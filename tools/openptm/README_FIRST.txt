@@ -7,12 +7,29 @@ Browse measurements, statistics, PTM families, sites, disease studies and the gu
 styles and scripts; it does not need external fonts or JavaScript libraries.
 Open index.html locally, or keep it beside the Excel file when publishing.
 
-CatLog visual alignment, 20 October
+Current interface update, 21 October 2026
+- Uses the current CatLog Browse and Stats as the visual reference, with
+  concise comparison rows, aligned values and a quiet white/teal palette.
+- PTM and exact measurement filters lead Browse. Conditions and binding
+  partners distinguish similar comparisons; +N exposes further endpoints.
+- Statistics foreground paper concentration, one-paper families and collection
+  gaps, with exact metric links and compact coverage, paper and source tables.
+- Phone controls are shorter; paging stays at the bottom. Detail drawers keep
+  keyboard focus and preserve full measurements, limits and source fields.
+- No scientific data changed: 253 comparisons, 307 measurement entries,
+  92 papers and 87 of 111 numerical families; 24 families remain without a
+  numerical comparison in this selection. Source records are not deduplicated
+  biological sites; these counts do not establish evidence strength.
+- The embedded data block is byte-for-byte identical to the prior release.
+  SHA-256: 6589f726c6044768b860951b70d2f984436ceee3048f9b649e7a7ea0368776d1
+- The original August audit workbook is unchanged and remains the Excel download.
+
+Earlier appearance update, 20 October
 - Teal links and selection, green-gray text and surfaces, softer separators,
   and a single pale summary band in Browse and Stats follow the CatLog palette.
 - Smaller headings and a compact phone toolbar bring the records forward.
 - Scientific data, source notes, application behavior and the audit workbook
-  are unchanged. All embedded data and scripts match the round31 release.
+  were unchanged at that release. The current interface update is described above.
 
 Design update, 20 October
 - Browse opens with measurements and their two state values. Stats adds linked

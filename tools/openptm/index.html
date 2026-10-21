@@ -27,6 +27,7 @@
   --accent-line: #B5D3CC;
   --band-line: #C9DDD6;
   --bar-neutral: #7D8885;
+  --paper: #405D86;
   --warning: #8A5A14;
   --warning-soft: #FFF6E8;
   --danger: #A94448;
@@ -256,10 +257,10 @@ a { color: var(--accent); }
 .regulation-table > thead > tr > th:nth-child(3) { width: 36%; }
 .regulation-table > thead > tr > th:nth-child(4) { width: 15%; }
 .regulation-table > thead > tr > th:nth-child(5) { width: 10%; }
-.measured-table > thead > tr > th:nth-child(1) { width: 24%; }
-.measured-table > thead > tr > th:nth-child(2) { width: 18%; }
-.measured-table > thead > tr > th:nth-child(3), .measured-table > thead > tr > th:nth-child(4) { width: 23%; }
-.measured-table > thead > tr > th:nth-child(5) { width: 12%; }
+.measured-table > thead > tr > th:nth-child(1) { width: 22%; }
+.measured-table > thead > tr > th:nth-child(2) { width: 24%; }
+.measured-table > thead > tr > th:nth-child(3), .measured-table > thead > tr > th:nth-child(4) { width: 20%; }
+.measured-table > thead > tr > th:nth-child(5) { width: 14%; }
 .measurement-state-value { display: block; margin-bottom: 3px; font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; line-height: 1.35; }
 .measurement-state-label { display: block; color: var(--muted); font-size: 12px; line-height: 1.4; overflow-wrap: anywhere; }
 .measurement-metric { font-size: 13px; line-height: 1.4; }
@@ -1108,24 +1109,117 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
 .stats-inner h2 { scroll-margin-top: 20px; }
 .app-header:has(#globalSearchWrap[hidden]) .header-download { margin-left: auto; }
 @media (max-width: 720px) { .stats-chemistry { grid-template-columns: minmax(0, 1fr); } }
-.mobile-comparison-sort { display: none; }
+/* Comparisons: one record per row, with conditions beside the metric. */
+.comparison-sort { display: inline-flex; align-items: center; gap: 8px; color: var(--muted); font-size: 12px; }
+.comparison-sort select { min-height: 32px; max-width: 170px; padding: 4px 8px; background: var(--panel); border: 1px solid var(--line-strong); border-radius: 4px; font: inherit; color: var(--ink); }
+.measured-table .cell-primary { color: var(--accent); font-weight: 600; }
+.measured-table > tbody > tr > td { padding-top: 9px; padding-bottom: 9px; }
+.metric-name { font-weight: 500; }
+.comparison-context { margin-top: 2px; }
+.value-qualifier { display: inline-block; font-size: 11px; color: var(--muted); margin: 3px 8px 0 0; }
+.measured-table .measurement-more { display: inline; margin: 0 0 0 6px; font-size: 11px; font-weight: 500; padding: 0; }
+.measurement-paper { position: relative; padding-right: 36px !important; }
+.comparison-open { position: absolute; right: 3px; top: 50%; transform: translateY(-50%); width: 30px; min-height: 36px; border: 0; background: transparent; color: var(--quiet); font-size: 24px; cursor: pointer; border-radius: 4px; }
+.comparison-open:hover { color: var(--accent); background: var(--accent-soft); }
+.browse-summary { background: var(--panel-muted); gap: 8px 30px; }
+.browse-summary > :nth-child(3) strong { color: var(--paper); }
+.workbench.detail-open { grid-template-columns: 236px minmax(0, 1fr); }
+.workbench.no-facets.detail-open { grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 1181px) {
+  .workbench.detail-open .filter-rail { display: block; }
+  .detail-pane { position: fixed; z-index: 50; top: 56px; bottom: 0; right: 0; width: 600px; border-left: 1px solid var(--line); box-shadow: -10px 0 26px rgba(20, 34, 31, 0.09); }
+}
+@media (max-width: 1180px) { .workbench.detail-open { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 720px) {
-  .mobile-comparison-sort { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 8px 12px; font-size: 12px; color: var(--muted); border-bottom: 1px solid var(--line); }
-  .mobile-comparison-sort select { max-width: 190px; min-height: 40px; font-size: 16px; background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 4px 8px; }
+  .sites-intro:has(.browse-summary:not([hidden])) { padding: 8px 12px; }
+  .sites-intro:has(.browse-summary:not([hidden])) .disease-heading { display: none; }
+  .sites-intro:has(.browse-summary:not([hidden])) > p { display: block; font-size: 12px; line-height: 1.4; }
+  .browse-summary { justify-content: space-between; padding: 8px 10px; gap: 8px; margin-top: 7px; }
+  .browse-summary > a { display: flex; flex-direction: column; font-size: 11px; line-height: 1.3; }
+  .browse-summary strong { font-size: 19px; }
+  .browse-summary .summary-entries, .browse-summary .browse-stats-link { display: none; }
+  .table-panel:has(.measured-table) { position: relative; padding-bottom: 45px; }
+  .table-panel:has(.measured-table) .table-toolbar { display: grid; grid-template-columns: 1fr auto; gap: 4px 8px; padding: 5px 12px; }
+  .table-panel:has(.measured-table) .records-title { grid-column: 1; font-size: 12px; }
+  .table-panel:has(.measured-table) .records-title strong { font-size: 12px; }
+  .table-panel:has(.measured-table) #filterSummary { display: none; }
+  .table-panel:has(.measured-table) .toolbar-tools { display: contents; }
+  .table-panel:has(.measured-table) #filtersButton { grid-column: 2; grid-row: 1; min-height: 36px; }
+  .comparison-sort { grid-column: 1 / -1; justify-content: space-between; }
+  .comparison-sort select { flex: 1; max-width: 230px; min-height: 36px; font-size: 16px; }
+  .table-panel:has(.measured-table) #pagerTop { position: absolute; bottom: 0; left: 0; right: 0; min-height: 45px; padding: 3px 12px; justify-content: space-between; border-top: 1px solid var(--line); background: var(--panel-muted); z-index: 10; }
+  .table-panel:has(.measured-table) #pagerTop:empty { display: none; }
+  .table-panel:has(.measured-table):has(#pagerTop:empty) { padding-bottom: 0; }
   #sheetTable.measured-table { display: block; min-width: 0; width: 100%; }
   #sheetTable.measured-table > thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   #sheetTable.measured-table > tbody { display: block; width: 100%; }
-  #sheetTable.measured-table > tbody > tr { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px 18px; padding: 14px 16px; border-bottom: 1px solid var(--line); }
+  #sheetTable.measured-table > tbody > tr { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 6px 16px; padding: 10px 16px; border-bottom: 1px solid var(--line); }
   #sheetTable.measured-table > tbody > tr > td { display: block; position: static; width: auto; min-width: 0; padding: 0; border: 0; box-shadow: none; background: transparent; }
-  #sheetTable.measured-table > tbody > tr > td:first-child { grid-column: 1 / -1; }
-  #sheetTable.measured-table > tbody > tr > td:first-child .cell-primary { font-size: 15px; }
-  #sheetTable.measured-table > tbody > tr > td:nth-child(2) { grid-column: 1 / -1; }
-  #sheetTable.measured-table .measurement-more { display: inline; margin-left: 10px; }
-  #sheetTable.measured-table .measurement-state-value { font-size: 16px; }
-  #sheetTable.measured-table .measurement-state-label { font-size: 12px; line-height: 1.5; }
-  #sheetTable.measured-table > tbody > tr > td:last-child { grid-column: 1 / -1; color: var(--muted); font-size: 12px; }
-  #sheetTable.measured-table > tbody > tr > td:last-child::before { content: "Source · "; }
+  #sheetTable.measured-table > tbody > tr > td:first-child { grid-column: 1 / -1; padding-right: 24px; }
+  #sheetTable.measured-table > tbody > tr > td:first-child .cell-primary { font-size: 14px; }
+  #sheetTable.measured-table > tbody > tr > td:nth-child(2) { grid-column: 1 / -1; font-size: 12px; }
+  #sheetTable.measured-table .measurement-more { margin-left: 8px; }
+  #sheetTable.measured-table .measurement-state-value { font-size: 15px; }
+  #sheetTable.measured-table .measurement-state-label { font-size: 12px; line-height: 1.4; }
+  #sheetTable.measured-table > tbody > tr > td:last-child { position: relative; grid-column: 1 / -1; color: var(--muted); font-size: 11px; padding-right: 36px; }
+  #sheetTable.measured-table > tbody > tr > td:last-child::before { content: none; }
+  #sheetTable.measured-table .comparison-open { width: 36px; min-height: 36px; right: -8px; }
+  .detail-pane { top: 0; width: 100vw; }
 }
+
+.workbench:has(.measured-table) .filter-section-body { max-height: 222px; overflow-y: auto; scrollbar-width: thin; }
+.workbench:has(.measured-table) .facet-search { position: sticky; top: 0; z-index: 1; }
+
+/* Statistics follow the questions asked of this collection. */
+.stats-overview { background: var(--panel-muted); }
+.stats-metric:nth-child(3) dd { color: var(--paper); }
+.stats-insights { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px; list-style: none; margin: 0 0 8px; padding: 8px 0 24px; }
+.stats-insights li { min-width: 0; }
+.stats-insights strong { display: block; font-size: 30px; line-height: 1.2; font-weight: 600; font-variant-numeric: tabular-nums; margin-bottom: 7px; }
+.stats-insights strong > span { font-size: 18px; color: var(--muted); }
+.stats-insights strong a { color: inherit; text-decoration: none; }
+.stats-insights li:first-child strong { color: var(--paper); }
+.stats-insights li > span { display: block; font-weight: 500; }
+.stats-insights p { color: var(--muted); font-size: 12px; line-height: 1.5; margin: 6px 0 0; max-width: 34ch; }
+.stats-table-wrap { position: relative; overflow-x: auto; max-width: 100%; }
+.stats-table { width: 100%; font-size: 13px; line-height: 1.45; }
+.stats-table :is(th, td) { padding: 9px 10px; vertical-align: top; border-bottom: 1px solid var(--line-soft); text-align: left; }
+.stats-table thead th { font-size: 12px; font-weight: 600; color: var(--muted); background: var(--panel-muted); }
+.stats-table tbody th { font-weight: 400; }
+.stats-table :is(th, td):first-child { padding-left: 0; }
+.stats-table :is(th, td):last-child { padding-right: 0; }
+.stats-table .stats-number { text-align: right; font-variant-numeric: tabular-nums; }
+.stats-table a { text-decoration: none; }
+.stats-table a:hover { text-decoration: underline; }
+.stats-table tbody th > a { color: var(--ink); }
+.stats-table .stats-number a { color: var(--accent); font-weight: 500; }
+.stats-table .stats-detail { margin: 3px 0 0; font-size: 11px; }
+.stats-coverage-table th:first-child { width: 62%; }
+.stats-more { margin-top: 12px; }
+.stats-more > summary { color: var(--accent); cursor: pointer; padding: 8px 0; font-size: 13px; }
+.stats-section-head { margin-bottom: 14px; }
+@media (max-width: 1000px) { .stats-columns { grid-template-columns: minmax(0, 1fr); gap: 0; } }
+@media (max-width: 720px) {
+  .stats-inner { padding: 22px 16px 40px; }
+  .stats-overview { margin-bottom: 16px; }
+  .stats-insights { grid-template-columns: minmax(0, 1fr); gap: 0; padding: 0 0 12px; }
+  .stats-insights li { display: grid; grid-template-columns: 95px minmax(0, 1fr); gap: 3px 16px; padding: 14px 0; border-top: 1px solid var(--line-soft); }
+  .stats-insights strong { grid-row: 1 / 3; margin: 0; font-size: 27px; }
+  .stats-insights p { margin: 0; max-width: none; }
+  .stats-insights li > span { font-size: 13px; }
+  .stats-table :is(th, td) { padding: 9px 6px; font-size: 12px; }
+  .stats-table thead th { font-size: 11px; }
+  .stats-table .stats-number { white-space: normal; }
+  .stats-coverage-table th:first-child { width: 50%; }
+  .stats-table thead th { max-width: 95px; }
+  .stats-section h2 { font-size: 19px; }
+}
+
+.stats-heading { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 16px; }
+.stats-heading > span { color: var(--quiet); font-size: 12px; }
+@media (max-width: 720px) { .stats-heading { margin-bottom: 8px; } .stats-heading h1 { margin-bottom: 0; } }
+
+.workbench:has(.measured-table) .check-option .opt-label { overflow-wrap: anywhere; padding-right: 4px; }
 </style>
 </head>
 <body>
@@ -1152,7 +1246,7 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
       </label>
       <div id="searchSuggestions" class="search-suggestions" role="listbox" aria-label="Search results" hidden></div>
     </div>
-    <a class="button header-download" id="downloadWorkbook" href="PTM_family_database_audit_final_2026-08-14.xlsx" download="openPTM-audit-2026-08-14.xlsx">Audit Excel ↓</a>
+    <a class="button header-download" id="downloadWorkbook" href="PTM_family_database_audit_final_2026-08-14.xlsx" download="openPTM-audit-2026-08-14.xlsx">Excel audit ↓</a>
   </header>
 
   <main id="statsView" class="stats-view" hidden tabindex="-1">
@@ -1257,14 +1351,14 @@ td .status-cell { display: inline-flex; align-items: center; gap: 6px; white-spa
           </div>
           <div class="toolbar-tools">
             <button id="filtersButton" class="button toolbar-filters" type="button" aria-expanded="false">Filters</button>
+            <label id="comparisonSortWrap" class="comparison-sort" hidden><span>Sort</span>
+              <select id="comparisonSort" aria-label="Sort comparisons"><option value="">Source order</option><option value="protein:asc">Protein A–Z</option><option value="protein:desc">Protein Z–A</option><option value="source:asc">Paper A–Z</option><option value="source:desc">Paper Z–A</option></select>
+            </label>
             <nav class="pager" id="pagerTop" aria-label="Table pages"></nav>
           </div>
         </div>
         <div class="active-filters" id="activeFilters" aria-label="Active filters" hidden></div>
         <p class="selection-summary" id="selectionSummary" aria-live="polite" hidden></p>
-        <label id="comparisonSortWrap" class="mobile-comparison-sort" hidden>Sort comparisons
-          <select id="comparisonSort"><option value="">Source order</option><option value="protein:asc">Protein A–Z</option><option value="protein:desc">Protein Z–A</option><option value="source:asc">Source A–Z</option><option value="source:desc">Source Z–A</option></select>
-        </label>
         <div class="table-wrap" id="tableWrap" tabindex="0" aria-label="Results table, scrollable">
           <table id="sheetTable" role="table">
             <caption class="sr-only" id="tableCaption"></caption>
@@ -2092,20 +2186,58 @@ function decodeOpenPTMData(data) {
   const measuredDisplay = [
     { col: "Protein / relationship", label: "Protein", kind: "measuredProtein" },
     { col: "Effect", label: "Measurement", kind: "measurementMetric", sort: false },
-    { col: "Mechanism", label: "State 1", kind: "measurementState", side: "modified", sort: false },
-    { col: "Setting", label: "State 2", kind: "measurementState", side: "comparator", sort: false },
-    { col: "Source", kind: "text" },
+    { col: "Mechanism", label: "Reported value", kind: "measurementState", side: "modified", sort: false },
+    { col: "Setting", label: "Compared with", kind: "measurementState", side: "comparator", sort: false },
+    { col: "Source", label: "Paper", kind: "measurementPaper" },
   ];
-  const cfg = () => isMeasuredView() ? { ...CONFIG[state.activeSheet], display: measuredDisplay } : CONFIG[state.activeSheet];
+  const measuredFacets = [
+    { col: "PTM" },
+    { label: "Measurement", values: row => [...new Set(measuredRecords.get(row[0])?.measurements.map(m => m.metric || "Reported value") || [])] },
+    { label: "Reported values", derive: row => {
+      const measurements = measuredRecords.get(row[0])?.measurements || [];
+      if (!measurements.length) return "No measurement reported";
+      return measurements.every(m => [m.modified_value, m.comparator_value].every(v => v != null && v !== ""))
+        ? "Both states reported" : "Includes a missing value";
+    } },
+    ...CONFIG["reported-regulation"].facets.filter(f => f.col !== "PTM"),
+  ];
+  const cfg = () => isMeasuredView() ? { ...CONFIG[state.activeSheet], display: measuredDisplay, facets: measuredFacets }
+    : state.activeSheet === "reported-regulation" ? { ...CONFIG[state.activeSheet], facets: [...CONFIG[state.activeSheet].facets,
+      ...measuredFacets.filter(f => ["Measurement", "Reported values"].includes(f.label)).map(f => ({ ...f, hidden: true }))] }
+    : CONFIG[state.activeSheet];
 
   // Layout-truth mode checks (computed styles beat matchMedia in embedded contexts)
   const drawerMode = () => getComputedStyle(document.getElementById("filterRail")).position === "fixed";
+  const detailOverlayMode = () => getComputedStyle(document.getElementById("detailPane")).position === "fixed";
   const narrowMode = () => getComputedStyle(document.querySelector(".top-nav")).order === "3";
 
   const facetValue = (facet, row, sheet) =>
     facet.derive ? facet.derive(row, sheet)
       : facet.human ? humanStatus(row[sheet.colIndex[facet.col]])
         : String(row[sheet.colIndex[facet.col]] ?? "").trim() || "Not reported";
+
+  const facetValues = (facet, row, sheet) => facet.values ? facet.values(row, sheet) : [facetValue(facet, row, sheet)];
+
+  // Short names are presentation only; full material names remain in each source record.
+  const comparisonName = record => ({
+    "Human-source ataxin-1 769–779 synthetic peptide": "Ataxin-1 peptide (769–779)",
+    "RNase II acetylated protein preparation": "RNase II preparations",
+    "Rhodococcus erythropolis inorganic pyrophosphatase preparations": "R. erythropolis PPase preparations",
+  }[record.substrate_name] || record.substrate_name || "Protein not named");
+  const comparisonContext = record => record.source_conditions?.calcium_state || record.partner_name || record.partner_accession || "";
+  const comparisonStateLabel = (record, measurement, side) => {
+    const label = measurement[`${side}_label`] || (side === "modified" ? "Reported state" : "Comparison state");
+    const suffix = ` ${record.substrate_name}`;
+    return label.endsWith(suffix) ? label.slice(0, -suffix.length) : label;
+  };
+  const presentationBriefs = {
+    "PAPER-23047115-PPASE-PUPYLATION-PREPARATION-ACTIVITY": {
+      finding: "PPase activity was higher after Dop treatment.",
+      limits: ["The starting hexamers contained both Pup-bearing and Pup-free subunits; their proportions were not measured.",
+        "Dop and its products may also affect the assay. This comparison does not isolate the effect of Pup at K155.",
+        "The source reports loss of detectable K155 pupylation after treatment, with the supporting data not shown."],
+    },
+  };
 
   /* ---------- PTM directory ---------- */
 
@@ -2267,7 +2399,7 @@ function decodeOpenPTMData(data) {
   function showMeasurements() {
     setView("workbench");
     activateSheet("reported-regulation");
-    Object.assign(sheetState(), { q: "", facets: measuredRecords.size ? { Values: new Set(["Measured comparison"]) } : {}, facetQueries: {}, page: 1, sort: null, proteinKey: null, lookupOrigin: null });
+    Object.assign(sheetState(), { q: "", facets: measuredRecords.size ? { Values: new Set(["Measured comparison"]) } : {}, facetQueries: {}, page: 1, sort: { col: "Protein / relationship", dir: "asc" }, proteinKey: null, lookupOrigin: null });
     $("#globalSearch").value = "";
     renderRail(); renderTable();
   }
@@ -2303,7 +2435,7 @@ function decodeOpenPTMData(data) {
       const key = facet.label || facet.col;
       const selected = st.facets[key];
       if (key !== exceptFacet && selected && selected.size) {
-        rows = rows.filter(({ row }) => selected.has(facetValue(facet, row, sheet)));
+        rows = rows.filter(({ row }) => facetValues(facet, row, sheet).some(value => selected.has(value)));
       }
     });
     return rows;
@@ -2392,13 +2524,12 @@ function decodeOpenPTMData(data) {
       if (facet.hidden || (isMeasuredView() && key === "Values")) return;
       const counts = new Map();
       rowsMatchingFilters(key).forEach(({ row }) => {
-        const v = facetValue(facet, row, sheet);
-        counts.set(v, (counts.get(v) || 0) + 1);
+        new Set(facetValues(facet, row, sheet)).forEach(v => counts.set(v, (counts.get(v) || 0) + 1));
       });
       const selected = st.facets[key] || new Set();
       selected.forEach(value => { if (!counts.has(value)) counts.set(value, 0); });
       const options = [...counts.entries()].sort((a, b) => b[1] - a[1] || String(a[0]).localeCompare(String(b[0])));
-      const expanded = st.openFacets[fi] ?? (selected.size > 0 || fi === 0 || (sheet.id === "family-ledger" && fi === 1));
+      const expanded = st.openFacets[fi] ?? (selected.size > 0 || fi === 0 || (isMeasuredView() && fi === 1) || (sheet.id === "family-ledger" && fi === 1));
       const query = st.facetQueries[fi] || "";
       const matches = value => !query || normalizeSearch(displayLabel(value)).includes(normalizeSearch(query)) || selected.has(value);
       const shown = options.filter(([value]) => matches(value)).length;
@@ -2429,15 +2560,23 @@ function decodeOpenPTMData(data) {
     const v = spec.derive ? spec.derive(row) : row[sheet.colIndex[spec.col]];
     const c = cfg();
     const value = name => row[sheet.colIndex[name]];
-    if (spec.kind === "measuredProtein") return `<td><span class="cell-primary">${esc(value("Target"))}</span><span class="cell-secondary">${esc(value("PTM"))}</span></td>`;
+    if (spec.kind === "measuredProtein") {
+      const record = measuredRecords.get(row[0]);
+      return `<td><span class="cell-primary" title="${esc(record.substrate_name)}">${esc(comparisonName(record))}</span><span class="cell-secondary">${esc(value("PTM"))}</span></td>`;
+    }
+    if (spec.kind === "measurementPaper") {
+      const record = measuredRecords.get(row[0]);
+      return `<td class="measurement-paper"><span>${esc(v)}</span><button class="comparison-open" type="button" aria-label="Open comparison: ${esc(comparisonName(record))}" title="Comparison details"><span aria-hidden="true">›</span></button></td>`;
+    }
     if (spec.kind === "measurementMetric" || spec.kind === "measurementState") {
       const record = measuredRecords.get(value("Record ID"));
       const { measurement } = measurementAt(record, 0);
-      if (spec.kind === "measurementState") return `<td><span class="measurement-state-value">${measurementSideHtml(record, 0, spec.side)}</span><span class="measurement-state-label">${esc(measurement[`${spec.side}_label`] || (spec.side === "modified" ? "Modified state" : "Comparator"))}</span></td>`;
-      return `<td class="measurement-metric">${esc(measurement.metric || "Reported value")}
-        ${measurement.approximate ? '<span class="cell-secondary">Approximate</span>' : ""}
-        ${DATA.primaryPaperChecks?.record_notes[record.id] ? '<span class="review-notice">Figure/text unit check pending</span>' : ""}
-        <button class="text-button measurement-more" type="button">${record.measurements.length > 1 ? `All ${record.measurements.length} measurements` : "Details"} &amp; study limits →</button></td>`;
+      if (spec.kind === "measurementState") return `<td><span class="measurement-state-value">${measurementSideHtml(record, 0, spec.side)}</span><span class="measurement-state-label" title="${esc(measurement[`${spec.side}_label`] || "")}">${esc(comparisonStateLabel(record, measurement, spec.side))}</span></td>`;
+      return `<td class="measurement-metric"><span class="metric-name">${esc(measurement.metric || "Reported value")}</span>${record.measurements.length > 1 ? `<button class="text-button measurement-more" type="button" aria-label="Show all ${record.measurements.length} measurements" title="${record.measurements.length - 1} more measurements">+${record.measurements.length - 1}</button>` : ""}
+        ${comparisonContext(record) ? `<span class="cell-secondary comparison-context">${esc(comparisonContext(record))}</span>` : ""}
+        ${measurement.approximate ? '<span class="value-qualifier">Approximate</span>' : ""}
+        ${[measurement.modified_value, measurement.comparator_value].some(v => v == null || v === "") ? '<span class="value-qualifier">One value reported</span>' : ""}
+        ${DATA.primaryPaperChecks?.record_notes[record.id] ? '<span class="review-notice">Figure/text unit check pending</span>' : ""}</td>`;
     }
     if (spec.kind === "catalogSource") return `<td><span class="cell-primary">${esc(v)}</span><span class="cell-secondary">${esc(value("Release"))}</span></td>`;
     if (spec.kind === "catalogCounts") return `<td>${String(v).split(" | ").map(line => `<span class="catalog-count-line">${esc(line)}</span>`).join("") || "—"}</td>`;
@@ -2941,9 +3080,10 @@ function decodeOpenPTMData(data) {
       else number += ` ± ${errorScientific ? scientificHtml(errorScientific) : esc(uncertainty)}`;
     }
     const units = { "min^-1": "min⁻¹", "s^-1 M^-1": "s⁻¹ M⁻¹", "M^-1": "M⁻¹", micromolar: "µM" };
-    return `${number}${unit ? ` ${esc(units[unit] || unit)}` : ""}`;
+    return `${number}${unit ? ` ${esc(units[unit] || unit).replace(/\^(-?\d+)/g, "<sup>$1</sup>")}` : ""}`;
   };
   const measurementSourceLabel = (record, locator) => ({
+    "PAPER-23047115-PPASE-PUPYLATION-PREPARATION-ACTIVITY": "Discussion, p. 1965 · Figure 3B",
     "PAPER-19246006-CCR3-Y17-EOTAXIN-NMR-KD-SULF-VS-SU0": "Results · original JATS",
     "PAPER-19246006-CCR3-Y16-EOTAXIN-NMR-KD-SULF-VS-SU0": "Results · original JATS",
     "PAPER-19246006-CCR3-Y16-Y17-EOTAXIN-NMR-KD-SULF-VS-SU0": "Results · original JATS",
@@ -3079,7 +3219,7 @@ function decodeOpenPTMData(data) {
   const assertionRecordHtml = record => {
     if (record.assertion_type === "source_curated_llps") return phaseRecordHtml(record);
     const regulation = isRegulatorAssertion(record);
-    const brief = DATA.recordBriefs?.records?.[record.id];
+    const brief = presentationBriefs[record.id] || DATA.recordBriefs?.records?.[record.id];
     const finding = brief?.finding || readablePaperProse(record, record.effect || record.finding || "");
     const comment = record.source_comment && textValue(record.source_comment).trim() !== textValue(finding).trim();
     if (record.measurements?.length) return `<p class="record-site">${esc(record.ptm_type)}${Array.isArray(record.site_set) && record.site_set.length > 1 && record.coordinate_check !== "preparation_level_ptm_no_canonical_site_mapping" ? ` · ${esc(siteLabel(record))} · sites reported together` : ""}</p>
@@ -3266,7 +3406,7 @@ function decodeOpenPTMData(data) {
       $("#detailEyebrow").textContent = sheet.id === "reported-regulation" ? assertionLabel(record.assertion_type) : viewName(sheet);
       $("#detailTitle").textContent = sheet.id === "site-catalogs" ? `${record.ptm_type} · ${record.source}`
         : sheet.id === "site-records" ? record.protein_name || record.gene || record.accession
-          : isRegulatorAssertion(record) ? relationshipTitle(record) : assertionProtein(record);
+          : isRegulatorAssertion(record) ? relationshipTitle(record) : record.measurements?.length ? comparisonName(record) : assertionProtein(record);
       const extra = sheet.id === "site-records" ? siteExtraReferences.get(record.id) : null;
       const body = record.original ? `<div class="catalog-counts">${catalogCountLines(record).map(line => `<p>${esc(line)}</p>`).join("")}</div>
           <p>${esc(record.limits)}</p><button class="button" type="button" data-open-selected="${esc(record.ptm_type)}">Six-PTM source comparison</button>${originalRecordHtml(record)}`
@@ -3359,7 +3499,7 @@ function decodeOpenPTMData(data) {
     pane.hidden = false;
     pane.scrollTop = 0;
     $("#workbench").classList.add("detail-open");
-    if (drawerMode()) {
+    if (drawerMode() || detailOverlayMode()) {
       setRail(false, false);
       pane.classList.add("open");
       showBackdrop(true);
@@ -3396,12 +3536,16 @@ function decodeOpenPTMData(data) {
   }
 
   function syncDrawerAccess() {
-    const modal = drawerMode() && (state.railOpen || !$("#detailPane").hidden);
+    const detailModal = detailOverlayMode() && !$("#detailPane").hidden;
+    const modal = detailModal || (drawerMode() && state.railOpen);
     [".app-header", "#workbookOverview", "#sheetTabs", "#diseaseIntro", "#selectedIntro", "#sitesIntro", "#familyContext", "#tablePanel", "#guideView", "#libraryView", "#familyPage"].forEach(selector => {
       $(selector).inert = modal;
     });
-    $("#filterRail").inert = drawerMode() && !state.railOpen;
+    $("#filterRail").inert = detailModal || (drawerMode() && !state.railOpen);
     $("#detailPane").inert = drawerMode() && state.railOpen;
+    $("#detailPane").setAttribute("role", detailModal ? "dialog" : "complementary");
+    if (detailModal) $("#detailPane").setAttribute("aria-modal", "true");
+    else $("#detailPane").removeAttribute("aria-modal");
   }
 
   function setRail(open, focusRail = true) {
@@ -3409,7 +3553,7 @@ function decodeOpenPTMData(data) {
     state.railOpen = open;
     $("#filterRail").classList.toggle("open", open);
     $("#filtersButton").setAttribute("aria-expanded", String(open));
-    showBackdrop(open || (state.detailRow != null && drawerMode() && !$("#detailPane").hidden));
+    showBackdrop(open || (state.detailRow != null && detailOverlayMode() && !$("#detailPane").hidden));
     if (open && focusRail) $("#filterRail").focus();
     if (!open && state.lastFocus) { state.lastFocus.focus(); state.lastFocus = null; }
   }
@@ -3545,16 +3689,16 @@ function decodeOpenPTMData(data) {
       <div class="hash-row"><strong>${esc(name)}</strong><code>${esc(hash)}</code></div>`).join("");
   }
 
-    // Counts describe the records included in this build, not completeness of the literature.
+    // These counts describe this build, not the completeness or strength of the literature.
   function renderStats() {
     const selected = [...measuredRecords.values()];
-    const entries = selected.reduce((n, record) => n + record.measurements.length, 0);
+    const entries = selected.flatMap(record => record.measurements.map(measurement => ({ record, measurement })));
     const paperIds = new Set(selected.flatMap(record => record.pmids || []));
     const covered = new Set(selected.map(record => record.family_id));
     const familyTotal = familySheet.rows.length;
     const siteFamilies = new Set(sites.rows.map(record => record.family_id));
     const summaryFamilies = new Set(catalogRecords.map(record => record.family_id));
-    const selectedFilter = ["Values", "Measured comparison"];
+    const familyNames = new Map(familySheet.rows.map(row => [row[0], familyNameLabel(row, familySheet)]));
     const tableLink = (sheet, filters = []) => {
       const params = new URLSearchParams({ sheet });
       filters.forEach(filter => params.append("filter", JSON.stringify(filter)));
@@ -3566,8 +3710,7 @@ function decodeOpenPTMData(data) {
       if (chemistry) params.set("chemistry", chemistry);
       return "#" + params.toString();
     };
-    const comparisonLink = (filters = []) => tableLink("reported-regulation", [selectedFilter, ...filters]);
-    const share = (n, total) => total ? 100 * n / total : 0;
+    const comparisonLink = (filters = []) => tableLink("reported-regulation", [["Values", "Measured comparison"], ...filters]);
     const group = (records, key) => {
       const result = new Map();
       records.forEach(record => {
@@ -3577,112 +3720,116 @@ function decodeOpenPTMData(data) {
       });
       return [...result].sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0]));
     };
-    const chartRow = ({ href, label, count, total, detail = "", unit = "records" }) => `
-      <a class="stats-row" href="${esc(href)}">
-        <span class="stats-row-main"><span class="stats-label">${esc(label)}</span>
-          ${detail ? `<span class="stats-detail">${esc(detail)}</span>` : ""}</span>
-        <span class="stats-count">${fmtNum(count)} <span>/ ${fmtNum(total)} ${esc(unit)}</span></span>
-        <span class="stats-track" aria-hidden="true"><span class="stats-fill" style="width:${share(count, total).toFixed(3)}%"></span></span>
-      </a>`;
-    const chemistry = group(familySheet.rows, familyChemistry);
-    const chemistryRows = chemistry.map(([name, rows]) => {
+    const number = value => `<td class="stats-number">${fmtNum(value)}</td>`;
+    const countLink = (count, href) => `<td class="stats-number"><a href="${esc(href)}">${fmtNum(count)}</a></td>`;
+    const table = (caption, headings, rows, className = "") => `<div class="stats-table-wrap"><table class="stats-table ${className}">
+      <caption class="sr-only">${esc(caption)}</caption><thead><tr>${headings.map((heading, i) => `<th scope="col"${i ? ' class="stats-number"' : ""}>${esc(heading)}</th>`).join("")}</tr></thead>
+      <tbody>${rows}</tbody></table></div>`;
+    const paperGroups = group(selected, record => (record.pmids || []).join("; "));
+    const largestPaper = paperGroups[0];
+    const oneComparisonPapers = paperGroups.filter(([, rows]) => rows.length === 1).length;
+    const familyGroups = group(selected, record => record.family_id);
+    const onePaperFamilies = familyGroups.filter(([, rows]) => new Set(rows.flatMap(record => record.pmids || [])).size === 1)
+      .sort(([a], [b]) => (familyNames.get(a) || a).localeCompare(familyNames.get(b) || b));
+    const chemistryRows = group(familySheet.rows, familyChemistry).map(([name, rows]) => {
       const count = rows.filter(row => covered.has(row[0])).length;
       const gaps = rows.length - count;
-      return `<li>${chartRow({
-        href: familyLink("measurements", name), label: name, count, total: rows.length, unit: "families",
-        detail: "",
-      })}${gaps ? `<a class="stats-gap-link" href="${esc(familyLink("gaps", name))}">${gaps} ${gaps === 1 ? "family" : "families"} without selected comparisons →</a>` : ""}</li>`;
+      return `<tr><th scope="row"><a href="${esc(familyLink("measurements", name))}">${esc(name)}</a></th>
+        <td class="stats-number"><a href="${esc(familyLink("measurements", name))}">${fmtNum(count)} / ${fmtNum(rows.length)}</a></td>
+        ${gaps ? countLink(gaps, familyLink("gaps", name)) : number(0)}</tr>`;
     }).join("");
-    const papers = group(selected, record => (record.pmids || []).join("; "));
-    const largestPaper = papers[0];
-    const singlePaperCount = papers.filter(([, rows]) => rows.length === 1).length;
-    const familyPaperCounts = group(selected, record => record.family_id)
-      .map(([, rows]) => new Set(rows.flatMap(record => record.pmids || [])).size);
-    const onePaperFamilies = familyPaperCounts.filter(count => count === 1).length;
-    const paperRows = papers.map(([pmid, rows]) => {
-      const families = [...new Set(rows.map(record => record.family_id))].map(id => {
-        const row = familySheet.rows.find(item => item[0] === id);
-        return row ? familyNameLabel(row, familySheet) : id;
-      });
-      const source = rows[0].source || rows[0].source_id || "Selected paper";
-      return `<li>${chartRow({
-        href: comparisonLink([["Paper", pmid]]), label: `${source} · PMID ${pmid}`,
-        count: rows.length, total: selected.length, unit: "comparisons",
-        detail: `${families.join("; ")} · ${fmtNum(rows.reduce((n, row) => n + row.measurements.length, 0))} measurement entries`,
-      })}</li>`;
+    const paperRows = paperGroups.map(([pmid, rows]) => {
+      const href = comparisonLink([["Paper", pmid]]);
+      const source = rows[0].source || rows[0].source_id || "Paper";
+      return `<tr><th scope="row"><a href="${esc(href)}">${esc(source)}</a><span class="stats-detail">PMID ${esc(pmid)}</span></th>
+        ${countLink(rows.length, href)}${number(rows.reduce((n, record) => n + record.measurements.length, 0))}${number(new Set(rows.map(record => record.family_id)).size)}</tr>`;
     });
-    const endpointRows = group(selected, record => record.assertion_type || "").map(([type, rows]) => {
-      const facet = CONFIG["reported-regulation"].facets.find(item => (item.label || item.col) === "Finding type");
-      const sheet = sheetsById["reported-regulation"];
-      const sample = sheet.rows.find(row => row[0] === rows[0].id);
-      const value = facetValue(facet, sample, sheet);
-      return `<li>${chartRow({
-        href: comparisonLink([["Finding type", value]]), label: assertionLabel(type),
-        count: rows.length, total: selected.length, unit: "comparisons",
-        detail: `${fmtNum(rows.reduce((n, row) => n + row.measurements.length, 0))} measurement entries`,
-      })}</li>`;
+    // Metric strings are counted exactly as recorded; no inferred endpoint categories or pooled values.
+    const metricGroups = group(entries, entry => entry.measurement.metric || "Reported value");
+    const metricRows = metricGroups.map(([metric, values]) => {
+      const href = comparisonLink([["Measurement", metric]]);
+      return `<tr><th scope="row"><a href="${esc(href)}">${esc(metric)}</a></th>${number(values.length)}
+        ${countLink(new Set(values.map(entry => entry.record.id)).size, href)}${number(new Set(values.flatMap(entry => entry.record.pmids || [])).size)}</tr>`;
+    });
+    const findingFacet = CONFIG["reported-regulation"].facets.find(item => (item.label || item.col) === "Finding type");
+    const findingSheet = sheetsById["reported-regulation"];
+    const findingRows = group(selected, record => record.assertion_type || "").map(([type, rows]) => {
+      const sample = findingSheet.rows.find(row => row[0] === rows[0].id);
+      const href = comparisonLink([["Finding type", facetValue(findingFacet, sample, findingSheet)]]);
+      return `<tr><th scope="row"><a href="${esc(href)}">${esc(assertionLabel(type))}</a></th>${countLink(rows.length, href)}
+        ${number(rows.reduce((n, record) => n + record.measurements.length, 0))}</tr>`;
     }).join("");
-    const unmeasuredSources = group(effects.rows.filter(record => !record.measurements?.length),
-      record => record.source || record.source_id || "Not reported");
-    const functionRows = [
-      ...unmeasuredSources.map(([source, rows]) => ({
-        href: tableLink("reported-regulation", [["Source", source], ["Values", "No numeric value included"]]),
-        label: source, count: rows.length, total: effects.rows.length,
-        detail: "Source records without selected numerical comparisons",
-      })),
-      { href: comparisonLink(), label: "Selected numerical comparisons", count: selected.length,
-        total: effects.rows.length, detail: "Original-paper comparisons with measurement entries" },
-    ].sort((a, b) => b.count - a.count).map(row => `<li>${chartRow(row)}</li>`).join("");
-    const siteRows = group(sites.rows, record => record.source || "Not reported").map(([source, rows]) =>
-      `<li>${chartRow({
-        href: tableLink("site-records", [["Source", source]]), label: source, count: rows.length,
-        total: sites.rows.length, unit: "site records",
-        detail: `${new Set(rows.map(record => record.family_id)).size} ${new Set(rows.map(record => record.family_id)).size === 1 ? "family" : "families"}`,
-      })}</li>`).join("");
+    const functionGroups = [
+      ...group(effects.rows.filter(record => !record.measurements?.length), record => record.source || record.source_id || "Not reported")
+        .map(([source, rows]) => ({ label: source, count: rows.length, note: "No numerical comparison included",
+          href: tableLink("reported-regulation", [["Source", source], ["Values", "No numeric value included"]]) })),
+      { label: "Primary-paper comparisons", count: selected.length, note: "With numerical measurements", href: comparisonLink() },
+    ].sort((a, b) => b.count - a.count);
+    const functionRows = functionGroups.map(item => `<tr><th scope="row"><a href="${esc(item.href)}">${esc(item.label)}</a>
+      <span class="stats-detail">${esc(item.note)}</span></th>${countLink(item.count, item.href)}</tr>`).join("");
+    const siteRows = group(sites.rows, record => record.source || "Not reported").map(([source, rows]) => {
+      const href = tableLink("site-records", [["Source", source]]);
+      return `<tr><th scope="row"><a href="${esc(href)}">${esc(source)}</a></th>${countLink(rows.length, href)}${number(new Set(rows.map(record => record.family_id)).size)}</tr>`;
+    }).join("");
+    const familyRows = onePaperFamilies.map(([id, rows]) => {
+      const href = comparisonLink([["Family ID", id]]);
+      return `<tr><th scope="row"><a href="${esc(href)}">${esc(familyNames.get(id) || id)}</a>
+        <span class="stats-detail">${esc(rows[0].source || rows[0].source_id || "Paper")}</span></th>${countLink(rows.length, href)}</tr>`;
+    }).join("");
     const html = `
-      <header class="stats-intro"><h1>OpenPTM in numbers</h1><p>Where the numerical evidence is, what it measures, and how much comes from each paper.</p><nav class="stats-nav" aria-label="Statistics sections"><a href="#view=stats&section=coverage">01 Coverage</a><a href="#view=stats&section=paper">02 Papers</a><a href="#view=stats&section=endpoint">03 Endpoints</a><a href="#view=stats&section=function">04 Sources</a></nav></header>
+      <header class="stats-intro"><div class="stats-heading"><h1>OpenPTM in numbers</h1>${DATA.meta.expansionDate ? `<span>Data updated ${esc(fmtDate(DATA.meta.expansionDate))}</span>` : ""}</div><p>Browse the measurements, see where evidence is concentrated, and find gaps in this collection.</p>
+        <nav class="stats-nav" aria-label="Statistics sections"><a href="#view=stats&section=coverage">Coverage</a><a href="#view=stats&section=paper">Papers</a><a href="#view=stats&section=endpoint">Measurements</a><a href="#view=stats&section=function">Sources</a></nav></header>
       <dl class="stats-overview">
-        <div class="stats-metric"><dt>Selected comparisons</dt><dd><a href="${esc(comparisonLink())}">${fmtNum(selected.length)}</a></dd></div>
-        <div class="stats-metric"><dt>Measurement entries</dt><dd><a href="${esc(comparisonLink())}">${fmtNum(entries)}</a></dd></div>
+        <div class="stats-metric"><dt>Comparisons</dt><dd><a href="${esc(comparisonLink())}">${fmtNum(selected.length)}</a></dd></div>
+        <div class="stats-metric"><dt>Reported measurements</dt><dd><a href="#view=stats&section=endpoint">${fmtNum(entries.length)}</a></dd></div>
         <div class="stats-metric"><dt>Papers</dt><dd><a href="#view=stats&section=paper">${fmtNum(paperIds.size)}</a></dd></div>
-        <div class="stats-metric"><dt>Families with comparisons</dt><dd><a href="${esc(familyLink("measurements"))}">${covered.size}<span> / ${familyTotal}</span></a></dd></div>
+        <div class="stats-metric"><dt>PTM families with comparisons</dt><dd><a href="${esc(familyLink("measurements"))}">${fmtNum(covered.size)}<span> / ${fmtNum(familyTotal)}</span></a></dd></div>
       </dl>
-      <p class="stats-note">A comparison is one selected record; it may contain several measurement entries. Entries are not replicates. <a href="${esc(familyLink("gaps"))}">${familyTotal - covered.size} families have no selected numerical comparison.</a></p>
+      <p class="stats-note">One comparison can report several measurements. Measurements are not replicates.</p>
+      <ul class="stats-insights" aria-label="Evidence at a glance">
+        ${largestPaper ? `<li><strong><a href="${esc(comparisonLink([["Paper", largestPaper[0]]]))}">${(100 * largestPaper[1].length / selected.length).toFixed(1)}%</a></strong>
+          <span>of comparisons come from one paper</span><p>${esc(largestPaper[1][0].source || `PMID ${largestPaper[0]}`)}: ${fmtNum(largestPaper[1].length)} of ${fmtNum(selected.length)} comparisons.</p></li>` : ""}
+        <li><strong>${fmtNum(onePaperFamilies.length)} <span>/ ${fmtNum(covered.size)}</span></strong><span>covered families have one paper</span>
+          <p><a href="#view=stats&section=paper">See the families and papers</a>. Multiple comparisons are not independent studies.</p></li>
+        <li><strong><a href="${esc(familyLink("gaps"))}">${fmtNum(familyTotal - covered.size)}</a></strong><span>families have no comparison here</span>
+          <p>A collection gap does not mean that no evidence has been published.</p></li>
+      </ul>
 
       <section class="stats-section" aria-labelledby="stats-coverage-title">
-        <div class="stats-section-head"><h2 id="stats-coverage-title">Coverage by chemistry</h2><p>Families with selected numerical comparisons / families in each class</p></div>
-        <ul class="stats-chart stats-chemistry">${chemistryRows}</ul>
-        <p class="stats-note">The denominator is the ${familyTotal}-family operational ledger. A gap here means no selected comparison in this build, not no published evidence.</p>
+        <div class="stats-section-head"><h2 id="stats-coverage-title">Which chemistries are covered?</h2><p>Families with at least one numerical comparison, out of ${fmtNum(familyTotal)} families in the catalog.</p></div>
+        ${table("PTM family coverage by chemistry", ["Chemistry", "Covered / total families", "Families without comparisons"], chemistryRows, "stats-coverage-table")}
       </section>
 
       <div class="stats-columns">
         <section class="stats-section" aria-labelledby="stats-paper-title">
-          <div class="stats-section-head"><h2 id="stats-paper-title">How comparisons are distributed</h2><p>Comparison counts by paper</p></div>
-          ${largestPaper ? `<p class="stats-note">The largest paper contributes <strong>${fmtNum(largestPaper[1].length)} / ${fmtNum(selected.length)} comparisons (${share(largestPaper[1].length, selected.length).toFixed(1)}%)</strong>. ${singlePaperCount} / ${paperIds.size} papers contribute one comparison; ${onePaperFamilies} / ${covered.size} covered families have one selected paper.</p>` : ""}
-          <ul class="stats-chart stats-paper-list">${paperRows.slice(0, 6).join("")}</ul>
-          ${paperRows.length > 6 ? `<details class="stats-paper-list"><summary>Show the other ${paperRows.length - 6} papers</summary><ul class="stats-chart">${paperRows.slice(6).join("")}</ul></details>` : ""}
-          <p class="stats-note">Multiple comparisons from one paper do not represent independent studies.</p>
+          <div class="stats-section-head"><h2 id="stats-paper-title">Where do the comparisons come from?</h2><p>${fmtNum(paperIds.size)} papers; ${fmtNum(oneComparisonPapers)} contribute one comparison each.</p></div>
+          ${table("Papers with the most comparisons", ["Paper", "Comparisons", "Measurements", "Families"], paperRows.slice(0, 8).join(""))}
+          ${paperRows.length > 8 ? `<details class="stats-more"><summary>Other ${fmtNum(paperRows.length - 8)} papers</summary>${table("Other papers", ["Paper", "Comparisons", "Measurements", "Families"], paperRows.slice(8).join(""))}</details>` : ""}
+          ${onePaperFamilies.length ? `<details class="stats-more"><summary>${fmtNum(onePaperFamilies.length)} families represented by one paper</summary>
+            ${table("Families represented by one paper", ["Family and paper", "Comparisons"], familyRows)}</details>` : ""}
         </section>
         <section class="stats-section" aria-labelledby="stats-endpoint-title">
-          <div class="stats-section-head"><h2 id="stats-endpoint-title">Reported endpoints</h2><p>Selected comparisons by existing finding type</p></div>
-          <ul class="stats-chart">${endpointRows}</ul>
-          <p class="stats-note">Categories retain the record’s finding type. Counts do not combine effect magnitudes, units, directions or assay conditions.</p>
+          <div class="stats-section-head"><h2 id="stats-endpoint-title">What was measured?</h2><p>${fmtNum(entries.length)} measurements across ${fmtNum(metricGroups.length)} recorded metric labels.</p></div>
+          ${table("Most frequently reported measurement metrics", ["Reported metric", "Measurements", "Comparisons", "Papers"], metricRows.slice(0, 10).join(""))}
+          ${metricRows.length > 10 ? `<details class="stats-more"><summary>Other ${fmtNum(metricRows.length - 10)} metric labels</summary>${table("Other reported metrics", ["Reported metric", "Measurements", "Comparisons", "Papers"], metricRows.slice(10).join(""))}</details>` : ""}
+          <p class="stats-note">Metric labels are retained as recorded, including assay-specific variants. A comparison can appear under several metrics; values and units are not pooled.</p>
+          <details class="stats-more"><summary>Record finding-type labels</summary>${table("Existing finding-type labels", ["Finding type", "Comparisons", "Measurements"], findingRows)}</details>
         </section>
       </div>
 
       <div class="stats-columns">
         <section class="stats-section" aria-labelledby="stats-function-title">
           <div class="stats-section-head"><h2 id="stats-function-title">Function and regulation sources</h2><p>${fmtNum(effects.rows.length)} included records</p></div>
-          <ul class="stats-chart stats-source-list">${functionRows}</ul>
-          <p class="stats-note">Regulator–target relations, curated findings and selected measurements are different record types. The full function layer is not a count of directly measured PTM-state comparisons.</p>
+          ${table("Function and regulation records by source", ["Source", "Records"], functionRows)}
+          <p class="stats-note">Relations, curated findings and measured comparisons are different record types. This total is not a count of directly measured PTM effects.</p>
         </section>
         <section class="stats-section" aria-labelledby="stats-site-title">
-          <div class="stats-section-head"><h2 id="stats-site-title">Included site records</h2><p>${fmtNum(sites.rows.length)} source records across <a href="${esc(familyLink("sites"))}">${siteFamilies.size} / ${familyTotal} families</a></p></div>
-          <ul class="stats-chart stats-source-list">${siteRows}</ul>
-          <p class="stats-note">These are source records, not a deduplicated set of biological sites. Source identifiers, organisms and coordinate limits remain attached to each record.</p>
+          <div class="stats-section-head"><h2 id="stats-site-title">Site records by source</h2><p>${fmtNum(sites.rows.length)} records across <a href="${esc(familyLink("sites"))}">${fmtNum(siteFamilies.size)} / ${fmtNum(familyTotal)} families</a></p></div>
+          ${table("Site records by source", ["Source", "Site records", "Families"], siteRows)}
+          <p class="stats-note">Source records can overlap; this is not a deduplicated count of biological sites.</p>
         </section>
       </div>
-      <p class="stats-footnote"><a href="#sheet=site-catalogs">${fmtNum(catalogRecords.length)} source summaries</a> span ${summaryFamilies.size} families. Summary counts are separate from included site records and cannot be added to them. <a href="#view=guide">Methods and sources →</a></p>`;
+      <p class="stats-footnote"><a href="#sheet=site-catalogs">${fmtNum(catalogRecords.length)} source summaries</a> cover ${fmtNum(summaryFamilies.size)} families. These summaries cannot be added to site-record counts. <a href="#view=guide">Methods and sources →</a></p>`;
     $("#statsContent").innerHTML = html;
     return html;
   }
@@ -3720,7 +3867,7 @@ function decodeOpenPTMData(data) {
         ? `${numerical.length} comparisons · ${new Set(numerical.flatMap(record => record.pmids || [])).size} papers · ${new Set(numerical.map(record => record.family_id)).size} PTM families` : "";
       $("#sitesScope").textContent = catalogView ? "Counts use different units and may overlap."
         : siteView ? "Source sites in original coordinates. Detection does not imply function."
-          : isMeasuredView() ? "Selected comparisons from primary papers. Both protein states may be modified."
+          : isMeasuredView() ? "Measured PTM comparisons from primary papers. Both states may be modified."
             : "Measured effects and database annotations, with their original sources.";
       $("#sitesReviewDate").textContent = "";
       $("#sitesReviewDate").hidden = true;
@@ -3728,10 +3875,10 @@ function decodeOpenPTMData(data) {
       $("#browseSummary").hidden = !isMeasuredView();
       if (isMeasuredView()) $("#browseSummary").innerHTML = `
         <a href="#sheet=reported-regulation&filter=${encodeURIComponent(JSON.stringify(["Values", "Measured comparison"]))}"><strong>${fmtNum(numerical.length)}</strong> comparisons</a>
-        <span><strong>${fmtNum(numerical.reduce((n, r) => n + r.measurements.length, 0))}</strong> measurement entries</span>
+        <span class="summary-entries"><strong>${fmtNum(numerical.reduce((n, r) => n + r.measurements.length, 0))}</strong> measurements</span>
         <a href="#view=stats"><strong>${new Set(numerical.flatMap(r => r.pmids || [])).size}</strong> papers</a>
         <a href="#view=ptms&collection=measurements"><strong>${new Set(numerical.map(r => r.family_id)).size} / ${familySheet.rows.length}</strong> PTM families</a>
-        <a class="browse-stats-link" href="#view=stats">Explore the data →</a>`;
+        <a class="browse-stats-link" href="#view=stats">Statistics →</a>`;
     }
     $("#workbench").classList.toggle("no-facets", cfg().facets.length === 0);
     $("#filtersButton").hidden = cfg().facets.length === 0;
@@ -3938,7 +4085,7 @@ function decodeOpenPTMData(data) {
         if (key === "Disease evidence") key = "Studies listed";
         if (key === "Assertion type" && state.activeSheet === "reported-regulation") key = "Finding type";
         const facet = cfg().facets.find(f => (f.label || f.col) === key);
-        if (facet && activeSheet().rows.some(r => facetValue(facet, r, activeSheet()) === value)) {
+        if (facet && activeSheet().rows.some(r => facetValues(facet, r, activeSheet()).includes(value))) {
           if (!st.facets[key]) st.facets[key] = new Set();
           st.facets[key].add(value);
         }
@@ -4292,7 +4439,7 @@ function decodeOpenPTMData(data) {
 
     // Global keys
     document.addEventListener("keydown", (e) => {
-      if (drawerMode() && !$("#backdrop").hidden && e.key === "Tab") {
+      if (!$("#backdrop").hidden && e.key === "Tab") {
         const panel = state.railOpen ? $("#filterRail") : $("#detailPane");
         const controls = [...panel.querySelectorAll('button, a[href], input, select, summary')].filter(el => el.getClientRects().length && !el.disabled);
         const first = controls[0], last = controls.at(-1);
@@ -4317,9 +4464,9 @@ function decodeOpenPTMData(data) {
         // leaving drawer mode: normalize any drawer state
         state.railOpen = false;
         $("#filterRail").classList.remove("open");
-        $("#detailPane").classList.remove("open");
+        $("#detailPane").classList.toggle("open", detailOverlayMode() && !$("#detailPane").hidden);
         $("#filtersButton").setAttribute("aria-expanded", "false");
-        showBackdrop(false);
+        showBackdrop(detailOverlayMode() && !$("#detailPane").hidden);
       } else {
         $("#detailPane").classList.toggle("open", !$("#detailPane").hidden);
         showBackdrop(state.railOpen || !$("#detailPane").hidden);
@@ -4345,5 +4492,6 @@ function decodeOpenPTMData(data) {
   syncDrawerAccess();
 })();
 </script>
+<script src="../../assets/js/usage-tracker.js" data-usage-source="openptm"></script>
 </body>
 </html>
