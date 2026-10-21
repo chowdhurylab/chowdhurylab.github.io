@@ -821,18 +821,19 @@ QUALITY_FIXTURE = {"as_of": "2026-10-11", "audit_values": 742, "audit_wrong": 2,
                    "v2_approved_total": 2380, "v2_differences_checked": 504, "v2_wrong": 0}
 
 
-# The headline band is Stats' focal point: each key number over a soft halo (a radial background and a low-alpha
-# box-shadow, the digits crisp, with no text-shadow) and the card with a gentle glow round it; none of it on paper.
+# The headline band is Stats' focal point by size, weight and meaning colour alone (round 14, the user's colleague: "a
+# bit AI-ish, with the glow"): no halo behind a number, no text-shadow, a plain white card with a 1px hairline and no
+# glow, wash or gradient rule, on screen and on paper.
 STATS_BAND_GLOW_JS = """
     const value = document.querySelector('.stats-totals-main .stats-total-value');
     const band = document.querySelector('#statsTotals > .stats-band');
     if (!value || !band) return null;
-    const v = getComputedStyle(value), b = getComputedStyle(band);
-    return {halo: v.backgroundImage.includes('radial-gradient') && v.boxShadow !== 'none', crisp: v.textShadow === 'none',
-            card: b.boxShadow !== 'none'};
+    const v = getComputedStyle(value), b = getComputedStyle(band), rule = getComputedStyle(band, '::before');
+    return {halo: v.backgroundImage !== 'none' || v.boxShadow !== 'none', crisp: v.textShadow === 'none',
+            card: b.boxShadow !== 'none' || b.backgroundImage !== 'none' || !['none', ''].includes(rule.backgroundImage)};
 """
 
-# The band's numbers fade and rise once (is-entering), only when the viewer has not asked for less motion.
+# The band's numbers stand still: no fade or rise, whatever the motion setting (is-entering no longer animates).
 STATS_BAND_RISE_JS = """
     const band = document.querySelector('#statsTotals > .stats-band');
     band.classList.add('is-entering');
@@ -2022,12 +2023,15 @@ def check_stats_new_figures(driver, browser, url):
             labels = driver.execute_script(RIDGE_TICKS_JS)
             assert labels and all(axis and all(label.startswith("10") and len(label) > 2 for label in axis) for axis in labels), (
                 f"At {narrow}px a ridge axis label is not a whole power of ten: {labels}")
-        # The key numbers glow on screen (a halo, never a text-shadow) and not on paper; with less motion asked for,
-        # nothing moves.
-        glow = "return getComputedStyle(document.querySelector('.stats-totals-main .stats-total-value')).boxShadow"
-        assert driver.execute_script(glow) not in ("", "none")
+        # The key numbers never glow (no halo, no text-shadow), on screen or on paper, and no figure mark has a glow or
+        # a gradient fill; with less motion asked for, nothing moves.
+        glow = """return [...document.querySelectorAll('.stats-totals-main .stats-total-value')].map(e => getComputedStyle(e))
+            .some(c => c.boxShadow !== 'none' || c.textShadow !== 'none' || c.backgroundImage !== 'none')
+            || [...document.querySelectorAll('.stats-seg, .stats-swatch:not(.stats-part-catlog-mark), .stats-histogram-bars > span, .stats-meter > span')]
+                .some(e => getComputedStyle(e).backgroundImage !== 'none' || getComputedStyle(e).filter !== 'none')"""
+        assert driver.execute_script(glow) is False
         driver.execute_cdp_cmd("Emulation.setEmulatedMedia", {"media": "print"})
-        assert driver.execute_script(glow) == "none"
+        assert driver.execute_script(glow) is False
         driver.execute_cdp_cmd("Emulation.setEmulatedMedia", {"media": "", "features": [{"name": "prefers-reduced-motion", "value": "reduce"}]})
         assert driver.execute_script("return getComputedStyle(document.querySelector('.stats-seg')).transitionDuration") in ("0s", "")
         driver.execute_cdp_cmd("Emulation.setEmulatedMedia", {"media": "", "features": []})
@@ -2411,7 +2415,7 @@ def check_filters(driver, browser, url, route_label):
             const probe = document.createElement('span');
             document.body.appendChild(probe);
             const colour = (token) => { probe.style.color = `var(${token})`; return getComputedStyle(probe).color; };
-            const out = ['--chg-magnitude', '--cmp-differs', '--bar-neutral', '--cmp-new', '--cmp-new', '--cmp-same'].map(colour);
+            const out = ['--chg-magnitude', '--cmp-differs', '--cmp-other', '--cmp-new', '--cmp-new', '--cmp-same'].map(colour);
             probe.remove();
             return out;
         """)
@@ -2925,8 +2929,8 @@ CHIP_COLOURS_JS = """
     document.body.appendChild(probe);
     const token = name => { probe.style.color = `var(${name})`; return getComputedStyle(probe).color; };
     const tokens = Object.fromEntries(['--st-accepted', '--st-pending', '--st-unverified', '--st-not-reviewed', '--st-disputed',
-        '--cmp-same', '--cmp-differs', '--cmp-new', '--chg-magnitude', '--chg-precision', '--caution', '--checked', '--accent',
-        '--bar-neutral', '--src-paper'].map(name => [name, token(name)]));
+        '--cmp-same', '--cmp-other', '--cmp-differs', '--cmp-new', '--chg-magnitude', '--chg-precision', '--caution', '--caution-mark',
+        '--checked', '--accent', '--bar-neutral', '--src-paper'].map(name => [name, token(name)]));
     probe.remove();
     const square = mark => { const e = document.querySelector(`#databaseChecklist .db-mark-${mark}`); return e ? getComputedStyle(e).backgroundColor : null; };
     const chips = [...document.querySelectorAll('#activeFilters .filter-chip')].map(chip => {
@@ -2949,7 +2953,7 @@ CHIP_COLOURS_JS = """
                     chip.querySelector('.chip-check, .chip-flag, .db-mark')),
                 words: chip.textContent.trim()};
     });
-    return {chips, tokens, squares: {differs: square('differs'), notListed: square('not-listed')},
+    return {chips, tokens, squares: {differs: square('differs'), notListed: square('not-listed'), otherLabel: square('other-label')},
             plainDots: [...document.querySelectorAll('#catalogFilters .filter-section-title')].filter(title => /^(Review result|Against the databases)/.test(title.textContent.trim()))
                 .map(title => title.querySelectorAll('.group-dot').length)};
 """
@@ -2972,10 +2976,10 @@ UNDO_STATE_JS = """
 
 def check_chip_colours_and_undo(driver, browser, base, wait, open_page, chip_keys, fragment):
     """The active-filter chips are colour-coded (the user, 2026-10-15: "can the filters be different color or sth so that
-    its user friendly to keep track to undo"): a chip whose option has a colour on the page wears it (a review result its
-    status colour, human-checked green, a database result its square's colour, a caution amber), the other groups the
-    colour of the dot beside the group in the sidebar, colours that mean nothing else on the page; the chip's words read
-    4.5:1 or more on its tint. Undo, first in the bar, works once a change is made, says what it gives back, restores
+    its user friendly to keep track to undo"): a chip whose option has a meaning colour wears it (a review result its
+    status colour, human-checked green, Read from the paper cyan, a database result its square's colour, a caution tan),
+    the other filters (round 14: one meaning per Nature BPG colour) the accent, the colour of what a visitor picks, as the
+    dot beside their group in the sidebar does; the chip's words read 4.5:1 or more on its tint. Undo, first in the bar, works once a change is made, says what it gives back, restores
     the filter set before the last change (a removed chip, Clear all; Enter on it too) and is dimmed when there is nothing
     more to undo. It keeps its place, so clicking it again at the same point undoes one more change, never a chip or Clear
     all. On a phone the filter
@@ -3017,8 +3021,8 @@ def check_chip_colours_and_undo(driver, browser, base, wait, open_page, chip_key
     by_key = {chip["key"]: chip["bar"] for chip in chips}
     assert by_key["db:differs"] == page["squares"]["differs"] == tokens["--cmp-differs"], (by_key, page["squares"])
     assert by_key["checked"] == tokens["--checked"], by_key
-    # Read from the paper wears its own colour (the counts band's and Stats'), and so does the Source group's dot while
-    # it is chosen; a database source chip and the dot then wear the group's purple.
+    # Read from the paper wears its own colour (BPG cyan, the counts band's and Stats'), and so does the Source group's
+    # dot while it is chosen; a database source chip and the dot then wear the accent.
     assert by_key["source:paper"] == tokens["--src-paper"], (by_key, tokens)
     paper_colour = plain.pop("tone-paper")
     open_page(base + "#browse?source=brenda")
@@ -3027,22 +3031,26 @@ def check_chip_colours_and_undo(driver, browser, base, wait, open_page, chip_key
     assert source_chip["tone"] == "tone-source" and source_chip["dots"] and all(dot["colour"] == source_chip["bar"] for dot in source_chip["dots"]), source_chip
     assert source_chip["bar"] != paper_colour, source_chip
     plain["tone-source"] = source_chip["bar"]
-    # The three plain groups differ from each other and from every colour that means something on the page.
-    assert len(set(plain.values())) == 3 and not set(plain.values()) & set(tokens.values()), (plain, tokens)
+    # The groups without a meaning colour (Source's databases, the enzyme fields, the measurement) all wear the accent,
+    # which is none of the meaning colours.
+    meaning = {value for name, value in tokens.items() if name != "--accent"}
+    assert set(plain.values()) == {tokens["--accent"]} and tokens["--accent"] not in meaning, (plain, tokens)
     # Review result and Against the databases have no group dot: each of their options has its own colour.
     assert page["plainDots"] == [0, 0], page["plainDots"]
-    # A Review result chip names each result after its status dot (several: a neutral bar); a caution is amber; Not in the
-    # databases wears its square's cyan.
-    open_page(base + "#browse?status=accepted,curation_pending&caution=units&db=not_listed")
-    wait.until(lambda d: len(d.execute_script(CHIP_COLOURS_JS)["chips"]) == 3)
+    # A Review result chip names each result after its status dot (several: a neutral bar); a caution is tan (its "!"
+    # disc's colour); Not in the databases wears its square's cyan, Same, other label its square's mint.
+    open_page(base + "#browse?status=accepted,curation_pending&caution=units&db=not_listed,other_label")
+    wait.until(lambda d: len(d.execute_script(CHIP_COLOURS_JS)["chips"]) == 4)
     page = driver.execute_script(CHIP_COLOURS_JS)
     by_key = {chip["key"]: chip for chip in page["chips"]}
     assert by_key["status"]["tone"] == "tone-neutral" and by_key["status"]["bar"] == tokens["--bar-neutral"], by_key["status"]
     assert by_key["status"]["states"] == [tokens["--st-accepted"], tokens["--st-pending"]], by_key["status"]
-    assert by_key["caution:units"]["bar"] == tokens["--caution"] and by_key["caution:units"]["dots"], by_key["caution:units"]
+    assert by_key["caution:units"]["bar"] == tokens["--caution-mark"] and by_key["caution:units"]["dots"], by_key["caution:units"]
     assert by_key["db:not_listed"]["bar"] == page["squares"]["notListed"] == tokens["--cmp-new"], (by_key["db:not_listed"], page["squares"])
+    assert by_key["db:other_label"]["bar"] == page["squares"]["otherLabel"] == tokens["--cmp-other"], (by_key["db:other_label"], page["squares"])
     assert {key: (chip["mark"], chip["markColour"]) for key, chip in by_key.items()} == {
-        "status": ("dot", None), "caution:units": ("flag", tokens["--caution"]), "db:not_listed": ("square", tokens["--cmp-new"])}, by_key
+        "status": ("dot", None), "caution:units": ("flag", tokens["--caution-mark"]), "db:not_listed": ("square", tokens["--cmp-new"]),
+        "db:other_label": ("square", tokens["--cmp-other"])}, by_key
     assert all(chip["text"] >= 4.5 and chip["cross"] >= 3 for chip in page["chips"]), page["chips"]
     results["colours"] = {**plain, **{chip["key"]: chip["bar"] for chip in page["chips"]}}
     # Nothing to undo on a fresh page: the address's filters are the start; Undo is in its place, first, dimmed. (A set
@@ -3377,7 +3385,8 @@ def check_layout(driver, browser, url, route_label):
         # the key numbers 28px (round 13: a focal point); the With counts (kcat, Km, kcat/Km) are secondary at 12px
         assert set(sizes["numbers"]) == {"28px"} and set(sizes["with"]) == {"12px"} and set(sizes["labels"]) == {"13px"}, sizes
         # Each key number in its meaning's colour (Records the page's ink, Accepted the status navy, Read from the paper
-        # CatLog's own colour, Human-checked its green), in a card with a soft glow.
+        # the darker BPG cyan, Human-checked the darker BPG green), on a plain white card with a 1px hairline: no glow,
+        # wash or gradient (round 14).
         colours = driver.execute_script("""
             const css = getComputedStyle(document.documentElement), probe = document.createElement('i');
             document.body.appendChild(probe);
@@ -3385,15 +3394,15 @@ def check_layout(driver, browser, url, route_label):
             const ink = selector => getComputedStyle(document.querySelector(selector)).color;
             const card = getComputedStyle(document.querySelector('.snapshot-overview'));
             const result = {records: [ink('.summary-records strong'), resolve('--text')], accepted: [ink('.summary-accepted strong'), resolve('--st-accepted')],
-                paper: [ink('#fromPaperCount'), resolve('--accent')], checked: [ink('#humanCheckedCount'), resolve('--checked')],
-                shadow: card.boxShadow, radius: parseFloat(card.borderTopLeftRadius)};
+                paper: [ink('#fromPaperCount'), resolve('--src-paper-ink')], checked: [ink('#humanCheckedCount'), resolve('--checked')],
+                shadow: card.boxShadow, wash: card.backgroundImage, border: card.borderTopWidth, line: [card.borderTopColor, resolve('--line')]};
             probe.remove();
             return result;
         """)
         for key in ("records", "accepted", "paper", "checked"):
             assert colours[key][0] == colours[key][1], (key, colours)
         assert len({colours[key][0] for key in ("records", "accepted", "paper", "checked")}) == 4, colours
-        assert colours["shadow"] not in ("", "none") and colours["radius"] >= 6, colours
+        assert colours["shadow"] == "none" and colours["wash"] == "none" and colours["border"] == "1px" and colours["line"][0] == colours["line"][1], colours
         assert set(sizes["th"]) == {"12px"} and set(sizes["thWeight"]) == {"600"} and set(sizes["td"]) == {"13px"}, sizes
         date, records = box("#snapshotDate"), box(".summary-card strong")
         # on the counts' line where the fonts allow, else under them; always inside the 64px band (Linux fonts are wider)
@@ -3996,8 +4005,8 @@ def check_layout(driver, browser, url, route_label):
             if driver.find_element(By.ID, "fromPaperLink").is_displayed():
                 assert shown == ["Read from the paper"], (width, shown)
         assert all(len(heights) == 1 for heights in band_heights.values()), f"Each layout of the counts band keeps one height: {band_heights}"
-        # The band's key numbers glow softly, each in its own colour; a linked count's hover tint is drawn around it, so it
-        # never moves the line.
+        # The band's key numbers have no glow (no text-shadow), each in its own colour; a linked count's hover tint is drawn
+        # around it, so it never moves the line.
         glow = driver.execute_script("""
             const shadow = selector => getComputedStyle(document.querySelector(selector)).textShadow;
             const font = selector => { const style = getComputedStyle(document.querySelector(selector));
@@ -4006,8 +4015,8 @@ def check_layout(driver, browser, url, route_label):
                     tint: getComputedStyle(document.getElementById('humanCheckedLink'), '::before').position,
                     key: font('.summary-card strong'), with: font('#snapshotMeta .snapshot-line strong'), withShadow: shadow('#snapshotMeta .snapshot-line strong')};
         """)
-        assert glow["records"] not in ("", "none") and glow["checked"] not in ("", "none") and glow["tint"] == "absolute", glow
-        # The With counts are secondary: smaller, lighter and without the glow, so the key numbers lead the band.
+        assert glow["records"] in ("", "none") and glow["checked"] in ("", "none") and glow["tint"] == "absolute", glow
+        # The With counts are secondary: smaller and lighter, so the key numbers lead the band.
         assert (glow["with"]["size"] < glow["key"]["size"] and glow["with"]["weight"] < glow["key"]["weight"]
                 and glow["withShadow"] in ("", "none")), glow
         results["band-rows"] = True
@@ -5018,7 +5027,8 @@ def check_record_marks_and_paper_link(driver, browser, base, wait):
         """)
         # Named by its tooltip alone (role img): a title beside an aria-label is read out again as a description.
         assert marks["names"] and set(marks["names"]) == {"approved by a human reviewer"} and not marks["labels"], marks
-        assert marks["colour"] == "rgb(23, 115, 58)", marks["colour"]
+        # human-checked's green: the darker shade of BPG green (#007A67, round 14)
+        assert marks["colour"] == "rgb(0, 122, 103)", marks["colour"]
         assert (marks["legend"] or "").startswith("Approved by a human reviewer"), marks["legend"]
         assert max(marks["edges"]) - min(marks["edges"]) <= 1, f"The Value column's numbers do not line up: {marks['edges']}"
         assert marks["sideways"] <= 1, marks
@@ -5350,8 +5360,8 @@ def check(driver, browser, url):
                 if isinstance(listed.get(key[len("source_"):]), int):
                     assert count == listed[key[len("source_"):]], f"Stats and the Guide count {key} differently"
 
-    # The headline band glows on screen (Chrome: not on paper), and its numbers rise once, never with less motion asked for.
-    assert driver.execute_script(STATS_BAND_GLOW_JS) == {"halo": True, "crisp": True, "card": True}, driver.execute_script(STATS_BAND_GLOW_JS)
+    # The headline band has no glow, halo or wash, on screen or on paper, and its numbers never move.
+    assert driver.execute_script(STATS_BAND_GLOW_JS) == {"halo": False, "crisp": True, "card": False}, driver.execute_script(STATS_BAND_GLOW_JS)
     WebDriverWait(driver, 5).until(lambda d: d.execute_script(
         "return !document.querySelector('#statsTotals > .stats-band').classList.contains('is-entering')"))
     if browser == "chrome":
@@ -5365,7 +5375,7 @@ def check(driver, browser, url):
             assert driver.execute_script(STATS_BAND_RISE_JS) == "none"
         finally:
             driver.execute_cdp_cmd("Emulation.setEmulatedMedia", {"media": "", "features": []})
-        assert driver.execute_script(STATS_BAND_RISE_JS) == "stats-total-rise"
+        assert driver.execute_script(STATS_BAND_RISE_JS) == "none"
 
     # The overview, when this snapshot has one; otherwise no section or headline without its numbers.
     headline = driver.find_element(By.ID, "statsTotals").text
@@ -5384,7 +5394,7 @@ def check(driver, browser, url):
                       for item in driver.find_elements(By.CSS_SELECTOR, ".stats-totals-main .stats-total") if item.find_elements(By.CSS_SELECTOR, "a")}
         assert band_links.get("accepted") == "browse?status=accepted" and band_links.get("catlog") == "browse?source=paper", band_links
         if browser == "chrome":
-            # Under the pointer the tint and the larger halo darken the item: its label and note step up to --text-2
+            # Under the pointer the flat tint darkens the item: its label and note step up to --text-2
             # (muted there measured 4.46:1), and go back once the pointer leaves.
             link = driver.find_element(By.CSS_SELECTOR, ".stats-total[data-total='accepted'] a.stats-total-value")
             driver.execute_script("arguments[0].scrollIntoView({block: 'center'})", link)
