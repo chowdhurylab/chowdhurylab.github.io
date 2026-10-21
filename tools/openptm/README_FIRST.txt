@@ -1,7 +1,7 @@
 openPTM
 
 Website: https://chowdhurylab.github.io/tools/openptm/
-Release: 2026-10-20
+Release: 2026-10-21
 
 Browse measurements, statistics, PTM families, sites, disease studies and the guide. The page contains its data,
 styles and scripts; it does not need external fonts or JavaScript libraries.
@@ -24,7 +24,7 @@ Design update, 20 October
 - Phone comparisons show both state labels and values together. Record details
   fill the screen and support previous/next navigation within the selection.
 - Paper links gather related comparisons. Browsing filters are preserved when
-  returning from Stats; the 25 remaining numerical-gap families are reachable.
+  returning from Stats; the remaining numerical-gap families are reachable.
 - The insulin workbook's long cached numbers have an explicitly rounded display
   and a full-precision disclosure. The stored numerical values are unchanged.
 
@@ -35,10 +35,10 @@ Design update, 20 October
 
 Included in this release
 - 111 operational PTM families in the original audit.
-- 27,165 site records and 14,427 function/regulation records.
+- 27,165 site records and 14,428 function/regulation records.
 - 63 source summaries: six original comparisons and 57 later additions.
-- 252 selected paper comparisons, containing 306 measurement entries from
-  91 primary papers across 86 families with numeric measurements.
+- 253 selected paper comparisons, containing 307 measurement entries from
+  92 primary papers across 87 families with numeric measurements.
 - 69 selected disease-study connections.
 - All nine original audit worksheets, with source records and methods.
 
@@ -47,6 +47,34 @@ overlap and must not be summed as unique biological sites. The 111 families
 are a defined working set, not a universal count of all PTMs. Paper comparisons
 are selected examples, not a systematic review. Upper bounds, uncertainty,
 study conditions and source links are retained in the record details.
+
+New paper measurements, reading round 33
+- One comparison and one specific-activity entry add pupylation coverage
+  (ADJ061). Yun et al., 2012, PMID23047115, compares a pupylated PPase
+  hexamer preparation with the same preparation after Dop treatment:
+  407.2 +/- 40.3 versus 715.1 +/- 57.1 micromol Pi mg^-1 min^-1.
+- The source specifies means and SD from three independent experiments.
+  Starting hexamers contain both Pup-bearing and Pup-free subunits, with
+  unquantified occupancy. Dop and its products remain treatment confounds;
+  this preparation comparison does not isolate a single-site Pup effect.
+- This is a prior-original recheck with newly recovered final journal PDF,
+  following an unfinished round 4 review. It is not counted as a new paper
+  read this round. An independent reader checked the final PDF values,
+  units, state assignments, normalization, SD/n and stated limitations.
+- Three genuinely new primary originals received selected relevant reads:
+  human protein-bound ceramides (PMID42555851) and two urmylation studies
+  (PMIDs36769280 and 28953965). All remain held: lipid composition and
+  cellular expression/profiling results do not supply the assigned target
+  PTM-state numerical function pair in the assessed scopes. Both families
+  are outside round 32's primary reading; pupylation is also outside it.
+- One MIO paper remains access-only and another metadata-only. No separate
+  supplement was read. Figure 3B and source-printed numerical text of the
+  PPase original were visually checked; no graphs, zeros or ratios were
+  reconstructed. Selected source reading is not exhaustive coverage or
+  experimental replication.
+- The selection now covers 87/111 families; 24 still have no selected
+  numerical comparison. All earlier scientific records, the CatLog palette,
+  application behavior and original audit workbook are unchanged.
 
 Paper reading, round 32
 - Four genuinely new primary papers were read in selected relevant scopes
@@ -386,7 +414,7 @@ exports, not the current website dataset. They are retained for old links.
 
 Release checksums (SHA-256)
 index.html
-fb4efbff054a32722c0d9a340afff87eaf0861adfc266d4757ce749a33fda442
+0f15098d726d10ea000122890d74eb83bc4010a100d393d7c33f01d0c559a3d2
 PTM_family_database_audit_final_2026-08-14.xlsx
 ddaa9ec6227fcfdaa12bb1a4a99ffaf7d28adb7c701f4ce8a7815038bbe81a8a
 
