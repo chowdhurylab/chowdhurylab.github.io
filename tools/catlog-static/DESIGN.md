@@ -144,7 +144,8 @@ count beside Filters is shown only when it says more than the page range.
 Export results (a menu beside Sort, "Export" on phones, opening to the right)
 offers "All N matching records (CSV)", "This page (CSV)" and "This page (JSON)".
 The CSV is built in the page from the loaded index, a slice at a time: the
-table's columns with their units and stored digits, the condition note under the
+table's columns with their units and stored digits (the pH too: every digit the record keeps, a trailing zero
+dropped, 7.25 never 7.3, as the table note and the record show it; formatPh), the condition note under the
 substrate (condition_note, so look-alike records of a paper stay apart), review result (the exact
 value), human-checked, source (named as the JSON and Download record name it: "CatLog (read from the paper)" for a
 record read from the paper by CatLog, otherwise the databases by name, "Open Enzyme Database (OED)"; the field names

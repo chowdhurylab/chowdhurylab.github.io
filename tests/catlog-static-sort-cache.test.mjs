@@ -3615,6 +3615,11 @@ const unitFlagHtml = measurementSection(row({
 assert.match(unitFlagHtml, /<span class="vt-number">64<\/span><button class="value-flag"/);
 assert.match(unitFlagHtml, /<span class="vt-number">22\.6<\/span><span class="value-flag vt-ghost" aria-hidden="true"><\/span><\/td>/, "no calc. in this table: no space kept for one");
 assert.match(unitFlagHtml, /The stored kcat\/Km \(64000 mM-1 s-1\) is 991-fold above kcat ÷ Km \(65 mM-1 s-1\)\. The source&#39;s own kcat\/Km, 64 mM-1 s-1 \(listed above\), agrees with kcat ÷ Km and is shown above\. The factor is near 1000, as between per mM and per M\./);
+// The pH as stored, every digit kept (record 185f13136893d1b4 stores 5.37 and prints 5.37; 913 records carry two decimals),
+// a trailing zero dropped: the table note, the record and the CSV export all use formatPh.
+assert.deepEqual(["5.37", "7.25", 7.35, "7.50", 7, "7.0", 6.125].map((ph) => api.formatPh({ ph_display: ph })), ["5.37", "7.25", "7.35", "7.5", "7", "7", "6.125"]);
+assert.equal(api.formatPh({ ph_display: "15" }), api.formatPh({ ph_display: null }));
+assert.match(sourceCode, /\["ph", \(row\) => csvCondition\(formatPh\(row\)\)\]/);
 // v2 conditions: labelled lines; a pH or temperature already shown and per-value qualifiers are not repeated.
 const lines = api.conditionLines("pH 7.5; 298.15 K; apparent kcat; apparent Km; cosubstrate NAD+; preparation: purified", row({ ph_display: "7.5", temperature_display: "25" }));
 assert.match(lines.cosubstrate, /<dt>Cosubstrate<\/dt><dd>NAD\+<\/dd>/);

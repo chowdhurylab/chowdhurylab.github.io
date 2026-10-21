@@ -1848,12 +1848,15 @@
     return formatNumber(kelvin - 273.15, { maximumFractionDigits: 1 });
   }
 
+  // The pH as stored, every digit the record keeps (7.25 stays 7.25, 5.37 stays 5.37; a trailing zero is dropped), in the
+  // table, the record and the CSV export alike; never rounded to one decimal (round 14).
   function formatPh(row) {
     const value = row.ph_display;
     if (value == null || value === "") return EMPTY_VALUE;
     const number = Number(value);
     if (!Number.isFinite(number) || number < 0 || number > 14) return EMPTY_VALUE;
-    return formatNumber(number, { maximumFractionDigits: 1 });
+    const decimals = (String(value).trim().split(/e/i)[0].split(".")[1] || "").replace(/0+$/, "").length;
+    return new Intl.NumberFormat(undefined, { maximumFractionDigits: Math.min(decimals, 6) }).format(number);
   }
 
   function stateConfig(value) {
@@ -14137,6 +14140,7 @@
       conversionFacts,
       evidenceNoteHtml,
       conditionLines,
+      formatPh,
       copyDetailValue,
       showSuggestions,
       hideSuggestions,
