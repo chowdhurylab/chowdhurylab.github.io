@@ -653,7 +653,10 @@ part that differs in the series; the tooltip adds "this paper also measured this
 enzyme and substrate at another pH", or, for records whose values another record
 shares, "otherwise the same as another record of this paper"). The Guide's Units
 says T and pH are in the record and the downloads, not as table columns. The table writes
-numbers at or above 10⁵ and below 10⁻³ as a × 10ⁿ. It shows no more precision
+numbers at or above 10⁵ and below 10⁻³ as a × 10ⁿ, and from 1000 any number with fewer figures than integer digits,
+printed or calculated alike (round 15 polish: a printed 3.5 × 10⁷ M⁻¹ s⁻¹ stored as 35000 reads 3.5 × 10⁴, like a calc.
+4.1 × 10⁴ in the same column; a plain integer's trailing zeros are not figures); a plain decimal groups its thousands
+from five integer digits (12,346; 1285.4 stays), like the site's counts. It shows no more precision
 than was measured: at most 4 significant figures, 3 when the stored digits from
 the fourth on are a ÷60 artefact (30.333 shows 30.3, 5.1667 shows 5.17; a kcat or
 kcat/Km stored with 4 figures ending 333, 667, 833 or 167, as 7.333 = 440/60,
@@ -1126,7 +1129,7 @@ stored kcat/Km is a unit factor off shows the source's own kcat/Km that agrees
 with kcat ÷ Km, and its note gives the stored number.
 
 The record writes numbers like the table (a × 10ⁿ at or above 10⁵ and below
-10⁻³, the same display rule); a value CatLog gives to the figures printed shows
+10⁻³ and from 1000 with fewer figures than integer digits, thousands grouped from five digits, the same display rule); a value CatLog gives to the figures printed shows
 exactly those figures (135.0, 1285.4; never rounded to 4), but never more figures than the paper prints: zeros of a printed
 integer are not figures, so "47,000 M⁻¹ s⁻¹" or "9440 µM" shows 47 or 9.44 as
 in the table, not 47.000 or 9.440; a kcat/Km calculated for an older record keeps the significant

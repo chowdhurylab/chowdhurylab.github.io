@@ -1713,29 +1713,18 @@
     return `<small class="metric-inline-unit" title="${escapeHtml(STORED_UNIT_NOTE)}">${unitHtml(metricUnit(row, field))}</small>`;
   }
 
-  // A table number with the digits as stored: a × 10ⁿ at or above 10⁵ and below 10⁻³, a plain decimal in between. Values
-  // with more digits than were measured are rounded first (displayFigures, numberHtml); the downloads keep the stored text.
+  // A table number with the digits as stored, by the record's one rule (numberParts): a × 10ⁿ at or above 10⁵, below
+  // 10⁻³ and from 1000 when it has fewer figures than integer digits (35000 is 3.5 × 10⁴, as a calc. 4.1 × 10⁴), a plain
+  // decimal in between, its thousands grouped from five integer digits (12,346). Values with more digits than were
+  // measured are rounded first (displayFigures, numberHtml); the downloads keep the stored text.
   function tableNumberHtml(value) {
-    const text = compactValue(value).trim();
-    const match = text.match(/^([+-]?)(\d*)(?:\.(\d*))?(?:[eE]([+-]?\d+))?$/);
-    const magnitude = Math.abs(Number(text));
-    if (!match || !(match[2] || match[3]) || !Number.isFinite(magnitude) || magnitude === 0) return scientificValueHtml(text);
-    const [, sign, whole = "", fraction = "", exponentText] = match;
-    let digits = whole + fraction;
-    let point = whole.length + Number(exponentText || 0);
-    const leadingZeros = digits.match(/^0*/)[0].length;
-    digits = digits.slice(leadingZeros);
-    point -= leadingZeros;
-    if (magnitude >= 1e5 || magnitude < 1e-3) {
-      // Trailing zeros of a plain integer (123000) are not printed digits.
-      const significant = fraction || exponentText ? digits : digits.replace(/0+$/, "") || "0";
-      const coefficient = significant.length > 1 ? `${significant[0]}.${significant.slice(1)}` : significant;
-      return scientificValueHtml(`${sign}${coefficient}e${point - 1}`);
-    }
-    if (!exponentText) return escapePublic(text);
-    if (point <= 0) return escapePublic(`${sign}0.${"0".repeat(-point)}${digits}`);
-    if (point >= digits.length) return escapePublic(`${sign}${digits}${"0".repeat(point - digits.length)}`);
-    return escapePublic(`${sign}${digits.slice(0, point)}.${digits.slice(point)}`);
+    return numberHtml(value);
+  }
+
+  // A plain decimal's integer digits grouped in thousands from five digits (12,346; 1285.4 stays as it is), like the
+  // site's counts.
+  function groupedDecimal(text) {
+    return String(text).replace(/^([+-]?)(\d{5,})/, (_match, sign, whole) => `${sign}${whole.replace(/\B(?=(\d{3})+$)/g, ",")}`);
   }
 
   const SUPERSCRIPT_DIGITS = { "-": "⁻", "−": "⁻", "+": "⁺", ".": "·", 0: "⁰", 1: "¹", 2: "²", 3: "³", 4: "⁴", 5: "⁵", 6: "⁶", 7: "⁷", 8: "⁸", 9: "⁹" };
@@ -10792,11 +10781,12 @@
   }
 
   // ---- Record panel: numbers ----
-  // One number style for the record panel (the table's notation; the table can use it too): the stored digits, as
-  // a × 10ⁿ at or above 10⁵ and below 10⁻³ and as a plain decimal in between. With `figures`, a number CatLog worked out
-  // (kcat ÷ Km) is first rounded to that many significant figures, so it never shows more precision than the values it
-  // comes from; a rounded number of 1000 or more whose last digits would be zeros that are not significant keeps the
-  // × 10ⁿ form (5.0 × 10³, not 5000).
+  // One number style for the table, the record panel, phone cards and notes: the stored digits, as a × 10ⁿ at or above
+  // 10⁵ and below 10⁻³ and as a plain decimal in between. With `figures`, a number CatLog worked out (kcat ÷ Km) is first
+  // rounded to that many significant figures, so it never shows more precision than the values it comes from. A number
+  // of 1000 or more with fewer figures than integer digits keeps the × 10ⁿ form whether it was printed or calculated
+  // (5.0 × 10³, not 5000; a printed 3.5 × 10⁷ M⁻¹ s⁻¹ stored as 35000 is 3.5 × 10⁴, like a calc. 4.1 × 10⁴): the
+  // trailing zeros of a plain integer are not figures. A plain decimal groups its thousands from five integer digits.
   function numberParts(value, { figures = 0 } = {}) {
     let text = compactValue(value).trim();
     const number = Number(text);
@@ -10811,10 +10801,11 @@
     const leadingZeros = digits.match(/^0*/)[0].length;
     digits = digits.slice(leadingZeros);
     point -= leadingZeros;
-    // Trailing zeros of a plain integer (123000) are not printed digits.
-    const significant = fraction || exponentText ? digits : digits.replace(/0+$/, "") || "0";
+    // Trailing zeros of a plain integer (123000) are not printed digits; a number rounded to `figures` has that many
+    // (12300.4 to 5 figures is 12300, five figures).
+    const significant = fraction || exponentText || figures > 0 ? digits : digits.replace(/0+$/, "") || "0";
     const magnitude = Math.abs(Number(text));
-    if (magnitude >= 1e5 || magnitude < 1e-3 || (figures > 0 && magnitude >= 1000 && significant.length < point)) {
+    if (magnitude >= 1e5 || magnitude < 1e-3 || (magnitude >= 1000 && significant.length < point)) {
       const coefficient = significant.length > 1 ? `${significant[0]}.${significant.slice(1)}` : significant;
       return { sign, coefficient, exponent: point - 1, significant: significant.length };
     }
@@ -10824,7 +10815,7 @@
       else if (point >= digits.length) plain = `${sign}${digits}${"0".repeat(point - digits.length)}`;
       else plain = `${sign}${digits.slice(0, point)}.${digits.slice(point)}`;
     }
-    return { plain, significant: significant.length };
+    return { plain: groupedDecimal(plain), significant: significant.length };
   }
 
   function numberHtml(value, options) {

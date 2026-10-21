@@ -3374,6 +3374,21 @@ assert.equal(api.numberText("8.5"), "8.5");
 assert.equal(api.numberText("6.004e+7"), "6.004 × 10⁷");
 assert.equal(api.numberText(5038.4615, { figures: 2 }), "5.0 × 10³");
 assert.equal(api.numberText(8.5 / 320, { figures: 2 }), "0.027");
+// Round 15 polish: one rule for printed and calculated values. From 1000, a number with fewer figures than integer digits
+// takes the × 10ⁿ form (a printed 3.5 × 10⁷ M⁻¹ s⁻¹ stored as 35000 reads 3.5 × 10⁴, like a calc. 4.1 × 10⁴); a plain
+// decimal groups its thousands from five integer digits; four digits and anything below 1000 stay as they are.
+assert.deepEqual(["35000", "86000", "77400", "3200", "1000", "4.5e3", "12345", "12345.6", "35000.5", "1285.4", "1285", "999", "100", "0.0012", "-35000"]
+  .map((value) => api.numberText(value)),
+["3.5 × 10⁴", "8.6 × 10⁴", "7.74 × 10⁴", "3.2 × 10³", "1 × 10³", "4.5 × 10³", "12,345", "12,345.6", "35,000.5", "1285.4", "1285", "999", "100", "0.0012", "-3.5 × 10⁴"]);
+assert.equal(api.numberText(12300.4, { figures: 5 }), "12,300", "a number rounded to 5 figures keeps them");
+assert.equal(api.numberText(40983.6, { figures: 2 }), "4.1 × 10⁴");
+{
+  const cell = (display) => api.metricDisplayWithUnitHtml(row({ kcat_unit: "s^(-1)", km_unit: "mM", kcat_over_km_unit: "s^(-1)*mM^(-1)",
+    kcat_over_km_origin: "paper_reported", kcat_over_km_display: display }), "kcat_over_km", { table: true });
+  assert.match(cell("35000"), /3\.5 &times;&nbsp;10<sup>4<\/sup>/, "a printed value reads like a calc. one");
+  assert.equal(cell("12345"), "12,345");
+  assert.equal(cell("12345.6"), "12,346", "rounded to its integer digits, then grouped");
+}
 // The table rounds a calculated kcat/Km the same way (197 ÷ 2 × 10⁻⁵ is 9.9 × 10⁶, not 9.85 × 10⁶); a printed one keeps its digits.
 {
   const calculated = row({ kcat: 197, km: 2e-5, kcat_over_km: 9.85e6, kcat_display: "197", km_display: "2e-05",
@@ -3452,7 +3467,8 @@ assert.equal(api.roundingFigures("7.333"), 0, "Km is never divided by 60");
   assert.match(html, /<span class="vt-number">135\.0<\/span><\/td><td class="vt-unit">s<sup>−1<\/sup><\/td><td class="vt-printed">135\.0 ± 15\.1 sec−1/, "Values keep the printed zero");
   assert.match(html, /<span class="vt-number">0\.03<\/span><\/td><td class="vt-unit">mM<\/td>/,
     "a printed integer's zero (30 µM) is no printed figure: the stored digits show, as in the table");
-  assert.match(html, /<span class="vt-number">4500<\/span><\/td><td class="vt-unit">mM<sup>−1<\/sup> s<sup>−1<\/sup><\/td>/, "a value_display that is not the stored number is not used");
+  assert.match(html, /<span class="vt-number"><span class="scientific-number" aria-label="4\.5 times 10 to the power of 3"><span aria-hidden="true">4\.5 &times;&nbsp;10<sup>3<\/sup><\/span><\/span><\/span><\/td><td class="vt-unit">mM<sup>−1<\/sup> s<sup>−1<\/sup><\/td>/,
+    "a value_display that is not the stored number is not used; the stored 4500 has 2 figures, so it reads 4.5 × 10³");
   assert.match(html, /<caption>Printed in Table 1<\/caption>/, "a place every value shares is said once");
   assert.doesNotMatch(html, /class="vt-where/);
   const body = decodeURIComponent(html.match(/id="reportRecordProblem" class="button secondary" href="([^"]+)"/)[1].replace(/&amp;/g, "&"));
@@ -3661,7 +3677,7 @@ const unitFlagHtml = measurementSection(row({
 }), { source_kcat_over_km_values: [{ value: 64, unit: "s^(-1)*mM^(-1)", source_db: "oed" }] });
 assert.match(unitFlagHtml, /<span class="vt-number">64<\/span><button class="value-flag"/);
 assert.match(unitFlagHtml, /<span class="vt-number">22\.6<\/span><span class="value-flag vt-ghost" aria-hidden="true"><\/span><\/td>/, "no calc. in this table: no space kept for one");
-assert.match(unitFlagHtml, /The stored kcat\/Km \(64000 mM-1 s-1\) is 991-fold above kcat ÷ Km \(65 mM-1 s-1\)\. The source&#39;s own kcat\/Km, 64 mM-1 s-1 \(listed above\), agrees with kcat ÷ Km and is shown above\. The factor is near 1000, as between per mM and per M\./);
+assert.match(unitFlagHtml, /The stored kcat\/Km \(6\.4 × 10⁴ mM-1 s-1\) is 991-fold above kcat ÷ Km \(65 mM-1 s-1\)\. The source&#39;s own kcat\/Km, 64 mM-1 s-1 \(listed above\), agrees with kcat ÷ Km and is shown above\. The factor is near 1000, as between per mM and per M\./);
 // The pH as stored, every digit kept (record 185f13136893d1b4 stores 5.37 and prints 5.37; 913 records carry two decimals),
 // a trailing zero dropped: the table note, the record and the CSV export all use formatPh.
 assert.deepEqual(["5.37", "7.25", 7.35, "7.50", 7, "7.0", 6.125].map((ph) => api.formatPh({ ph_display: ph })), ["5.37", "7.25", "7.35", "7.5", "7", "7", "6.125"]);
@@ -4877,7 +4893,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   // Before and After would read the same; integer digits below 10⁵ kept, as the record's values do.
   assert.deepEqual(plainData(api.correctionNumbers(0.546667, 0.544)), [{ text: "0.5467", stored: "0.546667" }, { text: "0.544", stored: "" }]);
   assert.deepEqual(plainData(api.correctionNumbers(2.667, 2.66667)), [{ text: "2.667", stored: "" }, { text: "2.6667", stored: "2.66667" }]);
-  assert.deepEqual(plainData(api.correctionNumbers(19230.8, 20)), [{ text: "19231", stored: "19230.8" }, { text: "20", stored: "" }]);
+  assert.deepEqual(plainData(api.correctionNumbers(19230.8, 20)), [{ text: "19,231", stored: "19230.8" }, { text: "20", stored: "" }]);
   assert.deepEqual(plainData(api.correctionNumbers(250, 0.25)), [{ text: "250", stored: "" }, { text: "0.25", stored: "" }]);
   assert.deepEqual(plainData(api.correctionNumbers(1.23456e-7, 1.2e-4)), [{ text: "1.235 × 10⁻⁷", stored: "1.23456e-7" }, { text: "1.2 × 10⁻⁴", stored: "" }]);
 
@@ -4940,7 +4956,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.match(trail, /<span class="cmp-value">M⁻¹ s⁻¹<span class="cmp-arrow"> → <\/span><strong>mM⁻¹ s⁻¹<\/strong><\/span>/);
   assert.match(trail, /<dt><i>K<\/i><sub>i<\/sub> unit<\/dt><dd><span class="cmp-value">min⁻¹<span class="cmp-arrow"> → <\/span><strong>s⁻¹<\/strong><\/span>/);
   assert.doesNotMatch(trail, /\^|\(-1\)/, "no caret unit left");
-  assert.match(trail, /<dt>V<sub>max<\/sub><\/dt><dd><span class="cmp-value">1\.2 × 10⁵ nmol\/min\/mg<span class="cmp-arrow"> → <\/span><strong>1200 nmol\/min\/mg<\/strong><\/span>/);
+  assert.match(trail, /<dt>V<sub>max<\/sub><\/dt><dd><span class="cmp-value">1\.2 × 10⁵ nmol\/min\/mg<span class="cmp-arrow"> → <\/span><strong>1\.2 × 10³ nmol\/min\/mg<\/strong><\/span>/);
   assert.match(trail, /<dt>SMILES<\/dt><dd><span class="cmp-value">Replaced<\/span><\/dd>/);
   assert.doesNotMatch(trail, /papers\\x\.pdf|x\.pdf|cmp-where-once/, "a local path never; places differ, so each item says its own");
   assert.match(html, /<dt>Review result<\/dt><dd>Corrected and accepted in the earlier automated review \(see Corrected earlier\)\.<\/dd>/);

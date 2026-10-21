@@ -3011,18 +3011,26 @@ def check_filters(driver, browser, url, route_label):
         wait.until(lambda d: not fragment())
 
         # 8. No more precision than was measured: a value shows at most 4 significant figures (a whole number keeps its
-        # digits); its tooltip keeps the stored digits.
-        for address in ("#browse?enzyme=aldolase&rows=100", "#browse?sort=kcat_over_km_asc"):
+        # digits); its tooltip keeps the stored digits. Round 15 polish: one rule for printed and calc. values, so a plain
+        # whole number from 1000 never ends in a zero that is not a figure (35000 reads 3.5 × 10⁴, like a calc.
+        # 4.1 × 10⁴), and five integer digits are grouped (12,346).
+        for address in ("#browse?enzyme=aldolase&rows=100", "#browse?sort=kcat_over_km_asc", "#browse?sort=kcat_over_km&rows=100"):
             open_page(base + address)
             shown = driver.execute_script("""
                 return [...document.querySelectorAll('#recordsBody tr[data-key] :is(.c-kcat,.c-km,.c-eff) .metric-with-note')]
-                    .map(e => [(e.innerText.match(/^-?[\\d.]+/) || [''])[0], e.title]).filter(([text]) => text);
+                    .map(e => [(e.innerText.match(/^-?[\\d.,]+/) || [''])[0], e.title, /^-?[\\d.,]+\\s*×/.test(e.innerText)])
+                    .filter(([text]) => text);
             """)
             assert shown, address
-            for text, title in shown:
-                digits = text.replace(".", "").lstrip("0")
+            for text, title, scientific in shown:
+                digits = text.replace(",", "").replace(".", "").lstrip("0")
                 assert len(digits) <= 4 or "." not in text, (text, title)
                 assert title, text
+                if scientific:
+                    continue
+                whole = text.split(".")[0].lstrip("-")
+                assert "." in text or len(whole.replace(",", "")) < 4 or not whole.endswith("0"), (address, text, title)
+                assert len(whole.replace(",", "")) < 5 or "," in whole, (address, text, title)
         # 9. Each chip wears a colour (a 3px bar and a quiet tint keeping its words at 4.5:1 or more): a review result's or
         # database result's own colour, a caution's tan, else the colour of the dot beside its group in the sidebar;
         # Undo, first in the bar, restores the filter set before the last change (Clear all too), by mouse and by
