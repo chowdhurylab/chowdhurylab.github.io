@@ -5598,6 +5598,9 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.deepEqual(notes([]), { records: "", accepted: "", paper: "", checked: "" });
   element("ecFilterInput").value = "";
   assert.deepEqual(notes([]).records, "4 papers", "unfiltered while loading: the snapshot's");
+  // The parameters' line carries the card's copy of the snapshot date (shown on tablets and in a short window).
+  assert.match(element("snapshotMeta").innerHTML, /<small class="snapshot-note" aria-live="off"><span class="snapshot-note-text">records with each parameter<\/span><span class="snapshot-card-date"><span class="snapshot-note-text"> · <\/span><span id="snapshotDateCard" class="snapshot-date"[^>]*>Snapshot [^<]+<\/span><\/span><\/small>$/);
+  assert.equal(element("snapshotDate").textContent, element("snapshotMeta").innerHTML.match(/id="snapshotDateCard"[^>]*>([^<]+)</)[1]);
   runtimeManifest.summary = previous.summary;
   runtimeManifest.total_rows = previous.total;
   runtimeManifest.enriched_download = previous.download;

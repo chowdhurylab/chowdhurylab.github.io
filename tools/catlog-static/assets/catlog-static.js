@@ -3805,7 +3805,7 @@
 
   // The counts band (round 15): one even row of the four key numbers, each with one short line of context under it, then
   // the parameters behind a thin rule, a label over each count and one line under them. The snapshot date ends the line
-  // above.
+  // above; on tablets and in a short window (where that line gives way) it ends the parameters' line in the card.
   function renderSummary() {
     const summary = manifest.summary || {};
     const coverage = summary.coverage || {};
@@ -3836,13 +3836,15 @@
     const dataId = shortHash(manifest.content_sha256 || manifest.source_sha256);
     const dateTitle = dataId === EMPTY_VALUE ? "" : `Data ID ${dataId}`;
     // The parameters: each name over its count, one line under them; "With" leads them where they make one line
-    // (tablets, phones), so no spaces between the boxes.
+    // (tablets, phones), so no spaces between the boxes. The line under them carries the card's copy of the snapshot
+    // date, shown only where the line above is not (tablets, a short window).
     $("snapshotMeta").innerHTML = [
       '<span class="snapshot-title">With</span>',
       `<span class="snapshot-line"><span><i>k</i><sub>cat</sub></span><strong>${formatCount(kcatRows)}</strong></span>`,
       `<span class="snapshot-line"><span><i>K</i><sub>m</sub></span><strong>${formatCount(kmRows)}</strong></span>`,
       `<span class="snapshot-line"><span><i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub></span><strong>${formatCount(efficiencyRows)}</strong></span>`,
-      '<small class="snapshot-note" aria-live="off">records with each parameter</small>',
+      '<small class="snapshot-note" aria-live="off"><span class="snapshot-note-text">records with each parameter</span>'
+        + `<span class="snapshot-card-date"><span class="snapshot-note-text"> · </span><span id="snapshotDateCard" class="snapshot-date"${dateTitle ? ` title="${escapeHtml(dateTitle)}"` : ""}>${escapeHtml(dateText)}</span></span></small>`,
     ].join("");
     $("snapshotDate").textContent = dateText;
     $("snapshotDate").title = dateTitle;
