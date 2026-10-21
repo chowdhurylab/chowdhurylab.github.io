@@ -5487,8 +5487,10 @@ def check(driver, browser, url):
     identity_only = {item["label"]: item["count"] for item in manifest["summary"]["distributions"].get("public_trust_basis", [])}.get("identity_only", 0)
     if identity_only:
         # since 2026-10-12 (D1) records with no PMID or DOI are not accepted; Stats still names them, once (round 14): in
-        # the Not reviewed row under the review rules, else in the note under the figure
-        status_text = " ".join(driver.find_element(By.CLASS_NAME, "stats-status-section").text.split())
+        # the Not reviewed row's definition (its title: the legend shows names only) under the review rules, else in the
+        # note under the figure
+        status_text = " ".join((driver.find_element(By.CLASS_NAME, "stats-status-section").text + " " + " ".join(
+            row.get_attribute("title") or "" for row in driver.find_elements(By.CSS_SELECTOR, ".stats-status-section tr[title]"))).split())
         assert (f"It also holds {identity_only:,} {'record' if identity_only == 1 else 'records'} the earlier review accepted, with no PMID or DOI linked" in status_text
                 or f"It also holds {identity_only:,} records the earlier review accepted that have no PMID or DOI linked" in status_text
                 or f"{identity_only:,} accepted records have no PMID or DOI linked" in status_text), status_text

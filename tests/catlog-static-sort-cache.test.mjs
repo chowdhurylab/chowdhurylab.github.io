@@ -1888,7 +1888,7 @@ function row(overrides = {}) {
   assert.deepEqual(api.statsNumbersText("Table", ["S1", "S2", "S3", "S4", "S9"]), "Tables S1–S4 and S9");
   assert.deepEqual(api.statsNumbersText("Table", [2, 3, "S1", "S2"]), "Tables 2, 3, S1 and S2");
   assert.ok(api.statsSharesRule({ Figure: [], Table: [] }).startsWith("A share is of its own bar, row or card"));
-  assert.match(element("statsCharts").innerHTML, /<strong>Figure 1\.<\/strong> Each record has exactly one review result\.<\/span><\/figcaption>/);
+  assert.match(element("statsCharts").innerHTML, /<strong>Figure 1\.<\/strong> Each record has exactly one review result \(<a class="stats-guide-link" href="[^"]*#guide-status">defined in the Guide<\/a>\)\.<\/span><\/figcaption>/);
   assert.match(element("statsCharts").innerHTML, /<strong>Table S1\.<\/strong> A record usually has several of these\.<\/span><\/figcaption>/);
   // A supplement item: closed, its own address, its heading (number and title) in its summary, the figure under it with
   // no heading of its own.
@@ -1902,7 +1902,7 @@ function row(overrides = {}) {
   assert.doesNotMatch(element("statsCharts").innerHTML, /radialGradient|statsDonutFill/);
   assert.match(element("statsCharts").innerHTML, /data-stat-key="unverified" data-count="1" data-hl="unverified"/);
   // Not checked stands for both of its parts: pointing at it lights the Unverified and Not reviewed slices and rows.
-  assert.match(element("statsCharts").innerHTML, /<tr class="stats-row-group" data-stat-key="not_verified" data-count="1" data-hl="unverified mathematically_inferred">/);
+  assert.match(element("statsCharts").innerHTML, /<tr class="stats-row-group" data-stat-key="not_verified" data-count="1" data-hl="unverified mathematically_inferred" title="No review result\.">/);
   assert.match(element("statsCharts").innerHTML, /data-part="accepted_printed" data-count="2" data-hl="accepted"/, "Accepted's parts light Accepted");
   assert.equal((element("statsCharts").innerHTML.match(/<path class="stats-part-/g) || []).length, 4, "One slice per review result with records");
   assert.match(element("statsCharts").innerHTML, /data-part="accepted_printed" data-count="2"[\s\S]*?As printed/);
@@ -2317,15 +2317,16 @@ function row(overrides = {}) {
   // The lead: one sentence on every value compared, one on the values a database pairs; result names link into Browse.
   const dbLead = figures.match(/<p class="stats-part-lead" data-lead="databases">[\s\S]*?<\/p>/)?.[0] || "";
   // The lead names the papers with a compared value (papers_compared), never more than CatLog has read.
-  assert.equal(plain(dbLead), "CatLog compared 126,951 values read from 2,598 papers with what the databases list for the same papers. Of these, 97,791 (77.0%) are the number a database lists, and 5,574 are the same number under another label. Another 1,548 correct a database's number (656 checked against the paper), and 1,051 differ, cause not yet known. A different number can mean a different measurement; it does not by itself mean a database is wrong. The remaining 20,987 are in none of the databases. Where a database lists a number for the same measurement (100,390 values), 97.4% of those numbers are the paper's.");
+  // Two sentences (round 14: it ran to about 110 words and 5 links): what was compared and how often a paired number is
+  // the paper's, then the corrections and the different numbers with the caveat right after them; the other results
+  // are Figure 7's, its legend linking each.
+  assert.equal(plain(dbLead), "CatLog compared 126,951 values read from 2,598 papers with what the databases list for the same papers; a database lists a number for the same measurement for 100,390 of them, and for 97.4% that number is the paper's. For the rest, 1,548 correct a database's number and 1,051 differ, cause not yet known, which can mean a different measurement rather than a database error.");
   // The caveat is said once in part 7, here, never under each figure.
-  assert.equal((databaseSection().match(/does not by itself mean a database is wrong/g) || []).length, 1);
-  // Its counts add up to the total (97,791 + 5,574 + 1,548 + 1,051 + 20,987 = 126,951), in Figure 8's order.
+  assert.equal((databaseSection().match(/does not by itself mean a database is wrong|rather than a database error/g) || []).length, 1);
   // Browse lists records: each link's title says how many it opens.
-  assert.match(dbLead, /href="[^"]*#browse\?db=other_label" title="5,574 values in 3,466 records">5,574 are the same number under another label/);
   assert.match(dbLead, /href="[^"]*#browse\?db=corrects" title="1,548 values in 1,443 records">1,548 correct a database/);
   assert.match(dbLead, /href="[^"]*#browse\?db=differs" title="1,051 values in 955 records">1,051 differ/);
-  assert.match(dbLead, /href="[^"]*#browse\?db=not_listed" title="20,987 values in 14,002 records">20,987 are in none/);
+  assert.equal((dbLead.match(/<a /g) || []).length, 2);
   // The lead stands right under the part's heading, before its figures.
   assert.match(figures, /<span>Against the databases<\/span><\/h2>\s*<p class="stats-part-lead"/);
   // Each value against the databases: a 100% bar per parameter and for all, the thin counts right of each bar.
@@ -2382,10 +2383,12 @@ function row(overrides = {}) {
   // A database's name never breaks across lines in part 7 ("SABIO-" / "RK", "STRENDA" / "DB" with a wide font).
   assert.match(bySource, /<span class="stats-chart-aside" aria-hidden="true">\+ 25,603 values from papers <span class="nowrap">BRENDA<\/span> does not list<\/span>/);
   assert.match(bySource, /<span class="stats-chart-label">STRENDA DB<\/span>/);
-  // The number beside each bar is headed Values; the caption says what a bar covers and why a value counts more than once.
+  // The number beside each bar is headed Values; the caption says what a bar covers, its rules why a value counts more
+  // than once.
   assert.match(bySource, /<div class="stats-chart-head" aria-hidden="true"><span class="stats-chart-value has-parts"><span class="stats-value-part" data-sizer="[^"]*&#10;Values"><span>Values<\/span><\/span><\/span><\/div>/);
   assert.match(bySource, /data-row="db_brenda" data-count="101348"[\s\S]*?<span class="stats-chart-value has-parts"><span class="stats-value-part" data-sizer="[^"]*"><span>101,348<\/span><\/span><\/span>/);
-  assert.match(plain(bySource), /Figure S\d+\. Each bar covers the values from papers that database lists; a value counts for every database that lists its paper\./);
+  assert.match(plain(bySource), /Figure S\d+\. Each bar covers the values from papers that database lists\./);
+  assert.match(methodHtml(), /Results by database\.<\/span> A value counts for every database that lists its paper\./);
   assert.match(bySource, /STRENDA DB, Same number: 216"/, "No share on a base under 1,000 values");
   assert.match(bySource, /BRENDA, Same number: 63,927 \(63\.1%\)"/);
   assert.match(bySource, /BRENDA: Same number 63,927 \(63\.1%\),[^<]*; 25,603 values from papers it does not list\./);
@@ -2401,7 +2404,8 @@ function row(overrides = {}) {
   assert.match(paired, /<tr data-stat-key="db_brenda"><th scope="row"><span class="nowrap">BRENDA<\/span><small class="stats-db-paired-note">66,170 paired<\/small><\/th><td class="stats-num stats-db-paired-col" data-count="66170">66,170<\/td>\s*<td class="stats-num" data-count="63927">63,927<small>96\.6%<\/small><\/td><td class="stats-num" data-count="1156">1,156<small>1\.7%<\/small><\/td><td class="stats-num" data-count="1087">1,087<small>/);
   assert.match(paired, /<tr data-stat-key="db_strenda"><th scope="row"><span class="nowrap">STRENDA DB<\/span><small class="stats-db-paired-note">230 paired<\/small><\/th><td class="stats-num stats-db-paired-col" data-count="230">230<\/td>\s*<td class="stats-num" data-count="216">216<\/td>/);
   assert.match(paired, /<tfoot><tr data-stat-key="db_all"><th scope="row">All, each value once<small class="stats-db-paired-note">100,390 paired<\/small><\/th><td class="stats-num stats-db-paired-col" data-count="100390">100,390<\/td>\s*<td class="stats-num" data-count="97791">97,791<small>97\.4%<\/small><\/td><td class="stats-num" data-count="1548"><a class="stats-link" href="[^"]*#browse\?db=corrects" aria-label="All, corrects a value: 1,548">1,548<\/a><small>1\.5%<\/small><\/td><td class="stats-num" data-count="1051"><a[^>]*>1,051<\/a><small>1\.0%<\/small>/);
-  assert.match(plain(paired), /Paired: a database lists a number for the same measurement; a number copied into several databases counts for each \(SKiD derives from BRENDA\), but once in the All row\./);
+  assert.match(plain(paired), /Paired: a database lists a number for the same measurement\./);
+  assert.match(methodHtml(), /Paired values by database\.<\/span> A number copied into several databases counts for each \(SKiD derives from BRENDA\), but once in the All row\./);
   // How each correction was found: a bar per cause family, split checked against the paper / an exact factor found by
   // code (the causes code finds add up to corrections.by.code).
   const found = figureHtml("db-found");
@@ -2440,7 +2444,7 @@ function row(overrides = {}) {
   // supplement, each database, the values it pairs, the causes by database, the earlier corrections and replaced entries.
   assert.deepEqual([...databaseSection().matchAll(/<section class="stats-section stats-figure-section( stats-wide)?[^"]*" aria-labelledby="[^"]+" data-figure="([^"]+)">/g)]
     .map((match) => `${match[2]}${match[1] ? " wide" : ""}`), ["db-values wide", "db-found wide", "db-sources", "db-paired", "db-causes", "earlier-corrections", "replaced"]);
-  assert.match(figures, /<strong>Table S\d+\.<\/strong> Paired: a database lists a number for the same measurement;/);
+  assert.match(figures, /<strong>Table S\d+\.<\/strong> Paired: a database lists a number for the same measurement\./);
   assert.doesNotMatch(plain(databaseSection()), /\bv[12]\b|\bfive\b|independent|blind|claim/i);
   // A part-7 link never names an address key Browse does not match (it would open a wider list than its count).
   assert.doesNotMatch(databaseSection(), /db(?:src|why|par)=/);
@@ -2551,7 +2555,7 @@ function row(overrides = {}) {
   // Figure 10 and the All column take them out of their causes (the per-database columns keep them, said in the rule).
   withOut((data) => { data.corrections.by_cause_found_by = { power_of_ten: { factor_cross_checked: 300, factor_only: 257 }, unit_not_converted: { paper_check: 126 } }; });
   assert.match(plain(databaseSection().match(/<p class="stats-part-lead"[\s\S]*?<\/p>/)[0]),
-    /Another 1,291 correct a database's number \(126 checked against the paper\), and 1,308 differ, cause not yet known \(257 by an exact factor, not yet checked\)\. A different number can mean/);
+    /For the rest, 1,291 correct a database's number and 1,308 differ, cause not yet known \(257 by an exact factor, not yet checked\), which can mean a different measurement rather than a database error\./);
   assert.match(plain(databaseSection().match(/<p class="stats-note stats-part-note">[\s\S]*?<\/p>/)[0]),
     /^The figures below still count 257 exact-factor values not yet checked against the paper under Corrects\.$/);
   assert.deepEqual([...figureHtml("db-found").matchAll(/data-row="([^"]+)" data-count="(\d+)"/g)].map((match) => [match[1], Number(match[2])]),
@@ -2571,7 +2575,7 @@ function row(overrides = {}) {
     assert.match(figureHtml("db-values"), /kcat, Corrects a value: 271\b/);
     assert.match(figureHtml("db-values"), /kcat, Different number: 326\b/);
     assert.match(figureHtml("db-paired"), /<td class="stats-num" data-count="956">[\s\S]*?956/);
-    assert.match(plain(databaseSection().match(/<p class="stats-part-lead"[\s\S]*?<\/p>/)[0]), /Another 1,291 correct a database's number/);
+    assert.match(plain(databaseSection().match(/<p class="stats-part-lead"[\s\S]*?<\/p>/)[0]), /For the rest, 1,291 correct a database's number/);
     // A split that does not add up to the comparison's count is not used: the note stays.
     runtimeManifest.summary.overview = { ...before, database_factor_only: { values: 250, by_parameter: { Km: 250 }, by_database: {} } };
     withOut((data) => { data.corrections.by_cause_found_by = { power_of_ten: { factor_cross_checked: 300, factor_only: 257 }, unit_not_converted: { paper_check: 126 } }; });
@@ -2581,14 +2585,14 @@ function row(overrides = {}) {
   // A comparison that counts them under Different number itself (a status of their own): in the Differs segment, no
   // move and no note.
   withOut((data) => { data.values.kcat.differs_factor_only = 40; data.values.all.differs_factor_only = 40; data.values.all.differs += 0; });
-  assert.match(plain(databaseSection().match(/<p class="stats-part-lead"[\s\S]*?<\/p>/)[0]), /Another 1,548 correct a database's number \(656 checked against the paper\), and 1,091 differ, cause not yet known \(40 by an exact factor, not yet checked\)\./);
+  assert.match(plain(databaseSection().match(/<p class="stats-part-lead"[\s\S]*?<\/p>/)[0]), /For the rest, 1,548 correct a database's number and 1,091 differ, cause not yet known \(40 by an exact factor, not yet checked\), which/);
   assert.doesNotMatch(databaseSection(), /stats-part-note/);
   assert.match(figureHtml("db-values"), /kcat, Different number: 309 \(0\.7%\)"/);
   // Small counts: no shares on a base under 1,000 values, counts under the bars, singular words.
   runtimeManifest.summary.database_comparison = { values: { kcat: { confirmed: 1, corrected: 1, new: 2 }, Km: { confirmed: 3, differs: 1 } }, papers: 1 };
   api.renderStats();
   assert.equal(plain(databaseSection().match(/<p class="stats-part-lead"[\s\S]*?<\/p>/)[0]),
-    "CatLog compared 8 values read from 1 paper with what the databases list for the same paper. Of these, 4 are the number a database lists. Another 1 corrects a database's number and 1 differs, cause not yet known. A different number can mean a different measurement; it does not by itself mean a database is wrong. The remaining 2 are in none of the databases. Where a database lists a number for the same measurement (6 values), 4 of those numbers are the paper's.");
+    "CatLog compared 8 values read from 1 paper with what the databases list for the same paper; a database lists a number for the same measurement for 6 of them, and for 4 that number is the paper's. For the rest, 1 corrects a database's number and 1 differs, cause not yet known, which can mean a different measurement rather than a database error.");
   assert.doesNotMatch(databaseSection().match(/<p class="stats-part-lead"[\s\S]*?<\/p>/)[0], /title=/, "No record counts, no titles");
   runtimeManifest.summary.database_comparison.records_with_kind = { corrected: 1, differs: "1" };
   api.renderStats();
@@ -2716,7 +2720,7 @@ function row(overrides = {}) {
     assert.match(more, /<span class="stats-name"><span><a class="stats-link" href="[^"]*#browse\?source=paper&amp;ec=1\.1\.1\.1">/);
     // Values read from each paper: rows from the first bin to the last one with papers; shares of the papers CatLog read.
     assert.match(more, /<h4 id="statsPerPaperTitle" class="stats-supp-title"><span class="stats-supp-number">Figure S2<\/span> <span class="stats-supp-name">Values per paper<\/span><\/h4>/);
-    assert.match(more, /<strong>Figure S2\.<\/strong> The 1 paper CatLog has read, by the number of <i>k<\/i><sub>cat<\/sub>, <i>K<\/i><sub>m<\/sub> and <i>k<\/i><sub>cat<\/sub>\/<i>K<\/i><sub>m<\/sub> values read from each\./);
+    assert.match(more, /<strong>Figure S2\.<\/strong> The 1 paper CatLog has read, by how many values each gave\./);
     assert.doesNotMatch(more.replace(/<[^>]*>/g, " "), /\bv[12]\b|Entries/, "CatLog is the one name");
     assert.deepEqual([...more.matchAll(/data-row="(values_\d+)" data-count="(\d+)"/g)].map((match) => `${match[1]}:${match[2]}`), ["values_1:0", "values_2:1"]);
     assert.match(more, /<span class="stats-chart-label">2–4<\/span>/);
@@ -2731,15 +2735,13 @@ function row(overrides = {}) {
     // Values by enzyme class: a ridge per class, its median dot and 10–90% line, a link to the class in Browse.
     assert.match(more, /<h4 id="statsClassValuesTitle" class="stats-supp-title"><span class="stats-supp-number">Figure S3<\/span> <span class="stats-supp-name">Values by enzyme class<\/span><\/h4>/);
     assert.equal((more.match(/<li class="stats-ridge-row[ "]/g) || []).length, 2);
-    // A class with fewer than 300 values is drawn lighter and dashed (is-few), and the caption's second sentence says so,
-    // with the hatched stub where an end bin holds values; the bins and end-bin rule are said under How these numbers are
-    // counted.
+    // A class with fewer than 300 values is drawn lighter and dashed (is-few); its rules under How these numbers are
+    // counted say so, with the hatched stub where an end bin holds values, the bins and the end-bin rule (round 14: one
+    // short caption).
     assert.match(more, /<li class="stats-ridge-row is-few stats-ec-1" data-hl="ec_1" data-class="1" data-count="3" data-tip="EC 1 Oxidoreductases, kcat: 3 values; median 2\.0 s⁻¹; 10–90% 0\.5–9 s⁻¹\. The link lists every EC 1 record with a kcat, in any unit\.">/);
-    assert.match(more, /<span class="stats-method-title">Values by enzyme class\.<\/span> Curves run through half-decade bins; n is the class&#39;s number of values\. A record in several classes counts in each\. The end bins hold every value beyond them, so the curve leaves them out \(their counts are in the tooltip\)\./);
-    // One sentence: what is drawn, then the marks shown (the hatched stubs where an end bin holds values, the dashed
-    // curves of small classes).
-    assert.match(more, /<strong>Figure S3\.<\/strong> One curve per enzyme class, scaled to its own peak, with the median \(dot\) and middle 80% \(line\); hatched stubs mark values beyond the curve and a dashed curve has fewer than 300 values\.<\/span>/);
-    assert.doesNotMatch(methodHtml(), /dashed|hatched/);
+    assert.match(more, /<span class="stats-method-title">Values by enzyme class\.<\/span> Hatched stubs mark values beyond the curve\. A dashed curve has fewer than 300 values\. Curves run through half-decade bins; n is the class&#39;s number of values\. A record in several classes counts in each\. The end bins hold every value beyond them, so the curve leaves them out \(their counts are in the tooltip\)\./);
+    // One short sentence: what is drawn.
+    assert.match(more, /<strong>Figure S3\.<\/strong> One curve per enzyme class, scaled to its peak, with the median \(dot\) and middle 80% \(line\)\.<\/span>/);
     // Each class's number of values in a muted n column after the median, sized in ch to the longest count.
     assert.match(more, /<span class="stats-ridges-head">Median<\/span><span class="stats-ridges-head">n<\/span><\/p>/);
     assert.deepEqual([...more.matchAll(/<span class="stats-ridge-n">([^<]+)<\/span>/g)].map((match) => match[1]), ["3", "1"]);
@@ -2793,7 +2795,8 @@ function row(overrides = {}) {
       assert.match(piled.body, /data-tip="EC 4 Lyases, kcat below 10⁰·⁵ s⁻¹: 5 values \(end bin, not in the curve\)"/);
       assert.match(piled.body, /data-tip="EC 4 Lyases, kcat 10¹·⁵ s⁻¹ and above: 100 values \(end bin, not in the curve\)"/);
       assert.match(piled.rules, /The end bins hold every value beyond them, so the curve leaves them out \(their counts are in the tooltip\)\./);
-      assert.match(piled.caption, /\(line\); hatched stubs mark values beyond the curve and a dashed curve has fewer than 300 values\.$/);
+      assert.match(piled.caption, /\(line\)\.$/);
+      assert.match(piled.rules, /^Hatched stubs mark values beyond the curve\. A dashed curve has fewer than 300 values\. /);
       assert.equal(piled.data, undefined, "No data line under the figure");
       // 300 values or more: drawn in full, n with thousands separators, no word about lighter curves.
       const full = api.statsRidgeFigure({ metrics: { km: { by_class: { log10_start: 0, bin_width: 0.5,

@@ -1115,7 +1115,7 @@ table, records by main source with a Records | Share switch, then the enzyme cla
 read-from-the-paper records), 4 Values (value ranges on one log axis per parameter; then, from the records read from
 the paper, kcat against Km as a density map with lines of equal kcat/Km, the diffusion limit and each class's median,
 and variants against their wild type of the same paper, enzyme, substrate, pH and temperature), 5 Against the databases
-(from the manifest's database comparison: a short lead that says once that a different number can mean a different
+(from the manifest's database comparison: a two-sentence lead that says once that a different number can mean a different
 measurement, values against the databases, corrections by cause), then S Supplementary figures and tables (round 14):
 every other figure and table, numbered apart (Figure S1, Table S1), in five groups (Quality; What is in the catalog;
 Organisms, enzymes and variants, called Biology until round 14's polish; Values; Against the databases), each item one
@@ -1123,7 +1123,9 @@ closed line (a details whose summary holds its number and title) that opens its 
 (#stats-s3, #stats-table-s2) that opens it; new there: papers by parameter, single substitutions by residue, kinds of
 variant and units as printed, counted by build_overview from the records read from the paper.
 Figures and tables, two to a row from 1024px, each have "Figure N." or "Table N." with a short caption in plain words
-(one sentence, no filler: a chart names its number columns above them instead) and no data
+(one sentence, no filler, about 15 words at most since round 14's fix pass: what a mark means beyond that, such as the
+ridges' hatched stubs and dashed curves or why a value counts for several databases, is the figure's rule under its
+number in How these numbers are counted; a chart names its number columns above them instead) and no data
 line: the snapshot's date, its Data ID and the counting rules (each figure's own under its number) are said once, in
 the closed How these numbers are counted that ends the page; flat fills, the colour at 60% with 1px opaque outlines, in the
 review-result and comparison tokens, --bar-neutral for the single-series value figures and the enzyme classes' own

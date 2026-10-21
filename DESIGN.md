@@ -77,7 +77,11 @@ each, so the legend table keeps its room beside the donut), one below. Figures a
    flags by kind and the reviewers' approved values read from the paper again are the supplement's Quality tables.
 3. What is in the catalog: Review result (the donut) beside Records by main source, then Enzyme classes across the row.
 4. Values: Value ranges, kcat against Km and Variants against their wild type, each full width.
-5. Against the databases (manifest `summary.database_comparison`; round 9 brief section 5): a short lead, Values
+5. Against the databases (manifest `summary.database_comparison`; round 9 brief section 5): a two-sentence lead
+   (round 14: it ran to about 110 words and five links): what was compared and how often a paired number is the
+   paper's, then the corrections and the different numbers, linked into Browse, with the caveat right after them
+   ("which can mean a different measurement rather than a database error"); the other results are Figure 7's, its
+   legend linking each. Then Values
    against the databases, then Corrections by cause and how found, each across the row (the corrections' bars kept to
    760px, stats-narrow). Each only when the snapshot has its counts; without a figure here the part has no heading,
    and a figure in the supplement that compares values still gets the caveat once, at the head of its group there.
@@ -180,13 +184,15 @@ its accessible description; no figure or table has a data line. The parts' figur
   hold together are not shown.
 - Figure 1, Review result: a donut drawn at 200px (outer r 88, inner r 56, 12 o'clock,
   clockwise, thin white gaps, the total in the centre, set smaller when the viewer's font draws it wider than the
-  hole; each slice has one fill, its colour at 60% with a 1px opaque outline, so navy and slate stay apart (the
-  bars keep their fade); the one partition that is
+  hole; each slice has one fill, its colour at 60% with a 1px opaque outline, Not checked's slices slate hatching, so
+  navy and slate stay apart by pattern, not lightness alone; the one partition that is
   a true whole) beside its legend table; pointing at a slice or its row lights both (lit rows tinted --surface-2; Not
   checked's row lights both its slices with their rows, while Unverified or Not reviewed alone leaves it unlit): Accepted (split in the rows under it:
   Read from the paper; Not yet re-read, as printed, after a correction or
   approved by a human reviewer; the split in words is the row's title), Not confirmed, Not checked (Unverified and Not reviewed
-  under it), Disputed, each with its definition. The no-paper-linked note and
+  under it), Disputed: names, records and share only (round 14: the definitions ran 2-6 lines a row and left the
+  row 700px tall beside a lone donut); each row's definition is its title and the caption links the Guide's
+  definitions ("Each record has exactly one review result (defined in the Guide)."). The no-paper-linked note and
   the closed table of fields saved in records that are not accepted follow.
 - Figure 2, Records by main source: each record once (`main_sources`:
   CatLog's own reading, one database, Several databases, Other for STRENDA DB,
