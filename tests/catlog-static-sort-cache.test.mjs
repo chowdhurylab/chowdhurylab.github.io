@@ -5057,13 +5057,13 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.doesNotMatch(text, /it is the paper’s number for/);
   assert.match(text, /Not compared: a kcat\/Km CatLog calculated \(calc\., 5,946\), a value in mass units \(mg\/mL\) and records not yet re-read\./);
   assert.match(html, /<i>k<\/i><sub>cat<\/sub>\/<i>K<\/i><sub>m<\/sub> CatLog calculated/);
-  // The six results in Browse's order, each with the shared square of its colour (none on Corrected earlier), its values
-  // and records; "every value" under Not in the databases.
+  // The six results in Browse's order, Figure 7's (round 14: one order everywhere), each with the shared square of its
+  // colour (none on Corrected earlier), its values and records; "every value" under Not in the databases.
   const rows = results(html);
-  assert.deepEqual(Object.keys(rows), ["Corrects a value", "Different number", "Same, other label", "Not in the databases",
-    "every value of the record", "All values the same", "Corrected earlier records not yet re-read"]);
+  assert.deepEqual(Object.keys(rows), ["All values the same", "Same, other label", "Corrects a value", "Different number", "Not in the databases",
+    "every value of the record", "Corrected earlier records not yet re-read"]);
   assert.deepEqual([...html.matchAll(/<span class="(?:db-mark db-mark-[a-z-]+ )?guide-db-mark"(?: data-result="([a-z_]+)")? aria-hidden="true"><\/span>/g)].map((match) => match[1] ?? ""),
-    ["corrects", "differs", "other_label", "not_listed", "same", ""]);
+    ["same", "other_label", "corrects", "differs", "not_listed", ""]);
   assert.match(html, /<span class="db-mark db-mark-other-label guide-db-mark" data-result="other_label"/, "Browse's own square classes");
   assert.deepEqual(rows["Corrects a value"], ["1,548", "1,443"]);
   assert.deepEqual(rows["Different number"], ["1,051", "955"]);
@@ -6150,12 +6150,12 @@ assert.doesNotMatch(detailFalseKiHtml, /<i>K<\/i><sub>i<\/sub>/);
     const rows = [...element("databaseChecklist").innerHTML.matchAll(/<label class="check-row([^"]*)" title="([^"]*)">([\s\S]*?)<\/label>/g)];
     const shown = rows.map((match) => match[3].match(/<span>([\s\S]*?)<\/span>\s*<strong/)[1]);
     assert.deepEqual(shown.map((html) => html.replace(/<span class="visually-hidden">[^<]*<\/span>/g, "").replace(/<[^>]*>/g, "")),
-      ["Corrects a value", "Different number", "Same, other label", "Not in the databases", "every value", "All values the same", "Corrected earlier"]);
-    assert.deepEqual(shown.map((html) => html.replace(/<[^>]*aria-hidden[^>]*><\/span>/g, "").replace(/<[^>]*>/g, "")).slice(4, 5),
+      ["All values the same", "Same, other label", "Corrects a value", "Different number", "Not in the databases", "every value", "Corrected earlier"]);
+    assert.deepEqual(shown.map((html) => html.replace(/<[^>]*aria-hidden[^>]*><\/span>/g, "").replace(/<[^>]*>/g, "")).slice(5, 6),
       ["Not in the databases: every value"]);
     assert.deepEqual(shown.map((html) => (html.match(/class="db-mark db-mark-([a-z-]+)" aria-hidden="true"/) || [])[1] || ""),
-      ["corrects", "differs", "other-label", "not-listed", "not-listed", "same", ""]);
-    assert.deepEqual(rows.map((match) => match[1].trim()), ["", "", "", "", "nested", "", "after-divider"]);
+      ["same", "other-label", "corrects", "differs", "not-listed", "not-listed", ""]);
+    assert.deepEqual(rows.map((match) => match[1].trim()), ["", "", "", "", "", "nested", "after-divider"]);
     assert.deepEqual(rows.map((match) => match[2]), [...api.databaseFilters].map((item) => item.title.replace(/'/g, "&#39;")));
   }
   // The "?" names the databases compared, from the manifest (here none listed or counted: the six fallback names).
@@ -6210,9 +6210,9 @@ assert.doesNotMatch(detailFalseKiHtml, /<i>K<\/i><sub>i<\/sub>/);
       assert.equal(titles.all_same, "Every compared value is the number a database lists for it.");
       assert.ok(titles.earlier.startsWith("Records not yet re-read whose values ") && titles.earlier.endsWith("before and after."), titles.earlier);
       runtimeManifest.summary.database_comparison = { records_with_kind: { corrected: 1 }, values: { all: { corrected: 1 } } };
-      assert.ok(api.databaseOptionTitle(api.databaseFilters[0]).endsWith(" 1 value in 1 record."));
+      assert.ok(api.databaseOptionTitle(api.databaseFilters.find((item) => item.value === "corrects")).endsWith(" 1 value in 1 record."));
       runtimeManifest.summary.database_comparison = { records_with_kind: { corrected: 2 }, values: { all: { corrected: "2" } } };
-      assert.equal(api.databaseOptionTitle(api.databaseFilters[0]), api.databaseFilters[0].title, "a count that is not a number is left out");
+      assert.equal(api.databaseOptionTitle(api.databaseFilters.find((item) => item.value === "corrects")), api.databaseFilters.find((item) => item.value === "corrects").title, "a count that is not a number is left out");
       // The databases compared come from the manifest: its sources list (a sixth database joins there), else the
       // databases values_by_database counts, else six.
       runtimeManifest.summary.database_comparison = { values_by_database: { BRENDA: {}, "SABIO-RK": {}, OED: {}, SKiD: {}, STRENDA: {} } };

@@ -291,7 +291,8 @@ def check_guide(driver, wait):
     driver.execute_script("document.getElementById('howReadProbe').remove()")
 
 
-GUIDE_DB_RESULTS = ("Corrects a value", "Different number", "Same, other label", "Not in the databases", "All values the same",
+# (in Figure 7's order, as the sidebar since round 14's fix pass: one order everywhere)
+GUIDE_DB_RESULTS = ("All values the same", "Same, other label", "Corrects a value", "Different number", "Not in the databases",
                     "Corrected earlier")
 # (round 14: the results as one table; what is compared and the three small tables in one disclosure, headed by its h3)
 GUIDE_DB_HEADINGS = ["Results", "How the comparison works"]
@@ -362,7 +363,7 @@ def check_guide_databases(driver, browser, url):
     labels = [row["label"] for row in rows]
     assert labels in (list(GUIDE_DB_RESULTS), list(GUIDE_DB_RESULTS[:-1])), labels
     marks = [row["mark"] for row in rows]
-    assert [mark[0] for mark in marks[:5]] == ["corrects", "differs", "other_label", "not_listed", "same"], marks
+    assert [mark[0] for mark in marks[:5]] == ["same", "other_label", "corrects", "differs", "not_listed"], marks
     assert all(mark and mark[2:] == [10, 10] for mark in marks), marks
     assert len({mark[1] for mark in marks[:5]}) == 5 and all(mark[1] not in ("rgba(0, 0, 0, 0)", "transparent") for mark in marks[:5]), marks
     if len(marks) == 6:
@@ -2532,28 +2533,28 @@ def check_filters(driver, browser, url, route_label):
                                       size: [mark.getBoundingClientRect().width, mark.getBoundingClientRect().height]} : null};
             });
         """)
-        assert [row["value"] for row in rows] == ["corrects", "differs", "other_label", "not_listed", "all_not_listed", "all_same", "earlier"], rows
-        assert [row["shown"] for row in rows] == ["Corrects a value", "Different number", "Same, other label", "Not in the databases",
-                                                   "every value", "All values the same", "Corrected earlier"], rows
-        assert [row["nested"] for row in rows] == [False] * 4 + [True, False, False], rows
+        assert [row["value"] for row in rows] == ["all_same", "other_label", "corrects", "differs", "not_listed", "all_not_listed", "earlier"], rows
+        assert [row["shown"] for row in rows] == ["All values the same", "Same, other label", "Corrects a value", "Different number",
+                                                   "Not in the databases", "every value", "Corrected earlier"], rows
+        assert [row["nested"] for row in rows] == [False] * 5 + [True, False], rows
         assert [row["divided"] for row in rows] == [False] * 6 + [True], rows
-        assert rows[4]["name"] == "Not in the databases: every value", rows[4]
+        assert rows[5]["name"] == "Not in the databases: every value", rows[5]
         colours = driver.execute_script("""
             const probe = document.createElement('span');
             document.body.appendChild(probe);
             const colour = (token) => { probe.style.color = `var(${token})`; return getComputedStyle(probe).color; };
-            const out = ['--chg-magnitude', '--cmp-differs', '--cmp-other', '--cmp-new', '--cmp-new', '--cmp-same'].map(colour);
+            const out = ['--cmp-same', '--cmp-other', '--chg-magnitude', '--cmp-differs', '--cmp-new', '--cmp-new'].map(colour);
             probe.remove();
             return out;
         """)
         assert [row["mark"]["colour"] for row in rows[:6]] == colours and rows[6]["mark"] is None, rows
         assert all(row["mark"]["hidden"] == "true" and row["mark"]["size"] == [10, 10] for row in rows[:6]), rows
-        definitions = ("A database lists another number; CatLog's is the paper's",
-                       "A database lists another number and the cause is not yet known;",
+        definitions = ("Every compared value is the number a database lists for it.",
                        "A database lists this number for the paper under another substrate, variant or organism.",
+                       "A database lists another number; CatLog's is the paper's",
+                       "A database lists another number and the cause is not yet known;",
                        "No compared database lists this value for this paper;",
                        "No compared database lists any value of the record.",
-                       "Every compared value is the number a database lists for it.",
                        "Records not yet re-read whose values CatLog's earlier version changed")
         assert all(row["title"].startswith(text) for row, text in zip(rows, definitions)), rows
         # The counts at rest are the manifest's keys; the titles add its values and records.
@@ -2575,10 +2576,10 @@ def check_filters(driver, browser, url, route_label):
         differs_extra = sum(values_all.get(key, 0) for key in ("differs_factor_only", "differs_exact_factor"))
         corrected_values = values_all.get("corrected")
         if isinstance(corrected_values, int) and "corrects" in expected:
-            assert rows[0]["title"].endswith(f" {corrected_values - factor_only:,} values in {expected['corrects']:,} records."), rows[0]["title"]
+            assert rows[2]["title"].endswith(f" {corrected_values - factor_only:,} values in {expected['corrects']:,} records."), rows[2]["title"]
         differs_values = values_all.get("differs")
         if isinstance(differs_values, int) and "differs" in expected:
-            assert rows[1]["title"].endswith(f" {differs_values + factor_only + differs_extra:,} values in {expected['differs']:,} records."), rows[1]["title"]
+            assert rows[3]["title"].endswith(f" {differs_values + factor_only + differs_extra:,} values in {expected['differs']:,} records."), rows[3]["title"]
         # The "?" names the databases compared and defines every option.
         about = driver.find_element(By.CSS_SELECTOR, '#catalogFilters .section-about[aria-controls="aboutDatabases"]')
         driver.execute_script("arguments[0].scrollIntoView({block: 'center'})", about)

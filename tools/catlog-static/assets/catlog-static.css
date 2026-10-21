@@ -2333,7 +2333,8 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
 /* Before you use the values: a short checklist. */
 .guide-view .guide-checklist { display:grid; gap:6px; margin:0; padding:0; list-style:none }
 .guide-view .guide-shell .guide-checklist li { position:relative; padding-left:22px }
-.guide-view .guide-checklist li::before { content:""; position:absolute; top:8px; left:3px; width:6px; height:6px; border-top:2px solid var(--muted); border-right:2px solid var(--muted); transform:rotate(45deg) }
+/* A plain en dash as the bullet (round 14: a rotated chevron read as a closed section that does nothing). */
+.guide-view .guide-checklist li::before { content:"\2013"; content:"\2013" / ""; position:absolute; top:0; left:2px; color:var(--muted) }
 .guide-view .guide-choice-link { margin-top:16px; font-size:var(--fs-14) }
 .guide-view .guide-shell .guide-note { margin:16px 0 0; color:var(--muted) }
 /* Review status: the table's badge (dot, status word in ink, tags) beside its meaning. */

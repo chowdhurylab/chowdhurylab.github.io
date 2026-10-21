@@ -251,14 +251,15 @@ scripts/build-catlog-viewer-index.py takes from the Table download's database
 fields or the Full data download of the same records (where the CatLog side's
 export puts them: each proof line's database_status, an earlier corrected
 record's corrections list; a Table field of the same name wins), the per-value
-database_status, a record summary or the corrections list; never an empty heading; round 9 brief section 3): Corrects
-a value, Different number (the cause not yet known; a value a database lists at an exact factor nothing has yet checked
-against the paper is "Different number (exact factor, not yet checked)", under it, never a correction: its definition
-says so and names the factor), Same, other label, Not in the databases (a value no
-compared database lists) with "every value" nested under it (no database lists any value of the record), All
-values the same (every compared value), then under a --line-soft rule Corrected earlier (records not yet re-read
+database_status, a record summary or the corrections list; never an empty heading; round 9 brief section 3), in Stats
+Figure 7's order (round 14's fix pass: one order for the results everywhere, the sidebar, the Guide's legend and its
+Results table): All values the same (every compared value), Same, other label, Corrects a value, Different number (the
+cause not yet known; a value a database lists at an exact factor nothing has yet checked against the paper is
+"Different number (exact factor, not yet checked)", under it, never a correction: its definition says so and names the
+factor), Not in the databases (a value no compared database lists) with "every value" nested under it (no database
+lists any value of the record), then under a --line-soft rule Corrected earlier (records not yet re-read
 whose earlier version changed values; shown only when a record has it). A 10px square in the result's colour
-(--chg-magnitude, --cmp-differs, --cmp-other, --cmp-new, --cmp-same; the light mint and cyan with a 1px darker ring;
+(--cmp-same, --cmp-other, --chg-magnitude, --cmp-differs, --cmp-new; the light mint and cyan with a 1px darker ring;
 aria-hidden) stands before each name but
 Corrected earlier's. The counts at rest equal the manifest's summary.database_comparison: records_with_kind
 (corrected, differs, other_label, new), records.every_value_new and records.every_value_confirmed; each option's
@@ -1244,7 +1245,8 @@ link to them; keep every one):
   reasons, the papers no compared database lists beside the last); then "Counts by parameter and database are on
   Stats."
 - Before you use the values (#guide-caveats): four short checklist lines (only Accepted passed review; read each value's
-  unit; a printed kcat/Km can differ from kcat ÷ Km; split training sets by paper or UniProt accession).
+  unit; a printed kcat/Km can differ from kcat ÷ Km; split training sets by paper or UniProt accession), each after a
+  plain muted en dash (round 14's fix pass: a rotated chevron read as a closed section that does nothing).
 - Reference (an h2 with no address of its own): Find records (#guide-find), Units (#guide-units), Downloads
   (#guide-downloads), Cite (#guide-cite) and Sources and licenses (#guide-sources), each a `<details class="guide-ref">`
   closed at first, its summary one row (44px or more): a + or − in the accent, the name as an h3 (16px/600, its id the

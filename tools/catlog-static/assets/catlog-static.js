@@ -240,12 +240,17 @@
   // A record's words for one value (section G): the number a database lists, and a value no database lists.
   DATABASE_RESULT_NAMES.same = "Same number";
   DATABASE_RESULT_NAMES.new = DATABASE_RESULT_NAMES.not_listed;
-  // The options in the sidebar's order: the results of the values read from the paper (any value with that result; All
-  // values the same and "every value" ask it of every compared value), a rule, then Corrected earlier (records not yet
-  // re-read). mark: the colour of the 10px square before the name (the record and Stats use the same colours); records
+  // The options in the sidebar's order, Figure 7's order of the results (round 14: one order everywhere, the Guide's
+  // legend and Results table too): All values the same, Same, other label, Corrects a value, Different number, Not in
+  // the databases with "every value" under it (All values the same and "every value" ask it of every compared value;
+  // the others of any value), a rule, then Corrected earlier (records not yet re-read). mark: the colour of the 10px square before the name (the record and Stats use the same colours); records
   // and values: where the manifest (summary.database_comparison) counts them, for the option's title. "every value"
   // narrows its parent: ticking it ticks Not in the databases, and the two are one filter (databaseFilterBits).
   const databaseFilters = [
+    { value: "all_same", bit: 32, mark: "same", records: ["records", "every_value_confirmed"],
+      title: "Every compared value is the number a database lists for it." },
+    { value: "other_label", bit: 4, mark: "other-label", records: ["records_with_kind", "other_label"], values: ["same_number_other_label"],
+      title: "A database lists this number for the paper under another substrate, variant or organism." },
     { value: "corrects", bit: 1, mark: "corrects", records: ["records_with_kind", "corrected"], values: ["corrected"],
       title: "A database lists another number; CatLog's is the paper's, and the record names the cause and how it was found." },
     { value: "differs", bit: 2, mark: "differs", records: ["records_with_kind", "differs"], values: ["differs", ...FACTOR_ONLY_STATUSES],
@@ -253,15 +258,11 @@
       // only (the user, 2026-10-15): Browse's "?" box and the Guide's results add it to this definition, Stats' lead says
       // it right after the different numbers; a tooltip never carries it.
       title: "A database lists another number and the cause is not yet known; where it is the paper's times an exact factor (a power of ten, 60 or 3,600), the record names the factor." },
-    { value: "other_label", bit: 4, mark: "other-label", records: ["records_with_kind", "other_label"], values: ["same_number_other_label"],
-      title: "A database lists this number for the paper under another substrate, variant or organism." },
     { value: "not_listed", bit: 8, mark: "not-listed", records: ["records_with_kind", "new"],
       values: ["new", "new_ratio_only", "new_paper_not_in_databases"],
       title: "No compared database lists this value for this paper; the record says why and what they do list." },
     { value: "all_not_listed", bit: 16, mark: "not-listed", parent: "not_listed", records: ["records", "every_value_new"],
       title: "No compared database lists any value of the record." },
-    { value: "all_same", bit: 32, mark: "same", records: ["records", "every_value_confirmed"],
-      title: "Every compared value is the number a database lists for it." },
     { value: "earlier", bit: 64, optional: true, divided: true,
       title: "Records not yet re-read whose values CatLog's earlier version changed; the record lists before and after." },
   ].map((item) => {
@@ -5581,11 +5582,11 @@
   // Browse's options in its order (key = the address's db= value), with Browse's names and definitions; mark: the
   // result's colour, as in Browse. The nested option is a row under its parent.
   const GUIDE_DB_RESULTS = [
+    { key: "all_same", mark: "same" },
+    { key: "other_label", mark: "other_label" },
     { key: "corrects", mark: "corrects" },
     { key: "differs", mark: "differs" },
-    { key: "other_label", mark: "other_label" },
     { key: "not_listed", mark: "not_listed", nested: { key: "all_not_listed", label: DATABASE_RESULT_NAMES.all_not_listed } },
-    { key: "all_same", mark: "same" },
     { key: "earlier", mark: "" },
   ].map((item) => ({ ...item, label: DATABASE_RESULT_NAMES[item.key], text: databaseResultTitle(item.key) }));
   // The cause of a correction in four families (Browse's dbwhy keys), one list for the Guide, Stats and Browse's Cause
