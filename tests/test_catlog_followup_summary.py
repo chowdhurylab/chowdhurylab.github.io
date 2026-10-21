@@ -3,6 +3,7 @@ from collections import Counter, defaultdict
 import hashlib
 import importlib.util
 import json
+import re
 import tempfile
 import unittest
 from pathlib import Path
@@ -217,6 +218,18 @@ class OverviewTests(unittest.TestCase):
         self.assertEqual(followup.caution_keys({"condition_flags": ["kcat_over_km_source_mismatch"]}), {"differs"})
         self.assertEqual(followup.caution_keys({"condition_flags": ["km_magnitude_needs_check", "kcat_over_km_source_mismatch"]}),
                          {"differs", "units"})
+
+    def test_caution_groups_are_the_pages_caution_bits(self):
+        # Stats' Cautions table counts what Browse's Cautions filter finds: each group holds exactly the flags the page's
+        # CAUTION_FLAG_BITS put in that group's bit (a printed unit prefix that differs is a unit caution in both).
+        script = (Path(__file__).resolve().parents[1] / "tools/catlog-static/assets/catlog-static.js").read_text()
+        block = re.search(r"const CAUTION_FLAG_BITS = \{(.*?)\};", script, re.S).group(1)
+        bits = {name: int(bit) for name, bit in re.findall(r"(\w+):\s*(\d+)", block)}
+        group_bits = {"differs": 1, "units": 2}
+        for group, bit in group_bits.items():
+            self.assertEqual(set(followup.CAUTION_GROUPS[group]), {name for name, value in bits.items() if value == bit}, group)
+        self.assertEqual(set(bits.values()), set(group_bits.values()))
+        self.assertEqual(followup.caution_keys({"condition_flags": ["printed_unit_prefix_differs"]}), {"units"})
 
     def test_magnitude_cautions_use_catlogs_bounds(self):
         # Km below 1 nM is a magnitude caution; kcat is one only above 10^8 s^-1 (an older snapshot flagged it from 10^7).

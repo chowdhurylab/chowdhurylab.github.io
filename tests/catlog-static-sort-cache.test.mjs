@@ -1467,10 +1467,10 @@ assert.match(guideMethod, /A second, separate AI check compares every value with
   assert.deepEqual(groups["No unit given"], ["no unit"]);
   assert.deepEqual(groups["Temperature questionable"], ["T questionable"]);
 }
-assert.match(sourceCode, /short: "Unit or magnitude error"/);
 assert.doesNotMatch(guideHtml, /The Cautions filter groups them as|On narrow screens its short name|Purple: source/);
 assert.doesNotMatch(guideHtml, /not in the table or the Cautions filter/);
-assert.match(sourceCode, /value: "units", label: "Possible unit or magnitude error", bit: 2, title: "[^"]*a printed unit that differs[^"]*"/);
+assert.match(sourceCode, /value: "units", label: "Unit or magnitude error", bit: 2, title: "[^"]*a printed unit that differs[^"]*"/);
+assert.doesNotMatch(sourceCode, /Possible unit or magnitude error/);
 assert.equal((guideHtml.match(/Claude, Anthropic/g) || []).length, 1, "The full method appears once");
 // Records are named by what happened to them (the user, 2026-10-13, round 8): Read from the paper and Not yet re-read,
 // never "the earlier catalog", "the old catalog" or older records. CatLog is the one name: no v1 or v2; the earlier
@@ -3536,7 +3536,7 @@ assert.doesNotMatch(flaggedHtml, /Check against source|condition-flag|often mean
   // CatLog's bounds on an older snapshot's flags: a Km below 1 nM is flagged even unflagged, a kcat up to 10⁸ s⁻¹ is not.
   const unflaggedLow = row({ km: 2e-14, km_display: "2e-14", km_unit: "mM", condition_flags: [] });
   assert.ok(api.conditionFlags(unflaggedLow).has("km_magnitude_needs_check"));
-  assert.equal(api.rowCautionBits(unflaggedLow), 2, "counted under Possible unit or magnitude error");
+  assert.equal(api.rowCautionBits(unflaggedLow), 2, "counted under Unit or magnitude error");
   assert.match(api.valueFlagBadgeHtml(api.conditionFlags(unflaggedLow), "km", unflaggedLow), /Km below 1 nM; the unit or the value may be wrong/);
   assert.ok(!api.conditionFlags(row({ km: 2e-6, km_display: "2e-06", km_unit: "mM" })).has("km_magnitude_needs_check"));
   const catalase = row({ kcat: 3e7, kcat_display: "3e+7", kcat_unit: "s^(-1)", condition_flags: ["kcat_magnitude_needs_check"] });
@@ -3976,7 +3976,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.match(auditedHtml, /aria-label="Km: printed unit differs\. Show the note\."/);
   // CatLog's own flag for it (printed_unit_prefix_differs) is a unit caution; the per-value notes say it, once.
   const flaggedBoth = { ...bothSummary, condition_flags: ["printed_unit_prefix_differs"] };
-  assert.equal(api.rowCautionBits(flaggedBoth), 2, "counted under Possible unit or magnitude error");
+  assert.equal(api.rowCautionBits(flaggedBoth), 2, "counted under Unit or magnitude error");
   const flaggedBothHtml = api.valuesSection(flaggedBoth, { verification_method: "catlog_v2_read_and_independent_verify",
     proof_lines: [proofLine("kcat", "150 ± 13", "s^-1", ""), proofLine("Km", "2.9 ± 0.4", "μM", "printed unit read as mM")] });
   assert.doesNotMatch(flaggedBothHtml, /another concentration unit/);
@@ -7239,7 +7239,7 @@ for (const hash of ["#stats", "#guide", "#guide-units"]) {
   assert.match(element("aboutVariant").innerHTML, /<p id="variantNoneNote" hidden><span data-count="variant:none">/);
   const aboutCautions = element("aboutCautions").innerHTML;
   assert.match(aboutCautions, /<strong><i>k<\/i><sub>cat<\/sub>\/<i>K<\/i><sub>m<\/sub> mismatch<\/strong> — the printed or listed kcat\/Km differs from kcat ÷ Km\.<\/p>/);
-  assert.match(aboutCautions, /<strong>Possible unit or magnitude error<\/strong> — Km above 10 M or below 1 nM, /);
+  assert.match(aboutCautions, /<strong>Unit or magnitude error<\/strong> — Km above 10 M or below 1 nM, /);
   assert.match(aboutCautions, /<strong>No cautions<\/strong> — records without any caution\.<\/p>/);
   assert.match(aboutCautions, /href="#guide-cautions">Cautions in the Guide/);
   assert.equal((aboutCautions.match(/<p>/g) || []).length, 6);

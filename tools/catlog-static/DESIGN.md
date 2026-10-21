@@ -407,8 +407,8 @@ of its paper: the index carries each record's PMIDs and DOIs from the Full data
 download of the same snapshot. When nothing matches, the table names the
 filters that are on and offers to remove the one set last that brings records
 back (with how many) or to clear everything; a button too long for the table's
-width wraps onto a second line inside it (at 320px "Remove Caution: Possible unit
-or magnitude error (144 records)"), never past its edge. The header's tabs are the
+width wraps onto a second line inside it (at 320px "Remove Caution: Unit or
+magnitude error (144 records)"), never past its edge. The header's tabs are the
 catalog's own views, Browse · Stats · Guide · Team (#team, the people and agents
 behind CatLog); the links out, "CatRange paper ↗" and "Chowdhury Lab ↗", follow
 them, set apart by a thin rule. From 641 to 1023px the header is one grid on
@@ -567,9 +567,11 @@ short words are kcat/Km mismatch, Km > 10 M or Km < 1 nM (flagged from the store
 value on older snapshots too), kcat > 10⁸ s⁻¹ (an older snapshot's flag on a kcat
 up to 10⁸ s⁻¹ is dropped; Stats counts the same way), possible 1000× unit error, above diffusion limit
 and T questionable. The
-Cautions filter names kcat/Km mismatch, Possible unit or magnitude error (the
-sidebar says "Unit or magnitude error", one line at 256px; its chip and the
-Guide keep "Possible"), No unit given, Temperature questionable and No cautions.
+Cautions filter names kcat/Km mismatch, Unit or magnitude error (one name in the
+sidebar, its chip, the "?", the record, the Guide and Stats' table; round 14), No unit given, Temperature
+questionable and No cautions. Stats' Cautions table counts each group from the same flags as the filter
+(scripts/build-catlog-followup-summary.py CAUTION_GROUPS = the page's CAUTION_FLAG_BITS; a unit test holds them
+together), so its counts are Browse's.
 
 Review result cells (the column is headed "Review result", as in the Guide) align left: a dot and the review result (Accepted, Not confirmed,
 Not checked or Disputed: words that define themselves and promise no further
@@ -1068,8 +1070,8 @@ whether kcat ÷ Km shows the unit used is right and, when an AI audit
 re-checked the value, ends with what it found ("... and kept mM."); the note
 stays a caution note (tan). CatLog's own flag for it
 (printed_unit_prefix_differs) counts as a possible unit error and is said once;
-with the flag the table's "!" and the Cautions filter's Possible unit or
-magnitude error find the record too (its title and the Guide's list of that
+with the flag the table's "!" and the Cautions filter's Unit or magnitude error
+find the record too (Stats' Cautions table counts it there as well) (its title and the Guide's list of that
 group name it), without it the caution is in the record only.
 A merged older record whose listed kcat/Km values are all more than 2-fold from
 kcat ÷ Km gets a note saying so (a "kcat/Km mismatch"; a familiar factor such as

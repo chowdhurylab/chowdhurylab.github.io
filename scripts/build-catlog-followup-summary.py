@@ -127,11 +127,12 @@ COMMON_ORGANISM_NAMES = {"homo sapiens": "human", "rattus norvegicus": "rat", "m
                          "canis lupus": "dog", "gallus gallus": "chicken", "zea mays": "maize", "sorghum bicolor": "sorghum",
                          "saccharomyces cerevisiae": "yeast"}
 LOCANT_WORD = re.compile(r"^(?:\d{1,2}'*(?:,\d{1,2}'*)*|[dlpomn](?:,[dl])?|" + "|".join(sorted(set(GREEK_NAMES.values()))) + r")$")
-# Browse `caution=` groups of condition_flags.
+# Browse `caution=` groups of condition_flags: the page's CAUTION_FLAG_BITS (bit 1 differs, bit 2 units), so Stats counts
+# what the Cautions filter finds (a printed unit prefix that differs is a unit caution there too).
 CAUTION_GROUPS = {
     "differs": ("kcat_over_km_quotient_mismatch", "kcat_over_km_source_mismatch"),
     "units": ("km_magnitude_needs_check", "kcat_magnitude_needs_check", "kcat_over_km_unit_mismatch",
-              "efficiency_above_diffusion_limit"),
+              "efficiency_above_diffusion_limit", "printed_unit_prefix_differs"),
     "unit_missing": ("unit_not_recorded_kcat", "unit_not_recorded_km"),
 }
 # Catalog units (normalizedUnitKey / canonicalMetricUnitKeys in the page).
