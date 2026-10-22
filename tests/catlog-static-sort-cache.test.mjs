@@ -3546,7 +3546,7 @@ function row(overrides = {}) {
     // The Guide's short Accepted definition (round 14) names the human reviewer's approval under the review rules; its Not
     // checked and no paper linked ones ("no PMID or DOI") hold under either rules and stay as the page writes them.
     api.renderGuideMethod();
-    assert.equal(element("guideAcceptedDefinition").textContent, "Read from the paper by CatLog, accepted by the earlier automated review or approved by a human reviewer.");
+    assert.equal(element("guideAcceptedDefinition").textContent, "Read from the paper by CatLog; or, for a record not yet re-read, accepted by the earlier automated review or approved by a human reviewer.");
     assert.match(indexHtml, /<dd id="guideNotCheckedDefinition">No review result\. The record says <em>Unverified<\/em> \(no final check\) or <em>Not reviewed<\/em> \(no PMID or DOI\)\.<\/dd>/);
     assert.match(indexHtml, /<dd id="guideNoPaperDefinition">No PMID or DOI, so the value cannot be traced to a paper\.<\/dd>/);
     const approved = row({ record_key: "approved", measurement_key: "approved", verification_status: "verified" });
@@ -3560,7 +3560,7 @@ function row(overrides = {}) {
     runtimeManifest.summary = savedSummary;
     // An older snapshot has no human approval among its acceptances.
     api.renderGuideMethod();
-    assert.equal(element("guideAcceptedDefinition").textContent, "Read from the paper by CatLog, or accepted by the earlier automated review.");
+    assert.equal(element("guideAcceptedDefinition").textContent, "Read from the paper by CatLog; or, for a record not yet re-read, accepted by the earlier automated review.");
   }
 
   // An unfamiliar status is listed, not dropped; a merged source counts under each source it names, as Browse finds it.

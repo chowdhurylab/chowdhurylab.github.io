@@ -142,8 +142,8 @@
     // Under the review rules (followsReviewRules) a full human approval also accepts a record.
     get accepted() {
       return followsReviewRules()
-        ? "Read from the paper by CatLog, accepted by the earlier automated review (as printed or after a correction) or approved by a human reviewer (human-checked)."
-        : "Read from the paper by CatLog, or accepted by the earlier automated review (as printed or after a correction).";
+        ? "Read from the paper by CatLog; or, for a record not yet re-read, accepted by the earlier automated review (as printed or after a correction) or approved by a human reviewer (human-checked)."
+        : "Read from the paper by CatLog; or, for a record not yet re-read, accepted by the earlier automated review (as printed or after a correction).";
     },
     curation_pending: "The earlier automated review left a question open on the value, unit, protein or substrate; replaced when CatLog reads the paper.",
     // Under the review rules Not reviewed also holds the records the earlier review accepted that have no linked paper
@@ -157,8 +157,8 @@
   function stateShortDescription(value) {
     if (value === "accepted") {
       return followsReviewRules()
-        ? "Read from the paper by CatLog, accepted by the earlier automated review or approved by a human reviewer."
-        : "Read from the paper by CatLog, or accepted by the earlier automated review.";
+        ? "Read from the paper by CatLog; or, for a record not yet re-read, accepted by the earlier automated review or approved by a human reviewer."
+        : "Read from the paper by CatLog; or, for a record not yet re-read, accepted by the earlier automated review.";
     }
     if (value === "curation_pending") return "The earlier automated review left a question open.";
     if (value === "not_verified") return "No review result.";
@@ -478,11 +478,13 @@
   }
   const NO_PAPER_RECORD_NOTE = "No PMID or DOI, so the value cannot be traced to a paper (the earlier review had accepted it); not counted as Accepted.";
   // The Guide's legend says Accepted in a few words (round 14, the user: a short Guide); Browse's "?" and the badges keep
-  // stateDescriptions. The review rules the snapshot follows decide it.
+  // stateDescriptions. The review rules the snapshot follows decide it. The alternatives stand apart (fix pass after
+  // round 16b: "read from the paper by CatLog, accepted by ... or approved ..." read as one chain of steps, so Accepted
+  // looked as if it should equal Read from the paper).
   function guideAcceptedDefinition() {
     return followsReviewRules()
-      ? "Read from the paper by CatLog, accepted by the earlier automated review or approved by a human reviewer."
-      : "Read from the paper by CatLog, or accepted by the earlier automated review.";
+      ? "Read from the paper by CatLog; or, for a record not yet re-read, accepted by the earlier automated review or approved by a human reviewer."
+      : "Read from the paper by CatLog; or, for a record not yet re-read, accepted by the earlier automated review.";
   }
   // Records accepted on a human reviewer's approval (accepted_basis "human review", human-checked's rule).
   function humanAcceptedCount() {
