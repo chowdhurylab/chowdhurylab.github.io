@@ -1699,6 +1699,13 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-pairs-table thead th.stats-num { white-space:normal }
 .stats-pairs-table :is(th,td) { padding-inline:6px }
 .stats-typical-table .stats-row-reference > * { border-top:1px solid var(--line) }
+/* On the narrowest phones (320px) in a wide font the two tables keep inside the page: tighter cells, 12px type and
+   headings and the record counts that may wrap (the release check of 2026-10-22 found them 1-9px too wide). */
+@media (max-width: 360px) {
+  .stats-pairs-table, .stats-typical-table { font-size:var(--fs-12); line-height:var(--lh-12) }
+  .stats-pairs-table :is(th,td), .stats-typical-table :is(th,td) { padding-inline:4px }
+  .stats-pairs-table th, .stats-typical-table :is(th,td) { white-space:normal; overflow-wrap:anywhere }
+}
 /* Values by enzyme class: a ridge per class (each scaled to its own peak) overlapping the row above; the ridge under the
    pointer takes a thicker line and the others dim. The 10-90% line and the median dot sit on its baseline. Three panels side by side from
    1024px with the class number only (the name is in the tooltip line and in Biology); one per row below with names. */
