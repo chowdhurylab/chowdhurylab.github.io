@@ -2995,7 +2995,7 @@ function row(overrides = {}) {
     assert.equal(figure.body.match(/<div class="stats-histogram-axis" aria-hidden="true">([\s\S]*?)<\/div>/)[1], api.statsDecadeTicks(0, 2.25));
     // At the same temperature and pH: the table and the records it uses ("1 enzyme", in the singular).
     assert.match(figure.body, /<tr data-count="2"><th scope="row"><i>k<\/i><sub>cat<\/sub><\/th><td class="stats-num">2<\/td><td class="stats-num">1\.5×<\/td><td class="stats-num">100\.0%<\/td><td class="stats-num">100\.0%<\/td><\/tr>/);
-    assert.match(figure.body, /At the same temperature \(to 1 °C\) and pH \(to 0\.1\): 5 records, 2 papers and 1 enzyme\.<\/p>/);
+    assert.match(figure.body, /At the same temperature \(to 1\u00a0°C\) and pH \(to 0\.1\): 5 records, 2 papers and 1 enzyme\.<\/p>/);
     assert.equal(figure.caption, "Wild-type values of one enzyme (UniProt entry) and substrate in two papers, from 12 records, 4 papers and 2 enzymes; assays and constructs differ between papers, so a difference is not all error.");
     assertPlainCaption(figure.caption);
     // Pairs giving the very same number are left out (often one paper's value printed again in another), and named.
@@ -3061,7 +3061,10 @@ function row(overrides = {}) {
     assert.equal(heat.key, "kcat-temperature");
     // No edge in two labels: a bin runs from its edge to below the next.
     assert.deepEqual([...heat.body.matchAll(/<span class="stats-ridge-label">([^<]+)<\/span>/g)].map((match) => match[1]), ["below 20", "20 to &lt;30", "80 or more"]);
-    assert.match(heat.body, /data-tip="20 °C to below 30 °C: median kcat 4\.5 s⁻¹, 10–90% 1\.125–18 s⁻¹;/);
+    // A number and its unit never break apart at a phone's width (a no-break space), nor a hyphenated name.
+    assert.match(heat.body, /data-tip="20\u00a0°C to below 30\u00a0°C: median kcat 4\.5 s⁻¹, 10–90% 1\.125–18 s⁻¹;/);
+    assert.match(heat.body, /\(Q<sub>10<\/sub>: fold change per 10\u00a0°C\)/);
+    assert.doesNotMatch(heat.body + heat.caption + sizes.rules, /\d °C|Bar-Even/);
     assert.match(heat.rules, /^Each bin starts at its lower edge and ends below the next; the dot is the median and the line the middle 80% \(10th to 90th percentile\), as in Value ranges; n is the bin’s number of records\./);
     // Q₁₀ in tenths of a power of ten centred on 10^−0.5 ... 10^1: the dashed line at 1 (no change).
     assert.match(heat.body, /<i class="stats-fold-zero" style="left:34\.375%" aria-hidden="true"><span>no change<\/span><\/i>/);
@@ -3080,8 +3083,8 @@ function row(overrides = {}) {
     assert.deepEqual([...table.body.matchAll(/data-stat-key="typical_(\w+)" data-count="(\d+)"/g)].map((match) => `${match[1]}:${match[2]}`), ["kcat:10", "kcat_over_km:1"]);
     assert.match(table.body, /<small>10 records, 3 papers and 2 enzymes<\/small>/);
     assert.match(table.body, /<small>1 record, 1 paper and 1 enzyme<\/small>/);
-    assert.match(table.body, /<td class="stats-num">28<small>28,000 M⁻¹ s⁻¹<\/small><\/td>/);
-    assert.match(table.body, /<a class="stats-ref-link" href="https:\/\/doi\.org\/10\.1021\/bi2002289" target="_blank" rel="noreferrer">Bar-Even et al\. 2011<\/a>: the average enzyme’s <i>k<\/i><sub>cat<\/sub>\/<i>K<\/i><sub>m<\/sub><small>in the paper’s abstract<\/small><\/th>\s*<td class="stats-num">about 10⁵ M⁻¹ s⁻¹<\/td><td class="stats-num stats-muted">—<\/td><\/tr>/);
+    assert.match(table.body, /<td class="stats-num">28<small>28,000\u00a0M⁻¹\u00a0s⁻¹<\/small><\/td>/);
+    assert.match(table.body, /<a class="stats-ref-link" href="https:\/\/doi\.org\/10\.1021\/bi2002289" target="_blank" rel="noreferrer">Bar\u2011Even et al\. 2011<\/a>: the average enzyme’s <i>k<\/i><sub>cat<\/sub>\/<i>K<\/i><sub>m<\/sub><small>in the paper’s abstract<\/small><\/th>\s*<td class="stats-num">about 10⁵\u00a0M⁻¹\u00a0s⁻¹<\/td><td class="stats-num stats-muted">—<\/td><\/tr>/);
     assert.doesNotMatch(table.body, /colspan/, "The reference value stands in the Median column, under CatLog's median");
     assertPlainCaption(table.caption);
     assert.match(table.rules, /about 10⁵ M⁻¹ s⁻¹ \(10² mM⁻¹ s⁻¹\)\.$/);

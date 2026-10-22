@@ -1228,6 +1228,8 @@ the rows centred on their line).
 | Km and substrate size | supplement, Values | the Km records by the substrate's non-hydrogen atoms (counted from a one-piece SMILES: 1–5, 6–10, 11–15, 16–20, 21–30, 31–50, 51 or more) as medians and middle 80%; within a panel of four or more substrates of at least two sizes, Spearman's ρ of size and median Km, bars of 0.25 centred on −1 ... 1, a dashed line at no trend (all-equal Km counts at 0) |
 | The typical wild-type enzyme (Table) | supplement, Values' first table | each parameter's median and 10–90% over its wild-type records (a calculated kcat/Km included, as the rule says), its records, papers and enzymes on a line under its name (three columns, so it fits a phone), beside the average enzyme of Bar-Even et al., Biochemistry 2011 (its value in the Median column, right under CatLog's median kcat/Km in M⁻¹ s⁻¹, its 10–90% a dash) (doi:10.1021/bi2002289; its link is a stats-ref-link that opens the DOI in a new tab, as the record's DOI links do: stats-link always opens Browse) |
 
+The round 16 figures keep a number with its unit (a no-break space in "10 °C", "1 °C" and "28,000 M⁻¹ s⁻¹") and write the
+name with a non-breaking hyphen (Bar‑Even, U+2011), so a phone line never ends at "per 10" or "Bar-" (round 16 review).
 Bar-Even et al. 2011 was checked against the paper's abstract (PubMed 21506553 and Europe PMC, 2026-10-21): the average
 enzyme's kcat/KM is about 10⁵ s⁻¹ M⁻¹ there, so only that number is set beside CatLog's (a constant in the page,
 STATS_BAR_EVEN, with the link). Its kcat and KM medians are not used: PubMed's copy of the abstract lost the kcat's digit

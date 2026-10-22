@@ -5525,13 +5525,13 @@
           const summary = strict.metrics[metric.key];
           return `<tr data-count="${summary.pairs}"><th scope="row">${metric.html}</th><td class="stats-num">${formatInteger(summary.pairs)}</td><td class="stats-num">${statsFoldText(summary.median, true)}</td><td class="stats-num">${escapeHtml(statsShare(summary.within_2, summary.pairs))}</td><td class="stats-num">${escapeHtml(statsShare(summary.within_10, summary.pairs))}</td></tr>`;
         }).join("")}</tbody></table>
-      <p class="stats-note">At the same temperature (to 1 °C) and pH (to 0.1): ${statsUsedText(...strictCounts)}.</p>` : "";
+      <p class="stats-note">At the same temperature (to 1\u00a0°C) and pH (to 0.1): ${statsUsedText(...strictCounts)}.</p>` : "";
     const identical = metrics.map((metric) => `${formatInteger(between.metrics[metric.key].identical_left_out)} for ${STATS_METRIC_WORDS[metric.key]}`);
     return {
       id: "statsPairsTitle", key: "between-papers", title: "Between papers", wide: true,
       body: `<div class="stats-ranges stats-pairs">${panels.join("")}</div>${table}`,
       caption: escapeHtml(`Wild-type values of one enzyme (UniProt entry) and substrate in two papers, from ${statsUsedText(records, papers, enzymes)}; assays and constructs differ between papers, so a difference is not all error.`),
-      rules: `Each paper’s value is the median of its records for that enzyme and substrate (matched by structure, else by name), whatever their conditions, a kcat/Km calculated as kcat ÷ Km included; a pair of papers counts once per enzyme, substrate and parameter. Pairs giving the very same number are left out, as often one paper prints the other’s value again: ${statsListText(identical)}. The table compares two papers only at a temperature (to 1 °C) and pH (to 0.1) both give. Each bar is a quarter of a power of ten; the last holds 100-fold and more. Values without a recorded unit, or in another unit, are left out.`,
+      rules: `Each paper’s value is the median of its records for that enzyme and substrate (matched by structure, else by name), whatever their conditions, a kcat/Km calculated as kcat ÷ Km included; a pair of papers counts once per enzyme, substrate and parameter. Pairs giving the very same number are left out, as often one paper prints the other’s value again: ${statsListText(identical)}. The table compares two papers only at a temperature (to 1\u00a0°C) and pH (to 0.1) both give. Each bar is a quarter of a power of ten; the last holds 100-fold and more. Values without a recorded unit, or in another unit, are left out.`,
     };
   }
 
@@ -5624,7 +5624,7 @@
       id: "statsKmSizeTitle", key: "km-size", title: "<i>K</i><sub>m</sub> and substrate size", wide: true,
       body: correlation ? `<div class="stats-insight-pair">${sizes}${correlation}</div>` : sizes,
       caption: metricWordsHtml(escapeHtml(`Km of wild-type records read from the paper by substrate size (${statsUsedText(records, papers, enzymes)})${correlation ? " and, within one enzyme’s substrates, its rank correlation with size" : ""}; each size holds different enzymes${correlation ? ", so only the correlation compares substrates of one enzyme" : ""}.`)),
-      rules: `Size is the number of non-hydrogen atoms in the substrate’s structure (SMILES); a structure in several pieces is left out. The dot is the median and the line the middle 80% (10th to 90th percentile), as in Value ranges; n is the size’s number of records.${rules} Bar-Even et al. (Biochemistry 2011) found that low molecular mass appears to limit Km optimization.`,
+      rules: `Size is the number of non-hydrogen atoms in the substrate’s structure (SMILES); a structure in several pieces is left out. The dot is the median and the line the middle 80% (10th to 90th percentile), as in Value ranges; n is the size’s number of records.${rules} Bar\u2011Even et al. (Biochemistry 2011) found that low molecular mass appears to limit Km optimization.`,
     };
   }
 
@@ -5645,7 +5645,8 @@
     // Each bin runs from its edge to below the next, so no edge is in two labels (30 °C, a common assay temperature, is in
     // "30 to <40" alone); the tooltip line says it in words.
     const label = (item) => (item.from === null ? `below ${item.below}` : item.below === null ? `${item.from} or more` : `${item.from} to <${item.below}`);
-    const words = (item) => (item.from === null ? `Below ${item.below} °C` : item.below === null ? `${item.from} °C and above` : `${item.from} °C to below ${item.below} °C`);
+    // (a no-break space keeps each number with its unit, here and in the panel's heading and caption)
+    const words = (item) => (item.from === null ? `Below ${item.below}\u00a0°C` : item.below === null ? `${item.from}\u00a0°C and above` : `${item.from}\u00a0°C to below ${item.below}\u00a0°C`);
     const byBin = statsMediansPanel({ key: "kcat-temperature", head: "n", labelWidth: "6em",
       heading: `<i>k</i><sub>cat</sub> <span class="stats-range-unit">(s⁻¹) by assay temperature (°C)</span>`,
       rows: bins.map((item) => ({ ...item, low: item.p10, high: item.p90, label: label(item),
@@ -5668,21 +5669,21 @@
         const high = statsFoldWords(centre + width / 2);
         return index === 0 ? `below ${high}` : index === STATS_Q10_BINS - 1 ? `${low} or more` : `${low}–${high}`;
       };
-      change = statsInsightPanel({ key: "q10", heading: `Within one paper’s series <span class="stats-range-unit">(Q<sub>10</sub>: fold change per 10 °C)</span>`,
+      change = statsInsightPanel({ key: "q10", heading: `Within one paper’s series <span class="stats-range-unit">(Q<sub>10</sub>: fold change per 10\u00a0°C)</span>`,
         facts: [["Median Q<sub>10</sub>", statsRangeNumber(series.median, { html: true, figures: 2 })],
           ["Middle half", `${statsRangeNumber(series.p25, { html: true, figures: 2 })}–${statsRangeNumber(series.p75, { html: true, figures: 2 })}`],
           ["Rises with temperature", escapeHtml(share(series.rising))]],
         counts: series.counts, tip: (n, index) => `Q₁₀ ${binText(index)}: ${seriesWord(n)} (${share(n)})`,
         axis: statsTicksAt([[Math.log10(0.5), "0.5"], [0, "1"], [Math.log10(2), "2"], [Math.log10(5), "5"], [1, "10"]], from, span),
         line: { at: (0 - from) / span * 100, label: "no change" }, linear: true,
-        label: `kcat change per 10 °C within one paper’s temperature series: ${seriesWord(count)}; median Q₁₀ ${statsRangeNumber(series.median, { figures: 2 })}, middle half ${statsRangeNumber(series.p25, { figures: 2 })}–${statsRangeNumber(series.p75, { figures: 2 })}; kcat rises with temperature in ${share(series.rising)}.`,
+        label: `kcat change per 10\u00a0°C within one paper’s temperature series: ${seriesWord(count)}; median Q₁₀ ${statsRangeNumber(series.median, { figures: 2 })}, middle half ${statsRangeNumber(series.p25, { figures: 2 })}–${statsRangeNumber(series.p75, { figures: 2 })}; kcat rises with temperature in ${share(series.rising)}.`,
         count: `${seriesWord(count)} of two or more temperatures` });
       rules = ` A series is one enzyme and substrate in one paper at two or more temperatures with one cosubstrate and pH (${seriesWord(count)}: ${statsUsedText(series.records, series.papers, series.enzymes)}); Q₁₀ is 10 to the power of ten times the least-squares slope of log10 kcat against temperature. Its bars are a tenth of a power of ten; the end bars hold every value beyond them.`;
     }
     return {
       id: "statsTemperatureTitle", key: "kcat-temperature", title: "<i>k</i><sub>cat</sub> and assay temperature", wide: true,
       body: change ? `<div class="stats-insight-pair">${byBin}${change}</div>` : byBin,
-      caption: metricWordsHtml(escapeHtml(`kcat of wild-type records read from the paper by assay temperature (${statsUsedText(records, papers, enzymes)})${change ? " and its change per 10 °C within one paper’s series" : ""}; each bin holds different enzymes${change ? ", and a series can pass the enzyme’s best temperature" : ""}.`)),
+      caption: metricWordsHtml(escapeHtml(`kcat of wild-type records read from the paper by assay temperature (${statsUsedText(records, papers, enzymes)})${change ? " and its change per 10\u00a0°C within one paper’s series" : ""}; each bin holds different enzymes${change ? ", and a series can pass the enzyme’s best temperature" : ""}.`)),
       rules: `Each bin starts at its lower edge and ends below the next; the dot is the median and the line the middle 80% (10th to 90th percentile), as in Value ranges; n is the bin’s number of records.${rules}`,
     };
   }
@@ -5694,7 +5695,8 @@
   // ~10⁵ s⁻¹ M⁻¹ (checked in the abstract on PubMed and Europe PMC, 2026-10-21); its kcat and KM medians are not set beside
   // CatLog's: the abstract's kcat lost a digit in PubMed's copy and the full text could not be checked.
   // (log10 of the kcat/KM in M⁻¹ s⁻¹)
-  const STATS_BAR_EVEN = { href: "https://doi.org/10.1021/bi2002289", name: "Bar-Even et al. 2011", log10KcatOverKm: 5 };
+  // (the name's hyphen is a non-breaking one, U+2011, so a line never ends at "Bar-")
+  const STATS_BAR_EVEN = { href: "https://doi.org/10.1021/bi2002289", name: "Bar\u2011Even et al. 2011", log10KcatOverKm: 5 };
 
   function statsTypicalTable(typical) {
     const rows = STATS_METRICS.filter((metric) => {
@@ -5710,13 +5712,13 @@
       <thead><tr><th scope="col">Parameter</th><th scope="col" class="stats-num">Median</th><th scope="col" class="stats-num">10–90%</th></tr></thead>
       <tbody>${rows.map((metric) => {
         const item = typical[metric.key];
-        const molar = metric.key === "kcat_over_km" ? `<small>${cell(item.median * 1000)} M⁻¹ s⁻¹</small>` : "";
+        const molar = metric.key === "kcat_over_km" ? `<small>${cell(item.median * 1000)}\u00a0M⁻¹\u00a0s⁻¹</small>` : "";
         const counts = statsUsedText(item.n, item.papers, item.enzymes);
         return `<tr data-stat-key="typical_${metric.key}" data-count="${item.n}"><th scope="row">${metric.html} <span class="stats-muted nowrap">(${escapeHtml(metric.unit)})</span><small>${counts}</small></th>
           <td class="stats-num">${cell(item.median)}${molar}</td><td class="stats-num stats-muted">${cell(item.p10)}–${cell(item.p90)}</td></tr>`;
       }).join("")}
         <tr class="stats-row-reference"><th scope="row"><a class="stats-ref-link" href="${escapeHtml(STATS_BAR_EVEN.href)}" target="_blank" rel="noreferrer">${escapeHtml(STATS_BAR_EVEN.name)}</a>: the average enzyme’s <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub><small>in the paper’s abstract</small></th>
-          <td class="stats-num">about ${statsPowerOfTen(STATS_BAR_EVEN.log10KcatOverKm)} M⁻¹ s⁻¹</td><td class="stats-num stats-muted">${EMPTY_VALUE}</td></tr></tbody></table>`;
+          <td class="stats-num">about ${statsPowerOfTen(STATS_BAR_EVEN.log10KcatOverKm)}\u00a0M⁻¹\u00a0s⁻¹</td><td class="stats-num stats-muted">${EMPTY_VALUE}</td></tr></tbody></table>`;
     return {
       id: "statsTypicalTitle", key: "typical", title: "The typical wild-type enzyme", kind: "Table", body,
       caption: escapeHtml(`Medians of the wild-type records read from the paper, each row with its records, papers and enzymes, beside the average enzyme of ${STATS_BAR_EVEN.name}; CatLog counts every substrate and assay a paper reports, not one value per enzyme.`),
