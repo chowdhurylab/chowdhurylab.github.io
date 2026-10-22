@@ -216,7 +216,7 @@
     printed_unit_prefix_differs: 2,
   };
 
-  // Against the databases: how a record's values compare with the numbers the compared databases (comparedDatabases())
+  // Compared with databases: how a record's values compare with the numbers the compared databases (comparedDatabases())
   // list for the same paper. The record index carries it as one number per record (database_summary, written by
   // scripts/build-catlog-viewer-index.py when the Table download has the comparison; DATABASE_SUMMARY_BITS); the group
   // shows only then. Each option is a test of that number (rowDatabaseBits).
@@ -3375,7 +3375,7 @@
     const hasKi = Boolean(metricSummary.has_ki) && metricHasValue(metricSummary, "ki");
     const temperature = formatTemperature(summary);
     const ph = formatPh(summary);
-    // Against the databases (section G), as the record says it: each value's result, or the earlier review's changes.
+    // Compared with databases (section G), as the record says it: each value's result, or the earlier review's changes.
     const check = recordCheck(summary);
     const databaseComparison = (v2Record && proof ? v2DatabaseRows(summary, detail, proof, check) : []).map(({ metric, facts }) => {
       const phrase = databaseResultPhrase(facts);
@@ -4008,7 +4008,7 @@
 
   const STATS_SUPPLEMENT_TITLE = "Supplementary figures and tables";
   // The groups the supplement lists its items under, in the main parts' words and order.
-  const STATS_SUPPLEMENT_GROUPS = [["quality", "Quality"], ["catalog", "What is in the catalog"], ["biology", "Organisms, enzymes and variants"], ["values", "Values"], ["databases", "Against the databases"]];
+  const STATS_SUPPLEMENT_GROUPS = [["quality", "Quality"], ["catalog", "What is in the catalog"], ["biology", "Organisms, enzymes and variants"], ["values", "Values"], ["databases", "Compared with databases"]];
   // Addresses of parts the supplement took over (round 14): #stats-biology opens What is in the catalog (its enzyme
   // classes), #stats-cautions the Cautions table.
   const STATS_ADDRESS_ALIASES = { biology: "catalog", cautions: "cautions" };
@@ -4073,7 +4073,7 @@
   }
 
   // A numbered part of the page (the user, 2026-10-13: At a glance, Quality, What is in the catalog, Biology, Values,
-  // Cautions, Against the databases), with one plain heading and its figures on a 12-column grid.
+  // Cautions, Compared with databases), with one plain heading and its figures on a 12-column grid.
   function statsPartHtml(number, key, title, blocks, { intro = "" } = {}) {
     const id = `statsPart${key.charAt(0).toUpperCase()}${key.slice(1)}Title`;
     return `<section class="stats-part" id="stats-${escapeHtml(key)}" data-part="${key}" aria-labelledby="${id}">
@@ -5703,7 +5703,7 @@
     };
   }
 
-  // Values against the databases by enzyme class (from_paper_insights.database_by_class): a 100% bar per class of the
+  // Values compared with databases by enzyme class (from_paper_insights.database_by_class): a 100% bar per class of the
   // values read from the paper, by each value's own result, counted as Figure 8 counts them; the class links to its
   // records read from the paper. The class colour stays off this figure: its segments are the results' colours.
   const STATS_CLASS_RESULT_KEYS = { same: "same", "other-label": "other_label", corrects: "corrects", differs: "differs", "not-listed": "not_listed" };
@@ -5720,10 +5720,10 @@
     }).filter((row) => row.count > 0);
     if (!rows.length) return null;
     return {
-      id: "statsDbClassesTitle", key: "db-classes", title: "Against the databases by enzyme class", wide: true,
+      id: "statsDbClassesTitle", key: "db-classes", title: "Compared with databases by enzyme class", wide: true,
       body: statsBarChart({ key: "db-classes", rows, legend: STATS_DATABASE_RESULTS.map((result) => ({ part: result.part, label: escapeHtml(result.label) })),
         percent: true, axis: statsAxis(100, 25, { percent: true }), valueHeads: ["Values"] }),
-      caption: "Values read from the paper by enzyme class and result against the databases.",
+      caption: "Values read from the paper by enzyme class and result compared with databases.",
       rules: `A record in several classes counts in each. Each bar is its class’s compared values; the tooltip gives the counts, and shares on ${formatInteger(STATS_RATE_BASE)} values or more.`,
     };
   }
@@ -6522,7 +6522,7 @@
     if ($("guideAcceptedDefinition")) $("guideAcceptedDefinition").innerHTML = keepReRead(escapeHtml(guideAcceptedDefinition()));
   }
 
-  // ---- Guide: Against the databases (#guide-databases) ----
+  // ---- Guide: Compared with databases (#guide-databases) ----
   // The Guide's own section on the comparison (round 9 brief, piece 8; round 14, the user: a short Guide): the lead, the
   // six results Browse's group offers with this snapshot's values and records, then the cause of a correction, how one is
   // found and why no database lists a value, each counted where the manifest's summary.database_comparison gives it (a
@@ -6828,7 +6828,7 @@
     return wide + tall;
   }
 
-  // Part 7, Against the databases: read only from the manifest's summary.database_comparison, which the CatLog side
+  // Part 7, Compared with databases: read only from the manifest's summary.database_comparison, which the CatLog side
   // writes with the snapshot. Each figure is drawn only when its keys are there as whole counts that hold together;
   // without them part 7 has only the earlier version's figures, or no heading at all. The databases, their order and
   // their names are comparedDatabases' (the comparison's own list, else the databases its counts name, else six).
@@ -7187,7 +7187,7 @@
     return html.replace(` ${STATS_NOTES_WORDS} `, () => ` <a class="stats-ref-link" href="${escapeHtml(datasetNotesHref())}" target="_blank" rel="noopener">${STATS_NOTES_WORDS}</a> `);
   }
 
-  // Figure: each value against the databases, a 100% bar per parameter and for all values; the thin results (corrects,
+  // Figure: each value compared with databases, a 100% bar per parameter and for all values; the thin results (corrects,
   // differs) have their counts right of the bar, each linking into Browse for that parameter.
   function statsDatabaseValuesFigure(comparison, values, sources) {
     const thin = STATS_DATABASE_RESULTS.filter((result) => result.thin);
@@ -7225,7 +7225,7 @@
     const notReproduced = statsNotReproducedHtml(comparison);
     const names = statsListText(sources.map((source) => statsDatabaseNameHtml(source.display)));
     return {
-      id: "statsDbValuesTitle", key: "db-values", title: "Values against the databases",
+      id: "statsDbValuesTitle", key: "db-values", title: "Values compared with databases",
       body: statsBarChart({ key: "db-values", rows, legend: statsDatabaseLegend(STATS_DATABASE_RESULTS), percent: true,
         axis: statsAxis(100, 25, { percent: true }), valueWidth: `calc(${chars}ch + 40px)`,
         valueHead: `<span class="stats-db-thin">${thin.map((result, index) => column(index, `<span class="stats-db-head">${result.head.map((line) => `<span class="nowrap">${escapeHtml(line)}</span>`).join("<br>")}</span>`)).join("")}</span>` })
@@ -8130,7 +8130,7 @@
       statsTemperatureFigure(insights.temperature), statsKmSizeFigure(insights.km_by_size), statsTypicalTable(insights.typical),
       statsPrintedUnitsTable(insights.printed_units), cautionsTable);
 
-    // 5. Against the databases (summary.database_comparison): a short lead, each value against the databases and the
+    // 5. Compared with databases (summary.database_comparison): a short lead, each value compared with databases and the
     // corrections by cause and how found; in the supplement the same by enzyme class, each database against the values
     // read from its papers, the values it pairs, the corrections by cause and database, then the earlier version's
     // corrections and its entries that reading the paper replaced. Each only when the snapshot has its counts.
@@ -8150,7 +8150,7 @@
     const compares = [...databases, ...databasesMore].some((item) => item.key !== "earlier-corrections" && item.key !== "replaced");
     const caveat = `<p class="stats-part-lead" data-lead="databases">${escapeHtml(STATS_DATABASE_CAVEAT)}</p>`;
     if (databases.length) {
-      parts.push({ key: "databases", title: "Against the databases", items: databases,
+      parts.push({ key: "databases", title: "Compared with databases", items: databases,
         intro: comparedValues ? statsDatabaseLeadHtml(comparison, comparedValues) + statsFactorOnlyNoteHtml(comparison) : compares ? caveat : "" });
     }
     const supplementIntro = { databases: !databases.length && compares ? caveat : "" };
@@ -8223,7 +8223,7 @@
         ${ruleRow(escapeHtml(SOURCE_CATLOG_LABEL), `Records ${escapeHtml(v2Sentence.charAt(0).toLowerCase() + v2Sentence.slice(1))}`)}
         ${ruleRow(escapeHtml(SOURCE_DATABASES_LABEL), `All other records: ${escapeHtml(SOURCE_DATABASES_HELP)}`)}` : ""}
         ${reviewRules ? ruleRow("Human review", metricWordsHtml(escapeHtml(reviewRules))) : ""}
-        ${compares || databases.length ? ruleRow("Against the databases", escapeHtml(`Numbers are compared within the same paper and parameter. Papers count when at least one of their values was compared. Shares are given only for ${formatInteger(STATS_RATE_BASE)} values or more.`)) : ""}
+        ${compares || databases.length ? ruleRow("Compared with databases", escapeHtml(`Numbers are compared within the same paper and parameter. Papers count when at least one of their values was compared. Shares are given only for ${formatInteger(STATS_RATE_BASE)} values or more.`)) : ""}
       </dl>${figureRules.length ? `<dl class="stats-method-figures">${figureRules.map(([term, title, rules]) => ruleRow(term, `<span class="stats-method-title">${title}.</span> ${escapeHtml(rules)}`)).join("")}</dl>` : ""}</details>`);
     $("statsCharts").innerHTML = keepReRead(statsSuperscriptsHtml(sections.join("")));
     // On this page: the parts in one line under the title, each a link to its part (#stats-<key>, the part's own
@@ -8778,7 +8778,7 @@
     return bits;
   }
 
-  // The "Against the databases" options a record matches, as databaseFilters bits: a value that corrects a database's
+  // The "Compared with databases" options a record matches, as databaseFilters bits: a value that corrects a database's
   // number, a different number whose cause is not yet known, the same number under another label, a value no database
   // lists, no database listing any value, every compared value the number a database lists, and an earlier record its
   // earlier version changed. The counts are the manifest's (summary.database_comparison: records_with_kind for the
@@ -8865,7 +8865,7 @@
     return (manifest.viewer_index?.optional_fields || []).includes("database_summary");
   }
 
-  // The Guide's sentences on Against the databases (Browse's filter group and the record's section) show only when the
+  // The Guide's sentences on Compared with databases (Browse's filter group and the record's section) show only when the
   // snapshot carries the comparison, as the group does; the Guide reads only the manifest, never the record index.
   function renderGuideDatabases() {
     if (typeof document.querySelectorAll !== "function") return;
@@ -8896,7 +8896,7 @@
       const row = input?.closest?.(".check-row");
       if (row) row.hidden = !(seen & item.bit) && !input.checked;
     });
-    // More filters' tooltip names the groups it holds (Against the databases only when shown).
+    // More filters' tooltip names the groups it holds (Compared with databases only when shown).
     const more = $("moreFilters");
     const title = more?.querySelector?.(":scope > summary");
     if (title) {
@@ -9157,7 +9157,7 @@
         $("aboutVariant").innerHTML = `<p>The enzyme form the record states; a variant’s mutation shows under the enzyme name.</p>
           <p id="variantNoneNote" hidden><span data-count="variant:none">${EMPTY_VALUE}</span> <span data-variant-none-words>records state neither.</span></p>`;
       }
-      // Against the databases: each result's square and name (a nested option's name is read with its parent's), its
+      // Compared with databases: each result's square and name (a nested option's name is read with its parent's), its
       // definition and counts in its title; Corrected earlier under a rule.
       if ($("databaseChecklist")) {
         $("databaseChecklist").innerHTML = databaseFilters.map((item) => checkRowHtml({
@@ -10015,7 +10015,7 @@
   }
 
   // More filters holds the specialist groups (the user, 2026-10-18): Source (first since round 14, the user 2026-10-20:
-  // "source can go to the extra filters"), Wild type or variant, Assay conditions, Against the databases, Cautions and
+  // "source can go to the extra filters"), Wild type or variant, Assay conditions, Compared with databases, Cautions and
   // Source database (a database of Not yet re-read). Its title counts the chips of those filters, as Filters counts all
   // of them, so a filter set there is never out of sight unannounced while it is closed ("More filters, 2 active"). The
   // keys follow the markup's groups.
@@ -12479,7 +12479,7 @@
   // lacks is not a row. A record read from the paper gives each value as printed and where it is printed; an older record
   // has no As printed column (a column of dashes would read as "nothing printed"), and a line under the table points to
   // its earlier review's notes under Paper when it has them. Under the table: a line for each value a database lists
-  // another number for (pointing to its note under Against the databases), the kcat/Km its sources list, each caution
+  // another number for (pointing to its note under Compared with databases), the kcat/Km its sources list, each caution
   // once (tan, with the "!" the value carries), the grey notes (how code converted a unit, calc.), then each line
   // quoted from the paper once. Facts only (where, what was printed, how it was converted), never reasoning.
   const VALUE_FIELDS = [
@@ -13542,7 +13542,7 @@
     return entry && typeof entry === "object" ? entry : null;
   }
 
-  // ---- Record panel: G. Against the databases ----
+  // ---- Record panel: G. Compared with databases ----
   // A record read from the paper (round 9 brief, section 4): the paper's own note on one database (a box, with a link to
   // the values it is about), each value a database lists with the same number in one line ("kcat and Km: Same as BRENDA
   // and OED."), then one folding note per value that is not the same (its summary: the parameter, which databases list
@@ -13595,7 +13595,7 @@
   const EARLIER_ADDITIONS_INTRO = "CatLog’s earlier version added these values from the paper; the source had none.";
   const DATABASE_VALUES_NOTE = "Not yet checked; the values are the database’s.";
   const DATABASE_SOURCE_BITS = 2 | 4 | 8 | 16 | 32 | 64;
-  // Browse's "Against the databases" filter group (#browse?db=..., options named "database"; databaseFilters gives each
+  // Browse's "Compared with databases" filter group (#browse?db=..., options named "database"; databaseFilters gives each
   // option's words): the options a record matches, by its values' results (the filter keys above) or its earlier
   // corrections. A link shows only where Browse can filter by it (databaseBrowseOption).
   const DATABASE_FILTER_PARAM = "db";
@@ -13785,7 +13785,7 @@
     return facts.phraseOnly || lineIsResult ? facts.sentence.charAt(0).toUpperCase() + facts.sentence.slice(1) : "";
   }
 
-  // What a value does against the databases, from its result and database_sources (never from its line), for the
+  // What a value does compared with databases, from its result and database_sources (never from its line), for the
   // pointer under the Values table: "corrects SABIO-RK and OED", "differs from BRENDA".
   function databasePointerPhrase(filter, sources = []) {
     const names = sentenceList(sources.map(databaseDisplayName));
@@ -13794,7 +13794,7 @@
   }
 
   // Section B's pointer (a value that corrects or differs): one 12px line under the Values table, the parameter and a
-  // link-like button that opens the value's note under Against the databases ("kcat/Km: corrects SABIO-RK and OED ↓");
+  // link-like button that opens the value's note under Compared with databases ("kcat/Km: corrects SABIO-RK and OED ↓");
   // the note says the rest, once.
   function databasePointersHtml(proof) {
     return (proof?.lines || []).map((line) => {
@@ -13804,11 +13804,11 @@
       if (!field || (filter !== "corrects" && filter !== "differs")) return "";
       return `<p class="cmp-pointer">${metricWordsHtml(escapeHtml(line.metric))}: `
         + `<button class="text-button cmp-pointer-link" type="button" data-show-note="${escapeHtml(field)}">${escapePublic(databasePointerPhrase(filter, facts.sources))}`
-        + `<span class="visually-hidden">, see Against the databases</span><span aria-hidden="true"> ↓</span></button></p>`;
+        + `<span class="visually-hidden">, see Compared with databases</span><span aria-hidden="true"> ↓</span></button></p>`;
     }).join("");
   }
 
-  // The value's note under Against the databases, opened, scrolled into view and focused, outlined a moment.
+  // The value's note under Compared with databases, opened, scrolled into view and focused, outlined a moment.
   function showDatabaseNote(field) {
     const note = document.querySelector?.(`#detailContent .cmp-note[data-cmp-field="${field}"]`);
     if (!note) return;
@@ -14018,7 +14018,7 @@
   function databaseAboutHtml() {
     const sources = comparedDatabases();
     const guide = guideDatabaseSummary() || databaseComparisonIndexed()
-      ? `<p><a href="#guide-databases">Against the databases in the Guide<span aria-hidden="true">&nbsp;&rarr;</span></a></p>` : "";
+      ? `<p><a href="#guide-databases">Compared with databases in the Guide<span aria-hidden="true">&nbsp;&rarr;</span></a></p>` : "";
     return `<p class="cmp-compared">Compared with the values ${databaseNamesHtml(sources.map((item) => item.display))} `
       + `${sources.length > 1 ? "list" : "lists"} for the same paper.</p>${guide}`;
   }
@@ -14033,7 +14033,7 @@
     return databaseCautionShown(rows) ? `<p class="section-note cmp-caution-line">${escapeHtml(DATABASE_COMPARED_CAPTION)}</p>` : "";
   }
 
-  // A record read from the paper: its values against the databases, or "" when the snapshot carries no comparison.
+  // A record read from the paper: its values compared with databases, or "" when the snapshot carries no comparison.
   // Notes on a value that corrects or differs are open: every one from 641px, only the first on a phone (not remembered).
   function v2DatabaseComparisonHtml(summary, detail, rows, paperRef) {
     const paperNotes = (Array.isArray(detail.database_note) ? detail.database_note : [detail.database_note])
@@ -14305,7 +14305,7 @@
       if (corrections.length) body = earlierCorrectionsHtml(corrections, summary.record_key);
     }
     // An earlier record's section is headed as Browse's option names it (Corrected earlier): no database is compared there.
-    return body ? detailSection("databases", v2Record ? "Against the databases" : DATABASE_RESULT_NAMES.earlier, body, { about, aboutLabel: "About the comparison with the databases" }) : "";
+    return body ? detailSection("databases", v2Record ? "Compared with databases" : DATABASE_RESULT_NAMES.earlier, body, { about, aboutLabel: "About the comparison with the databases" }) : "";
   }
 
   // A database record the earlier review did not settle, with a paper to check it against: its values are the database's

@@ -525,7 +525,7 @@ def most_common(spellings):
 
 
 # Corrections on records not yet re-read (Stats part 7, "Corrections on records not yet re-read"): each earlier record's
-# corrections list in the Full data, as its record panel lists it under Against the databases. Per value field, the
+# corrections list in the Full data, as its record panel lists it under Compared with databases. Per value field, the
 # changes of the four kinds the figure draws (more digits or rounding, a different number, unit or magnitude, added);
 # every other change (another field, or another kind) is counted apart; and of the changed values (those with a value
 # before), how many had before the change a number a database lists for that paper (the item names it: "listed").
@@ -814,7 +814,7 @@ def printed_units(counts):
     return result or None
 
 
-# The values read from the paper against the databases, by enzyme class: each value's own result (its proof line's
+# The values read from the paper compared with databases, by enzyme class: each value's own result (its proof line's
 # database_status), as Stats part 7's figures count them: the same number, the same number under another label, corrects
 # a database's number, a different number or in none of the databases. A record in several classes counts in each.
 DATABASE_CLASS_RESULTS = {"confirmed": "same", "same_number_other_label": "other_label", "corrected": "corrects",

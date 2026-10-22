@@ -255,14 +255,14 @@ example "e.g. 3 or 1.1.1" and its title say that a class, a subclass or a full n
 only group without a "?": its fields are labelled and a "?" would wrap its long title at 256px), Measurement type (Has kcat, Has Km, Has kcat/Km; its "?" says that ticking several shows records with all of them), Review result (Accepted, Not
 confirmed, Not checked and Disputed, each after its status dot, the boxes neutral as everywhere in the sidebar (round 15
 polish: one pattern, the option's own mark between box and words, the dot, square or "!" in the square's 10px slot, so
-the words of Review result, Against the databases and Cautions start at one edge); "Only
+the words of Review result, Compared with databases and Cautions start at one edge); "Only
 human-checked" sits under Accepted (shown as the green "✓ human-checked" tag, read
 out "Only human-checked"; a wide font in the 256px sidebar breaks it after the
 hyphen, never into its count), and ticking it ticks Accepted;
 its count waits for the review marks; unticking Accepted unticks it; its "?" gives
 the four results and human-checked in one short sentence each, "Accepted — read
 from the paper by CatLog, ...", a dash after the result and the sentence in lower case after it, never
-"Accepted: Read from the paper:"; every group's "?" (Source, Against the databases, Cautions too) gives a name, a dash
+"Accepted: Read from the paper:"; every group's "?" (Source, Compared with databases, Cautions too) gives a name, a dash
 and its definition this way, the definition in lower case unless it starts with a name such as Km or CatLog
 (aboutDefinition; round 14) (each option's
 title has the full definition) with a link to the Guide's #guide-status, where
@@ -281,7 +281,7 @@ Read from the paper's as the method's short form) and links to the Guide's #guid
 re-read are their own group, Source database, last under More filters; Source keeps its group dot (its chips' colour) and is
 open inside More filters), then Wild type or variant (its "?" says what the form is and how many records state neither, "1 record does not ...",
 the line hidden when none) and Assay conditions (temperature °C and pH, from and to, either may be empty; a bound that is not a number is outlined and
-ignored; the count beside each is the records that give one, as its "?" says), open inside it like Source, then Against the databases (shown only when the snapshot carries the comparison:
+ignored; the count beside each is the records that give one, as its "?" says), open inside it like Source, then Compared with databases (shown only when the snapshot carries the comparison:
 the record index's optional database_summary, one number per record that
 scripts/build-catlog-viewer-index.py takes from the Table download's database
 fields or the Full data download of the same records (where the CatLog side's
@@ -365,7 +365,7 @@ No cautions; Corrected earlier) have no mark: their words are enough. A group's 
 aria-hidden, hung in the 16px gutter so the titles keep their width) only where its filter has a meaning colour:
 Cautions' tan dot, and Source's cyan square while Read from the paper is chosen; none beside the enzyme fields, the
 measurement and Source database (round 13's dot there wore the accent: decoration once the chips lost their colour), nor
-beside Review result and Against the databases, whose options each have their own mark. The words read 15:1 or more on
+beside Review result and Compared with databases, whose options each have their own mark. The words read 15:1 or more on
 the white chip and the × 4.5:1. Undo comes first in the bar whenever the bar shows, dimmed
 ("Nothing to undo") until a change of the filters reaches the results (a box ticked, a field typed, a chip removed,
 Clear all, Back or a link that sets filters; never the address a page opens with); it then restores the set before
@@ -757,7 +757,7 @@ for all entries"): a record is a curated entry, not a log. Each section says onl
 what is the same on every record (how CatLog reads and checks a value, that code converts units, the license and the
 snapshot) is the Guide's, linked once under Checks ("How CatLog reads a value →", #guide-how-read), or the footnote's.
 A field the header gives (form, the source of a record read from the paper, where the values are printed) is not
-repeated in a section. The order: A (header), B (Values), G (Against the databases, or Corrected earlier), H (Checks),
+repeated in a section. The order: A (header), B (Values), G (Compared with databases, or Corrected earlier), H (Checks),
 C (Source: an older record's database only), D (Conditions), E (Protein and substrate), F (Paper), then the footer
 (Download record and Report a problem, then a 12px muted footnote: "License: ..." and "Snapshot Oct 15, 2026 · Data ID
 8a39252508" on lines of their own). So the values, how they compare with the databases and how far they were checked
@@ -973,7 +973,7 @@ come first, the context after.
   printed cell other than the value is quoted ("kcat 0.022 s⁻¹, printed
   “(2.2 ± 0.1) x 10-2”"), "+/-" reads ±, "PubMed XML abstract PMID n" reads
   "Abstract" and "ScienceDirect HTML Table 1" "Table 1".
-- G. Against the databases (only when there is something to say; round 9 brief,
+- G. Compared with databases (only when there is something to say; round 9 brief,
   section 4). A record whose values were compared has a 24px round "?" 8px after
   its heading's words (the filter groups' "?": the same circle, `--line-strong`
   outline, accent tint while open; centred on the heading's 20px line; on phones
@@ -984,7 +984,7 @@ come first, the context after.
   the same paper. A different number can mean a different measurement; it does
   not by itself mean a database is wrong." (names from the manifest, each kept
   whole on one line: SABIO-RK never breaks at its hyphen nor STRENDA DB at its
-  space; never a counted "five"), then "Against the databases in the Guide →"
+  space; never a counted "five"), then "Compared with databases in the Guide →"
   (#guide-databases, when the Guide has that section). The caveat is not in the
   box: it stands under Different number only, as one line under the notes of a
   record with such a value, never as a footer on every record (the user, 2026-10-15:
@@ -1054,7 +1054,7 @@ come first, the context after.
   titled "Corrects a value · Database: BRENDA · Compared value: kcat"); the paper's other records are linked once,
   under Paper (no "All records of this paper" here). Under the Values table (section B), a value that corrects or differs
   gets one short 12px line, the parameter and a link-like button, "kcat/Km: corrects BRENDA and OED ↓" or "Km: differs
-  from SABIO-RK ↓" (its accessible name adds "see Against the databases"; no square beside CatLog's number), whose button
+  from SABIO-RK ↓" (its accessible name adds "see Compared with databases"; no square beside CatLog's number), whose button
   opens that value's note, scrolls it to the middle and focuses it.
   An earlier corrected record (not yet re-read) with its correction trail, headed
   "Corrected earlier" (Browse's name for it; no database is compared there, the
@@ -1124,7 +1124,7 @@ come first, the context after.
   values as printed (each with the whole line quoted from the paper, which the
   record cuts at 240 characters), AI audit, cautions and human review (with
   human_approved_values, the values the record shows with a check), and, when the snapshot
-  carries them, Against the databases (each value's result, line, cause and
+  carries them, Compared with databases (each value's result, line, cause and
   evidence; or the earlier review's changes, Before, After and the kind of
   change; never an empty list or a local path); the license as the record
   shows it, once. The earlier pipeline's internal fields stay in the
@@ -1184,12 +1184,12 @@ table (fix pass after round 16b; a donut until then), records by main source wit
 the manifest has summary.publication_years), then the enzyme classes with accepted and read-from-the-paper records), 4 Values (value ranges on one log axis per parameter; then, from the records read from
 the paper, Between papers (round 16) after the ranges, kcat against Km as a density map with lines of equal kcat/Km, the
 diffusion limit and each class's median, Substrate specificity (round 16), and variants against their wild type of the
-same paper, enzyme, substrate, pH and temperature), 5 Against the databases
+same paper, enzyme, substrate, pH and temperature), 5 Compared with databases
 (from the manifest's database comparison: a two-sentence lead that says once that a different number can mean a different
 measurement, and (round 16b) how the corrections were found and that they are a lower bound, values against the
 databases, corrections by cause), then S Supplementary figures and tables (round 14):
 every other figure and table, numbered apart (Figure S1, Table S1), in five groups (Quality; What is in the catalog;
-Organisms, enzymes and variants, called Biology until round 14's polish; Values; Against the databases), each item one
+Organisms, enzymes and variants, called Biology until round 14's polish; Values; Compared with databases), each item one
 closed line (a details whose summary holds its number and title) that opens its figure, with its own address
 (#stats-s3, #stats-table-s2) that opens it; new there: papers by parameter, single substitutions by residue, kinds of
 variant and units as printed, counted by build_overview from the records read from the paper; round 16 added kcat and
@@ -1312,12 +1312,12 @@ link to them; keep every one):
   "found automatically", never "code", as the README does.
 - Read a record (#guide-record): "Select a row to open its record." then a record drawn as the panel draws it, in the
   panel's order (title, EC · organism · form, substrate; the status line with tags; the values table with ticks, As
-  printed and its caption "Printed in Table 1"; the quoted line "In the paper: …"; Against the databases, the real
+  printed and its caption "Printed in Table 1"; the quoted line "In the paper: …"; Compared with databases, the real
   record's three lines, 07fd908d4f44bfe6, BRENDA's Km 10× the paper's 0.82 µM; Checks with Second check and Human
   review; Conditions, Protein and substrate and Paper as plain labels), each part numbered (plain 14px accent figures,
   no discs, as a journal figure labels its parts), beside a numbered key of one
   short line each (under it below 900px); the Checks key line links How CatLog reads a value. A part the snapshot lacks
-  (Against the databases) is hidden with its key line, so the numbers stay in sequence. On phones the example's values
+  (Compared with databases) is hidden with its key line, so the numbers stay in sequence. On phones the example's values
   table puts each As printed under its value. When the record's sections change, this example changes with them.
 - Labels and colours (#guide-status): a grid of legends under hairlines (two columns, one below 760px), no intro line:
   Review result (the table's badges, a few words each; Accepted's words follow the review rules the snapshot follows,
@@ -1325,7 +1325,7 @@ link to them; keep every one):
   Not reviewed (no PMID or DOI)" and no paper linked "No PMID or DOI, so the value cannot be traced to a paper." hold
   under both and stay as the page writes them), Tags (from paper, by CatLog's current, second version, said once,
   linked to the method; not re-read; earlier extraction; corrected; no paper linked; human-checked with its tick and
-  green), Marks beside a value (tick, "!", calc., dash; side by side on phones too), Against the databases (the five
+  green), Marks beside a value (tick, "!", calc., dash; side by side on phones too), Compared with databases (the five
   squares in Browse's colours, shown with the comparison) and Filters in use (the chips as Browse draws them, each in
   its group's colour, across both columns, and one line: "× removes a filter; Undo brings back the last change."). Then
   Cautions (#guide-cautions, an h3): one line ("An ! beside a value flags a possible problem, which the record
@@ -1334,7 +1334,7 @@ link to them; keep every one):
   with what it means in brackets; Unit or magnitude error says once "The unit or the value may be wrong." (above
   diffusion limit: above 10¹⁰ M⁻¹ s⁻¹, the limit the caution uses). On phones each row stacks, its group as a 13px
   muted label. The evidence labels of records not yet re-read in a disclosure, a few words each.
-- Against the databases (#guide-databases, marked data-guide-database-section with its line in the contents and under
+- Compared with databases (#guide-databases, marked data-guide-database-section with its line in the contents and under
   Questions; shown when the manifest's summary.database_comparison is there, or the record index lists database_summary;
   written from the manifest only): the lead in two sentences (the compared databases from the manifest's sources list,
   else the databases its counts name, else the six in the code, never a typed "five"; then "This snapshot compares N
@@ -1364,10 +1364,10 @@ link to them; keep every one):
   (the contents, "Units" in the checklist, "Sources and licenses" in Cite) opens it (openGuidePart, from renderView and
   guideSectionHeading). Inside: Find records (Search with example chips and "Gene names are not indexed.", Filters (the
   groups in view: enzyme, EC number, organism, substrate; measurement type; review result), More filters (source, wild
-  type or variant, assay conditions, against the databases only when the Guide shows its database section, cautions
+  type or variant, assay conditions, compared with databases only when the Guide shows its database section, cautions
   and source database; it opens by itself when one is set), Share; "Try": example views in the #browse? format); Units
   (the three catalog units as hairline rows: name, unit, meaning; then calc., × 10ⁿ, Digits, T and pH, Missing and
-  Other units, one short line each); Downloads (Full data, Table, Against the databases when the manifest has its
+  Other units, one short line each); Downloads (Full data, Table, Compared with databases when the manifest has its
   comparison download, Format, Review files, the Download full data button); Cite (the paper, CatLog-27k, the citation
   line, Snapshot and Data ID, one note, the paper and README links); Sources and licenses (the list the manifest fills,
   the curation license).
@@ -1402,7 +1402,7 @@ Generated mockups guide layout only; their text is not a scientific source.
   under it when the text layer lost symbols (the snapshot's printed_line_note, or a replacement or private-use
   character).
 - Stats' Human review headline says beside its share how many entries had a value the reviewer could not find.
-- Stats' Against the databases figures and tables count the exact-factor values not yet checked against the paper
+- Stats' Compared with databases figures and tables count the exact-factor values not yet checked against the paper
   under Different number, as the lead does (overview.database_factor_only splits them by parameter and database).
 
 ## Round 14 words and polish
@@ -1417,7 +1417,7 @@ Generated mockups guide layout only; their text is not a scientific source.
   from the data (database lines, review notes, the README) are reworded where they are made, in catlog-v2.
 - The Download menu gives a file's rows, size and format on a line of their own under what it holds (the spans keep a
   line break: white-space pre-line), so no line starts with " · ": "185,804 rows · 42.6 MB · JSON Lines (gzip)" for Full
-  data and Table (fix pass: "Table" read like a spreadsheet), "CSV (gzip)" for Against the databases; a muted last line
+  data and Table (fix pass: "Table" read like a spreadsheet), "CSV (gzip)" for Compared with databases; a muted last line
   under a hairline says where a filtered set goes: "The records you filtered: Export results, above the table (CSV)."
 - Every disclosure opens with a muted + (− when open): Stats' How these numbers are counted and Fields saved in records
   that are not accepted, and the Guide's Questions and evidence labels, as the supplement, the record and the Guide's
@@ -1450,11 +1450,11 @@ Generated mockups guide layout only; their text is not a scientific source.
 
 ## Round 15 polish
 
-- Stats' percent charts (Values against the databases and the two supplement figures of earlier changes) give their
+- Stats' percent charts (Values compared with databases and the two supplement figures of earlier changes) give their
   shares in a table under the bars whose column heads are the legend's names, each after its swatch (a grid of
   percentages each behind a colour square, with no heads, had left colour the only key); on a phone the same numbers
   turn round (the results as rows, the chart's rows as four short heads), one table shown at a time. The two counts
-  beside Values against the databases' bars stand under the legend's own names in two lines, "Corrects / a value" and
+  beside Values compared with databases' bars stand under the legend's own names in two lines, "Corrects / a value" and
   "Different / number" (they had read "Corrects" and "Differs").
 - "On this page" is one component on Stats and the Guide: a 13px --muted label on its own line, then the parts as a
   wrapped row of 14px/500 links 20px apart (28px targets), no separators; Stats' links keep their parts' numbers, muted.
@@ -1467,7 +1467,7 @@ Generated mockups guide layout only; their text is not a scientific source.
   Figure S6 a database's Different number and Same, other label also count values whose own result is another, so they
   stay plain text.
 - The Guide's small slips: every group of Labels and colours keeps one 11.5em term column, so the definitions in one
-  column start at one x (Tags' had started 32px left of Against the databases'); the Reference's disclosures open with
+  column start at one x (Tags' had started 32px left of Compared with databases'); the Reference's disclosures open with
   the muted + every other disclosure has; a Results cell with no count shows the dash the Units section says marks no
   value.
 - One apostrophe, the typographic ’: escapeHtml sets it for an apostrophe after a letter and before an English ending
@@ -1540,7 +1540,7 @@ manifest's database comparison; a field an older snapshot lacks leaves its words
   hold together (a route above All) draw nothing.
 - Table S2's caption says who checked the values that differ and how many of how many ("AI agents checked 323 of the
   555 that differ against the paper; 232 are still to check."); values that cannot be compared count as checked.
-- Against the databases' lead keeps the corrections an AI check of the paper found apart from those an exact factor
+- Compared with databases' lead keeps the corrections an AI check of the paper found apart from those an exact factor
   found (when both counts add up to the corrections) and calls them a lower bound when the comparison says only
   differences of checked_from_factor-fold or more are checked.
 - STRENDA DB's numbers stay its own paired ones (values_by_database: Figure S6, Table S10); no agreement claim names it.
@@ -1578,7 +1578,7 @@ manifest's database comparison; a field an older snapshot lacks leaves its words
   organism), so kcat, Km and kcat/Km stay in the 536px pane at 1024px and the names get Organism's room at 1280px; the
   records title takes no row when nothing in it shows (its visually hidden lines kept a 30px row and a 45px empty band
   above Columns, Export and Sort). The browser check opens a record at 1024 and 1280px and measures both.
-- One key per percent chart: Values against the databases and the earlier version's corrections keep their legend (its
+- One key per percent chart: Values compared with databases and the earlier version's corrections keep their legend (its
   names link to Browse) and their share table's heads in words; the table's heads and the counts beside the bars no
   longer repeat the legend's swatches. A legend's linked names are underlined only under the pointer or focus, so a name
   with no Browse filter (Same number) does not look broken beside them.
@@ -1596,10 +1596,10 @@ manifest's database comparison; a field an older snapshot lacks leaves its words
   papers)" and "163,908 values confirmed, 5,993 corrected (3.5%); values it rejected are left out", from
   overview.from_paper.values and .checks, which build_overview counts at stage time from each value's proof line
   (check_result: confirmed, corrected or other); a snapshot without them keeps the method in words.
-- Against the databases' lead keeps two sentences but no longer splices: "Of the other 3,359, 2,681 correct a database’s
+- Compared with databases' lead keeps two sentences but no longer splices: "Of the other 3,359, 2,681 correct a database’s
   number (1,745 found by an AI check of the paper, 936 by an exact factor found automatically); the remaining 678 differ
   for a reason not yet known, and some may be other measurements in the paper rather than database errors." The note
-  under Values against the databases gives one total as the Dataset notes do (20,403 numbers that match no value CatLog
+  under Values compared with databases gives one total as the Dataset notes do (20,403 numbers that match no value CatLog
   read), then what CatLog has in another form (paired with a CatLog value of another number, a calculated kcat/Km,
   another parameter), the reprints and the possible misses, which are not yet checked (statsNotReproducedText), and links
   the Dataset notes (README_FIRST.txt, datasetNotesHref, as the Download menu names it) for the reasons of the rest.
@@ -1628,7 +1628,7 @@ manifest's database comparison; a field an older snapshot lacks leaves its words
 - Figure 1 (Review result) draws its results as one 100% bar over its legend table, as wide as the table (640px at
   most; statsStatusBar: a segment per result, Not checked's hatched, its count on its tooltip line, lit with its row);
   the donut with "185,804 records" in its hole repeated the table beside it and was the page's most dashboard-like mark.
-- Every 100% bar (Values against the databases, by enzyme class, by database, the earlier version's corrections) is one
+- Every 100% bar (Values compared with databases, by enzyme class, by database, the earlier version's corrections) is one
   length, 560px, wherever it stands (a narrower column shrinks it; on a phone it spans the row), its label, bar and
   value columns starting at the left: at 1440px they had been 900, 916, 580 and 584px.
 

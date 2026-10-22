@@ -207,7 +207,7 @@ TABLE_FIELDS = (
 OPTIONAL_TEXT_FIELDS = ("condition_note",)
 
 # How a record compares with the enzyme databases (each database the manifest lists, for the same paper), for the
-# sidebar's "Against the databases" group. The Table download may carry it in any of these shapes (the CatLog side's
+# sidebar's "Compared with databases" group. The Table download may carry it in any of these shapes (the CatLog side's
 # per-value database_status, a record-level summary and its list of kinds, or the earlier review's corrections list),
 # and so may the Full data download of the same records (catlog-enriched: each proof line's database_status, the
 # record's summary, kinds and corrections); the index reads both and writes one compact number per record,

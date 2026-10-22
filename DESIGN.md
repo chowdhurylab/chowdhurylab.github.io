@@ -5,7 +5,7 @@ record drawer and downloads intact. Stats is a separate page, not a drawer or
 expanding summary that takes space from the table. The filter sidebar shows in view only
 the filters most visitors use (Enzyme, organism, substrate; Measurement type; Review result
 with human-checked), each option one short line with its count, and folds the
-specialist groups (Source, first since round 14; Wild type or variant, Assay conditions, Against the databases,
+specialist groups (Source, first since round 14; Wild type or variant, Assay conditions, Compared with databases,
 Cautions, Source database) under one "More filters", which opens by itself when one of them is set
 and counts them on its title; help text sits behind each group's "?", never in view; no
 option, address or chip changed (the user, 2026-10-18). Browse's active-filter chips
@@ -84,12 +84,12 @@ each, so the legend table keeps its room beside the donut), one below. Figures a
    publication year (round 16, when the manifest has `summary.publication_years`) and Enzyme classes, each across the row.
 4. Values: Value ranges, Between papers, kcat against Km, Substrate specificity and Variants against their wild type, each
    full width (round 16 added the second and fourth).
-5. Against the databases (manifest `summary.database_comparison`; round 9 brief section 5): a two-sentence lead
+5. Compared with databases (manifest `summary.database_comparison`; round 9 brief section 5): a two-sentence lead
    (round 14: it ran to about 110 words and five links): what was compared and how often a paired number is the
    paper's, then the corrections and the different numbers, linked into Browse, with the caveat right after them
    ("which can mean a different measurement rather than a database error"); the other results are Figure 7's, its
    legend linking each. Then Values
-   against the databases, then Corrections by cause and how found, each across the row (the corrections' bars kept to
+   compared with databases, then Corrections by cause and how found, each across the row (the corrections' bars kept to
    760px, stats-narrow). Each only when the snapshot has its counts; without a figure here the part has no heading,
    and a figure in the supplement that compares values still gets the caveat once, at the head of its group there.
 S. Supplementary figures and tables (round 14, the user: "not every figure has to be shown like that (and tables,
@@ -149,7 +149,7 @@ Shares (what a share is out of: all records in the
 figures and tables that count all records, named by number (Figure 1 and Tables S1-S4 and S9 today; `STATS_SHARES_OF_ALL`),
 elsewhere its own bar's, row's or card's total or the total its caption names; one decimal, a nonzero share under 0.1%
 written <0.1%), Papers, Names, Human-checked, Main source, Read from the paper
-and Not yet re-read (with an overview), Human review (with a lead: its date and definitions), Against the databases
+and Not yet re-read (with an overview), Human review (with a lead: its date and definitions), Compared with databases
 (with part 7: same paper and parameter, shares only on 1,000 values or more), then each figure's or table's own rules
 under its number ("Figure 4", "Table 1", the title first), in reading order. It prints open, so paper and PDF keep
 the Data ID and the rules: beforeprint opens it and afterprint closes it again unless the viewer had opened it, and the
@@ -240,7 +240,7 @@ its accessible description; no figure or table has a data line. The parts' figur
   calculated kcat/Km is not a value read), its number columns named Papers and % of papers; drawn only when the bins add up to
   the papers CatLog has read. No publication years here: the Full data has none (CatLog and BRENDA by publication year
   reads the manifest's own field).
-- Part 7, Against the databases, reads only the manifest's `summary.database_comparison` (the page never parses a
+- Part 7, Compared with databases, reads only the manifest's `summary.database_comparison` (the page never parses a
   value's database line): whole counts, checked to add up (the parameters to `values.all`, the causes to
   `corrections.values`); a figure whose keys are absent or damaged is left out, and the part has no heading without
   figures. The databases, their order and names come from its `sources` list (key, name, display), else from the
@@ -288,7 +288,7 @@ its accessible description; no figure or table has a data line. The parts' figur
   - Links never open a wider list than their count: a count, segment or label whose link would name a database
     (dbsrc), a cause (dbwhy) or a compared parameter (dbpar) links only once Browse matches that key
     (DATABASE_REFINE_KEYS, the record's rule too); until then it is a plain number and only the db= links stay.
-  - Values against the databases: 100% bars kcat, Km, printed kcat/Km and All values (same, same other label,
+  - Values compared with databases: 100% bars kcat, Km, printed kcat/Km and All values (same, same other label,
     corrects, differs, not listed); the counts of corrects and differs beside each bar (with dbpar, see above), each
     after its swatch in a right-aligned column under its heading, Corrects and Differs (Table S10's names; each column as
     wide as its widest count or heading plus the swatch, a sizer as in Figure 3, fitted to the heading line once drawn);
@@ -296,7 +296,7 @@ its accessible description; no figure or table has a data line. The parts' figur
     counted): calculated kcat/Km not compared; a note under the figure (a result, so beside it): the numbers the databases list that CatLog does not have (`not_reproduced.distinct`), with those CatLog has as a
     kcat/Km it calculated or under another parameter named apart; "the README gives the reasons" only when the snapshot
     has its comparison download (`database_comparison_download`), whose build writes the README's section on it; that
-    file is also the Download menu's and the Guide's Downloads' "Against the databases" item (one row per value and
+    file is also the Download menu's and the Guide's Downloads' "Compared with databases" item (one row per value and
     database, CSV; rows and size from the manifest, saved as catlog-<date>-database-comparison.csv.gz), hidden
     without it.
   - Results by database (`values_by_database`): a 100% bar per database, the
@@ -465,7 +465,7 @@ its accessible description; no figure or table has a data line. The parts' figur
     reports, not one value per enzyme.
   The linear axes (ρ, Q₁₀) use stats-condition-axis, as Assay temperature and pH do. No caption or rule names a figure's
   number, so the BRENDA comparison by year (another round 16 lane) can join the main figures and the rest renumber.
-- Against the databases by enzyme class (`from_paper_insights.database_by_class`, part 7, after Values against the
+- Compared with databases by enzyme class (`from_paper_insights.database_by_class`, part 7, after Values against the
   databases, only with the comparison): a 100% bar per class of the values read from the paper by each value's own
   result (its proof line's database_status, as part 7's figures count them: a correction found by an exact factor alone
   stands under Corrects where this snapshot's figures keep it there), in part 7's colours and legend; the class

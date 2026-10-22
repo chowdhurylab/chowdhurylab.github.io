@@ -372,7 +372,7 @@ const sourceModeInputs = ["all", "paper", "databases"].map((value) => ({
 const sourceInputs = ["brenda", "sabio_rk", "oed", "uniprot", "skid", "strenda", "earlier_paper", "unrecorded"].map((value) => ({
   value, type: "checkbox", name: "source", checked: false,
 }));
-// Against the databases (shown when the snapshot has the comparison).
+// Compared with databases (shown when the snapshot has the comparison).
 const databaseInputs = ["corrects", "differs", "other_label", "not_listed", "all_not_listed", "all_same", "earlier"].map((value) => ({
   value, type: "checkbox", name: "database", checked: false,
 }));
@@ -1417,10 +1417,10 @@ for (const part of ["guide-find", "guide-units", "guide-downloads", "guide-cite"
 assert.match(sourceCode, /function openGuidePart\(section\)/);
 // The method's heading says what the section is ("How CatLog works"), not the steps' label again.
 assert.match(guideHtml, /<h2 id="guide-method-title">How CatLog works<\/h2>/);
-// Against the databases is a section of its own, written from the manifest when the snapshot carries the comparison: it
+// Compared with databases is a section of its own, written from the manifest when the snapshot carries the comparison: it
 // starts hidden, and its line in the contents with it.
-assert.match(guideContents, /<li data-guide-database-section hidden><a href="#guide-databases">Against the databases<\/a><\/li>/);
-assert.match(guideHtml, /<section class="guide-section guide-databases" id="guide-databases" aria-labelledby="guide-databases-title" data-guide-database-section hidden>\s*<h2 id="guide-databases-title">Against the databases<\/h2>\s*<div id="guideDatabasesBody"><\/div>\s*<\/section>/);
+assert.match(guideContents, /<li data-guide-database-section hidden><a href="#guide-databases">Compared with databases<\/a><\/li>/);
+assert.match(guideHtml, /<section class="guide-section guide-databases" id="guide-databases" aria-labelledby="guide-databases-title" data-guide-database-section hidden>\s*<h2 id="guide-databases-title">Compared with databases<\/h2>\s*<div id="guideDatabasesBody"><\/div>\s*<\/section>/);
 assert.equal((guideHtml.match(/href="#guide-databases"/g) || []).length, 4, "the contents, Read a record, the legend and Questions link to it");
 // The method is said in full once, in its own section (with the model's name); nowhere else in the Guide.
 const guideMethod = guideHtml.match(/<section [^>]*id="guide-method"[^>]*>([\s\S]*?)<\/section>/)[1];
@@ -1440,7 +1440,7 @@ assert.doesNotMatch(howRead, /<strong>(?:Accepted|Human-checked)<\/strong>/);
 assert.match(guideMethod, /<a href="#stats-quality">Checks so far on Stats<\/a>/);
 assert.doesNotMatch(guideHtml, /guideMethodLead|guideMethodMore|guide-check-grid|What the checks found/);
 // The Guide's record picture follows the record panel's order (round 13): its quote reads "In the paper:" as the record's
-// does, a Checks part (the panel's Checks section) follows Against the databases, its key links How CatLog reads a value,
+// does, a Checks part (the panel's Checks section) follows Compared with databases, its key links How CatLog reads a value,
 // no part names a section the record no longer has, and every numbered part has its key line.
 {
   const anatomy = guideHtml.match(/<figure class="guide-anatomy"[\s\S]*?<\/figure>/)[0];
@@ -1519,7 +1519,7 @@ assert.match(guideFind, /href="#browse\?checked=1"/);
 // The Guide lists the filters as the sidebar shows them (round 14: Source moved under More filters, as its first group):
 // the common groups in view, the specialist ones under More filters, which opens by itself when one of them is set.
 assert.match(guideFind, /<dt>Filters<\/dt><dd>Enzyme, EC number, organism, substrate; measurement type; review result\.<\/dd>/);
-assert.match(guideFind, /<dt>More filters<\/dt><dd>Source, wild type or variant, assay conditions,<span data-guide-databases hidden> against the databases,<\/span> cautions and source database; it opens by itself/);
+assert.match(guideFind, /<dt>More filters<\/dt><dd>Source, wild type or variant, assay conditions,<span data-guide-databases hidden> compared with databases,<\/span> cautions and source database; it opens by itself/);
 for (const [, href] of guideFind.matchAll(/<a href="(#browse[^"]*)"/g)) {
   const params = new URLSearchParams(href.replace(/&amp;/g, "&").slice("#browse?".length));
   assert.ok([...params.keys()].every((key) => ["q", "status", "checked", "ec", "enzyme", "organism", "substrate", "metric",
@@ -2339,8 +2339,8 @@ function row(overrides = {}) {
   assert.deepEqual([...element("statsCharts").innerHTML.matchAll(/data-stat-key="kind_([^"]+)" data-count="(\d+)"/g)].map((match) => [match[1], Number(match[2])]),
     [["organism name", 13]], "Kinds that are not whole counts of the other disagreements are left out");
   assert.doesNotMatch(lead, /could not find|not found/);
-  // Part 7, Against the databases, reads only summary.database_comparison (the test bundle's counts, 2026-10-13): the
-  // lead, each value against the databases, each database beside the values it pairs, how each correction was found
+  // Part 7, Compared with databases, reads only summary.database_comparison (the test bundle's counts, 2026-10-13): the
+  // lead, each value compared with databases, each database beside the values it pairs, how each correction was found
   // beside the corrections by cause and database; then the earlier version's figures (overview.earlier_corrections,
   // else quality's) and the replaced entries. An overview.quality.db_compare is no longer read.
   const databaseComparison = () => ({
@@ -2394,7 +2394,7 @@ function row(overrides = {}) {
       another_measurement_per_paper_check: 10 } },
     papers: 2650, papers_compared: 2598,
   });
-  // Against the databases: the main part, then the supplement's group of the same name (round 14).
+  // Compared with databases: the main part, then the supplement's group of the same name (round 14).
   const databaseSection = () => (element("statsCharts").innerHTML.match(/<section class="stats-part" id="stats-databases" data-part="databases"[\s\S]*?<\/div><\/section>(?=<section class="stats-part[ "]|<details|$)/)?.[0] || "")
     + (element("statsCharts").innerHTML.match(/<section class="stats-supp-group" aria-labelledby="statsSupplementDatabasesTitle">[\s\S]*?<\/details><\/div><\/section>/)?.[0] || "");
   const figureHtml = (key) => element("statsCharts").innerHTML.match(new RegExp(`<section class="stats-section[^"]*" aria-labelledby="[^"]+" data-figure="${key}">[\\s\\S]*?</figure>[\\s\\S]*?</section>`))?.[0] || "";
@@ -2408,13 +2408,13 @@ function row(overrides = {}) {
     replaced: { records: 7, accepted: 2, papers: 1, values: { kcat: [5, 6], km: [2, 2] } } } };
   api.renderStats();
   let figures = element("statsCharts").innerHTML;
-  // The part keeps the values against the databases and the corrections by cause; the rest is in the supplement.
-  assert.deepEqual(headings().slice(-2), ["Values against the databases", "Corrections by cause and how found"]);
+  // The part keeps the values compared with databases and the corrections by cause; the rest is in the supplement.
+  assert.deepEqual(headings().slice(-2), ["Values compared with databases", "Corrections by cause and how found"]);
   // (figures first within a group, then the tables, so the numbers run as the list shows them)
   assert.deepEqual(supplementTitles().slice(-5), ["Figure S2 Results by database", "Figure S3 Corrections on records not yet re-read",
     "Figure S4 Entries replaced by reading the paper", "Table S6 Paired values by database", "Table S7 Corrections by cause and database"]);
-  assert.deepEqual(partTitles().slice(-2), ["5 Against the databases", "S Supplementary figures and tables"]);
-  assert.doesNotMatch(figures, /Values read from the paper against the databases|data-figure="db-compare"/);
+  assert.deepEqual(partTitles().slice(-2), ["5 Compared with databases", "S Supplementary figures and tables"]);
+  assert.doesNotMatch(figures, /Values read from the paper compared with databases|data-figure="db-compare"/);
   // The lead: one sentence on every value compared, one on the values a database pairs; result names link into Browse.
   const dbLead = figures.match(/<p class="stats-part-lead" data-lead="databases">[\s\S]*?<\/p>/)?.[0] || "";
   // The lead names the papers with a compared value (papers_compared), never more than CatLog has read.
@@ -2429,8 +2429,8 @@ function row(overrides = {}) {
   assert.match(dbLead, /href="[^"]*#browse\?db=differs" title="1,051 values in 955 records">1,051 differ/);
   assert.equal((dbLead.match(/<a /g) || []).length, 2);
   // The lead stands right under the part's heading, before its figures.
-  assert.match(figures, /<span>Against the databases<\/span><\/h2>\s*<p class="stats-part-lead"/);
-  // Each value against the databases: a 100% bar per parameter and for all, the thin counts right of each bar.
+  assert.match(figures, /<span>Compared with databases<\/span><\/h2>\s*<p class="stats-part-lead"/);
+  // Each value compared with databases: a 100% bar per parameter and for all, the thin counts right of each bar.
   const values = figureHtml("db-values");
   assert.match(values, /stats-wide/, "Alone in its pair (Why no database lists a value is not here yet), it takes the row");
   assert.deepEqual([...values.matchAll(/data-row="([^"]+)" data-count="(\d+)"/g)].map((match) => [match[1], Number(match[2])]),
@@ -2462,11 +2462,11 @@ function row(overrides = {}) {
   // (fix pass after round 16b: one total, as the Dataset notes give it; first what CatLog has in another form, then the
   // reprints and the possible misses, which are not yet checked)
   assert.match(values, /<\/figure><p class="stats-note">The databases also list 14,633 numbers for these papers that match no value CatLog read from them: 5,635 are paired with a CatLog value of another number, 1,687 equal a <i>k<\/i><sub>cat<\/sub>\/<i>K<\/i><sub>m<\/sub> CatLog calculated, 463 are in CatLog under another parameter, 2,372 are reprinted in the paper from earlier work and 1,566 may be values CatLog missed, not yet checked \(448 of them only weakly\)\.<\/p>/);
-  assert.match(methodHtml(), /<dt>Figure \d+<\/dt><dd><span class="stats-method-title">Values against the databases\.<\/span> 5,946 kcat\/Km calculated by CatLog are not compared\.<\/dd>/);
+  assert.match(methodHtml(), /<dt>Figure \d+<\/dt><dd><span class="stats-method-title">Values compared with databases\.<\/span> 5,946 kcat\/Km calculated by CatLog are not compared\.<\/dd>/);
   assert.doesNotMatch(values, /not compared|README/);
   assert.doesNotMatch(methodHtml(), /README|databases also list/);
   // Part 7's own rules, once.
-  assert.match(methodHtml(), /<dt>Against the databases<\/dt><dd>Numbers are compared within the same paper and parameter\. Papers count when at least one of their values was compared\. Shares are given only for 1,000 values or more\.<\/dd>/);
+  assert.match(methodHtml(), /<dt>Compared with databases<\/dt><dd>Numbers are compared within the same paper and parameter\. Papers count when at least one of their values was compared\. Shares are given only for 1,000 values or more\.<\/dd>/);
   assert.equal(api.statsNotReproducedText({ not_reproduced: { distinct: { equals_catlog_calculated_ratio: 1, another_parameter_in_catlog: 0 } } }),
     "The databases also list 1 number for these papers that matches no value CatLog read from them: 1 equals a kcat/Km CatLog calculated.");
   runtimeManifest.database_comparison_download = { path: "data/catlog-database-comparison.0123456789ab.csv.gz", rows: 10 };
@@ -2560,7 +2560,7 @@ function row(overrides = {}) {
   assert.match(earlier, /<a class="stats-link" href="[^"]*#browse\?db=earlier">2,881 records not yet <span class="nowrap">re-read<\/span><\/a>/);
   assert.match(methodHtml(), /<span class="stats-method-title">Corrections on records not yet <span class="nowrap">re-read<\/span>\.<\/span> The value before the change equals a number a database lists for that paper for 2,601 of 3,635 changed values \(71\.6%\)\. These records also list 889 other changes\.<\/dd>/);
   assert.doesNotMatch(earlier, /Figure 1 counts/);
-  // The part: each value against the databases and the corrections by cause, each across the row; then, in the
+  // The part: each value compared with databases and the corrections by cause, each across the row; then, in the
   // supplement, each database, the values it pairs, the causes by database, the earlier corrections and replaced entries.
   assert.deepEqual([...databaseSection().matchAll(/<section class="stats-section stats-figure-section( stats-wide)?[^"]*" aria-labelledby="[^"]+" data-figure="([^"]+)">/g)]
     .map((match) => `${match[2]}${match[1] ? " wide" : ""}`), ["db-values wide", "db-found wide", "db-sources", "earlier-corrections", "replaced", "db-paired", "db-causes"]);
@@ -2761,7 +2761,7 @@ function row(overrides = {}) {
   runtimeManifest.summary.overview = { ...overview, quality: { db_compare: { kcat: { same: 9, differs: 1, absent: 0 } },
     replaced: { records: 7, values: { kcat: [8, 6] } } } };
   api.renderStats();
-  assert.doesNotMatch(element("statsCharts").innerHTML, /against the databases|Against the databases|Entries replaced/);
+  assert.doesNotMatch(element("statsCharts").innerHTML, /compared with databases|Compared with databases|Entries replaced/);
   // The match is the lead's (and the Guide lead's) side line; the Guide's Human review item adds nothing for it.
   assert.equal(api.humanComparisonText({ quality: { v2_approved_total: 4, v2_found: 3 } }), "");
   assert.equal(api.v2MatchSentence(api.v2MatchFacts({ v2_approved_total: 4, v2_found: 3, v2_wrong: 1 })),
@@ -3058,7 +3058,7 @@ function row(overrides = {}) {
     assert.match(byClass.body, /#browse\?ec=1\.&amp;source=paper">EC 1<\/a><span class="stats-ec-name"> Oxidoreductases<\/span>/);
     assert.equal(api.statsDatabaseClassFigure([], classNames), null);
 
-    // In the page: Values ends with the three, the class figure follows Values against the databases.
+    // In the page: Values ends with the three, the class figure follows Values compared with databases.
     // (The page's records read from the paper bound the conditions' counts: here 2.)
     const two = (index) => Array.from({ length: 101 }, (_value, bin) => (bin === index ? 2 : 0));
     runtimeManifest.summary.overview = { ...overview, from_paper_insights: { kcat_km: map, mutations,
@@ -4235,7 +4235,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.match(html, /<td class="vt-printed">68 s<sup>−1<\/sup><\/td><\/tr>/);
   assert.doesNotMatch(html, /<dt>Location<\/dt>/, "the Values caption says where the values are printed");
   assert.doesNotMatch(html, />Source<\/h3>|<dt>Values from<\/dt>|<dt>License<\/dt>|<dt>Data ID<\/dt>/);
-  assert.doesNotMatch(html, /Against the databases/, "no database comparison in the snapshot: no section");
+  assert.doesNotMatch(html, /Compared with databases/, "no database comparison in the snapshot: no section");
   assert.doesNotMatch(html, /<dt>Review result<\/dt>|Accepted: read from the paper by CatLog/, "the header says Accepted · from paper");
   assert.match(html, /<p class="section-link"><a class="method-link" href="#guide-how-read">How CatLog reads a value<span aria-hidden="true"> →<\/span><\/a><\/p><\/section>/);
   assert.match(html, /<p class="detail-footnote"><span class="detail-license">License: CC BY 4\.0 \(CatLog compilation\)<\/span>/);
@@ -4814,7 +4814,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.doesNotMatch(element("detailContent").innerHTML, /<dt>Title<\/dt>/);
 }
 
-// Against the databases (round 9 brief, section 4): a record read from the paper shows its values against the
+// Compared with databases (round 9 brief, section 4): a record read from the paper shows its values against the
 // databases only when the snapshot carries the comparison (each value's database_status ... fields, the record's
 // database_note, or the snapshot's record checks): the paper's note in a box, the values a database lists with the
 // same number in lines, a folding note per other value, the compared databases from the manifest and links to records
@@ -4843,7 +4843,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
     }
   };
   let html = render(v2Summary, v2Detail([line("kcat"), line("Km")]));
-  assert.doesNotMatch(html, /Against the databases|cmp-mark|cmp-pointer/);
+  assert.doesNotMatch(html, /Compared with databases|cmp-mark|cmp-pointer/);
   const comparedDetail = () => v2Detail([
     line("kcat", { database_status: "confirmed", database_line: "Same as BRENDA, SABIO-RK.", database_sources: ["BRENDA", "SABIO-RK"] }),
     line("Km", { database_status: "corrected", database_line: "BRENDA lists 0.5499 mM, 1,000× lower.", database_cause: "mM_entered_as_uM",
@@ -4855,7 +4855,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   // The paper's note in a box, said as given after "Across this paper:"; no link while Browse cannot filter by it.
   // The heading's "?" (the filter groups' pattern) controls a quiet box, closed at first, that names the compared databases
   // once; the paper's note follows.
-  assert.match(section, /<h3 id="detail-databases-title">Against the databases<\/h3><button class="section-about" type="button" aria-expanded="false" aria-controls="detail-databases-about" title="About the comparison with the databases"><span aria-hidden="true">\?<\/span><span class="visually-hidden">About the comparison with the databases<\/span><\/button><div class="filter-about detail-about" id="detail-databases-about" hidden><p class="cmp-compared">[\s\S]*?<\/div><div class="cmp-paper-note"><p><strong>Across this paper:<\/strong> All 12 BRENDA Km values for this paper are 1000× lower than printed\.<\/p><\/div>/);
+  assert.match(section, /<h3 id="detail-databases-title">Compared with databases<\/h3><button class="section-about" type="button" aria-expanded="false" aria-controls="detail-databases-about" title="About the comparison with the databases"><span aria-hidden="true">\?<\/span><span class="visually-hidden">About the comparison with the databases<\/span><\/button><div class="filter-about detail-about" id="detail-databases-about" hidden><p class="cmp-compared">[\s\S]*?<\/div><div class="cmp-paper-note"><p><strong>Across this paper:<\/strong> All 12 BRENDA Km values for this paper are 1000× lower than printed\.<\/p><\/div>/);
   assert.match(section, /^class="detail-section databases-section has-about" aria-labelledby="detail-databases-title">/);
   // A value a database lists with the same number: one line, its line whole.
   assert.match(section, /<p class="cmp-same-line"><span class="cmp-mark cmp-same" aria-hidden="true"><\/span><span><i>k<\/i><sub>cat<\/sub>: Same as BRENDA, SABIO-RK\.<\/span><\/p>/);
@@ -4876,12 +4876,12 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   // No More like this while Browse cannot filter by a result: the paper's records are linked once, under Paper.
   assert.doesNotMatch(section, /cmp-explore|All records of this paper/);
   assert.doesNotMatch(section, /db=|<table|cmp-list|Not in any database|Same number, other label/);
-  // Right after Values: what CatLog corrected against the databases is found at once; Checks follow it.
-  assert.ok(html.indexOf(">Values</h3>") < html.indexOf(">Against the databases</h3>") && html.indexOf(">Against the databases</h3>") < html.indexOf(">Checks</h3>"));
+  // Right after Values: what CatLog corrected compared with databases is found at once; Checks follow it.
+  assert.ok(html.indexOf(">Values</h3>") < html.indexOf(">Compared with databases</h3>") && html.indexOf(">Compared with databases</h3>") < html.indexOf(">Checks</h3>"));
   // Section B: a value that corrects or differs gets one short line under the Values table, the parameter and a button
   // that opens its note ("corrects BRENDA and STRENDA DB ↓"); the table itself carries no comparison mark.
   const values = valuesOf(html);
-  assert.match(values, /<\/table><p class="cmp-pointer"><i>K<\/i><sub>m<\/sub>: <button class="text-button cmp-pointer-link" type="button" data-show-note="km">corrects BRENDA and STRENDA DB<span class="visually-hidden">, see Against the databases<\/span><span aria-hidden="true"> ↓<\/span><\/button><\/p>/);
+  assert.match(values, /<\/table><p class="cmp-pointer"><i>K<\/i><sub>m<\/sub>: <button class="text-button cmp-pointer-link" type="button" data-show-note="km">corrects BRENDA and STRENDA DB<span class="visually-hidden">, see Compared with databases<\/span><span aria-hidden="true"> ↓<\/span><\/button><\/p>/);
   assert.equal((values.match(/cmp-pointer"/g) || []).length, 1, "only the value that corrects or differs");
   assert.doesNotMatch(values.slice(0, values.indexOf("</table>")), /cmp-mark/);
   // Its button opens the note, scrolls it into view and focuses its summary.
@@ -4922,7 +4922,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
     const previousSummary = runtimeManifest.summary;
     runtimeManifest.summary = { ...(previousSummary || {}), database_comparison: { values_by_database: { BRENDA: {} } } };
     try {
-      assert.match(sectionOf(render(v2Summary, twoChanged)), /<div class="filter-about detail-about" id="detail-databases-about" hidden><p class="cmp-compared">Compared with the values <span class="nowrap">BRENDA<\/span> lists for the same paper\.<\/p><p><a href="#guide-databases">Against the databases in the Guide<span aria-hidden="true">&nbsp;&rarr;<\/span><\/a><\/p><\/div>/);
+      assert.match(sectionOf(render(v2Summary, twoChanged)), /<div class="filter-about detail-about" id="detail-databases-about" hidden><p class="cmp-compared">Compared with the values <span class="nowrap">BRENDA<\/span> lists for the same paper\.<\/p><p><a href="#guide-databases">Compared with databases in the Guide<span aria-hidden="true">&nbsp;&rarr;<\/span><\/a><\/p><\/div>/);
     } finally {
       runtimeManifest.summary = previousSummary;
     }
@@ -5027,7 +5027,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.match(section, /<p class="cmp-same-line">[\s\S]*?Same as BRENDA\.<\/span><\/p><div class="cmp-notes"><details class="cmp-note" data-cmp-field="kcat"[\s\S]*?<\/details><\/div><p class="section-note cmp-caution-line">[^<]*<\/p><p class="cmp-calc-line"><i>k<\/i><sub>cat<\/sub>\/<i>K<\/i><sub>m<\/sub> \(calc\.\): not compared\.<\/p>(?:<p class="cmp-explore">|<\/section>)/);
   assert.equal((section.match(/cmp-mark/g) || []).length, 2, "squares only on the same line and the note's result");
   html = render(calculatedSummary, v2Detail([line("kcat"), line("Km")]));
-  assert.doesNotMatch(html, /Against the databases|not compared/, "no compared value, no section");
+  assert.doesNotMatch(html, /Compared with databases|not compared/, "no compared value, no section");
   // Values whose notes read alike share one note ("kcat and Km · Not in the databases"), as the same lines do; a value
   // that corrects or differs keeps its own (the Values pointer opens it by its parameter).
   const noneLine = "BRENDA, SABIO-RK, OED, SKiD, STRENDA DB and UniProt list no kcat, Km or kcat/Km for this paper.";
@@ -5088,7 +5088,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
     }
   }
 
-  // With Browse's "Against the databases" group on the page, the record links to the records like it: each option it
+  // With Browse's "Compared with databases" group on the page, the record links to the records like it: each option it
   // matches, never one the page does not have, and only when Browse can filter by it: the record index carries the
   // comparison (else db= is not read and the link would open Browse unfiltered) and the record's own row in it matches
   // the option. The paper's note links to the records of the paper that correct a value; once Browse matches a database
@@ -5311,17 +5311,17 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   // Without its trail, a corrected record says the snapshot does not list the changes (the earlier catalog keeps them)
   // and has no section.
   html = render(corrected, { supporting_pmids: ["2226453"] });
-  assert.doesNotMatch(html, /Against the databases/);
+  assert.doesNotMatch(html, /Compared with databases/);
   assert.match(html, /Corrected and accepted in the earlier automated review; this snapshot does not list the changes\./);
   assert.doesNotMatch(html, /was not kept/);
 
   // A database record the earlier review did not settle: the values are the database's, said in Checks' Paper check row,
-  // never under Against the databases (it compares nothing); accepted, disputed, no paper linked or an earlier
+  // never under Compared with databases (it compares nothing); accepted, disputed, no paper linked or an earlier
   // extraction: no such line.
   const NOT_YET = "<dt>Paper check</dt><dd>Not yet checked; the values are the database’s.</dd>";
   const paperCheckOf = (summary, detail = { supporting_pmids: ["1"] }) => {
     const html = render(summary, detail);
-    assert.doesNotMatch(html, /Against the databases/, "no comparison, no section");
+    assert.doesNotMatch(html, /Compared with databases/, "no comparison, no section");
     const review = html.match(/<h3 id="detail-checks-title">Checks<\/h3>([\s\S]*?)<\/section>/)?.[1] ?? "";
     return review.includes(NOT_YET) ? review : null;
   };
@@ -5337,7 +5337,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   // Values the earlier review located in the paper (Evidence: Located in the paper) were checked against it: no line.
   assert.equal(paperCheckOf(row({ record_key: "db-located", verification_status: "unverified", source_db: "oed", has_proof_excerpt: false, proof_kind: "paper_evidence" })), null);
   assert.doesNotMatch(render(row({ record_key: "db-excerpt", verification_status: "manual_review_required", source_db: "brenda", has_proof_excerpt: false }),
-    { supporting_pmids: ["1"], has_proof_excerpt: true }), /Against the databases|values are the database|Paper check/);
+    { supporting_pmids: ["1"], has_proof_excerpt: true }), /Compared with databases|values are the database|Paper check/);
   assert.equal(paperCheckOf(row({ record_key: "db-accepted", verification_status: "verified", source_db: "brenda" })), null);
   assert.equal(paperCheckOf(row({ record_key: "db-disputed", verification_status: "disputed", source_db: "brenda" })), null);
   assert.equal(paperCheckOf(row({ record_key: "db-no-paper", verification_status: "unverified", source_db: "skid", public_trust_basis: "identity_only" })), null);
@@ -5346,7 +5346,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.equal(paperCheckOf(row({ record_key: "db-no-pmid", verification_status: "unverified", source_db: "strenda" }), {}), null);
   assert.ok(paperCheckOf(row({ record_key: "db-doi-only", verification_status: "unverified", source_db: "strenda", has_proof_excerpt: false }), { supporting_dois: ["10.1/x"] }));
 
-  // The Guide's two sentences on Against the databases show only when the snapshot carries the comparison (the
+  // The Guide's two sentences on Compared with databases show only when the snapshot carries the comparison (the
   // manifest's record index lists database_summary), as Browse's group does.
   {
     const guideItems = [{ hidden: true }, { hidden: true }];
@@ -5367,7 +5367,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
     }
   }
 }
-// The Guide's section Against the databases (#guide-databases) is written from the manifest's
+// The Guide's section Compared with databases (#guide-databases) is written from the manifest's
 // summary.database_comparison (round 14, the user: a short Guide): the lead, the results as one table with this
 // snapshot's values and records (the ones Browse's options count), the caveat once, then one disclosure with what is
 // compared and three small tables (cause families, how a correction is found, why no database lists a value); a count the
@@ -6018,7 +6018,7 @@ assert.equal((await recordDownloadPayload(row({ record_key: "record-no-source", 
     "no comparison in the snapshot, none in the download");
   assert.ok("ai_audit" in v2Payload && v2Payload.ai_audit === null, "a record read from the paper always names its AI audit");
 }
-// Against the databases goes into the download as the record says it: each value's result for a record read from the
+// Compared with databases goes into the download as the record says it: each value's result for a record read from the
 // paper; the earlier review's changes for a corrected record (a local path never).
 {
   const v2Summary = row({ record_key: "record-v2-db", measurement_key: "record-v2-db", source_db: "primary_paper_direct",
@@ -6537,7 +6537,7 @@ assert.doesNotMatch(detailFalseKiHtml, /<i>K<\/i><sub>i<\/sub>/);
   assert.equal(counts.checked, 1, "the human-checked record that Not confirmed alone leaves out");
   api.setHumanReviewMarks({});
   await countsFor("");
-  // Against the databases: each record's comparison (the index's number, or the Table download's fields) matches the
+  // Compared with databases: each record's comparison (the index's number, or the Table download's fields) matches the
   // options it shows; a record that was not compared matches none.
   const compared = (key, extra) => sourceRow(key, { source_db: "primary_paper_direct", enzyme_label_source: "explicit_enzyme_name", ...extra });
   const dbRows = [
@@ -7691,7 +7691,7 @@ for (const hash of ["#stats", "#guide", "#guide-units"]) {
   const titles = (html) => [...html.matchAll(/<summary class="filter-section-title"><span>(?:<span class="group-dot [\w-]+" aria-hidden="true"><\/span>)?([^<]+)<\/span>/g)]
     .map((match) => match[1]);
   assert.deepEqual(titles(rail.slice(0, at)), ["Enzyme, organism, substrate", "Measurement type", "Review result"]);
-  assert.deepEqual(titles(rail.slice(at)), ["Source", "Wild type or variant", "Assay conditions", "Against the databases", "Cautions", "Source database"]);
+  assert.deepEqual(titles(rail.slice(at)), ["Source", "Wild type or variant", "Assay conditions", "Compared with databases", "Cautions", "Source database"]);
   // Source keeps its dot (Source's colour, as its chips) and opens inside More filters, as the first two groups did.
   assert.match(rail.slice(at), /^<details class="filter-more" id="moreFilters">\s*<summary[\s\S]*?<\/summary>\s*<details class="filter-section has-about" open>\s*<summary class="filter-section-title"><span><span class="group-dot tone-source" aria-hidden="true"><\/span>Source<\/span>/);
 }

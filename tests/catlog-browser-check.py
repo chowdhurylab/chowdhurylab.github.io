@@ -180,7 +180,7 @@ def guide_heading_text(driver):
 def check_guide(driver, wait):
     """Guide: the contents list reaches every section, a section's link keeps the Guide open at that section, the
     example views use the #browse? links Browse reads, and human-checked is drawn as in the table."""
-    # Against the databases has a section of its own (and a line in the contents) when the snapshot carries the
+    # Compared with databases has a section of its own (and a line in the contents) when the snapshot carries the
     # comparison: the manifest's summary, or the record index's field.
     sections = list(GUIDE_SECTIONS)
     if driver.execute_script("""const m = window.CATLOG_STATIC_MANIFEST;
@@ -199,7 +199,7 @@ def check_guide(driver, wait):
     assert driver.find_elements(By.CSS_SELECTOR, '#guide-method a[href="#team"], #guide-method a[href$="catlog-latest.html#team"]'), \
         "The method section links to the Team page"
     assert driver.find_elements(By.CSS_SELECTOR, '#guide-status a[href="#guide-method"]'), "The from-paper tag links to the method"
-    # Against the databases (Browse's group and the record's section) is described only when the snapshot carries the
+    # Compared with databases (Browse's group and the record's section) is described only when the snapshot carries the
     # comparison, as Browse shows the group.
     comparison = driver.execute_script(
         "return (window.CATLOG_STATIC_MANIFEST?.viewer_index?.optional_fields || []).includes('database_summary')")
@@ -340,7 +340,7 @@ GUIDE_DB_ROWS_CLEAR = """
 
 
 def check_guide_databases(driver, browser, url):
-    """The Guide's Against the databases (#guide-databases), from the manifest only: shown with its line in the contents
+    """The Guide's Compared with databases (#guide-databases), from the manifest only: shown with its line in the contents
     when the snapshot carries the comparison (hidden otherwise); the six results in Browse's order as one table, each
     after the square of its colour (none on Corrected earlier) with the values and records Browse's options give; the
     causes, how a correction is found and why no database lists a value in one disclosure; no sideways scroll at 375 and
@@ -847,7 +847,7 @@ def check_browse(driver, browser, url, route_label):
 
 STATS_LINK_KEYS = {"q", "status", "checked", "ec", "enzyme", "organism", "substrate", "metric", "variant", "tmin", "tmax",
                    "phmin", "phmax", "caution", "source", "sort", "db", "dbsrc", "dbwhy", "dbpar"}
-# Against the databases in the address (round 9 brief sections 2-3): the results, the compared parameter and the cause
+# Compared with databases in the address (round 9 brief sections 2-3): the results, the compared parameter and the cause
 # families Stats links with.
 STATS_DATABASE_LINK_VALUES = {"db": {"corrects", "differs", "other_label", "not_listed", "all_not_listed", "all_same", "earlier"},
                               "dbpar": {"kcat", "km", "kcatkm"}, "dbwhy": {"unit", "decimal", "elsewhere", "misprint"}}
@@ -1423,14 +1423,14 @@ DATABASE_COMPARISON_FIXTURE = {
     "not_reproduced": {"distinct": {"paired_with_different_number": 5635, "reprinted_from_other_work": 2372}},
     "papers": 2650,
 }
-# Against the databases (round 14): the part keeps the values against the databases and the corrections by cause; the
+# Compared with databases (round 14): the part keeps the values compared with databases and the corrections by cause; the
 # rest stands in the supplement's group of the same name (SUPPLEMENT_DATABASES), each item's title in its summary.
-DATABASE_TITLES = ("Values against the databases", "Corrections by cause and how found")
+DATABASE_TITLES = ("Values compared with databases", "Corrections by cause and how found")
 # (the supplement's group lists its figures first, then its tables: round 14's fix pass)
 FIGURE_MORE_TITLES = ("Results by database", "Corrections on records not yet re-read", "Entries replaced by reading the paper",
                       "Paired values by database", "Corrections by cause and database")
 # The database results by enzyme class open the supplement's group when the overview counts them.
-DATABASE_CLASS_TITLE = "Against the databases by enzyme class"
+DATABASE_CLASS_TITLE = "Compared with databases by enzyme class"
 SUPPLEMENT_DATABASES = "#statsCharts .stats-supp-group[aria-labelledby='statsSupplementDatabasesTitle']"
 
 
@@ -1779,7 +1779,7 @@ STATS_DATABASES_LAYOUT_JS = """
 
 
 def check_stats_databases(driver, browser, url):
-    """Part 7, Against the databases, holds its layout at 1440, 1280, 1024, 375 and 320px (STATS_DATABASES_LAYOUT_JS),
+    """Part 7, Compared with databases, holds its layout at 1440, 1280, 1024, 375 and 320px (STATS_DATABASES_LAYOUT_JS),
     in the viewer's own font (a wide one too: the DejaVu run), with the snapshot's comparison or, in Chrome, the test
     bundle's when the snapshot has none; its figures stand in order, two to a row from 1024px."""
     wait = WebDriverWait(driver, 60, ignored_exceptions=(StaleElementReferenceException,))
@@ -1809,7 +1809,7 @@ def check_stats_databases(driver, browser, url):
             titles = [h.get_attribute("innerText").strip() for h in driver.find_elements(By.CSS_SELECTOR, "#statsCharts [data-part='databases'] .stats-fig-title")]
             assert titles == list(DATABASE_TITLES), titles
             problems = driver.execute_script(STATS_DATABASES_LAYOUT_JS)
-            assert not problems, f"Against the databases at {width}px: {problems}"
+            assert not problems, f"Compared with databases at {width}px: {problems}"
             # In the supplement each item stands on its own line: each database above the values it pairs.
             tops = driver.execute_script("""return ['db-sources', 'db-paired'].map(key => document.querySelector(`[data-figure='${key}']`).getBoundingClientRect().top)""")
             assert tops[1] > tops[0] + 1, f"At {width}px Figure and Table rows: {tops}"
@@ -3041,7 +3041,7 @@ def check_filters(driver, browser, url, route_label):
         box.click()
 
     def check_database_group():
-        """Round 9: Against the databases is the second group, after Source: Corrects a value, Different number, Same, other
+        """Round 9: Compared with databases is the second group, after Source: Corrects a value, Different number, Same, other
         label, Not in the databases with "every value" nested under it, All values the same, a rule, Corrected earlier;
         each result's square, its definition as title; counts at rest are the manifest's keys; earlier addresses keep
         their records; "every value" brings Not in the databases and is one chip with it; the names keep one line at
@@ -3215,7 +3215,7 @@ def check_filters(driver, browser, url, route_label):
         driver.find_element(By.CSS_SELECTOR, '#activeFilters [data-filter-key="db:all_not_listed"]').click()
         wait.until(lambda d: not fragment())
         assert database_ticked() == [] and not chip_keys(), (database_ticked(), chip_keys())
-        # Every link of Stats' Against the databases opens a Browse list that keeps all of its keys: Browse drops a key
+        # Every link of Stats' Compared with databases opens a Browse list that keeps all of its keys: Browse drops a key
         # it does not read (dbsrc, dbwhy or dbpar before value-level matching) and would then show a wider list than the
         # link names. One link for each set of keys the part's links use; once, on the published page.
         if base.endswith("catlog-latest.html") and browser == "chrome":  # one reload per link set: Chrome covers it
@@ -3279,7 +3279,7 @@ def check_filters(driver, browser, url, route_label):
         open_page(base + "#browse")
         rest = driver.execute_script(SIDEBAR_GROUPS_JS)
         assert rest["top"] == ["Enzyme, organism, substrate", "Measurement type", "Review result", "More filters"], rest
-        assert rest["more"] == ["Source", "Wild type or variant", "Assay conditions", "Against the databases", "Cautions", "Source database"], rest
+        assert rest["more"] == ["Source", "Wild type or variant", "Assay conditions", "Compared with databases", "Cautions", "Source database"], rest
         assert rest["moreOpen"] is False and rest["moreOpenInside"] == [True, True, True, False, False, False], rest
         assert rest["countHidden"] and rest["words"] == "", rest
         assert rest["notes"] == [], f"Help text in view: {rest['notes']}"
@@ -3465,7 +3465,7 @@ def check_filters(driver, browser, url, route_label):
         driver.find_element(By.CSS_SELECTOR, "#activeFilters [data-filter-clear]").click()
         wait.until(lambda d: not fragment())
 
-        # Against the databases shows only when the snapshot carries the comparison; without it a db= address is ignored.
+        # Compared with databases shows only when the snapshot carries the comparison; without it a db= address is ignored.
         indexed = driver.execute_script(
             "return (window.CATLOG_STATIC_MANIFEST?.viewer_index?.optional_fields || []).includes('database_summary')")
         open_page(base + "#browse?db=corrects")
@@ -3666,7 +3666,7 @@ CHIP_COLOURS_JS = """
     probe.style.color = 'var(--line-strong)'; document.body.appendChild(probe); tokens['--line-strong'] = getComputedStyle(probe).color;
     probe.style.color = 'var(--bg)'; tokens['--bg'] = getComputedStyle(probe).color; probe.remove();
     return {chips, tokens, squares: {differs: square('differs'), notListed: square('not-listed'), otherLabel: square('other-label')},
-            plainDots: [...document.querySelectorAll('#catalogFilters .filter-section-title')].filter(title => /^(Review result|Against the databases)/.test(title.textContent.trim()))
+            plainDots: [...document.querySelectorAll('#catalogFilters .filter-section-title')].filter(title => /^(Review result|Compared with databases)/.test(title.textContent.trim()))
                 .map(title => title.querySelectorAll('.group-dot').length)};
 """
 UNDO_STATE_JS = """
@@ -3729,7 +3729,7 @@ def check_chip_colours_and_undo(driver, browser, base, wait, open_page, chip_key
                      "metric:kcat": (None, None), "temperature": (None, None)}, marks
     assert page["squares"]["differs"] == tokens["--cmp-differs"], page["squares"]
     # The sidebar's group marks: Source's cyan square while Read from the paper is chosen; no mark beside the groups with
-    # no meaning colour (an ink dot there was decoration), nor beside Review result and Against the databases.
+    # no meaning colour (an ink dot there was decoration), nor beside Review result and Compared with databases.
     by_key = {chip["key"]: chip for chip in chips}
     assert by_key["source:paper"]["dots"] and all(dot["shown"] and dot["colour"] == tokens["--src-paper"] for dot in by_key["source:paper"]["dots"]), by_key["source:paper"]
     assert all(not any(dot["shown"] for dot in by_key[key]["dots"]) for key in ("ec", "organism", "metric:kcat", "temperature")), by_key
@@ -5118,7 +5118,7 @@ def check_layout(driver, browser, url, route_label):
 RECORD_PANEL_FORBIDDEN = re.compile(r"independent|AI run|second run|Protein identity|Accession resolved|Normalized|Values in source|Detail shard|earlier catalog|old catalog", re.I)
 
 
-RECORD_SECTIONS = ["Values", "Against the databases", "Checks", "Source", "Conditions", "Protein and substrate", "Paper"]
+RECORD_SECTIONS = ["Values", "Compared with databases", "Checks", "Source", "Conditions", "Protein and substrate", "Paper"]
 # Round 13 (a curated entry, not a log): what is the same on every record is the Guide's (one link under Checks), never a
 # sentence of the record.
 RECORD_BOILERPLATE = re.compile(r"converted by code|as extracted from the paper|Read from the paper by an AI model|"
@@ -5145,7 +5145,7 @@ PHONE_APPROVED_SCIENTIFIC_RECORD = "9f56345af45ee06e"
 
 
 def check_record_panel(driver, browser, url, route_label):
-    """The record (design spec 5, round 13): header lines, then Values, Against the databases (only when it has something
+    """The record (design spec 5, round 13): header lines, then Values, Compared with databases (only when it has something
     to say), Checks, Source (an older record's database; a record read from the paper has none), Conditions, Protein and
     substrate, Paper, then the record's actions and its footnote (license, snapshot, data ID); a record read from the
     paper gives its values as printed and one Guide link under Checks ("How CatLog reads a value"), no method sentence;
@@ -5227,8 +5227,8 @@ def check_record_panel(driver, browser, url, route_label):
                                   ("database-pending", "#browse?source=brenda&status=curation_pending")):
                 panel = open_first_record(address)
                 # (an earlier corrected record's section in that slot is headed Corrected earlier: no database is compared there)
-                sections = ["Against the databases" if name == "Corrected earlier" else name for name in panel["sections"]]
-                expected = [name for name in RECORD_SECTIONS if (name != "Against the databases" or name in sections)
+                sections = ["Compared with databases" if name == "Corrected earlier" else name for name in panel["sections"]]
+                expected = [name for name in RECORD_SECTIONS if (name != "Compared with databases" or name in sections)
                             and (name != "Source" or kind != "from-paper" or name in sections)]
                 assert sections == expected, panel["sections"]
                 if kind != "from-paper":
@@ -5262,7 +5262,7 @@ def check_record_panel(driver, browser, url, route_label):
                     assert panel["dotColor"] == panel["rowDotColor"], (panel["dotColor"], panel["rowDotColor"])
                 if kind.startswith("database"):
                     # A database record compares nothing with the databases: an unsettled one says its values are the
-                    # database's in Checks' Paper check row, never under Against the databases. Only a record
+                    # database's in Checks' Paper check row, never under Compared with databases. Only a record
                     # the earlier review corrected has the section, when the snapshot lists what that review changed.
                     if panel["databasesText"] is not None:
                         assert "corrected" in panel["status"] and "Corrected earlier" in panel["databasesText"], \
@@ -5692,7 +5692,7 @@ ABOUT_TARGET_JS = """
 
 
 def open_database_about(driver, wait, width):
-    """Opens the record's Against the databases "?" box (centred first, for Safari) and returns where the "?" and the box
+    """Opens the record's Compared with databases "?" box (centred first, for Safari) and returns where the "?" and the box
     sit: the "?" on the heading's line just after its words, the box under the heading, inside the panel."""
     button = driver.find_element(By.CSS_SELECTOR, "#detailContent .databases-section > .section-about")
     driver.execute_script("arguments[0].scrollIntoView({block: 'center'})", button)
@@ -5724,7 +5724,7 @@ def open_database_about(driver, wait, width):
 
 
 def check_record_databases(driver, browser, base, wait):
-    """Section G, Against the databases (round 9 brief, section 4): a folding note for each value that is not the same,
+    """Section G, Compared with databases (round 9 brief, section 4): a folding note for each value that is not the same,
     the result's word in its summary; notes on a correction or a different number open (every one from 641px, only the
     first on a phone); one line under the Values table for each of those values, whose button opens its note in view;
     the compared databases and the caption once, in the heading's "?" box (the "?" on the heading's line; the box's link
@@ -5747,7 +5747,7 @@ def check_record_databases(driver, browser, base, wait):
         if problems and PRE_C9_LINES:
             results.setdefault("databases-names-pre-c9", {})[key] = problems
             return "waived (lines before C9)"
-        assert not problems, (f"Record {key}: Against the databases names the databases unlike its \"?\" box: {problems}. The "
+        assert not problems, (f"Record {key}: Compared with databases names the databases unlike its \"?\" box: {problems}. The "
                               "snapshot's database_line predates C9 (catlog-v2 tools/site_release.py: 'None of the compared "
                               "databases', display names such as STRENDA DB); publish this section only with C9. For a pre-C9 "
                               "test bundle only, CATLOG_CHECK_PRE_C9_LINES=1 lists this instead of failing.")
@@ -5758,7 +5758,7 @@ def check_record_databases(driver, browser, base, wait):
         set_browse_viewport(driver, browser, width, height)
         if open_record(DATABASE_NOTES_RECORD):
             state = driver.execute_script(DATABASE_SECTION_STATE)
-            assert state["order"][:2] == ["Values", "Against the databases"], state["order"]
+            assert state["order"][:2] == ["Values", "Compared with databases"], state["order"]
             assert state["notes"] and all(note["word"] in DATABASE_RESULT_WORDS for note in state["notes"]), state["notes"]
             changed = [note for note in state["notes"] if note["word"] in ("Corrects a value", "Different number", "Different number (exact factor, not yet checked)")]
             assert changed and all(note["details"] for note in changed), state["notes"]
@@ -5780,10 +5780,10 @@ def check_record_databases(driver, browser, base, wait):
             # footer on every record; the caption shows under the notes only on a record with a Different number.
             assert state["about"].startswith("Compared with the values "), state["about"]
             assert state["aboutButton"] == {"expanded": "false", "hidden": True, "inSection": True, "afterHeading": True}, state["aboutButton"]
-            assert state["footers"] == 0, "Against the databases still ends with a footer"
+            assert state["footers"] == 0, "Compared with databases still ends with a footer"
             check_database_caution(state)
             assert not re.search(r"\bfive\b|Not in any database|Same number, other label|Adds a value", state["text"]), state["text"]
-            assert state["sideways"] <= 1, f"Against the databases scrolls sideways at {width}px: {state['sideways']}"
+            assert state["sideways"] <= 1, f"Compared with databases scrolls sideways at {width}px: {state['sideways']}"
             # The "?" opens the box under the heading (on the heading's line, after its words), where each database's
             # name keeps one line (SABIO-RK never breaks at its hyphen, STRENDA DB at its space); it closes again.
             about = open_database_about(driver, wait, width)
@@ -5815,7 +5815,7 @@ def check_record_databases(driver, browser, base, wait):
             driver.save_screenshot(str(OUTPUT / f"{browser}-record-databases-{label}.png"))
             results[f"databases-notes-{label}"] = True
             if label == "desktop" and about["guide"]:
-                # The box's link opens the Guide at its Against the databases section.
+                # The box's link opens the Guide at its Compared with databases section.
                 open_database_about(driver, wait, width)
                 link = driver.find_element(By.CSS_SELECTOR, "#detailContent .detail-about a[href='#guide-databases']")
                 driver.execute_script("arguments[0].scrollIntoView({block: 'center'})", link)

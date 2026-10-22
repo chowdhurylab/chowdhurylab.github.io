@@ -68,7 +68,7 @@ JSON Lines (gzip)</span>
 JSON Lines (gzip)</span>
               </a>
               <a id="comparisonDataButton" href="#" download="catlog-database-comparison.csv.gz" hidden>
-                <strong>Against the databases</strong>
+                <strong>Compared with databases</strong>
                 <span id="comparisonDataDescription">Values read from the paper, one row per database listing the paper
 CSV (gzip)</span>
               </a>
@@ -188,7 +188,7 @@ CSV (gzip)</span>
                   </div>
                 </details>
                 <details class="filter-section has-about" id="databaseFilterSection" hidden>
-                  <summary class="filter-section-title"><span>Against the databases</span> <svg class="chevron" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.5 7.5 6 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
+                  <summary class="filter-section-title"><span>Compared with databases</span> <svg class="chevron" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.5 7.5 6 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></summary>
                   <button class="section-about" type="button" aria-expanded="false" aria-controls="aboutDatabases" title="About the comparison with the databases"><span aria-hidden="true">?</span><span class="visually-hidden">About the comparison with the databases</span></button>
                   <div class="filter-about" id="aboutDatabases" hidden></div>
                   <div class="check-stack" id="databaseChecklist"></div>
@@ -375,7 +375,7 @@ JSON</span>
               <li><a href="#guide-method">How CatLog works</a></li>
               <li><a href="#guide-record">Read a record</a></li>
               <li><a href="#guide-status">Labels and colours</a></li>
-              <li data-guide-database-section hidden><a href="#guide-databases">Against the databases</a></li>
+              <li data-guide-database-section hidden><a href="#guide-databases">Compared with databases</a></li>
               <li><a href="#guide-caveats">Before you use the values</a></li>
               <li class="guide-contents-ref"><a href="#guide-find">Find records</a></li>
               <li class="guide-contents-ref"><a href="#guide-units">Units</a></li>
@@ -451,7 +451,7 @@ JSON</span>
                 </div>
                 <div class="guide-anatomy-part" data-guide-databases hidden>
                   <span class="guide-pin" aria-hidden="true"></span>
-                  <p class="guide-anatomy-heading">Against the databases</p>
+                  <p class="guide-anatomy-heading">Compared with databases</p>
                   <ul class="guide-anatomy-db">
                     <li><span class="db-mark db-mark-same" aria-hidden="true"></span><i>k</i><sub>cat</sub>: same as BRENDA, SABIO-RK and OED</li>
                     <li><span class="db-mark db-mark-same" aria-hidden="true"></span><i>K</i><sub>m</sub>: same as SABIO-RK; BRENDA lists 0.0082&nbsp;mM</li>
@@ -475,7 +475,7 @@ JSON</span>
                   <li><strong>Review result</strong> The result and its tags (<a href="#guide-status">Labels and colours</a>).</li>
                   <li><strong>Values</strong> In catalog units, beside the cell as printed; a tick means a reviewer approved it.</li>
                   <li><strong>In the paper</strong> The line the values come from.</li>
-                  <li data-guide-databases hidden><strong>Against the databases</strong> What the databases list; here BRENDA&rsquo;s <i>K</i><sub>m</sub> is 10&times; the paper&rsquo;s (<a href="#guide-databases">results</a>).</li>
+                  <li data-guide-databases hidden><strong>Compared with databases</strong> What the databases list; here BRENDA&rsquo;s <i>K</i><sub>m</sub> is 10&times; the paper&rsquo;s (<a href="#guide-databases">results</a>).</li>
                   <li><strong>Checks</strong> The second AI check, AI audits and human review (<a href="#guide-how-read">How CatLog reads a value</a>).</li>
                   <li><strong>Details</strong> Conditions, protein, substrate and paper.</li>
                 </ol>
@@ -546,7 +546,7 @@ JSON</span>
                 </dl>
               </section>
               <section class="guide-legend-group" aria-labelledby="guide-db-legend-title" data-guide-databases hidden>
-                <h3 id="guide-db-legend-title">Against the databases</h3>
+                <h3 id="guide-db-legend-title">Compared with databases</h3>
                 <dl class="guide-status-list guide-db-legend">
                   <div><dt><span class="db-mark db-mark-same" aria-hidden="true"></span>Same number</dt><dd>A database lists this number (<a href="#guide-databases">more</a>).</dd></div>
                   <div><dt><span class="db-mark db-mark-other-label" aria-hidden="true"></span>Same, other label</dt><dd>The same number under another substrate, variant or organism.</dd></div>
@@ -600,7 +600,7 @@ JSON</span>
           </section>
 
           <section class="guide-section guide-databases" id="guide-databases" aria-labelledby="guide-databases-title" data-guide-database-section hidden>
-            <h2 id="guide-databases-title">Against the databases</h2>
+            <h2 id="guide-databases-title">Compared with databases</h2>
             <div id="guideDatabasesBody"></div>
           </section>
 
@@ -621,7 +621,7 @@ JSON</span>
               <dl class="guide-term-list">
                 <div><dt>Search</dt><dd>An enzyme, EC number, organism, substrate, UniProt accession, PMID or DOI: <code class="guide-try">laccase</code> <code class="guide-try">1.10.3.2</code> <code class="guide-try">P11509</code> <code class="guide-try">12514023</code>. A substrate word matches the start of a part of the name, so lactose does not find galactose. Gene names are not indexed.</dd></div>
                 <div><dt>Filters</dt><dd>Enzyme, EC number, organism, substrate; measurement type; review result.</dd></div>
-                <div><dt>More filters</dt><dd>Source, wild type or variant, assay conditions,<span data-guide-databases hidden> against the databases,</span> cautions and source database; it opens by itself when one is set.</dd></div>
+                <div><dt>More filters</dt><dd>Source, wild type or variant, assay conditions,<span data-guide-databases hidden> compared with databases,</span> cautions and source database; it opens by itself when one is set.</dd></div>
                 <div><dt>Share</dt><dd>Every view and open record has its own address.</dd></div>
               </dl>
               <p class="guide-list-title" id="guideExamplesTitle">Try</p>
@@ -651,7 +651,7 @@ JSON</span>
             <dl class="guide-download-list">
               <div><dt>Full data</dt><dd>Every record and field, with sequences, SMILES and paper links.</dd></div>
               <div><dt>Table</dt><dd>The table&rsquo;s columns with pH and temperature; joins Full data on record_key.</dd></div>
-              <div id="guideComparisonDownload" hidden><dt>Against the databases</dt><dd>One row per value and database, with the result and the database&rsquo;s number (gzip CSV). <a id="guideComparisonLink" href="#" download="catlog-database-comparison.csv.gz">Download the comparison</a></dd></div>
+              <div id="guideComparisonDownload" hidden><dt>Compared with databases</dt><dd>One row per value and database, with the result and the database&rsquo;s number (gzip CSV). <a id="guideComparisonLink" href="#" download="catlog-database-comparison.csv.gz">Download the comparison</a></dd></div>
               <div><dt>Format</dt><dd>gzip JSON Lines: <code>pandas.read_json(path, lines=True, compression="gzip")</code>. The Dataset notes (<a href="#guide-cite">Cite</a>) list every field.</dd></div>
               <div><dt>Review files</dt><dd>Behind records not yet <span class="nowrap">re-read</span>: <a href="mailto:ratul@iastate.edu?cc=supantha@iastate.edu&amp;subject=CatLog%20review%20files%20request">request by email</a>.</dd></div>
             </dl>
@@ -696,7 +696,7 @@ JSON</span>
             <h2 id="guide-questions-title">Questions</h2>
             <details class="guide-details">
               <summary>Why does a value differ from BRENDA?</summary>
-              <p>BRENDA may use another unit, round the value or take it from another table, condition or enzyme form.<span data-guide-database-section hidden> See <a href="#guide-databases">Against the databases</a>.</span></p>
+              <p>BRENDA may use another unit, round the value or take it from another table, condition or enzyme form.<span data-guide-database-section hidden> See <a href="#guide-databases">Compared with databases</a>.</span></p>
             </details>
             <details class="guide-details">
               <summary>Why is a sequence or SMILES missing?</summary>
