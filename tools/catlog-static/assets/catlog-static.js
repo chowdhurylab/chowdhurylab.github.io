@@ -5533,7 +5533,7 @@
     return {
       id: "statsPairsTitle", key: "between-papers", title: "Between papers", wide: true,
       body: `<div class="stats-ranges stats-pairs">${panels.join("")}</div>${table}`,
-      caption: escapeHtml(`Wild-type values of one enzyme (UniProt entry) and substrate in two papers, from ${statsUsedText(records, papers, enzymes)}; assays and constructs differ between papers, so a difference is not all error.`),
+      caption: escapeHtml(`Wild-type values of one enzyme (UniProt entry) and substrate in two papers, from ${statsUsedText(records, papers, enzymes)}; assays and constructs differ between papers, so part of each difference is real.`),
       rules: `Each paper’s value is the median of its records for that enzyme and substrate (matched by structure, else by name), whatever their conditions, a kcat/Km calculated as kcat ÷ Km included; a pair of papers counts once per enzyme, substrate and parameter. Pairs giving the very same number are left out, as often one paper prints the other’s value again: ${statsListText(identical)}. The table compares two papers only at a temperature (to 1\u00a0°C) and pH (to 0.1) both give. Each bar is a quarter of a power of ten; the last holds 100-fold and more. Values without a recorded unit, or in another unit, are left out.`,
     };
   }
@@ -5720,7 +5720,7 @@
         return `<tr data-stat-key="typical_${metric.key}" data-count="${item.n}"><th scope="row">${metric.html} <span class="stats-muted nowrap">(${escapeHtml(metric.unit)})</span><small>${counts}</small></th>
           <td class="stats-num">${cell(item.median)}${molar}</td><td class="stats-num stats-muted">${cell(item.p10)}–${cell(item.p90)}</td></tr>`;
       }).join("")}
-        <tr class="stats-row-reference"><th scope="row"><a class="stats-ref-link" href="${escapeHtml(STATS_BAR_EVEN.href)}" target="_blank" rel="noreferrer">${escapeHtml(STATS_BAR_EVEN.name)}</a>: the average enzyme’s <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub><small>in the paper’s abstract</small></th>
+        <tr class="stats-row-reference"><th scope="row"><a class="stats-ref-link" href="${escapeHtml(STATS_BAR_EVEN.href)}" target="_blank" rel="noreferrer">${escapeHtml(STATS_BAR_EVEN.name)}</a>, average enzyme<small>its abstract’s <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub></small></th>
           <td class="stats-num">about ${statsPowerOfTen(STATS_BAR_EVEN.log10KcatOverKm)}\u00a0M⁻¹\u00a0s⁻¹</td><td class="stats-num stats-muted">${EMPTY_VALUE}</td></tr></tbody></table>`;
     return {
       id: "statsTypicalTitle", key: "typical", title: "The typical wild-type enzyme", kind: "Table", body,
@@ -7498,7 +7498,8 @@
       body: statsBarChart({ key: "earlier-corrections", rows, legend: names.map(([part, label]) => ({ part, label })), percent: true, axis: statsAxis(100, 25, { percent: true }) }) + statsShareLines(rows),
       caption: own
         // (what was changed, by kind, never "to the paper's number": a changed kcat/Km is often kcat ÷ Km, round 14)
-        ? `Changes CatLog’s earlier version made to values on the ${recordsLink} that ${records === 1 ? "lists them" : "list them"}, by kind.`
+        // (fix pass after round 16b: "Changes ... made to values on the ... that list them" read as shorthand)
+        ? `How CatLog’s earlier version changed values on ${recordsLink}, by kind of change.`
         : Number.isInteger(snapshot.corrected) && snapshot.corrected !== records
           ? `Changes the earlier review made to values on the ${formatInteger(records)} ${records === 1 ? "record" : "records"} accepted after a correction when counted${statsAsOf(quality) ? ` (${statsAsOf(quality)})` : ""}, by kind; Figure 1 counts ${formatInteger(snapshot.corrected)} in this snapshot.`
           : `Changes the earlier review made to values on the ${formatInteger(records)} ${records === 1 ? "record" : "records"} accepted after a correction, by kind.`,
@@ -7888,7 +7889,7 @@
           valueHeads: byStatus ? ["Records", STATS_HEAD_ACCEPTED] : [],
         }),
         caption: "Each record counts once, under the source it came from.",
-        rules: `A merged record counts once here, under Several databases; the list under the bars counts it under each, as Browse does.${byStatus ? " Share draws each bar as 100%." : ""}`,
+        rules: `A merged record counts once here, under Several databases; the list under the bars counts it under each, as Browse does.${byStatus ? " The Share view draws each bar at full width." : ""}`,
         after: byDatabase,
       });
     } else {
@@ -7985,7 +7986,7 @@
       contentsTable = {
         id: "statsContentsTitle", key: "contents", title: "What the records contain", kind: "Table",
         body: statsTable(contents, total, { head: "Value or field" }),
-        caption: "A record usually has several of these.",
+        caption: "Records with each value or field; most records have several.",
         rules: notes,
         after: sequences.length ? `<details class="stats-explanation"><summary>Sequence fields</summary><table class="stats-detail-table"><tbody>
           ${sequences.map(([label, count]) => `<tr><th scope="row">${escapeHtml(label)}</th><td>${formatInteger(count)}</td><td>${escapeHtml(statsShare(count, total))}</td></tr>`).join("")}
@@ -8210,7 +8211,7 @@
         ${ruleRow(escapeHtml(SOURCE_CATLOG_LABEL), `Records ${escapeHtml(v2Sentence.charAt(0).toLowerCase() + v2Sentence.slice(1))}`)}
         ${ruleRow(escapeHtml(SOURCE_DATABASES_LABEL), `All other records: ${escapeHtml(SOURCE_DATABASES_HELP)}`)}` : ""}
         ${reviewRules ? ruleRow("Human review", metricWordsHtml(escapeHtml(reviewRules))) : ""}
-        ${compares || databases.length ? ruleRow("Against the databases", escapeHtml(`Numbers are compared within the same paper and parameter. Its papers are those with a compared value. Shares only on ${formatInteger(STATS_RATE_BASE)} values or more.`)) : ""}
+        ${compares || databases.length ? ruleRow("Against the databases", escapeHtml(`Numbers are compared within the same paper and parameter. Papers count when at least one of their values was compared. Shares are given only for ${formatInteger(STATS_RATE_BASE)} values or more.`)) : ""}
       </dl>${figureRules.length ? `<dl class="stats-method-figures">${figureRules.map(([term, title, rules]) => ruleRow(term, `<span class="stats-method-title">${title}.</span> ${escapeHtml(rules)}`)).join("")}</dl>` : ""}</details>`);
     $("statsCharts").innerHTML = keepReRead(sections.join(""));
     // On this page: the parts in one line under the title, each a link to its part (#stats-<key>, the part's own

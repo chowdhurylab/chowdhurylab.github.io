@@ -1898,7 +1898,7 @@ function row(overrides = {}) {
   assert.deepEqual(api.statsNumbersText("Table", [2, 3, "S1", "S2"]), "Tables 2, 3, S1 and S2");
   assert.ok(api.statsSharesRule({ Figure: [], Table: [] }).startsWith("A share is of its own bar, row or card"));
   assert.match(element("statsCharts").innerHTML, /<strong>Figure 1\.<\/strong> Each record has exactly one review result \(<a class="stats-guide-link" href="[^"]*#guide-status">defined in the Guide<\/a>\)\.<\/span><\/figcaption>/);
-  assert.match(element("statsCharts").innerHTML, /<strong>Table S1\.<\/strong> A record usually has several of these\.<\/span><\/figcaption>/);
+  assert.match(element("statsCharts").innerHTML, /<strong>Table S1\.<\/strong> Records with each value or field; most records have several\.<\/span><\/figcaption>/);
   // A supplement item: closed, its own address, its heading (number and title) in its summary, the figure under it with
   // no heading of its own.
   assert.match(element("statsCharts").innerHTML, /<details class="stats-supp-item" id="stats-table-s1" data-supp="contents">\s*<summary><h4 id="statsContentsTitle" class="stats-supp-title"><span class="stats-supp-number">Table S1<\/span> <span class="stats-supp-name">What the records contain<\/span><\/h4><\/summary>\s*<div class="stats-supp-body"><section class="stats-section stats-figure-section" aria-labelledby="statsContentsTitle" data-figure="contents">\s*<figure/);
@@ -2444,7 +2444,7 @@ function row(overrides = {}) {
   assert.doesNotMatch(values, /not compared|README/);
   assert.doesNotMatch(methodHtml(), /README|databases also list/);
   // Part 7's own rules, once.
-  assert.match(methodHtml(), /<dt>Against the databases<\/dt><dd>Numbers are compared within the same paper and parameter\. Its papers are those with a compared value\. Shares only on 1,000 values or more\.<\/dd>/);
+  assert.match(methodHtml(), /<dt>Against the databases<\/dt><dd>Numbers are compared within the same paper and parameter\. Papers count when at least one of their values was compared\. Shares are given only for 1,000 values or more\.<\/dd>/);
   assert.equal(api.statsNotReproducedText({ not_reproduced: { distinct: { equals_catlog_calculated_ratio: 1, another_parameter_in_catlog: 0 } } }),
     "The databases also list 1 number for these papers that matches no value CatLog read from them: 1 equals a kcat/Km CatLog calculated.");
   runtimeManifest.database_comparison_download = { path: "data/catlog-database-comparison.0123456789ab.csv.gz", rows: 10 };
@@ -2531,7 +2531,7 @@ function row(overrides = {}) {
   assert.match(plain(causes.match(/<ul class="stats-db-blocks">[\s\S]*?<\/ul>/)[0].replace(/<\/li>/g, " ")), /^BRENDA: unit or scale 979 · decimal slip 85 · another number 46 · unit misprinted 46 SABIO-RK: unit or scale 325 · unit misprinted 43 /);
   // The earlier version's corrections, counted from this snapshot's Full data: on the records Corrected earlier finds.
   const earlier = figureHtml("earlier-corrections");
-  assert.match(plain(earlier), /Changes CatLog’s earlier version made to values on the 2,881 records not yet re-read that list them, by kind\./);
+  assert.match(plain(earlier), /How CatLog’s earlier version changed values on 2,881 records not yet re-read, by kind of change\./);
   assert.doesNotMatch(plain(earlier), /to the paper's number|what the paper prints/);
   // Every part-7 caption is plain, and none repeats the caveat the lead says once.
   for (const caption of databaseSection().match(/<span class="stats-fig-caption">[\s\S]*?<\/span>(?=<\/figcaption>)/g)) assertPlainCaption(caption);
@@ -3080,7 +3080,7 @@ function row(overrides = {}) {
     // At the same temperature and pH: the table and the records it uses ("1 enzyme", in the singular).
     assert.match(figure.body, /<tr data-count="2"><th scope="row"><i>k<\/i><sub>cat<\/sub><\/th><td class="stats-num">2<\/td><td class="stats-num">1\.5×<\/td><td class="stats-num">100\.0%<\/td><td class="stats-num">100\.0%<\/td><\/tr>/);
     assert.match(figure.body, /At the same temperature \(to 1\u00a0°C\) and pH \(to 0\.1\): 5 records, 2 papers and 1 enzyme\.<\/p>/);
-    assert.equal(figure.caption, "Wild-type values of one enzyme (UniProt entry) and substrate in two papers, from 12 records, 4 papers and 2 enzymes; assays and constructs differ between papers, so a difference is not all error.");
+    assert.equal(figure.caption, "Wild-type values of one enzyme (UniProt entry) and substrate in two papers, from 12 records, 4 papers and 2 enzymes; assays and constructs differ between papers, so part of each difference is real.");
     assertPlainCaption(figure.caption);
     // Pairs giving the very same number are left out (often one paper's value printed again in another), and named.
     assert.match(figure.rules, /Pairs giving the very same number are left out, as often one paper prints the other’s value again: 1 for kcat and 1 for Km\./);
@@ -3168,7 +3168,7 @@ function row(overrides = {}) {
     assert.match(table.body, /<small>10 records, 3 papers and 2 enzymes<\/small>/);
     assert.match(table.body, /<small>1 record, 1 paper and 1 enzyme<\/small>/);
     assert.match(table.body, /<td class="stats-num">28<small>28,000\u00a0M⁻¹\u00a0s⁻¹<\/small><\/td>/);
-    assert.match(table.body, /<a class="stats-ref-link" href="https:\/\/doi\.org\/10\.1021\/bi2002289" target="_blank" rel="noreferrer">Bar\u2011Even et al\. 2011<\/a>: the average enzyme’s <i>k<\/i><sub>cat<\/sub>\/<i>K<\/i><sub>m<\/sub><small>in the paper’s abstract<\/small><\/th>\s*<td class="stats-num">about 10⁵\u00a0M⁻¹\u00a0s⁻¹<\/td><td class="stats-num stats-muted">—<\/td><\/tr>/);
+    assert.match(table.body, /<a class="stats-ref-link" href="https:\/\/doi\.org\/10\.1021\/bi2002289" target="_blank" rel="noreferrer">Bar\u2011Even et al\. 2011<\/a>, average enzyme<small>its abstract’s <i>k<\/i><sub>cat<\/sub>\/<i>K<\/i><sub>m<\/sub><\/small><\/th>\s*<td class="stats-num">about 10⁵\u00a0M⁻¹\u00a0s⁻¹<\/td><td class="stats-num stats-muted">—<\/td><\/tr>/);
     assert.doesNotMatch(table.body, /colspan/, "The reference value stands in the Median column, under CatLog's median");
     assertPlainCaption(table.caption);
     assert.match(table.rules, /about 10⁵ M⁻¹ s⁻¹ \(10² mM⁻¹ s⁻¹\)\.$/);
