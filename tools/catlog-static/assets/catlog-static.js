@@ -5642,7 +5642,9 @@
       && (item.from === null || item.below === null || item.below > item.from) && statsCount(item.n) && statsCount(item.papers, papers)
       && statsSpreadHolds(item, "p10", "p90")) || bins.reduce((sum, item) => sum + item.n, 0) !== records) return null;
     const recordWord = (n) => `${formatInteger(n)} ${n === 1 ? "record" : "records"}`;
-    const label = (item) => (item.from === null ? `below ${item.below}` : item.below === null ? `${item.from} or more` : `${item.from}–${item.below}`);
+    // Each bin runs from its edge to below the next, so no edge is in two labels (30 °C, a common assay temperature, is in
+    // "30 to <40" alone); the tooltip line says it in words.
+    const label = (item) => (item.from === null ? `below ${item.below}` : item.below === null ? `${item.from} or more` : `${item.from} to <${item.below}`);
     const words = (item) => (item.from === null ? `Below ${item.below} °C` : item.below === null ? `${item.from} °C and above` : `${item.from} °C to below ${item.below} °C`);
     const byBin = statsMediansPanel({ key: "kcat-temperature", head: "n", labelWidth: "6em",
       heading: `<i>k</i><sub>cat</sub> <span class="stats-range-unit">(s⁻¹) by assay temperature (°C)</span>`,

@@ -3059,7 +3059,8 @@ function row(overrides = {}) {
         counts: [0, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0] } };
     const heat = api.statsTemperatureFigure(temperature);
     assert.equal(heat.key, "kcat-temperature");
-    assert.deepEqual([...heat.body.matchAll(/<span class="stats-ridge-label">([^<]+)<\/span>/g)].map((match) => match[1]), ["below 20", "20–30", "80 or more"]);
+    // No edge in two labels: a bin runs from its edge to below the next.
+    assert.deepEqual([...heat.body.matchAll(/<span class="stats-ridge-label">([^<]+)<\/span>/g)].map((match) => match[1]), ["below 20", "20 to &lt;30", "80 or more"]);
     assert.match(heat.body, /data-tip="20 °C to below 30 °C: median kcat 4\.5 s⁻¹, 10–90% 1\.125–18 s⁻¹;/);
     assert.match(heat.rules, /^Each bin starts at its lower edge and ends below the next; the dot is the median and the line the middle 80% \(10th to 90th percentile\), as in Value ranges; n is the bin’s number of records\./);
     // Q₁₀ in tenths of a power of ten centred on 10^−0.5 ... 10^1: the dashed line at 1 (no change).
