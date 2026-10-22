@@ -1115,6 +1115,8 @@
   // and the data's had set ' beside the Guide's ’): an apostrophe after a letter and before an English ending (paper’s,
   // CatLog’s, BRENDA’s, isn’t). A prime in a chemical name (2'-deoxyguanosine, 3',5'-cyclic AMP, N,N'-...) follows a digit
   // or comes before a hyphen or comma, and stays; an address keeps its text (Browse's search reads ’ as ').
+  // (A plural's possessive is written with ’ in the page's own strings, fix pass after round 16b: "agents' " cannot be
+  // told from a closing quote in the data's text, 'Steady-state kinetic constants'.)
   const TYPOGRAPHIC_APOSTROPHE = /(?<=[A-Za-z])'(?=(?:s|t|re|ll|ve|d|m)\b)/g;
   function typographicText(value) {
     const text = String(value == null ? "" : value);
@@ -4783,25 +4785,23 @@
     const [limitLow, limitHigh] = STATS_DIFFUSION_LIMIT;
     const band = `M${x(kmStart)} ${y(kmStart + limitLow)}L${x(kmEnd)} ${y(kmEnd + limitLow)}L${x(kmEnd)} ${y(kmEnd + limitHigh)}L${x(kmStart)} ${y(kmStart + limitHigh)}Z`;
     // Lines of equal kcat/Km every hundredfold that cross the plot (those at the band's edges are its edges), each
-    // labelled where it leaves the plot (across the top, else down the right side) in M⁻¹ s⁻¹, the unit the diffusion
-    // limit is known in (10⁸–10⁹ M⁻¹ s⁻¹), so no label reads as the limit in another unit: at 10², 10⁴, 10⁶ M⁻¹ s⁻¹ ...
-    const exits = [];
-    const exitOf = (k) => {
-      const top = kcatEnd - k;
-      if (top >= kmStart && top <= kmEnd) return { side: "top", at: (top - kmStart) / spanX * 100 };
-      const right = kmEnd + k;
-      return right >= kcatStart && right <= kcatEnd ? { side: "right", at: (right - kcatStart) / spanY * 100 } : null;
-    };
+    // labelled on the line itself, three quarters of a decade in from where it leaves the plot, along its slope as the
+    // band's "diffusion limit" is (fix pass after round 16b: labels along the top edge and down the right side read as a
+    // second x axis and a repeat of the y ticks), in M⁻¹ s⁻¹, the unit the diffusion limit is known in (10⁸–10⁹ M⁻¹ s⁻¹),
+    // so no label reads as the limit in another unit. A line with less than a decade and a half inside the plot (a
+    // corner) has no label; the legend names the lines.
     const isoLines = [];
+    const isoLabels = [];
     const first = Math.ceil((kcatStart - kmEnd + STATS_MOLAR) / STATS_MAP_ISO_STEP) * STATS_MAP_ISO_STEP - STATS_MOLAR;
     for (let k = first; k < kcatEnd - kmStart; k += STATS_MAP_ISO_STEP) {
       if (k >= limitLow && k <= limitHigh) continue;
       isoLines.push(`<path class="stats-map-iso" d="${line(k)}"/>`);
-      const exit = exitOf(k);
-      if (exit && exit.at > 0.5) exits.push({ ...exit, exponent: k + STATS_MOLAR });
+      const enter = Math.max(kmStart, kcatStart - k);
+      const leave = Math.min(kmEnd, kcatEnd - k);
+      if (leave - enter < 1.5) continue;
+      const at = leave - 0.75;
+      isoLabels.push(`<span class="stats-map-iso-label" style="left:${+((at - kmStart) / spanX * 100).toFixed(3)}%;bottom:${+((at + k - kcatStart) / spanY * 100).toFixed(3)}%" aria-hidden="true">10<sup>${String(k + STATS_MOLAR).replace("-", "−")}</sup></span>`);
     }
-    // Labelled as the axes' ticks are (10 and a superscript), one exponent style in the figure.
-    const label = (exit) => `<span class="stats-map-iso-label is-${exit.side}" style="${exit.side === "top" ? "left" : "bottom"}:${+exit.at.toFixed(3)}%">10<sup>${String(exit.exponent).replace("-", "−")}</sup></span>`;
     // "diffusion limit" runs along the band, a decade in from where its middle line leaves the plot (the decades are one
     // size, so the band runs at 45°), where the band crosses at least two decades of the plot.
     const middle = (limitLow + limitHigh) / 2;
@@ -4809,7 +4809,7 @@
     const bandTo = Math.min(kmEnd, kcatEnd - middle);
     const limitLabel = bandTo - bandFrom >= 2
       ? `<span class="stats-map-limit-label" style="left:${+((bandTo - 1 - kmStart) / spanX * 100).toFixed(3)}%;bottom:${+((bandTo - 1 + middle - kcatStart) / spanY * 100).toFixed(3)}%" aria-hidden="true">diffusion limit</span>` : "";
-    const labels = exits.map(label).join("") + limitLabel;
+    const labels = isoLabels.join("") + limitLabel;
     // The class medians: a dot per class (the end bins' values count, so a median stays inside the plot).
     const place = (value, start, span) => Math.max(0, Math.min(100, (Math.log10(value) - start) / span * 100));
     const classes = (Array.isArray(map.classes) ? map.classes : []).filter((item) => statsClassColour(item?.class)
@@ -6482,7 +6482,7 @@
     const asOf = statsAsOf(quality);
     return [
       asOf ? `Counted ${asOf}.` : "",
-      review ? "From the reviewers' own files: each entry a reviewer checked counts once, by its final verdict." : "",
+      review ? "From the reviewers’ own files: each entry a reviewer checked counts once, by its final verdict." : "",
       review?.unchecked ? "An entry with no PMID or DOI could not be checked against a paper, so the shares leave it out." : "",
       review ? `No value disputed: no reviewer disputed the entry’s ${REVIEW_VALUES} number or unit.` : "",
       review && review.notFound !== null ? "Could not find the value: the reviewer could not find the entry’s value in the paper (one kind of other disagreement)." : "",
@@ -8216,7 +8216,7 @@
         ${reviewRules ? ruleRow("Human review", metricWordsHtml(escapeHtml(reviewRules))) : ""}
         ${compares || databases.length ? ruleRow("Against the databases", escapeHtml(`Numbers are compared within the same paper and parameter. Papers count when at least one of their values was compared. Shares are given only for ${formatInteger(STATS_RATE_BASE)} values or more.`)) : ""}
       </dl>${figureRules.length ? `<dl class="stats-method-figures">${figureRules.map(([term, title, rules]) => ruleRow(term, `<span class="stats-method-title">${title}.</span> ${escapeHtml(rules)}`)).join("")}</dl>` : ""}</details>`);
-    $("statsCharts").innerHTML = keepReRead(sections.join(""));
+    $("statsCharts").innerHTML = keepReRead(statsSuperscriptsHtml(sections.join("")));
     // On this page: the parts in one line under the title, each a link to its part (#stats-<key>, the part's own
     // address), numbered as their headings are; on a phone Stats is 17 screens long and this is the way to a part
     // (2026-10-15). Hidden until drawn, so a page without parts shows no empty line.
@@ -8298,7 +8298,7 @@
       .map((key) => TEAM_STATIONS[key].replace(/^The /, "the ")).join(", ");
   }
   // AI critique, in plain words (round 14): what Vaishnavey looks for and where it goes; never more than that.
-  const VAISHNAVEY_PHRASE = "examines the AI agents' readings for systematic errors; the findings feed the rules";
+  const VAISHNAVEY_PHRASE = "examines the AI agents’ readings for systematic errors; the findings feed the rules";
   // In the order the wide figure draws them, so Tab follows it: the agents above, left to right, then the people below.
   // The agents re-verify what is already published (round 13: never a "download" agent): source agents find the paper
   // a database value cites, reading agents read its values, verification agents check each one against the paper.
@@ -12496,6 +12496,15 @@
   // record's sentences (its cautions, grey notes, database lines and Human review line; round 15 polish: the caution box
   // had set "mM⁻¹ s⁻¹" in Unicode under a table of <sup>s). Takes escaped text; As printed keeps the paper's text.
   const FROM_SUPERSCRIPT = { "⁻": "−", "⁺": "+", "⁰": "0", "¹": "1", "²": "2", "³": "3", "⁴": "4", "⁵": "5", "⁶": "6", "⁷": "7", "⁸": "8", "⁹": "9" };
+  // Stats' sentences, legends and table cells set a unit's or a power of ten's exponent with <sup>, as its axes, its
+  // table heads and the record do (fix pass after round 16b: the Unicode superscripts of "10⁸–10⁹ M⁻¹ s⁻¹" drew smaller
+  // and lighter beside them): only in text, never inside a tag or an attribute (a title or tooltip line keeps its
+  // Unicode), nor inside an SVG, whose <text> holds no HTML.
+  function statsSuperscriptsHtml(html) {
+    return String(html ?? "").split(/(<svg\b[\s\S]*?<\/svg>)/).map((part, index) => (index % 2 ? part
+      : part.replace(/[⁻⁺]?[⁰¹²³⁴⁵⁶⁷⁸⁹]+(?![^<>]*>)/g, (run) => superscriptsHtml(run)))).join("");
+  }
+
   function superscriptsHtml(html) {
     return String(html ?? "").replace(/[⁻⁺]?[⁰¹²³⁴⁵⁶⁷⁸⁹]+/g, (run) => `<sup>${[...run].map((character) => FROM_SUPERSCRIPT[character]).join("")}</sup>`);
   }
@@ -15511,6 +15520,8 @@
       statsExposureText,
       auditFacts,
       reviewGlanceText,
+      statsSuperscriptsHtml,
+      typographicText,
       statsCorrectionsQualifiers,
       statsNotReproducedHtml,
       secondCheckFacts,

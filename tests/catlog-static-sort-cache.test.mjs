@@ -1314,9 +1314,9 @@ assert.equal(document.title, "Team | CatLog");
   // AI critique (round 14, the user 2026-10-20): Vaishnavey examines the AI agents' readings for systematic errors and
   // the findings feed the rules, in one plain sentence (no pronoun, no title); on both loops AI critique hangs off Rules
   // updated by a dashed line whose chevron points at Rules updated.
-  assert.match(team, /<strong>Vaishnavey<\/strong> examines the AI agents&#39; readings for systematic errors; the findings feed the rules<\/span><small [^>]*>At AI critique<\/small>/);
+  assert.match(team, /<strong>Vaishnavey<\/strong> examines the AI agents’ readings for systematic errors; the findings feed the rules<\/span><small [^>]*>At AI critique<\/small>/);
   assert.match(team, /data-actor="vaishnavey" data-stations="critique"/);
-  assert.match(team, /aria-label="Vaishnavey: examines the AI agents&#39; readings for systematic errors; the findings feed the rules\. At AI critique\."/);
+  assert.match(team, /aria-label="Vaishnavey: examines the AI agents’ readings for systematic errors; the findings feed the rules\. At AI critique\."/);
   assert.doesNotMatch(team, /\b(?:she|her|hers|he|his|him)\b[^<]*(?:critique|Vaishnavey)|Vaishnavey[^<]*\b(?:she|her|hers|he|his|him)\b/i);
   {
     const loop = (layout) => element("teamFigure").innerHTML.match(new RegExp(`class="team-loop team-loop-${layout}"[\\s\\S]*?</svg>`))[0];
@@ -2259,7 +2259,7 @@ function row(overrides = {}) {
   assert.doesNotMatch(lead, /Counted|own files|stats-fig-data/);
   // Its definitions set kcat and Km in italic as everywhere else on the page.
   assert.match(methodHtml(), /<dt>Human review<\/dt><dd>[^<]*no reviewer disputed the entry’s <i>k<\/i><sub>cat<\/sub>, <i>K<\/i><sub>m<\/sub> or/);
-  assert.match(metricPlain(methodHtml()), /<dt>Human review<\/dt><dd>Counted Oct 13, 2026\. From the reviewers&#39; own files: each entry a reviewer checked counts once, by its final verdict\. No value disputed: no reviewer disputed the entry’s kcat, Km or kcat\/Km number or unit\. Could not find the value: the reviewer could not find the entry’s value in the paper \(one kind of other disagreement\)\. Values missing: the reviewer says the paper prints a value the entry lacks\. Approved values: kcat, Km and printed kcat\/Km values a reviewer approved without objection\. The same value: the same paper, metric, protein, variant and substrate, and a value within 2%\.<\/dd>/);
+  assert.match(metricPlain(methodHtml()), /<dt>Human review<\/dt><dd>Counted Oct 13, 2026\. From the reviewers’ own files: each entry a reviewer checked counts once, by its final verdict\. No value disputed: no reviewer disputed the entry’s kcat, Km or kcat\/Km number or unit\. Could not find the value: the reviewer could not find the entry’s value in the paper \(one kind of other disagreement\)\. Values missing: the reviewer says the paper prints a value the entry lacks\. Approved values: kcat, Km and printed kcat\/Km values a reviewer approved without objection\. The same value: the same paper, metric, protein, variant and substrate, and a value within 2%\.<\/dd>/);
   assert.doesNotMatch(lead, /first comparison|blind|95% range|85\.9|87\.0|earlier catalog/i, "The strict wording is gone");
   // The checks: the second AI check, the AI audits and the human-checked records; the review and the match are the
   // lead's.
@@ -2990,6 +2990,11 @@ function row(overrides = {}) {
     assert.match(figure.body, /17 mM⁻¹ s⁻¹<small>17,000 M⁻¹ s⁻¹<\/small>/);
     assert.match(figure.body, /<dd>1 <span class="stats-muted">\(33\.3%\)<\/span><small>10⁸ M⁻¹ s⁻¹ or more; 0 at 10⁹ or more \(the caution marks those above 10¹⁰\)<\/small>/);
     assert.match(figure.body, /Diffusion limit, 10⁸–10⁹ M⁻¹ s⁻¹/);
+    // The equal-kcat/Km lines are labelled on the lines, along their slope, never along the plot's top or right edge
+    // (fix pass after round 16b: those read as a second x axis and a repeat of the y ticks).
+    assert.doesNotMatch(figure.body, /stats-map-iso-label is-(top|right)/);
+    assert.ok([...figure.body.matchAll(/<span class="stats-map-iso-label" style="left:([\d.]+)%;bottom:([\d.]+)%" aria-hidden="true">10<sup>/g)]
+      .every((match) => Number(match[1]) <= 100 && Number(match[2]) <= 100), "each label stands inside the plot");
     assert.match(figure.body, /Equal <i>k<\/i><sub>cat<\/sub>\/<i>K<\/i><sub>m<\/sub> \(M⁻¹ s⁻¹\), every 100-fold/);
     assert.doesNotMatch(api.statsKcatKmFigure({ ...map, linked: 4 }, classNames).body, /<dd><a class="stats-link"/, "No link when Browse would list another number");
     // Counts that do not add up, or a grid that is not whole decades, draw nothing.
@@ -7733,6 +7738,14 @@ for (const hash of ["#stats", "#guide", "#guide-units"]) {
   assert.doesNotMatch(aboutStatus, /Tags<\/p>|earlier extraction|no paper linked|from paper<\/strong>/);
   assert.equal((aboutStatus.match(/<p>/g) || []).length, 6);
 }
+// The page's own plural possessives are written with ’ (fix pass after round 16b), as escapeHtml sets a singular's; a
+// chemical prime and a quoted phrase in the data keep theirs. Stats sets an exponent in text with <sup>, never inside a
+// tag, an attribute or an SVG.
+assert.equal(api.typographicText("CatLog's 'Steady-state kinetic constants' "), "CatLog’s 'Steady-state kinetic constants' ");
+assert.equal(api.typographicText("3',5'-cyclic AMP and 2'-deoxyguanosine"), "3',5'-cyclic AMP and 2'-deoxyguanosine");
+assert.equal(api.statsSuperscriptsHtml('<p title="10⁸ M⁻¹">10⁸–10⁹ M⁻¹ s⁻¹</p><svg><text>10⁸</text></svg>'),
+  '<p title="10⁸ M⁻¹">10<sup>8</sup>–10<sup>9</sup> M<sup>−1</sup> s<sup>−1</sup></p><svg><text>10⁸</text></svg>');
+
 // A correction count per database carries the lead's qualifiers (fix pass after round 16b): a lower bound in the
 // caption, how all the corrections were found in the rule.
 {

@@ -1618,3 +1618,10 @@ manifest's database comparison; a field an older snapshot lacks leaves its words
   catlog-v2's (site_release.py).
 - Value ranges and Values by enzyme class say in their captions that they count all records, those not yet re-read
   included (about 45% of the kcat values drawn), as the figures round them count only records read from the paper.
+- kcat against Km labels each line of equal kcat/Km on the line itself, three quarters of a decade in from where it
+  leaves the plot, along its slope as "diffusion limit" is, on a plain ground that parts the line (a contour label);
+  the labels along the top edge and down the right side had read as a second x axis and a repeat of the y ticks. A line
+  with less than a decade and a half in the plot has none. The frame's right column is 16px (the last x tick's half).
+- Stats sets the exponents of its sentences, legends and table cells with <sup>, as its axes, table heads and the record
+  do (statsSuperscriptsHtml on the drawn page: text only, never a tag, an attribute or an SVG); the page's plural
+  possessives are written with ’ ("the AI agents’ readings", "the reviewers’ own files").
