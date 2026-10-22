@@ -442,8 +442,12 @@ class OverviewTests(unittest.TestCase):
                                    r"|matched_later_other)$")
         read = {key for key in re.findall(r"\ba\.([a-z][a-z0-9_]*)|\"([a-z][a-z0-9_]*)\"", script) for key in key if key}
         read = {key for key in read if agreement_key.match(key)}
-        # The first-comparison and blind fields are reference only (the user, 2026-10-13): the page reads none of them.
-        self.assertFalse({key for key in read if key.startswith("first_") or "unexposed" in key}, read)
+        # The first comparison's share and the blind fields are reference only (the user, 2026-10-13): the page reads none
+        # of them. The errors that comparison found in CatLog (first_catlog_errors and its parts) are said, with their
+        # fixes, under Approved values read from the paper again (fix pass after round 16b).
+        self.assertFalse({key for key in read if (key.startswith("first_") and not key.startswith("first_catlog_errors"))
+                          or "unexposed" in key}, read)
+        self.assertIn("first_catlog_errors_label", read)
         self.assertIn("agree", read)
         self.assertEqual(read - set(followup.AGREEMENT_FIELDS), set())
         fresh = {"papers_compared": 291, "values_approved": 3838, "first_agree": 3332, "first_agree_pct": 86.8, "agree": 3412,
