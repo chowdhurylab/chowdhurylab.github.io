@@ -1990,6 +1990,14 @@ function row(overrides = {}) {
   assert.match(totalsHtml, /#browse\?source=paper">2<\/a><small>from 1 papers<\/small>/);
   // Human-checked is a check under Quality; the band has no Human review without the review's counts.
   assert.doesNotMatch(totalsHtml, /Human-checked|Human review/);
+  // Round 16b: with the values of the human-checked records counted, the rules say what they are.
+  assert.doesNotMatch(methodHtml(), /Their values are/);
+  overview.human_checked_values = 2;
+  api.renderStats();
+  assert.match(methodHtml(), /<dt>Human-checked<\/dt><dd>Accepted records where [^<]*\(the human-checked tag\)\. Their values are the kcat, Km and kcat\/Km values a reviewer approved on them; a record holds up to three\.<\/dd>/);
+  delete overview.human_checked_values;
+  api.renderStats();
+  assert.equal(element("statsCharts").innerHTML, chart);
   assert.deepEqual(partTitles(), ["1 At a glance", "2 Quality", "3 What is in the catalog", "4 Values", "S Supplementary figures and tables"]);
   // On this page: one line under the title listing the parts as their headings number them, each a link to the part's
   // own address (#stats-<key>, the section's id), so a phone visitor reaches a part without scrolling the whole page.
@@ -2087,6 +2095,33 @@ function row(overrides = {}) {
   const qualityChart = element("statsCharts").innerHTML;
   assert.deepEqual(headings().slice(0, 3), ["Checks on the values", "Review result", "Records by main source"]);
   assert.match(qualityChart, /<tr data-check="audit">\s*<th scope="row">AI audits<\/th><td class="stats-check-covered">742 values<\/td>\s*<td class="stats-check-result">740 kept, 2 removed as wrong \(0\.3%\), as of Oct 11, 2026<\/td>/);
+  // Round 16b (catlog-v2's publication review, items 1, 3, 5 and 7): the audit's 95% interval and the two papers most
+  // wrong values sit in, human-checked records with their values, the papers read or checked with database values in
+  // view, and CatLog's own errors by route; each only when its counts hold together.
+  {
+    const plainText = (html) => html.replace(/<[^>]*>/g, "").replace(/&amp;/g, "&").replace(/\s+/g, " ").trim();
+    const audit = api.auditFacts({ quality: { audit_values: 6651, audit_wrong: 74, as_of: "2026-10-21", audit_wrong_ci95: "0.89-1.39", audit_wrong_papers: 26, audit_wrong_top2: 50 } });
+    assert.deepEqual([[...audit.ci], audit.papers, audit.top2], [["0.89", "1.39"], 26, 50]);
+    assert.equal(api.auditFacts({ quality: { audit_values: 6651, audit_wrong: 74, audit_wrong_ci95: "1.5-2.0" } }).ci, null, "An interval that does not hold the share is left out");
+    assert.equal(api.auditFacts({ quality: { audit_values: 6651, audit_wrong: 74, audit_wrong_papers: 2, audit_wrong_top2: 74 } }).top2, null, "Two papers in all: nothing to set apart");
+    const checks = plainText(api.statsChecksHtml({ fromPaper: null, papersRead: null, audit, humanChecked: 1721, humanValues: 3486, marked: 2005, compared: null,
+      exposure: api.statsExposureText({ exposed: { papers: 309, reader: 173, checker_only: 136, first: "2026-10-09", last: "2026-10-21", reread_blind: 303, reread_blind_on: "2026-10-21", reread_blind_done: 0 } }) }));
+    assert.match(checks, /6,577 kept, 74 removed as wrong \(1\.1%; 95% interval 0\.89–1\.39%\), as of Oct 21, 2026\. 50 of the 74 are in two papers\./);
+    assert.match(checks, /1,721 records approved \(85\.8%\), 3,486 values/);
+    assert.match(checks, /Between Oct 9 and Oct 21, 2026, the reading agent on 173 papers, and only a checking agent on 136 more, opened database values or files of CatLog’s earlier version\. 303 of these papers were sent back on Oct 21, 2026 to be read again blind; none is done yet\./);
+    assert.equal(api.statsExposureText({ exposed: { papers: 309, reader: 173, checker_only: 135 } }), "", "Counts that do not add up say nothing");
+    assert.equal(api.statsExposureText({ exposed: { papers: 5, reader: 0, checker_only: 5, reread_blind: 5, reread_blind_on: "2026-10-21", reread_blind_done: 2 } }),
+      "Only a checking agent on 5 papers opened database values or files of CatLog’s earlier version. 5 of these papers were sent back on Oct 21, 2026 to be read again blind; 2 are done.");
+    const errors = { audit: { values: 74, papers: 26 }, sweep: { values: 1254, papers: 97, reprinted: 1058, partial_constant: 103 },
+      unit_fix: { values: 108, papers: 13 }, database_check: { values: 12, papers: 4 }, all: { values: 1435, papers: 127 } };
+    const table = api.statsErrorsHtml({ catlog_errors: errors });
+    assert.deepEqual([...table.matchAll(/<tr data-route="([^"]+)"/g)].map((match) => match[1]), ["audit", "sweep", "unit_fix", "database_check", "all"]);
+    assert.match(plainText(table), /Catalog-wide sweep after an audit or check1,058 reprinted from an earlier paper, 103 partial constants\s*1,254\s*97/);
+    assert.match(plainText(table), /All, each value once\s*1,435\s*127/);
+    assert.equal(api.statsErrorsHtml({ catlog_errors: { ...errors, sweep: { values: 2000, papers: 97 } } }), "", "A route above All says nothing");
+    assert.equal(api.statsErrorsHtml({ catlog_errors: { ...errors, all: { values: "1435", papers: 127 } } }), "");
+    assert.doesNotMatch(api.statsErrorsHtml({ catlog_errors: { ...errors, database_check: { values: 0, papers: 0 } } }), /data-route="database_check"/);
+  }
   // The lead (the match read from the paper again) says what reviewers found in the earlier version's entries: the share
   // correct never without the label errors beside it; the checks repeat neither.
   assert.match(leadHtml(), /In entries from the earlier version, 9 of 2,431 values reviewers compared had a wrong number or unit \(99\.6% correct\), and 114 had a wrong enzyme, organism, substrate, variant or protein label\./);
@@ -2133,7 +2168,7 @@ function row(overrides = {}) {
   // (no second big number: At a glance gives the share, round 14)
   assert.doesNotMatch(lead, /stats-lead-figure|<strong>/);
   // The other values, each kind counted (the user's sentence, 2026-10-15), only when the kinds add up to them.
-  assert.match(lead, /<p class="stats-lead-sentence">Where CatLog has <span class="nowrap">re-read<\/span> a paper the reviewers checked, its value matches the approved value for 2,232 of 2,489 \(89\.7%\)\. Of the other 257, 128 were checked: 16 are the same value under another name, 109 are values the paper supports as CatLog reads them \(the earlier entry’s number or label was wrong\) and 3 differ by rounding; none is a CatLog error\. 24 cannot be compared and 105 are still to check\.<\/p>/);
+  assert.match(lead, /<p class="stats-lead-sentence">Where CatLog has <span class="nowrap">re-read<\/span> a paper the reviewers checked, its value matches the approved value for 2,232 of 2,489 \(89\.7%\)\. Of the other 257, AI agents checked 152 against the paper: 16 are the same value under another name, 109 are values the paper supports as CatLog reads them \(the earlier entry’s number or label was wrong\), 3 differ by rounding and 24 cannot be compared; none is a CatLog error\. 105 are still to check\.<\/p>/);
   assert.match(lead, /href="https:\/\/example\.test\/tools\/catlog-latest\.html#team">People behind CatLog/);
   assert.doesNotMatch(lead, /independent|AI run|Claude|Codex|first comparison|blind|95% range/);
   assert.doesNotMatch(element("statsCharts").innerHTML, /data-check="agreement"/, "The match is the lead's, not repeated in the checks");
@@ -2163,8 +2198,18 @@ function row(overrides = {}) {
   assert.match(lead, /<h3 id="statsReviewTitle" class="stats-fig-title">Human review<\/h3>/);
   // The headline is At a glance's alone (round 14: stated once): the share, then in a few words the entries checked, the
   // disputed ones and, beside the share as the user asked (2026-10-15), the entries whose value was not found.
-  assert.match(element("statsTotals").innerHTML, /<dt>Human review<\/dt><dd><span class="stats-total-value">99\.9%<\/span><small>of 2,674 earlier entries people checked, 3 had a value disputed; 153 \(5\.7%\) not found in the paper<\/small>/);
-  assert.equal(api.reviewGlanceText(api.reviewFacts({ entries: 10, value_disputed: 0 })), "of 10 earlier entries people checked, none had a value disputed");
+  assert.match(element("statsTotals").innerHTML, /<dt>Human review<\/dt><dd><span class="stats-total-value">99\.9%<\/span><small>of 2,674 entries \(earlier records as reviewers saw them\) people checked, 3 had a value disputed; 153 \(5\.7%\) not found in the paper<\/small>/);
+  assert.equal(api.reviewGlanceText(api.reviewFacts({ entries: 10, value_disputed: 0 })), "of 10 entries (earlier records as reviewers saw them) people checked, none had a value disputed");
+  // Round 16b: with the counts over the entries a reviewer could check against a paper (review.checkable), the share is
+  // theirs and the entries without a paper are said beside it; counts that do not add up keep the older reading.
+  const checkable = { entries: 10, papers: 4, entries_without_paper: 2, value_disputed: 1, checkable: { entries: 8, value_disputed: 1, other_disputed: 1, other_by_kind: { DOI: 1 } } };
+  assert.equal(api.reviewGlanceText(api.reviewFacts(checkable)), "of 8 entries (earlier records as reviewers saw them) people could check, 1 had a value disputed; 2 had no paper");
+  assert.deepEqual([api.reviewFacts(checkable).share, api.reviewFacts(checkable).all, api.reviewFacts(checkable).unchecked, api.reviewFacts(checkable).papers], ["87.5%", 10, 2, 4]);
+  assert.equal(api.reviewFacts({ ...checkable, entries_without_paper: 3 }).unchecked, null);
+  // The review in one sentence says every entry checked, those without a paper and the share over the others.
+  assert.equal(api.reviewSentence(api.reviewFacts({ ...checkable, value_disputed_checked_as_printed: 1, checkable: { ...checkable.checkable, value_disputed_checked_as_printed: 1 } })),
+    "Human reviewers checked 10 entries from the earlier version (4 papers); 2 had no paper and could not be checked, and no value was disputed on 7 of the 8 that could (87.5%); a check of the paper found the disputed value printed as the entry gives it.");
+  assert.equal(api.reviewFacts({ ...checkable, checkable: { entries: "8" } }).share, "90.0%");
   // Quality says it once more only as one sentence and a table of the verdicts; the not-found entries are a table row.
   assert.doesNotMatch(lead, /stats-lead-figure|<strong>|could not find the value in the paper\./);
   assert.match(lead, /<p class="stats-lead-sentence">People checked 2,674 entries from the earlier version <span class="nowrap">\(408 papers\)<\/span>; a check of the paper found all 3 disputed values printed as the entry gives them\.<\/p>/);
@@ -2569,6 +2614,14 @@ function row(overrides = {}) {
   withOut((data) => { data.corrections.by = { code: 900, paper_check: 648 }; });
   assert.match(methodHtml(), /648 found by an AI check of the paper; for 900 an automated check found an exact factor\./);
   assert.doesNotMatch(figureHtml("db-found"), /<ul class="stats-legend">/);
+  // Round 16b (catlog-v2's publication review, item 6): the lead keeps the corrections an AI check of the paper found
+  // apart from those an exact factor found, when the comparison counts both and they add up, and calls them a lower
+  // bound when it says only larger differences are checked (checked_from_factor).
+  withOut((data) => { data.corrections.by_cause_found_by = { power_of_ten: { factor_cross_checked: 557 }, unit_not_converted: { paper_check: 991 } }; data.checked_from_factor = 1.5; });
+  assert.match(plain(databaseSection().match(/<p class="stats-part-lead"[\s\S]*?<\/p>/)[0]),
+    /For the rest, 1,548 correct a database’s number \(991 found by an AI check of the paper, 557 by an exact factor found automatically\) and 1,051 differ, cause not yet known, which can mean a different measurement rather than a database error\. These corrections are a lower bound on the databases’ errors, since only differences of 1\.5-fold or more are checked\.$/);
+  withOut((data) => { data.corrections.by_cause_found_by = { power_of_ten: { factor_cross_checked: 556 }, unit_not_converted: { paper_check: 991 } }; data.checked_from_factor = "x"; });
+  assert.doesNotMatch(databaseSection(), /found by an AI check of the paper, 556|lower bound/, "Counts that do not add up and a factor that is not a number say nothing");
   withOut((data) => { data.corrections.by_cause.new_cause = 2; data.corrections.by_cause.time_unit -= 2; });
   assert.match(methodHtml(), /<span class="stats-method-title">Corrections by cause\.<\/span> [^<]*2 corrections have causes not named here\.<\/dd>/);
   assert.match(methodHtml(), /<span class="stats-method-title">Corrections by cause and database\.<\/span> 2 corrections have causes not named here\. All causes counts them\.<\/dd>/);
@@ -2670,7 +2723,7 @@ function row(overrides = {}) {
   // that counts, in the user's order.
   assert.equal(api.v2MatchSentence(api.v2MatchFacts({ agreement: { values_approved: 20, agree: 10, differ_same_value_other_name: 4,
     differ_catlog_right: 0, differ_rounding: 1, differ_not_comparable: 2, differ_not_adjudicated: 2, differ_catlog_wrong: 1 } })),
-    "Where CatLog has re-read a paper the reviewers checked, its value matches the approved value for 10 of 20 (50.0%). Of the other 10, 6 were checked: 4 are the same value under another name and 1 differs by rounding; 1 is a CatLog error. 2 cannot be compared and 2 are still to check.");
+    "Where CatLog has re-read a paper the reviewers checked, its value matches the approved value for 10 of 20 (50.0%). Of the other 10, AI agents checked 8 against the paper: 4 are the same value under another name, 1 differs by rounding and 2 cannot be compared; 1 is a CatLog error. 2 are still to check.");
   assert.equal(api.v2MatchSentence(api.v2MatchFacts({ agreement: { values_approved: 20, agree: 10, differ_same_value_other_name: 4,
     differ_catlog_right: 0, differ_rounding: 1, differ_not_comparable: 2, differ_not_adjudicated: 9, differ_catlog_wrong: 0 } })),
     "Where CatLog has re-read a paper the reviewers checked, its value matches the approved value for 10 of 20 (50.0%). Of the other 10, none has been found to be a CatLog error.");

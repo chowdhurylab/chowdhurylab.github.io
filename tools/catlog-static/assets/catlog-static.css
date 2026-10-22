@@ -1536,6 +1536,12 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-checks-table td.stats-col-bar { width:96px }
 /* A check's bar is a share of all it covered: a hairline track gives its 100% (round 15 polish: the bars had no reference). */
 .stats-checks-table .stats-minibar { box-shadow:inset 0 0 0 1px var(--line) }
+/* Errors found in CatLog (round 16b): one row per way an error was found, values and papers, the All row (each value
+   once) set off by a rule and weight; a row's note (the sweep's reprinted values and partial constants) under its name. */
+.stats-errors-table th[scope="row"] { font-weight:400; white-space:normal; max-width:52ch }
+.stats-errors-table th[scope="row"] small { display:block; margin-top:2px; color:var(--text-2); font-size:var(--fs-12); line-height:var(--lh-12) }
+.stats-errors-table td.stats-num { padding-left:24px }
+.stats-errors-table .stats-errors-all > * { border-top:1px solid var(--line); font-weight:600 }
 
 /* Value ranges: three small log-scale histograms. */
 .stats-ranges { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:24px 32px }

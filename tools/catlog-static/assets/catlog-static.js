@@ -5853,13 +5853,23 @@
     return `${percent.toFixed(1)}%`;
   }
 
+  // The random audit (overview.quality): values re-checked, the wrong ones removed, the date, and from catlog-v2's
+  // 2026-10-21 marks (round 16b, item 7 of its publication review) the 95% Wilson interval of the share wrong
+  // (audit_wrong_ci95, "low-high" percentages, kept only when it holds the share) and how many of the wrong values sit in
+  // the two papers with the most (audit_wrong_top2 of them, in audit_wrong_papers papers); null where a snapshot lacks
+  // them.
   function auditFacts(overview) {
     const quality = overview?.quality;
     const values = statsCount(quality?.audit_values);
     const wrong = values ? statsCount(quality.audit_wrong, values) : null;
     if (!values || wrong === null) return null;
     const asOf = /^\d{4}-\d{2}-\d{2}/.test(String(quality.as_of || "")) ? formatDate(String(quality.as_of).slice(0, 10)) : "";
-    return { values, wrong, date: asOf };
+    const range = /^(\d+(?:\.\d+)?)-(\d+(?:\.\d+)?)$/.exec(String(quality.audit_wrong_ci95 ?? ""));
+    const share = wrong / values * 100;
+    const ci = range && Number(range[1]) <= share && share <= Number(range[2]) ? [range[1], range[2]] : null;
+    const papers = wrong ? statsCount(quality.audit_wrong_papers, wrong) : null;
+    const top2 = papers !== null && papers > 2 ? statsCount(quality.audit_wrong_top2, wrong) : null;
+    return { values, wrong, date: asOf, ci, papers, top2: top2 && top2 < wrong ? top2 : null };
   }
 
   function auditOutcomeText(audit) {
@@ -5875,7 +5885,24 @@
   // disagreements, by kind, among them the entries whose value the reviewer could not find in the paper. Shares are
   // worked out from the counts; null when they do not hold together. Stats' lead, the Guide's method section and Team's
   // Human check say it the same way.
+  // The shares are over the entries a reviewer could check against a paper when the snapshot gives them
+  // (review.checkable, catlog-v2 from 2026-10-21: an entry with no PMID or DOI cannot be checked, so it is no part of
+  // the share; item 4 of its publication review): entries, the counts and the kinds are then those entries', all is
+  // every entry reviewed and unchecked the entries without a paper. An older snapshot's share is over every entry
+  // (unchecked null). The two must add up, or the older reading stands.
   function reviewFacts(review) {
+    const whole = reviewBlockFacts(review);
+    if (!whole) return null;
+    const checkable = review.checkable && typeof review.checkable === "object" && !Array.isArray(review.checkable)
+      ? reviewBlockFacts(review.checkable) : null;
+    const unchecked = checkable ? statsCount(review.entries_without_paper, whole.entries) : null;
+    if (checkable && unchecked !== null && checkable.entries + unchecked === whole.entries) {
+      return { ...checkable, papers: whole.papers ?? checkable.papers, all: whole.entries, unchecked };
+    }
+    return { ...whole, all: whole.entries, unchecked: null };
+  }
+
+  function reviewBlockFacts(review) {
     const entries = statsCount(review?.entries);
     const disputed = entries ? statsCount(review.value_disputed, entries) : null;
     if (!entries || disputed === null) return null;
@@ -5909,11 +5936,12 @@
   // headline's base, round 8), "40 records read from the paper (3 papers)" (review.v2). As HTML its parenthesis keeps
   // one line (a wide font once left "(408" at the end of a line and "papers)" on the next).
   function reviewBaseParts(facts, { fromPaper = false } = {}) {
-    const one = facts.entries === 1;
+    const count = facts.all ?? facts.entries;
+    const one = count === 1;
     return {
       what: fromPaper
-        ? `${formatInteger(facts.entries)} ${one ? "record" : "records"} read from the paper`
-        : `${formatInteger(facts.entries)} ${one ? "entry" : "entries"} from the earlier version`,
+        ? `${formatInteger(count)} ${one ? "record" : "records"} read from the paper`
+        : `${formatInteger(count)} ${one ? "entry" : "entries"} from the earlier version`,
       papers: facts.papers ? `(${formatInteger(facts.papers)} ${facts.papers === 1 ? "paper" : "papers"})` : "",
     };
   }
@@ -5969,9 +5997,15 @@
   // The review in one sentence: "Human reviewers checked 2,770 entries from the earlier version (431 papers): no value
   // disputed on 2,767 of them (99.9%); the 3 disputed values are as printed in the paper." (review.v2: "Human
   // reviewers checked 40 records read from the paper (3 papers): ...").
+  // With the share over the entries with a paper (reviewFacts' unchecked, round 16b): "Human reviewers checked 2,770
+  // entries from the earlier version (431 papers); 166 had no paper and could not be checked, and no value was disputed
+  // on 2,601 of the 2,604 that could (99.9%); ...".
   function reviewSentence(facts, { fromPaper = false } = {}) {
     const after = facts.disputed ? reviewDisputedText(facts) : "";
     const tail = after ? `; ${after.charAt(0).toLowerCase()}${after.slice(1)}` : ".";
+    if (facts.unchecked) {
+      return `Human reviewers checked ${reviewBaseText(facts, { fromPaper })}; ${formatInteger(facts.unchecked)} had no paper and could not be checked, and no value was disputed on ${formatInteger(facts.undisputed)} of the ${formatInteger(facts.entries)} that could (${facts.share})${tail}`;
+    }
     return `Human reviewers checked ${reviewBaseText(facts, { fromPaper })}: no value disputed on ${formatInteger(facts.undisputed)} of them (${facts.share})${tail}`;
   }
 
@@ -6042,19 +6076,20 @@
     return { approved, same, differ, papers: statsCount(a.papers_compared), wrong, breakdown };
   }
 
-  // The values that differ, by how far they were checked (match.breakdown): the checked ones (the same value under
-  // another name, values the paper supports as CatLog reads them, rounding, CatLog errors) and those not checked (cannot
-  // be compared, still to check). null without the parts.
-  const V2_DIFFER_OPEN = ["differ_not_comparable", "differ_not_adjudicated"];
+  // The values that differ, by how far AI agents have checked them against the paper (match.breakdown; round 16b, item
+  // 2 of catlog-v2's publication review: say who checked them and how many of how many): checked are all but those
+  // still to check (differ_not_adjudicated), the values that cannot be compared among them (the check found CatLog
+  // leaves them out under its reading rules). null without the parts.
+  const V2_DIFFER_OPEN = ["differ_not_adjudicated"];
   function v2DifferChecks(match) {
     if (!match?.breakdown) return null;
     const open = V2_DIFFER_OPEN.reduce((sum, key) => sum + (match.breakdown[key] || 0), 0);
     return { checked: match.differ - open, notComparable: match.breakdown.differ_not_comparable || 0, toCheck: match.breakdown.differ_not_adjudicated || 0 };
   }
 
-  // What became of the values that differ, never more than was checked: "Of the other 538, 279 were checked and none
-  // is a CatLog error; 44 cannot be compared and 215 are still to check." (the Guide's short form); without the parts,
-  // "Of the other 449, none has been found to be a CatLog error."; "" when the errors are not counted.
+  // What became of the values that differ, never more than was checked: "Of the other 554, AI agents checked 323
+  // against the paper and none is a CatLog error; 231 are still to check." (the short form); without the parts, "Of the
+  // other 449, none has been found to be a CatLog error."; "" when the errors are not counted.
   function v2DifferShortText(match) {
     if (!match?.differ || match.wrong === null) return "";
     const errors = (n) => (n ? `${formatInteger(n)} ${n === 1 ? "is a CatLog error" : "are CatLog errors"}` : "none is a CatLog error");
@@ -6064,16 +6099,17 @@
         : "none has been found to be a CatLog error";
       return `Of the other ${formatInteger(match.differ)}, ${found}.`;
     }
-    const open = [checks.notComparable ? `${formatInteger(checks.notComparable)} cannot be compared` : "",
-      checks.toCheck ? `${formatInteger(checks.toCheck)} ${checks.toCheck === 1 ? "is" : "are"} still to check` : ""].filter(Boolean);
-    return `Of the other ${formatInteger(match.differ)}, ${formatInteger(checks.checked)} ${checks.checked === 1 ? "was" : "were"} checked and ${errors(match.wrong)}${open.length ? `; ${sentenceList(open)}` : ""}.`;
+    const open = checks.toCheck ? `; ${formatInteger(checks.toCheck)} ${checks.toCheck === 1 ? "is" : "are"} still to check` : "";
+    return checks.checked
+      ? `Of the other ${formatInteger(match.differ)}, AI agents checked ${formatInteger(checks.checked)} against the paper and ${errors(match.wrong)}${open}.`
+      : `The other ${formatInteger(match.differ)} ${match.differ === 1 ? "is" : "are"} still to check.`;
   }
 
-  // "Where CatLog has re-read a paper the reviewers checked, its value matches the approved value for 3,903 of 4,441
-  // (87.9%). Of the other 538, 279 were checked: 134 are the same value under another name, 142 are values the paper
-  // supports as CatLog reads them (the earlier entry's number or label was wrong) and 3 differ by rounding; none is a
-  // CatLog error. 44 cannot be compared and 215 are still to check." Without the parts, the second sentence says only
-  // the errors found (v2DifferShortText), or nothing when they are not counted.
+  // "Where CatLog has re-read a paper the reviewers checked, its value matches the approved value for 3,940 of 4,494
+  // (87.7%). Of the other 554, AI agents checked 323 against the paper: 134 are the same value under another name, 142
+  // are values the paper supports as CatLog reads them (the earlier entry's number or label was wrong), 3 differ by
+  // rounding and 44 cannot be compared; none is a CatLog error. 231 are still to check." Without the parts, the second
+  // sentence says only the errors found (v2DifferShortText), or nothing when they are not counted.
   function v2MatchSentence(match) {
     const first = `Where CatLog has re-read a paper the reviewers checked, its value matches the approved value for ${formatInteger(match.same)} of ${formatInteger(match.approved)} (${qualityShare(match.same, match.approved)}).`;
     if (!match.differ) return first;
@@ -6081,11 +6117,10 @@
     if (checks && match.wrong !== null) {
       const parts = V2_DIFFER_PARTS.filter(([key]) => !V2_DIFFER_OPEN.includes(key) && match.breakdown[key] > 0).map(([key, words]) => words(match.breakdown[key]));
       const errors = match.wrong ? `${formatInteger(match.wrong)} ${match.wrong === 1 ? "is a CatLog error" : "are CatLog errors"}` : "none is a CatLog error";
-      const open = [checks.notComparable ? `${formatInteger(checks.notComparable)} cannot be compared` : "",
-        checks.toCheck ? `${formatInteger(checks.toCheck)} ${checks.toCheck === 1 ? "is" : "are"} still to check` : ""].filter(Boolean);
-      const openText = open.length ? ` ${open.join(" and ").replace(/^./, (character) => character.toUpperCase())}.` : "";
-      if (parts.length) return `${first} Of the other ${formatInteger(match.differ)}, ${formatInteger(checks.checked)} ${checks.checked === 1 ? "was" : "were"} checked: ${sentenceList(parts)}; ${errors}.${openText}`;
-      if (checks.checked) return `${first} Of the other ${formatInteger(match.differ)}, ${formatInteger(checks.checked)} ${checks.checked === 1 ? "was" : "were"} checked and ${errors}.${openText}`;
+      const openText = checks.toCheck ? ` ${formatInteger(checks.toCheck)} ${checks.toCheck === 1 ? "is" : "are"} still to check.` : "";
+      const checked = `Of the other ${formatInteger(match.differ)}, AI agents checked ${formatInteger(checks.checked)} against the paper`;
+      if (parts.length) return `${first} ${checked}: ${sentenceList(parts)}; ${errors}.${openText}`;
+      if (checks.checked) return `${first} ${checked} and ${errors}.${openText}`;
       return `${first}${openText}`;
     }
     const short = v2DifferShortText(match);
@@ -6122,14 +6157,21 @@
     ].filter(Boolean).join(" ");
   }
 
-  // At a glance's Human review note (round 14: the headline is stated once, there): "of 2,770 earlier entries people
-  // checked, 3 had a value disputed; 153 (5.5%) not found in the paper" (the entries whose value the reviewer could not
-  // find stay beside the share wherever it stands, the user, 2026-10-15).
+  // At a glance's Human review note (round 14: the headline is stated once, there), with the gloss of "entries" where
+  // Stats first uses the word (round 16b): "of 2,604 entries (earlier records as reviewers saw them) people could check,
+  // 3 had a value disputed; 166 had no paper" when the share is over the entries with a paper (reviewFacts), else "of
+  // 2,770 entries (...) people checked, 3 had a value disputed; 153 (5.5%) not found in the paper" (the entries whose
+  // value the reviewer could not find stay beside the share wherever it stands, the user, 2026-10-15).
+  const REVIEW_ENTRIES_GLOSS = "earlier records as reviewers saw them";
   function reviewGlanceText(facts) {
     const disputed = facts.disputed ? `${formatInteger(facts.disputed)} had a value disputed` : "none had a value disputed";
+    const entries = `${formatInteger(facts.entries)} ${facts.entries === 1 ? "entry" : "entries"} (${REVIEW_ENTRIES_GLOSS})`;
+    if (facts.unchecked !== null && facts.unchecked !== undefined) {
+      return `of ${entries} people could check, ${disputed}${facts.unchecked ? `; ${formatInteger(facts.unchecked)} had no paper` : ""}`;
+    }
     const notFound = facts.notFound === null || facts.notFound === undefined ? ""
       : `; ${formatInteger(facts.notFound)} (${qualityShare(facts.notFound, facts.entries)}) not found in the paper`;
-    return `of ${formatInteger(facts.entries)} earlier ${facts.entries === 1 ? "entry" : "entries"} people checked, ${disputed}${notFound}`;
+    return `of ${entries} people checked, ${disputed}${notFound}`;
   }
 
   // Quality's Human review (round 14: no second big number; At a glance gives the headline): one sentence, who checked
@@ -6151,7 +6193,11 @@
       return section(`<p class="stats-lead-sentence">${escapeHtml(v2MatchSentence(match))}</p>${earlier ? `<p class="stats-lead-note">${escapeHtml(earlier)}</p>` : ""}`);
     }
     const after = reviewDisputedText(review);
-    const sentence = `People checked ${reviewBaseText(review)}${after ? `; ${after.charAt(0).toLowerCase()}${after.slice(1)}` : "."}`;
+    // with the entries a reviewer could not check said (round 16b): "People checked 2,770 entries from the earlier version
+    // (431 papers); 166 had no paper and could not be checked. A check of the paper found all 3 disputed values ..."
+    const sentence = review.unchecked
+      ? `People checked ${reviewBaseText(review)}; ${formatInteger(review.unchecked)} had no paper and could not be checked.${after ? ` ${after}` : ""}`
+      : `People checked ${reviewBaseText(review)}${after ? `; ${after.charAt(0).toLowerCase()}${after.slice(1)}` : "."}`;
     const row = (label, count, { sub = 0, title = "" } = {}) => `<tr${sub ? ` class="stats-row-sub${sub > 1 ? " stats-row-sub2" : ""}"` : ""}><th scope="row"${title ? ` title="${escapeHtml(title)}"` : ""}>${words(label)}</th><td class="stats-num">${formatInteger(count)}</td><td class="stats-num stats-muted">${escapeHtml(qualityShare(count, review.entries))}</td></tr>`;
     const noted = [
       review.missing !== null ? row("Value missing", review.missing, { sub: 1, title: "The paper prints a value the entry lacked" }) : "",
@@ -6164,6 +6210,7 @@
         <thead><tr><th scope="col">Verdict</th><th scope="col" class="stats-num">Entries</th><th scope="col" class="stats-num">Share</th></tr></thead>
         <tbody>${row("No value disputed", review.undisputed)}${row("A value disputed", review.disputed)}${noted
           ? `<tr class="stats-row-group"><th scope="rowgroup" colspan="3">Also noted, with either verdict</th></tr>${noted}` : ""}</tbody></table>
+      ${review.unchecked ? `<p class="stats-note stats-review-base">${escapeHtml(`Shares are of the ${formatInteger(review.entries)} ${review.entries === 1 ? "entry" : "entries"} with a paper.`)}</p>` : ""}
       ${v2Review ? `<p class="stats-lead-note">${keepReviewBase(words(reviewSentence(v2Review, { fromPaper: true })), v2Review, { fromPaper: true })}</p>` : ""}`);
   }
 
@@ -6183,7 +6230,9 @@
     ];
     return { id: "statsReviewKindsTitle", key: "review-kinds", title: "Human review by kind", kind: "Table",
       body: metricWordsHtml(statsTable(items, review.entries, { scale: Math.max(...items.map((item) => item.count)), head: "Flag", countHead: "Entries" })),
-      caption: `Flags on the ${formatInteger(review.entries)} entries people checked; an entry can have several.` };
+      caption: review.unchecked
+        ? `Flags on the ${formatInteger(review.entries)} entries people could check against a paper; an entry can have several.`
+        : `Flags on the ${formatInteger(review.entries)} entries people checked; an entry can have several.` };
   }
 
   // Supplement, Quality: the values reviewers approved, against CatLog's reading of the same papers (the match, by
@@ -6202,29 +6251,37 @@
         : [{ value: "other", label: "Not the same", count: match.differ },
           ...(match.wrong !== null ? [{ value: "catlog_wrong", label: "CatLog error", note: "Among those not the same.", count: match.wrong, sub: true }] : [])]),
     ];
+    // who checked the values that differ, and how many of how many (round 16b): "AI agents checked 323 of the 554 that
+    // differ against the paper; 231 are still to check."
+    const checked = checks && match.differ
+      ? ` AI agents checked ${formatInteger(checks.checked)} of the ${formatInteger(match.differ)} that differ against the paper${checks.toCheck ? `; ${formatInteger(checks.toCheck)} ${checks.toCheck === 1 ? "is" : "are"} still to check` : ""}.` : "";
     return { id: "statsReviewMatchTitle", key: "review-match", title: "Approved values read from the paper again", kind: "Table",
       body: statsTable(items, match.approved, { scale: match.approved, head: "CatLog’s value", countHead: "Values" }),
       // (re-read is kept whole by the page's own pass over Stats, keepReRead)
-      caption: escapeHtml(`The ${formatInteger(match.approved)} values reviewers approved, where CatLog has re-read the paper${match.papers !== null ? ` (${formatInteger(match.papers)} ${match.papers === 1 ? "paper" : "papers"})` : ""}.`) };
+      caption: escapeHtml(`The ${formatInteger(match.approved)} values reviewers approved, where CatLog has re-read the paper${match.papers !== null ? ` (${formatInteger(match.papers)} ${match.papers === 1 ? "paper" : "papers"})` : ""}.${checked}`) };
   }
 
   // Quality's Checks on the values (round 14: a table, not three cards with big numbers): each check, what it covered
   // and what it found, a small bar for the share kept or approved. Each row says its own base, so the three counts are
-  // never read as one set.
-  function statsChecksHtml({ fromPaper, papersRead, audit, humanChecked, marked, compared }) {
+  // never read as one set. Round 16b: the audit's share with its 95% interval and the two papers most of its wrong
+  // values sit in; human-checked records with their values beside them (one record holds up to three values); the
+  // papers read or checked with database values in view, under the table (statsExposureText).
+  function statsChecksHtml({ fromPaper, papersRead, audit, humanChecked, humanValues = null, marked, compared, exposure = "" }) {
+    const auditShare = audit?.wrong ? `${qualityShare(audit.wrong, audit.values)}${audit.ci ? `; 95% interval ${audit.ci[0]}–${audit.ci[1]}%` : ""}` : "";
+    const auditPapers = audit?.top2 ? ` ${formatInteger(audit.top2)} of the ${formatInteger(audit.wrong)} are in two papers.` : "";
     const rows = [
       fromPaper ? { key: "second_check", name: "Second AI check",
         covered: `<a class="stats-link" href="${escapeHtml(statsBrowseHref({ source: "paper" }))}">${formatInteger(fromPaper)}</a> records${papersRead !== null ? ` from ${formatInteger(papersRead)} papers` : ""}`,
         result: "Every value compared with the paper", share: null } : null,
       audit ? { key: "audit", name: "AI audits", covered: `${formatInteger(audit.values)} values`,
-        result: `${audit.wrong ? `${formatInteger(audit.values - audit.wrong)} kept, ${formatInteger(audit.wrong)} removed as wrong (${qualityShare(audit.wrong, audit.values)})` : "None was wrong"}${audit.date ? `, as of ${audit.date}` : ""}`,
+        result: `${audit.wrong ? `${formatInteger(audit.values - audit.wrong)} kept, ${formatInteger(audit.wrong)} removed as wrong (${auditShare})` : "None was wrong"}${audit.date ? `, as of ${audit.date}` : ""}${audit.wrong && auditPapers ? `.${auditPapers}` : ""}`,
         share: (audit.values - audit.wrong) / audit.values, part: "catlog" } : null,
       compared ? { key: "review", name: "Human review", covered: `${formatInteger(compared.values)} values${compared.papers ? ` on ${formatInteger(compared.papers)} ${compared.papers === 1 ? "paper" : "papers"}` : ""}`,
         result: `${formatInteger(compared.wrong)} with a wrong number or unit (${qualityShare(compared.values - compared.wrong, compared.values)} correct), ${formatInteger(compared.labels)} with a wrong label`,
         share: (compared.values - compared.wrong) / compared.values, part: "neutral" } : null,
       humanChecked !== null ? { key: "human_checked", name: "Human-checked",
         covered: marked !== null && marked >= humanChecked ? `${formatInteger(marked)} records judged` : "accepted records",
-        result: `<a class="stats-link" href="${escapeHtml(statsBrowseHref({ checked: "1" }))}">${formatInteger(humanChecked)}</a> approved${marked ? ` (${escapeHtml(qualityShare(humanChecked, marked))})` : ""}`,
+        result: `<a class="stats-link" href="${escapeHtml(statsBrowseHref({ checked: "1" }))}">${formatInteger(humanChecked)}</a> ${humanValues !== null ? (humanChecked === 1 ? "record " : "records ") : ""}approved${marked ? ` (${escapeHtml(qualityShare(humanChecked, marked))})` : ""}${humanValues !== null ? `, ${formatInteger(humanValues)} ${humanValues === 1 ? "value" : "values"}` : ""}`,
         resultHtml: true, share: marked ? humanChecked / marked : null, part: "same", title: HUMAN_CHECKED_DESCRIPTION } : null,
     ].filter(Boolean);
     if (!rows.length) return "";
@@ -6236,7 +6293,80 @@
           <th scope="row">${escapeHtml(row.name)}</th><td class="stats-check-covered">${row.covered}</td>
           <td class="stats-check-result">${row.resultHtml ? row.result : metricWordsHtml(escapeHtml(row.result))}</td>
           <td class="stats-col-bar" aria-hidden="true">${row.share !== null && row.share !== undefined
-            ? `<span class="stats-minibar"><span class="stats-seg stats-part-${row.part}" style="width:${+(Math.max(0, Math.min(1, row.share)) * 100).toFixed(4)}%"></span></span>` : ""}</td></tr>`).join("")}</tbody></table></section>`;
+            ? `<span class="stats-minibar"><span class="stats-seg stats-part-${row.part}" style="width:${+(Math.max(0, Math.min(1, row.share)) * 100).toFixed(4)}%"></span></span>` : ""}</td></tr>`).join("")}</tbody></table>${exposure
+        ? `<p class="stats-note stats-exposure" data-note="exposure">${escapeHtml(exposure)}</p>` : ""}</section>`;
+  }
+
+  // "Oct 9 and Oct 21, 2026" for two days of one year (as formatDate writes them), else both in full; "" without both.
+  function statsDaySpan(first, last) {
+    const ok = (day) => /^\d{4}-\d{2}-\d{2}$/.test(String(day || ""));
+    if (!ok(first) || !ok(last)) return "";
+    const [a, b] = [formatDate(first), formatDate(last)];
+    const year = String(last).slice(0, 4);
+    return String(first).slice(0, 4) === year && a.endsWith(`, ${year}`) ? `${a.slice(0, -`, ${year}`.length)} and ${b}` : `${a} and ${b}`;
+  }
+
+  // The papers read or checked with database values in view (overview.quality.exposed, catlog-v2 from 2026-10-21;
+  // round 16b, item 1 of its publication review: "reading or checking agent", reader and checker only apart, and the
+  // blind re-reading they were sent back to): "Between Oct 9 and Oct 21, 2026, the reading agent on 173 papers, and only
+  // a checking agent on 136 more, opened database values or files of CatLog’s earlier version. 303 of these papers were
+  // sent back on Oct 21, 2026 to be read again blind; none is done yet." "" without the counts, or when they do not add
+  // up.
+  function statsExposureText(quality) {
+    const exposed = quality?.exposed;
+    const papers = statsCount(exposed?.papers);
+    const reader = papers ? statsCount(exposed.reader, papers) : null;
+    const checker = papers ? statsCount(exposed.checker_only, papers) : null;
+    if (!papers || reader === null || checker === null || reader + checker !== papers) return "";
+    const span = statsDaySpan(exposed.first, exposed.last);
+    const who = [reader ? `the reading agent on ${formatInteger(reader)} ${reader === 1 ? "paper" : "papers"}` : "",
+      checker ? `${reader ? "and " : ""}only a checking agent on ${formatInteger(checker)} ${reader ? "more" : checker === 1 ? "paper" : "papers"}` : ""].filter(Boolean);
+    const first = `${span ? `Between ${span}, ` : ""}${who.join(", ")}${who.length > 1 ? "," : ""} opened database values or files of CatLog’s earlier version.`;
+    const sent = statsCount(exposed.reread_blind, papers);
+    const done = sent ? statsCount(exposed.reread_blind_done, sent) : null;
+    const on = /^\d{4}-\d{2}-\d{2}$/.test(String(exposed.reread_blind_on || "")) ? formatDate(exposed.reread_blind_on) : "";
+    const again = sent && on ? ` ${formatInteger(sent)} of these papers ${sent === 1 ? "was" : "were"} sent back on ${on} to be read again blind${done === null ? "" : done ? `; ${formatInteger(done)} ${done === 1 ? "is" : "are"} done` : "; none is done yet"}.` : "";
+    return (first.charAt(0).toUpperCase() + first.slice(1)) + again;
+  }
+
+  // CatLog's own errors found so far, by every route (overview.quality.catlog_errors, catlog-v2 from 2026-10-21; round
+  // 16b, item 3 of its publication review): values an AI audit found wrong, values removed in sweeps for an error an
+  // audit or check had found (the reprinted values and partial constants among them said), values whose unit the paper
+  // misprints, corrected, and values a check of a database difference against the paper found wrong; All counts each
+  // value once. Rows whose counts are not whole are left out; "" without All, or when a route holds more than All.
+  const STATS_ERROR_ROUTES = [
+    ["audit", "AI audit"],
+    ["sweep", "Catalog-wide sweep after an audit or check"],
+    ["unit_fix", "Unit misprinted in the paper, corrected"],
+    ["database_check", "Check of a database difference against the paper"],
+  ];
+  function statsErrorsHtml(quality) {
+    const errors = quality?.catlog_errors;
+    const all = statsCount(errors?.all?.values);
+    const allPapers = all ? statsCount(errors.all.papers, all) : null;
+    if (!all || allPapers === null) return "";
+    const rows = [];
+    for (const [key, name] of STATS_ERROR_ROUTES) {
+      const values = statsCount(errors[key]?.values, all);
+      const papers = values ? statsCount(errors[key].papers, Math.min(values, allPapers)) : null;
+      if (values === null) return "";
+      if (!values || papers === null) continue;
+      const reprinted = key === "sweep" ? statsCount(errors.sweep.reprinted, values) : null;
+      const partial = key === "sweep" ? statsCount(errors.sweep.partial_constant, values) : null;
+      const kinds = (reprinted || 0) + (partial || 0) <= values ? [reprinted ? `${formatInteger(reprinted)} reprinted from an earlier paper` : "",
+        partial ? `${formatInteger(partial)} partial constants` : ""].filter(Boolean) : [];
+      rows.push({ key, name, values, papers, note: kinds.join(", ") });
+    }
+    if (!rows.length) return "";
+    const row = (item, total = false) => `<tr data-route="${item.key}"${total ? ' class="stats-errors-all"' : ""}>
+      <th scope="row">${escapeHtml(item.name)}${item.note ? `<small>${escapeHtml(item.note)}</small>` : ""}</th>
+      <td class="stats-num">${formatInteger(item.values)}</td><td class="stats-num">${formatInteger(item.papers)}</td></tr>`;
+    return `<section class="stats-section stats-checks-section stats-errors-section stats-wide" aria-labelledby="statsErrorsTitle" data-figure="errors">
+      <h3 id="statsErrorsTitle" class="stats-fig-title">Errors found in CatLog</h3>
+      <table class="stats-table stats-checks-table stats-errors-table">
+        <thead><tr><th scope="col">How it was found</th><th scope="col" class="stats-num">Values</th><th scope="col" class="stats-num">Papers</th></tr></thead>
+        <tbody>${rows.map((item) => row(item)).join("")}${row({ key: "all", name: "All, each value once", values: all, papers: allPapers }, true)}</tbody></table>
+      <p class="stats-note">${escapeHtml("Values CatLog held that a check later found wrong; a value found in more than one way counts once in All.")}</p></section>`;
   }
 
   // What the lead's numbers count, said once under How these numbers are counted: the date they were counted and the
@@ -6250,6 +6380,7 @@
     return [
       asOf ? `Counted ${asOf}.` : "",
       review ? "From the reviewers' own files: each entry a reviewer checked counts once, by its final verdict." : "",
+      review?.unchecked ? "An entry with no PMID or DOI could not be checked against a paper, so the shares leave it out." : "",
       review ? `No value disputed: no reviewer disputed the entry’s ${REVIEW_VALUES} number or unit.` : "",
       review && review.notFound !== null ? "Could not find the value: the reviewer could not find the entry’s value in the paper (one kind of other disagreement)." : "",
       review && review.missing !== null ? "Values missing: the reviewer says the paper prints a value the entry lacks." : "",
@@ -6834,8 +6965,19 @@
     // results (Same, other label; Not in the databases) are Figure 7's, its legend linking each into Browse; how each
     // correction was found is Figure 8's.
     const pairedText = paired ? `; a database lists a number for the same measurement for ${formatInteger(paired)} of them, and for ${rate ? qualityShare(same, paired) : formatInteger(same)} that number is the paper’s` : "";
+    // How the corrections were found, kept apart (round 16b, item 6 of catlog-v2's publication review): by an AI check of
+    // the paper, or by an exact factor found automatically (Figure 8's two ways), said only when the two add up to the
+    // corrections; and the corrections are a lower bound when the comparison says only larger differences are checked
+    // (checked_from_factor, catlog-v2 from 2026-10-21).
+    const ways = corrects ? guideDatabaseFoundBy(comparison.corrections).totals : {};
+    const byPaper = statsCount(ways.paper_check), byFactor = statsCount(ways.factor_cross_checked);
+    const foundBy = byPaper !== null && byFactor !== null && byPaper + byFactor === corrects && byPaper && byFactor
+      ? ` (${formatInteger(byPaper)} found by an AI check of the paper, ${formatInteger(byFactor)} by an exact factor found automatically)` : "";
+    const fold = Number(comparison.checked_from_factor);
+    const lowerBound = corrects && Number.isFinite(fold) && fold > 1
+      ? `These corrections are a lower bound on the databases’ errors, since only differences of ${String(fold)}-fold or more are checked.` : "";
     const changed = [
-      corrects ? link(`${formatInteger(corrects)} ${plural(corrects, "corrects", "correct")} a database’s number`, "corrects", corrects) : "",
+      corrects ? `${link(`${formatInteger(corrects)} ${plural(corrects, "corrects", "correct")} a database’s number`, "corrects", corrects)}${escapeHtml(foundBy)}` : "",
       differs ? `${link(`${formatInteger(differs)} ${plural(differs, "differs", "differ")}, cause not yet known`, "differs", differs)}${factorOnly ? ` (${formatInteger(factorOnly)} by an exact factor, not yet checked)` : ""}` : "",
     ].filter(Boolean);
     const sentences = [
@@ -6843,6 +6985,7 @@
       changed.length ? `${paired ? "For the rest, " : ""}${changed.join(" and ")}${differs ? ", which can mean a different measurement rather than a database error" : ""}.`.replace(/^./, (letter) => letter.toUpperCase()) : "",
       changed.length && !differs ? escapeHtml(STATS_DATABASE_CAVEAT) : "",
       changed.length ? "" : escapeHtml(STATS_DATABASE_CAVEAT),
+      escapeHtml(lowerBound),
     ].filter(Boolean);
     return `<p class="stats-part-lead" data-lead="databases">${sentences.join(" ")}</p>`;
   }
@@ -7452,8 +7595,11 @@
     const labelErrors = reviewedValues ? statsCount(quality.label_or_annotation_v1, reviewedValues) : null;
     const compared = reviewedValues && comparedWrong !== null && labelErrors !== null
       ? { values: reviewedValues, wrong: comparedWrong, labels: labelErrors, papers: statsCount(quality.compared_papers_v1) } : null;
-    const checksHtml = statsChecksHtml({ fromPaper, papersRead, audit, humanChecked, marked, compared });
-    const quality_ = [reviewHtml, checksHtml].filter(Boolean).map((html) => ({ html }));
+    const humanValues = humanChecked !== null ? statsCount(overview?.human_checked_values) : null;
+    const checksHtml = statsChecksHtml({ fromPaper, papersRead, audit, humanChecked, humanValues, marked, compared,
+      exposure: statsExposureText(quality) });
+    const errorsHtml = checksHtml ? statsErrorsHtml(quality) : "";
+    const quality_ = [reviewHtml, checksHtml, errorsHtml].filter(Boolean).map((html) => ({ html }));
     if (checksHtml && !reviewHtml) {
       quality_.push({ html: `<p class="stats-lead-links"><a class="stats-guide-link" href="${escapeHtml(viewUrl("guide-method").href)}">How CatLog reads and checks values <span aria-hidden="true">→</span></a></p>` });
     }
@@ -7910,7 +8056,7 @@
         ${ruleRow("Shares", escapeHtml(statsSharesRule(ofAll)))}
         ${overview ? `${ruleRow("Papers", "Distinct PMIDs; a record without a PMID counts by its DOI.")}
         ${ruleRow("Names", "Enzymes, organisms and substrates count distinct names, ignoring capitals and \"Unknown\". EC numbers are complete four-part numbers.")}
-        ${ruleRow("Human-checked", `Accepted records where ${escapeHtml(`${HUMAN_CHECKED_RULE} shown and ${HUMAN_CHECKED_RATIO}`)} (the human-checked tag).`)}
+        ${ruleRow("Human-checked", `Accepted records where ${escapeHtml(`${HUMAN_CHECKED_RULE} shown and ${HUMAN_CHECKED_RATIO}`)} (the human-checked tag).${humanValues !== null ? " Their values are the kcat, Km and kcat/Km values a reviewer approved on them; a record holds up to three." : ""}`)}
         ${ruleRow("Main source", "Where a record came from: CatLog’s reading of the paper, one database or several merged into one record.")}
         ${ruleRow(escapeHtml(SOURCE_CATLOG_LABEL), `Records ${escapeHtml(v2Sentence.charAt(0).toLowerCase() + v2Sentence.slice(1))}`)}
         ${ruleRow(escapeHtml(SOURCE_DATABASES_LABEL), `All other records: ${escapeHtml(SOURCE_DATABASES_HELP)}`)}` : ""}
@@ -15120,6 +15266,9 @@
       statsCloseMethodAfterPrint,
       statsReviewHtml,
       statsChecksHtml,
+      statsErrorsHtml,
+      statsExposureText,
+      auditFacts,
       reviewGlanceText,
       renderTeam,
       teamNumbers,

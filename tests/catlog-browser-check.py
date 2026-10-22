@@ -930,6 +930,11 @@ def review_headline(quality):
     else the reviewers' approved values the same, read from the paper again (quality.agreement, else v2_found of
     v2_approved_total); None without them."""
     review = (quality.get("review") or {}).get("v1") or {}
+    # (round 16b) over the entries a reviewer could check against a paper when the snapshot gives them and they add up
+    checkable = review.get("checkable") if isinstance(review.get("checkable"), dict) else {}
+    if isinstance(checkable.get("entries"), int) and isinstance(review.get("entries"), int) \
+            and checkable["entries"] + (review.get("entries_without_paper") or 0) == review["entries"]:
+        review = checkable
     entries, disputed = review.get("entries"), review.get("value_disputed")
     if isinstance(entries, int) and entries > 0 and isinstance(disputed, int) and 0 <= disputed <= entries:
         return review_share(entries - disputed, entries)
@@ -1039,7 +1044,8 @@ REVIEW_FIXTURE = {
 # the earlier version (408 papers); the sentence under it says what a check of the paper found for the disputed values and the entries whose
 # value the reviewer could not find, never the base again.
 # At a glance's Human review note (round 14: the headline stated once, the not-found entries beside it).
-REVIEW_HEADLINE_NOTE = "of 2,674 earlier entries people checked, 3 had a value disputed; 153 (5.7%) not found in the paper"
+# Round 16b: the word "entries" glossed where Stats first uses it.
+REVIEW_HEADLINE_NOTE = "of 2,674 entries (earlier records as reviewers saw them) people checked, 3 had a value disputed; 153 (5.7%) not found in the paper"
 REVIEW_SENTENCE = "People checked 2,674 entries from the earlier version (408 papers); a check of the paper found all 3 disputed values printed as the entry gives them."
 # The base's "(408 papers)" in the given places: its text and how many lines it takes.
 REVIEW_BASE_PARENS = """
@@ -1197,6 +1203,121 @@ def check_review_headline(driver, browser, url):
             driver.get(url + "#team")
             station = wait.until(lambda d: d.find_element(By.CSS_SELECTOR, f"svg.team-loop-{layout} [data-station='human']"))
             assert "no value disputed on 2,671 of 2,674 entries (99.9%) from the earlier version" in station.get_attribute("aria-label"), station.get_attribute("aria-label")
+            assert driver.execute_script(TEAM_TEXT_APART, layout), f"Team's {layout} loop: station texts overlap"
+    finally:
+        driver.execute_cdp_cmd("Emulation.clearDeviceMetricsOverride", {})
+        driver.execute_cdp_cmd("Page.removeScriptToEvaluateOnNewDocument", {"identifier": injected["identifier"]})
+
+
+# Round 16b (catlog-v2's publication review, items 1-7): the CatLog side's 2026-10-21 quality fields, with that day's
+# numbers: the review's counts over the entries a reviewer could check against a paper, the audit's 95% interval and the
+# two papers most of its wrong values sit in, CatLog's own errors by route, and the papers read or checked with database
+# values in view; overview.human_checked_values and the comparison's checked_from_factor beside them.
+QUALITY_16B_FIXTURE = {
+    "as_of": "2026-10-21", "audit_values": 6651, "audit_wrong": 74, "audit_wrong_ci95": "0.89-1.39",
+    "audit_wrong_papers": 26, "audit_wrong_top2": 50,
+    "review": {"v1": {"entries": 2770, "papers": 431, "entries_without_paper": 166, "value_disputed": 3,
+                      "value_correct_pct": 99.9, "value_disputed_checked_as_printed": 3, "value_missing": 27,
+                      "value_missing_pct": 1.0, "other_disputed": 177, "other_disputed_pct": 6.4,
+                      "other_by_kind": {"could not find the value": 153, "organism name": 13, "DOI": 5, "substrate name": 3,
+                                        "duplicate": 2, "paper evidence mismatch": 1},
+                      "checkable": {"entries": 2604, "papers": 431, "value_disputed": 3, "value_correct_pct": 99.9,
+                                    "value_disputed_checked_as_printed": 3, "value_missing": 27, "value_missing_pct": 1.0,
+                                    "other_disputed": 24, "other_disputed_pct": 0.9,
+                                    "other_by_kind": {"organism name": 13, "DOI": 5, "substrate name": 3, "duplicate": 2,
+                                                      "paper evidence mismatch": 1}}}},
+    "agreement": {"papers_compared": 383, "values_approved": 4522, "agree": 3967, "differ": 555, "catlog_value_wrong": 0,
+                  "differ_same_value_other_name": 134, "differ_catlog_right": 142, "differ_rounding": 3,
+                  "differ_catlog_wrong": 0, "differ_not_comparable": 44, "differ_not_adjudicated": 232,
+                  "stated_values": 77, "stated_values_catlog_has": 71},
+    "catlog_errors": {"audit": {"values": 74, "papers": 26},
+                      "sweep": {"values": 1254, "papers": 97, "reprinted": 1058, "partial_constant": 103},
+                      "unit_fix": {"values": 108, "papers": 13}, "database_check": {"values": 12, "papers": 4},
+                      "all": {"values": 1435, "papers": 127}},
+    "exposed": {"papers": 309, "reader": 173, "checker_only": 136, "first": "2026-10-09", "last": "2026-10-21",
+                "reread_blind": 303, "reread_blind_on": "2026-10-21", "reread_blind_done": 0},
+}
+QUALITY_16B_JS = """
+    Object.defineProperty(window, "CATLOG_STATIC_MANIFEST", { configurable: true, get() { return undefined; },
+      set(value) {
+        const overview = value?.summary?.overview;
+        if (overview) {
+          overview.quality = { ...(overview.quality || {}), ...%s };
+          if (Number.isInteger(overview.human_checked_accepted)) overview.human_checked_values = 3486;
+        }
+        if (value?.summary?.database_comparison) value.summary.database_comparison.checked_from_factor = 1.5;
+        Object.defineProperty(window, "CATLOG_STATIC_MANIFEST", { value, writable: true, configurable: true });
+      } });
+""" % json.dumps(QUALITY_16B_FIXTURE)
+
+
+def check_quality_round16b(driver, browser, url):
+    """Stats with the CatLog side's 2026-10-21 quality fields (round 16b): the human review's share over the 2,604
+    entries a reviewer could check, the 166 without a paper said beside it, and "entries" glossed where Stats first uses
+    it; the audit's share with its 95% interval and the two papers most wrong values sit in; human-checked records with
+    their values; the papers read or checked with database values in view; Errors found in CatLog by route; the
+    differences checked by AI agents, X of Y; the corrections split by how found and called a lower bound. Chrome only:
+    the fixture is set before the page starts (the data files are not changed)."""
+    if browser != "chrome":
+        return
+    wait = WebDriverWait(driver, 60, ignored_exceptions=(StaleElementReferenceException,))
+    injected = driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {"source": QUALITY_16B_JS})
+    text = lambda element: " ".join(element.get_attribute("innerText").split())
+    try:
+        for width, height in ((1440, 1000), (375, 812)):
+            driver.execute_cdp_cmd("Emulation.setDeviceMetricsOverride", {"width": width, "height": height, "deviceScaleFactor": 1,
+                                                                          "mobile": width < 768})
+            driver.get("about:blank")
+            driver.get(url.replace("catlog-latest.html", "catlog-stats.html"))
+            lead = wait.until(lambda d: d.find_element(By.CSS_SELECTOR, "#statsCharts .stats-lead"))
+            band = text(driver.find_element(By.CSS_SELECTOR, ".stats-total[data-total='review']"))
+            assert "99.9%" in band and ("of 2,604 entries (earlier records as reviewers saw them) people could check, 3 had a "
+                                        "value disputed; 166 had no paper") in band, band
+            assert text(lead.find_element(By.CSS_SELECTOR, ".stats-lead-sentence")) == (
+                "People checked 2,770 entries from the earlier version (431 papers); 166 had no paper and could not be checked. "
+                "A check of the paper found all 3 disputed values printed as the entry gives them."), text(lead)
+            rows = driver.execute_script("""return [...arguments[0].querySelectorAll('.stats-review-table tbody tr')]
+                .map(row => [...row.children].map(cell => cell.innerText.trim()))""", lead)
+            assert rows == [["No value disputed", "2,601", "99.9%"], ["A value disputed", "3", "0.1%"], ["Also noted, with either verdict"],
+                            ["Value missing", "27", "1.0%"], ["Other disagreement", "24", "0.9%"]], rows
+            assert "Shares are of the 2,604 entries with a paper." in text(lead), text(lead)
+            method = " ".join(driver.execute_script("return document.querySelector('.stats-method').textContent").split())
+            assert "An entry with no PMID or DOI could not be checked against a paper, so the shares leave it out." in method, method
+            assert "Their values are the kcat, Km and kcat/Km values a reviewer approved on them" in method, method
+            audit = text(driver.find_element(By.CSS_SELECTOR, "[data-check='audit'] .stats-check-result"))
+            assert audit.startswith("6,577 kept, 74 removed as wrong (1.1%; 95% interval 0.89–1.39%)") \
+                and audit.endswith("50 of the 74 are in two papers."), audit
+            human = text(driver.find_element(By.CSS_SELECTOR, "[data-check='human_checked'] .stats-check-result"))
+            assert re.fullmatch(r"[\d,]+ records approved \([\d.]+%\), 3,486 values", human), human
+            assert text(driver.find_element(By.CSS_SELECTOR, "[data-note='exposure']")) == (
+                "Between Oct 9 and Oct 21, 2026, the reading agent on 173 papers, and only a checking agent on 136 more, opened "
+                "database values or files of CatLog’s earlier version. 303 of these papers were sent back on Oct 21, 2026 to "
+                "be read again blind; none is done yet."), text(driver.find_element(By.CSS_SELECTOR, "[data-note='exposure']"))
+            errors = driver.execute_script("""return [...document.querySelectorAll('.stats-errors-table tbody tr')]
+                .map(row => [row.dataset.route, ...[...row.children].map(cell => cell.innerText.trim().split('\\n')[0])])""")
+            assert errors == [["audit", "AI audit", "74", "26"], ["sweep", "Catalog-wide sweep after an audit or check", "1,254", "97"],
+                              ["unit_fix", "Unit misprinted in the paper, corrected", "108", "13"],
+                              ["database_check", "Check of a database difference against the paper", "12", "4"],
+                              ["all", "All, each value once", "1,435", "127"]], errors
+            assert "1,058 reprinted from an earlier paper, 103 partial constants" in text(driver.find_element(By.CSS_SELECTOR, ".stats-errors-table [data-route='sweep'] th"))
+            databases = driver.find_elements(By.CSS_SELECTOR, "[data-lead='databases']")
+            if databases:
+                words = text(databases[0])
+                assert "These corrections are a lower bound on the databases’ errors, since only differences of 1.5-fold or more are checked." in words, words
+            open_stats_supplement(driver)
+            kinds = text(driver.find_element(By.CSS_SELECTOR, ".stats-supp-item[data-supp='review-kinds']"))
+            assert "Flags on the 2,604 entries people could check against a paper" in kinds and "Could not find" not in kinds, kinds
+            match = text(driver.find_element(By.CSS_SELECTOR, ".stats-supp-item[data-supp='review-match']"))
+            assert "AI agents checked 323 of the 555 that differ against the paper; 232 are still to check." in match, match
+            assert driver.execute_script("return document.documentElement.scrollWidth <= innerWidth + 1"), f"Stats scrolls sideways at {width}px"
+            driver.execute_script("document.querySelector('[data-figure=errors]').scrollIntoView()")
+            driver.save_screenshot(str(OUTPUT / f"{browser}-stats-quality-16b-{width}.png"))
+            # Team's Human check gives the same share over the same entries.
+            layout = "wide" if width >= 960 else "narrow"
+            driver.get("about:blank")
+            driver.get(url + "#team")
+            station = wait.until(lambda d: d.find_element(By.CSS_SELECTOR, f"svg.team-loop-{layout} [data-station='human']"))
+            assert "no value disputed on 2,601 of 2,604 entries (99.9%) from the earlier version" in station.get_attribute("aria-label"), station.get_attribute("aria-label")
             assert driver.execute_script(TEAM_TEXT_APART, layout), f"Team's {layout} loop: station texts overlap"
     finally:
         driver.execute_cdp_cmd("Emulation.clearDeviceMetricsOverride", {})
@@ -6595,6 +6716,7 @@ def main():
         if quality or args.browser == "chrome":
             check_quality(driver, args.browser, url, quality)
         check_review_headline(driver, args.browser, url)
+        check_quality_round16b(driver, args.browser, url)
         result["stats_figures"] = check_stats_figures(driver, args.browser, url)
         result["stats_databases"] = check_stats_databases(driver, args.browser, url)
         result["stats_new_figures"] = check_stats_new_figures(driver, args.browser, url)
