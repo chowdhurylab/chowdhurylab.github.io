@@ -1612,3 +1612,7 @@ manifest's database comparison; a field an older snapshot lacks leaves its words
   what it means (the record's Assay and Preparation say how they differ), so rows that read the same but for their values
   no longer look like duplicates. The difference itself (free or immobilised, buffer or milk) needs catlog-v2's export
   to write it into condition_note; the table then shows that note instead, as it does today.
+- The Guide's FAQ no longer says CatLog "never guesses" a sequence or SMILES (name and EC lookups can be wrong, and some
+  were): "otherwise the field stays empty (uniprot_candidate_ids lists the candidates)". Sources and licenses says the
+  licence once, in its summary line, with the field (source_license). The README's file names for the Data ID check are
+  catlog-v2's (site_release.py).
