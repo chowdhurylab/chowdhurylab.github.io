@@ -6009,6 +6009,34 @@
     return `Human reviewers checked ${reviewBaseText(facts, { fromPaper })}: no value disputed on ${formatInteger(facts.undisputed)} of them (${facts.share})${tail}`;
   }
 
+  // The review of records read from the paper (quality.review.v2), in counts only (fix pass after round 16b: a share of
+  // 99 records, "100.0%", claimed a precision so few cannot carry): "People also checked 99 records CatLog read from the
+  // paper (68 drawn at random, 31 picked as hard cases; 40 free-to-read papers): no value was disputed." The random and
+  // picked records are said when catlog-v2 counts them apart (entries_random, entries_picked; the disputes then
+  // value_disputed over the random ones plus picked_value_disputed), the values when it counts them (values).
+  function reviewFromPaperText(review) {
+    const entries = statsCount(review?.entries);
+    if (!entries) return "";
+    const random = statsCount(review.entries_random, entries);
+    const picked = statsCount(review.entries_picked, entries);
+    const split = random !== null && picked !== null && random + picked === entries;
+    const randomBasis = split && review.value_correct_basis === "random sample";
+    const disputed = randomBasis
+      ? (statsCount(review.value_disputed, random) ?? NaN) + (statsCount(review.picked_value_disputed, picked) ?? NaN)
+      : statsCount(review.value_disputed, entries);
+    if (disputed === null || Number.isNaN(disputed)) return "";
+    const papers = statsCount(review.papers);
+    const values = statsCount(review.values);
+    const free = review.scope === "papers free to read";
+    const how = [split && random ? `${formatInteger(random)} drawn at random` : "", split && picked ? `${formatInteger(picked)} picked as hard cases` : ""].filter(Boolean).join(", ");
+    const where = papers ? `${formatInteger(papers)} ${free ? "free-to-read " : ""}${papers === 1 ? "paper" : "papers"}` : "";
+    const parens = [how, where].filter(Boolean).join("; ");
+    const found = disputed
+      ? `a value was disputed in ${formatInteger(disputed)} of them`
+      : values ? `none of their ${formatInteger(values)} values was disputed` : "no value was disputed";
+    return `People also checked ${formatInteger(entries)} ${entries === 1 ? "record" : "records"} CatLog read from the paper${parens ? ` (${parens})` : ""}: ${found}.`;
+  }
+
   function entriesText(count, entries) {
     return `${formatInteger(count)} ${count === 1 ? "entry" : "entries"} (${qualityShare(count, entries)})`;
   }
@@ -6153,7 +6181,7 @@
       reviewNotFoundText(review),
       missing ? `Values missing: ${missing}.` : "",
       review.other !== null ? `Other disagreements: ${entriesText(review.other, review.entries)}.` : "",
-      v2Review ? reviewSentence(v2Review, { fromPaper: true }) : "",
+      reviewFromPaperText(quality.review?.v2),
     ].filter(Boolean).join(" ");
   }
 
@@ -6216,14 +6244,14 @@
       review.other !== null ? row("Other disagreement", review.other, { sub: 1 }) : "",
       review.other !== null && review.notFound !== null ? row("of them, value not found in the paper", review.notFound, { sub: 2 }) : "",
     ].join("");
-    const v2Review = reviewFacts(quality.review?.v2);
+    const v2Line = reviewFromPaperText(quality.review?.v2);
     return section(`<p class="stats-lead-sentence">${keepReviewBase(escapeHtml(sentence), review)}</p>
       <table class="stats-table stats-review-table">
         <thead><tr><th scope="col">Verdict</th><th scope="col" class="stats-num">Entries</th><th scope="col" class="stats-num">Share</th></tr></thead>
         <tbody>${row("No value disputed", review.undisputed)}${row("A value disputed", review.disputed)}${noted
           ? `<tr class="stats-row-group"><th scope="rowgroup" colspan="3">Also noted, with either verdict</th></tr>${noted}` : ""}</tbody></table>
       ${review.unchecked ? `<p class="stats-note stats-review-base">${escapeHtml(`Shares are of the ${formatInteger(review.entries)} ${review.entries === 1 ? "entry" : "entries"} with a paper.`)}</p>` : ""}
-      ${v2Review ? `<p class="stats-lead-note">${keepReviewBase(words(reviewSentence(v2Review, { fromPaper: true })), v2Review, { fromPaper: true })}</p>` : ""}`);
+      ${v2Line ? `<p class="stats-lead-note" data-note="from-paper-review">${escapeHtml(v2Line)}</p>` : ""}`);
   }
 
   // Supplement, Quality: the review's flags by kind (values missing, and the other disagreements, most first), with what
@@ -6291,8 +6319,10 @@
       compared ? { key: "review", name: "Human review", covered: `${formatInteger(compared.values)} values${compared.papers ? ` on ${formatInteger(compared.papers)} ${compared.papers === 1 ? "paper" : "papers"}` : ""}`,
         result: `${formatInteger(compared.wrong)} with a wrong number or unit (${qualityShare(compared.values - compared.wrong, compared.values)} correct), ${formatInteger(compared.labels)} with a wrong label` } : null,
       humanChecked !== null ? { key: "human_checked", name: "Human-checked",
-        covered: marked !== null && marked >= humanChecked ? `${formatInteger(marked)} records judged` : "accepted records",
-        result: `<a class="stats-link" href="${escapeHtml(statsBrowseHref({ checked: "1" }))}">${formatInteger(humanChecked)}</a> ${humanValues !== null ? (humanChecked === 1 ? "record " : "records ") : ""}approved${marked ? ` (${escapeHtml(qualityShare(humanChecked, marked))})` : ""}${humanValues !== null ? `, ${formatInteger(humanValues)} ${humanValues === 1 ? "value" : "values"}` : ""}`,
+        // (fix pass after round 16b: "judged" and "approved" said what they count; a record is human-checked only when
+        // it is accepted and a reviewer approved every value it shows, so its share is not the review's 99.9%)
+        covered: marked !== null && marked >= humanChecked ? `${formatInteger(marked)} ${marked === 1 ? "record" : "records"} with a reviewer’s verdict` : "accepted records",
+        result: `<a class="stats-link" href="${escapeHtml(statsBrowseHref({ checked: "1" }))}">${formatInteger(humanChecked)}</a>${marked ? ` (${escapeHtml(qualityShare(humanChecked, marked))})` : ""} accepted with every value approved${humanValues !== null ? ` (${formatInteger(humanValues)} ${humanValues === 1 ? "value" : "values"})` : ""}`,
         resultHtml: true, title: HUMAN_CHECKED_DESCRIPTION } : null,
     ].filter(Boolean);
     if (!rows.length) return "";
@@ -6304,6 +6334,21 @@
           <th scope="row">${escapeHtml(row.name)}</th><td class="stats-check-covered">${row.covered}</td>
           <td class="stats-check-result">${row.resultHtml ? row.result : metricWordsHtml(escapeHtml(row.result))}</td></tr>`).join("")}</tbody></table>${exposure
         ? `<p class="stats-note stats-exposure" data-note="exposure">${escapeHtml(exposure)}</p>` : ""}</section>`;
+  }
+
+  // How the human-review counts relate (fix pass after round 16b: entries, records and values had stood side by side with
+  // nothing joining them): " Of the 2,005 records with a reviewer’s verdict, the other 284 have a value not approved or
+  // are not accepted. The human review counts entries, earlier records as reviewers saw them, with no value disputed,
+  // and Approved values read from the paper again counts approved values one by one, also on a record with another value
+  // not approved; a record counts here only when every value it shows was approved." "" without the counts.
+  function statsHumanCheckedBridge(humanChecked, marked, review, match) {
+    if (humanChecked === null || marked === null || marked < humanChecked) return "";
+    const other = marked - humanChecked;
+    const rest = other ? ` Of the ${formatInteger(marked)} records with a reviewer’s verdict, the other ${formatInteger(other)} ${other === 1 ? "has a value not approved or is" : "have a value not approved or are"} not accepted.` : "";
+    const counts = [review ? "the human review counts entries, earlier records as reviewers saw them, with no value disputed" : "",
+      match ? `${review ? "" : "the "}Approved values read from the paper again counts approved values one by one, also on a record with another value not approved` : ""].filter(Boolean);
+    const joined = counts.length ? ` ${counts.join(", and ").replace(/^./, (letter) => letter.toUpperCase())}; a record counts here only when every value it shows was approved.` : "";
+    return `${rest}${joined}`;
   }
 
   // "Oct 9 and Oct 21, 2026" for two days of one year (as formatDate writes them), else both in full; "" without both.
@@ -8065,7 +8110,7 @@
         ${ruleRow("Shares", escapeHtml(statsSharesRule(ofAll)))}
         ${overview ? `${ruleRow("Papers", "Distinct PMIDs; a record without a PMID counts by its DOI.")}
         ${ruleRow("Names", "Enzymes, organisms and substrates count distinct names, ignoring capitals and \"Unknown\". EC numbers are complete four-part numbers.")}
-        ${ruleRow("Human-checked", `Accepted records where ${escapeHtml(`${HUMAN_CHECKED_RULE} shown and ${HUMAN_CHECKED_RATIO}`)} (the human-checked tag).${humanValues !== null ? " Their values are the kcat, Km and kcat/Km values a reviewer approved on them; a record holds up to three." : ""}`)}
+        ${ruleRow("Human-checked", `Accepted records where ${escapeHtml(`${HUMAN_CHECKED_RULE} shown and ${HUMAN_CHECKED_RATIO}`)} (the human-checked tag).${humanValues !== null ? " Their values are the kcat, Km and kcat/Km values a reviewer approved on them; a record holds up to three." : ""}${escapeHtml(statsHumanCheckedBridge(humanChecked, marked, review, match))}`)}
         ${ruleRow("Main source", "Where a record came from: CatLog’s reading of the paper, one database or several merged into one record.")}
         ${ruleRow(escapeHtml(SOURCE_CATLOG_LABEL), `Records ${escapeHtml(v2Sentence.charAt(0).toLowerCase() + v2Sentence.slice(1))}`)}
         ${ruleRow(escapeHtml(SOURCE_DATABASES_LABEL), `All other records: ${escapeHtml(SOURCE_DATABASES_HELP)}`)}` : ""}
@@ -15280,6 +15325,8 @@
       auditFacts,
       reviewGlanceText,
       reviewGlanceTitle,
+      reviewFromPaperText,
+      statsHumanCheckedBridge,
       renderTeam,
       teamNumbers,
       teamWrappedLines,

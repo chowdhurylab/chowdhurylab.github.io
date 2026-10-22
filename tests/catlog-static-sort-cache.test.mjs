@@ -1994,7 +1994,7 @@ function row(overrides = {}) {
   assert.doesNotMatch(methodHtml(), /Their values are/);
   overview.human_checked_values = 2;
   api.renderStats();
-  assert.match(methodHtml(), /<dt>Human-checked<\/dt><dd>Accepted records where [^<]*\(the human-checked tag\)\. Their values are the kcat, Km and kcat\/Km values a reviewer approved on them; a record holds up to three\.<\/dd>/);
+  assert.match(methodHtml(), /<dt>Human-checked<\/dt><dd>Accepted records where [^<]*\(the human-checked tag\)\. Their values are the kcat, Km and kcat\/Km values a reviewer approved on them; a record holds up to three\. Of the 2 records with a reviewer’s verdict, the other 1 has a value not approved or is not accepted\.<\/dd>/);
   delete overview.human_checked_values;
   api.renderStats();
   assert.equal(element("statsCharts").innerHTML, chart);
@@ -2080,12 +2080,12 @@ function row(overrides = {}) {
   // The records with a reviewer's verdict are said as such (not mixed up with the review's entries): covered, the records
   // judged; the result, those approved (human-checked); the definition is the row's title. No meters (fix pass after
   // round 16b: the shares are in the words).
-  assert.match(chart, /<tr data-check="human_checked" title="A human reviewer approved every kcat and Km shown; the kcat\/Km was approved too or agrees with kcat ÷ Km\.">\s*<th scope="row">Human-checked<\/th><td class="stats-check-covered">2 records judged<\/td>\s*<td class="stats-check-result"><a class="stats-link" href="[^"]*#browse\?checked=1">1<\/a> approved \(50\.0%\)<\/td><\/tr>/);
+  assert.match(chart, /<tr data-check="human_checked" title="A human reviewer approved every kcat and Km shown; the kcat\/Km was approved too or agrees with kcat ÷ Km\.">\s*<th scope="row">Human-checked<\/th><td class="stats-check-covered">2 records with a reviewer’s verdict<\/td>\s*<td class="stats-check-result"><a class="stats-link" href="[^"]*#browse\?checked=1">1<\/a> \(50\.0%\) accepted with every value approved<\/td><\/tr>/);
   assert.doesNotMatch(chart.match(/<table class="stats-table stats-checks-table">[\s\S]*?<\/table>/)[0], /stats-minibar|stats-col-bar/);
   assert.doesNotMatch(chart, /stats-meter|stats-check-number|class="stats-checks"/, "No dashboard cards");
   assert.doesNotMatch(chart, /data-check="audit"|wrong number or unit/, "Without overview.quality there is no audit check and no accuracy");
   // How these numbers are counted: human-checked's rule as one clause after "where".
-  assert.match(chart, /<dt>Human-checked<\/dt><dd>Accepted records where a human reviewer approved every kcat and Km shown and the kcat\/Km was approved too or agrees with kcat ÷ Km \(the human-checked tag\)\.<\/dd>/);
+  assert.match(chart, /<dt>Human-checked<\/dt><dd>Accepted records where a human reviewer approved every kcat and Km shown and the kcat\/Km was approved too or agrees with kcat ÷ Km \(the human-checked tag\)\. Of the 2 records with a reviewer’s verdict, the other 1 has a value not approved or is not accepted\.<\/dd>/);
   // (The Guide repeats none of this: its method section links Stats' Quality part.)
   // With the audit and review results (overview.quality, copied from the human-review marks file at build time).
   runtimeManifest.summary.overview = { ...overview, quality: { as_of: "2026-10-11", audit_values: 742, audit_wrong: 2,
@@ -2107,7 +2107,17 @@ function row(overrides = {}) {
     const checks = plainText(api.statsChecksHtml({ fromPaper: null, papersRead: null, audit, humanChecked: 1721, humanValues: 3486, marked: 2005, compared: null,
       exposure: api.statsExposureText({ exposed: { papers: 309, reader: 173, checker_only: 136, first: "2026-10-09", last: "2026-10-21", reread_blind: 303, reread_blind_on: "2026-10-21", reread_blind_done: 0 } }) }));
     assert.match(checks, /6,577 kept, 74 removed as wrong \(1\.1%; 95% interval 0\.89–1\.39%\), as of Oct 21, 2026\. 50 of the 74 are in two papers\./);
-    assert.match(checks, /1,721 records approved \(85\.8%\), 3,486 values/);
+    assert.match(checks, /2,005 records with a reviewer’s verdict 1,721 \(85\.8%\) accepted with every value approved \(3,486 values\)/);
+    // How the counts relate (fix pass after round 16b): the records left out, and what the review and the match count.
+    assert.equal(api.statsHumanCheckedBridge(1721, 2005, {}, {}), " Of the 2,005 records with a reviewer’s verdict, the other 284 have a value not approved or are not accepted. The human review counts entries, earlier records as reviewers saw them, with no value disputed, and Approved values read from the paper again counts approved values one by one, also on a record with another value not approved; a record counts here only when every value it shows was approved.");
+    assert.equal(api.statsHumanCheckedBridge(1721, null, {}, {}), "");
+    // The review of records read from the paper in counts, never a share of so few.
+    assert.equal(api.reviewFromPaperText({ entries: 99, papers: 40, value_disputed: 0, picked_value_disputed: 0, entries_random: 68, entries_picked: 31,
+      value_correct_basis: "random sample", scope: "papers free to read" }),
+      "People also checked 99 records CatLog read from the paper (68 drawn at random, 31 picked as hard cases; 40 free-to-read papers): no value was disputed.");
+    assert.equal(api.reviewFromPaperText({ entries: 99, papers: 40, values: 220, value_disputed: 0 }), "People also checked 99 records CatLog read from the paper (40 papers): none of their 220 values was disputed.");
+    assert.equal(api.reviewFromPaperText({ entries: 12, papers: 3, value_disputed: 1, entries_random: 10, entries_picked: 2, value_correct_basis: "random sample", picked_value_disputed: 1 }),
+      "People also checked 12 records CatLog read from the paper (10 drawn at random, 2 picked as hard cases; 3 papers): a value was disputed in 2 of them.");
     assert.match(checks, /Between Oct 9 and Oct 21, 2026, the reading agent on 173 papers, and only a checking agent on 136 more, opened database values or files of CatLog’s earlier version\. 303 of these papers were sent back on Oct 21, 2026 to be read again blind; none is done yet\./);
     assert.equal(api.statsExposureText({ exposed: { papers: 309, reader: 173, checker_only: 135 } }), "", "Counts that do not add up say nothing");
     assert.equal(api.statsExposureText({ exposed: { papers: 5, reader: 0, checker_only: 5, reread_blind: 5, reread_blind_on: "2026-10-21", reread_blind_done: 2 } }),
@@ -2280,7 +2290,7 @@ function row(overrides = {}) {
   runtimeManifest.summary.overview = { ...overview, quality: { ...reviewQuality, review: { v1: reviewV1,
     v2: { entries: 40, papers: 3, value_disputed: 1, value_disputed_checked_as_printed: 0 } } } };
   api.renderStats();
-  assert.match(metricPlain(leadHtml()), /<p class="stats-lead-note">Human reviewers checked 40 records read from the paper <span class="nowrap">\(3 papers\)<\/span>: no value disputed on 39 of them \(97\.5%\)\.<\/p>/);
+  assert.match(metricPlain(leadHtml()), /<p class="stats-lead-note" data-note="from-paper-review">People also checked 40 records CatLog read from the paper \(3 papers\): a value was disputed in 1 of them\.<\/p>/);
   api.renderGuideMethod();
   // Counts that do not hold together are not shown: a dispute count above the entries drops the review (the lead falls
   // back to the match read from the paper again), kinds that are not whole counts are left out.

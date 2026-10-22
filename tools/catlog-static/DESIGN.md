@@ -1545,3 +1545,13 @@ manifest's database comparison; a field an older snapshot lacks leaves its words
 - How these numbers are counted: Human review adds "An entry with no PMID or DOI could not be checked against a paper,
   so the shares leave it out." with the entries-with-a-paper base, and Human-checked says what its values are when the
   overview counts them.
+
+## Fix pass after round 16b (2026-10-22)
+
+- The human-review counts are joined (they had stood as 99.9% of entries, 85.8% of records and 4,522 approved values with
+  nothing between them): Checks on the values' Human-checked row says "2,005 records with a reviewer’s verdict" and
+  "1,721 (85.8%) accepted with every value approved (3,486 values)"; its counting rule names the other 284 (a value not
+  approved, or not accepted) and what the review and Approved values read from the paper again count instead
+  (statsHumanCheckedBridge). The review of records read from the paper (quality.review.v2) is said in counts, never as a
+  share of so few: how many were drawn at random and picked as hard cases, the free-to-read papers, and how many had a
+  value disputed (reviewFromPaperText; its values when catlog-v2 counts them).

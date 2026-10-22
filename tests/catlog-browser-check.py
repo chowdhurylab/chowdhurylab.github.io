@@ -1297,7 +1297,9 @@ def check_quality_round16b(driver, browser, url):
             assert audit.startswith("6,577 kept, 74 removed as wrong (1.1%; 95% interval 0.89–1.39%)") \
                 and audit.endswith("50 of the 74 are in two papers."), audit
             human = text(driver.find_element(By.CSS_SELECTOR, "[data-check='human_checked'] .stats-check-result"))
-            assert re.fullmatch(r"[\d,]+ records approved \([\d.]+%\), 3,486 values", human), human
+            assert re.fullmatch(r"[\d,]+ \([\d.]+%\) accepted with every value approved \(3,486 values\)", human), human
+            covered = text(driver.find_element(By.CSS_SELECTOR, "[data-check='human_checked'] .stats-check-covered"))
+            assert re.fullmatch(r"[\d,]+ records with a reviewer’s verdict", covered), covered
             assert text(driver.find_element(By.CSS_SELECTOR, "[data-note='exposure']")) == (
                 "Between Oct 9 and Oct 21, 2026, the reading agent on 173 papers, and only a checking agent on 136 more, opened "
                 "database values or files of CatLog’s earlier version. 303 of these papers were sent back on Oct 21, 2026 to "
