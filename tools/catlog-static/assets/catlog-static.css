@@ -2057,6 +2057,14 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
   .records-title { flex:1 1 auto }
   .download-page-detail, .records-tools .sort-label-detail { display:none }
 }
+/* Beside an open record on a desktop the pane can be narrower still (536px at 1024px): Export and Sort drop "results"
+   and "by" there too, so Columns, Export and Sort keep one row in a wide font (fix pass after round 16b: DejaVu Sans
+   wrapped them onto two). */
+@media (min-width: 1024px) {
+  @container records (max-width: 720px) {
+    body.detail-open :is(.download-page-detail, .records-tools .sort-label-detail) { display:none }
+  }
+}
 @container records (max-width: 1100px) {
   table { --cell-x:6px }
   th.c-enzyme, td.c-enzyme { padding-left:10px }
