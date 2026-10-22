@@ -3088,7 +3088,7 @@ function row(overrides = {}) {
     const at = (title) => supplement.findIndex((item) => item.endsWith(title));
     assert.ok(at("kcat and assay temperature") >= 0 && at("Km and substrate size") === at("kcat and assay temperature") + 1, supplement.join(" | "));
     assert.ok(/^Table S\d+ The typical wild-type enzyme$/.test(supplement[at("The typical wild-type enzyme")]), supplement.join(" | "));
-    assert.match(methodHtml(), /<span class="stats-method-title">Between papers\.<\/span> Each paper’s value is the median/);
+    assert.match(methodHtml(), /<span class="stats-method-title">Between papers\.<\/span> Each paper’s value is the median of its records for that enzyme and substrate \(matched by structure, else by name\), whatever their conditions; a pair of papers counts once per enzyme, substrate and parameter\./);
     assert.match(methodHtml(), /<span class="stats-method-title">The typical wild-type enzyme\.<\/span>/);
     assert.doesNotMatch(element("statsCharts").innerHTML, /NaN|Infinity|undefined/);
     runtimeManifest.summary.overview = overview;

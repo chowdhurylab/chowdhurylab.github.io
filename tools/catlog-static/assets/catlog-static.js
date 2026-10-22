@@ -5267,7 +5267,7 @@
       id: "statsPairsTitle", key: "between-papers", title: "Between papers", wide: true,
       body: `<div class="stats-ranges stats-pairs">${panels.join("")}</div>${table}`,
       caption: escapeHtml(`Wild-type values of one enzyme (UniProt entry) and substrate in two papers, from ${statsUsedText(records, papers, enzymes)}; assays and constructs differ between papers, so a difference is not all error.`),
-      rules: `Each paper’s value is the median of its records for that enzyme and substrate (matched by structure, else by name), whatever their conditions; each pair of papers counts once per parameter. Pairs giving the very same number: ${statsListText(identical)}. The table compares two papers only at a temperature (to 1 °C) and pH (to 0.1) both give. Each bar is a quarter of a power of ten; the last holds 100-fold and more. Values without a recorded unit, or in another unit, are left out.`,
+      rules: `Each paper’s value is the median of its records for that enzyme and substrate (matched by structure, else by name), whatever their conditions; a pair of papers counts once per enzyme, substrate and parameter. Pairs giving the very same number: ${statsListText(identical)}. The table compares two papers only at a temperature (to 1 °C) and pH (to 0.1) both give. Each bar is a quarter of a power of ten; the last holds 100-fold and more. Values without a recorded unit, or in another unit, are left out.`,
     };
   }
 
