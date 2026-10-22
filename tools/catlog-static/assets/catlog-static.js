@@ -5145,6 +5145,318 @@
     };
   }
 
+  // What the wild-type values show (round 16, the user 2026-10-21: "more stats that are more scientifically insightful
+  // and important, even as supplementary"): from_paper_insights.between_papers, substrate_range, km_by_size, temperature
+  // and typical, counted by the overview builder from the wild-type records read from the paper, so drawn in Read from
+  // the paper's cyan. Each caption is one sentence with the records, papers and enzymes it uses and the caveat that
+  // matters; each figure only when its counts hold together. Between papers and Substrate specificity stand in Values,
+  // the rest in the supplement.
+  const STATS_METRIC_WORDS = { kcat: "kcat", km: "Km", kcat_over_km: "kcat/Km" };
+
+  // A count and its noun: "1 enzyme", "3,077 records".
+  function statsNoun(count, word) {
+    return `${formatInteger(count)} ${word}${count === 1 ? "" : "s"}`;
+  }
+
+  // The records, papers and enzymes a figure uses, in its caption: "3,077 records, 811 papers and 346 enzymes".
+  function statsUsedText(records, papers, enzymes) {
+    return `${statsNoun(records, "record")}, ${statsNoun(papers, "paper")} and ${statsNoun(enzymes, "enzyme")}`;
+  }
+
+  // A fold to two significant figures: "1.9×", "1,000×".
+  function statsFoldText(value, html = false) {
+    return `${statsRangeNumber(value, { html, figures: 2 })}×`;
+  }
+
+  // A median with its low and high quantiles that holds together: positive and in order.
+  function statsSpreadHolds(item, low = "low", high = "high") {
+    return [item?.median, item?.[low], item?.[high]].every((value) => Number.isFinite(value) && value > 0)
+      && item[low] <= item.median && item.median <= item[high];
+  }
+
+  // Ticks of an axis at chosen places ([place, label], in the axis's own unit) on an axis from `from` over `span`.
+  function statsTicksAt(ticks, from, span) {
+    return ticks.map(([at, label]) => `<span style="left:${+((at - from) / span * 100).toFixed(3)}%">${escapeHtml(label)}</span>`).join("");
+  }
+
+  // One histogram of wild-type values read from the paper, drawn as Variants against their wild type draws its panels:
+  // its heading, a line of facts, bars (each with its tooltip line) over an axis, a dashed reference line where given
+  // (`line`: its place in percent of the axis and its word) and a count line. A `linear` axis (ρ, Q₁₀) takes the assay
+  // conditions' axis class: its labels are plain numbers, which a log axis's narrow rule would thin as powers of ten.
+  function statsInsightPanel({ key, heading, facts, counts, tip, axis, label, count, line = null, linear = false }) {
+    const highest = Math.max(...counts);
+    const bars = counts.map((n, index) => `<span${n ? ' class="has-values"' : ""} style="height:${highest ? +(n / highest * 100).toFixed(3) : 0}%" data-tip="${escapeHtml(tip(n, index))}"></span>`).join("");
+    return `<figure class="stats-range stats-insight" data-panel="${escapeHtml(key)}" data-count="${statsListSum(counts)}">
+      <figcaption>${heading}</figcaption>
+      <dl class="stats-range-numbers">${facts.map(([term, value]) => `<div><dt>${term}</dt><dd>${value}</dd></div>`).join("")}</dl>
+      <div class="stats-histogram${line ? " stats-fold-plot" : ""}" role="img" aria-label="${escapeHtml(label)}">
+        <div class="stats-histogram-bars">${bars}</div>${line ? `
+        <i class="stats-fold-zero" style="left:${+line.at.toFixed(3)}%" aria-hidden="true"><span>${escapeHtml(line.label)}</span></i>` : ""}
+        <div class="${linear ? "stats-condition-axis" : "stats-histogram-axis"}" aria-hidden="true">${axis}</div>
+      </div>
+      <p class="stats-range-count">${count}</p>
+    </figure>`;
+  }
+
+  // Medians by group, in the rows of Values by enzyme class: per row its label, the middle half as a line and the median
+  // as a dot on a log axis of whole decades (at least two), the median and the count; the row's tooltip line says it all.
+  function statsMediansPanel({ key, heading, rows, head, labelWidth }) {
+    const from = Math.floor(Math.log10(Math.min(...rows.map((row) => row.low))) + 1e-9);
+    const to = Math.max(Math.ceil(Math.log10(Math.max(...rows.map((row) => row.high))) - 1e-9), from + 2);
+    const position = (value) => Math.max(0, Math.min(100, (Math.log10(value) - from) / (to - from) * 100));
+    const longest = Math.max(head.length, ...rows.map((row) => formatInteger(row.n).length));
+    const items = rows.map((row) => `<li class="stats-ridge-row" data-count="${row.n}" data-tip="${escapeHtml(row.tip)}">
+        <span class="stats-ridge-label">${escapeHtml(row.label)}</span>
+        <span class="stats-ridge-plot" role="img" aria-label="${escapeHtml(row.tip)}"><span class="stats-ridge-range" style="left:${+position(row.low).toFixed(3)}%;width:${+Math.max(position(row.high) - position(row.low), 0.5).toFixed(3)}%"></span><i class="stats-ridge-median" style="left:${+position(row.median).toFixed(3)}%"></i></span>
+        <span class="stats-ridge-value">${statsRangeNumber(row.median, { html: true, figures: 2 })}</span>
+        <span class="stats-ridge-n">${formatInteger(row.n)}</span></li>`).join("");
+    return `<div class="stats-ridges stats-medians" data-panel="${escapeHtml(key)}" data-count="${rows.reduce((sum, row) => sum + row.n, 0)}" style="--ridge-label:${labelWidth};--ridge-n:calc(${longest}ch + 4px)">
+      <p class="stats-ridges-title"><span>${heading}</span><span class="stats-ridges-head">Median</span><span class="stats-ridges-head">${escapeHtml(head)}</span></p>
+      <ol class="stats-ridge-rows">${items}</ol>
+      <div class="stats-ridge-axis" aria-hidden="true"><span></span><span class="stats-ridge-ticks">${statsDecadeTicks(from, to)}</span><span></span><span></span></div>
+    </div>`;
+  }
+
+  // Between papers (from_paper_insights.between_papers): one protein (its UniProt entry) and substrate as wild type in two
+  // papers, per parameter the fold difference between the two papers' values in quarter decades from 1-fold (the last bar
+  // holds 100-fold and more), with the median and the shares within 2-fold and 10-fold; under them, the same at a
+  // temperature and pH both papers give.
+  const STATS_PAIR_BINS = 9;
+
+  function statsBetweenPapersFigure(between) {
+    const [records, papers, enzymes] = ["records", "papers", "proteins"].map((key) => statsCount(between?.[key]));
+    const width = between?.bin_width;
+    if (!records || !papers || !enzymes || width !== 0.25) return null;
+    const holds = (summary, histogram) => {
+      const pairs = statsCount(summary?.pairs);
+      return Boolean(pairs && statsCount(summary.groups, pairs) && Number.isFinite(summary.median) && summary.median >= 1
+        && statsCount(summary.within_10, pairs) !== null && statsCount(summary.within_2, summary.within_10) !== null
+        && (!histogram || (statsWholeList(summary.counts, STATS_PAIR_BINS) && statsListSum(summary.counts) === pairs
+          && statsCount(summary.identical, summary.within_2) !== null)));
+    };
+    const metrics = STATS_METRICS.filter((metric) => holds(between.metrics?.[metric.key], true));
+    if (!metrics.length) return null;
+    const pairsWord = (n) => `${statsNoun(n, "pair")} of papers`;
+    const edge = (index) => statsFoldWords(index * width);
+    const binText = (index) => (index === 0 ? `within ${edge(1)}-fold` : index === STATS_PAIR_BINS - 1 ? `${edge(index)}-fold or more apart`
+      : `${edge(index)}- to ${edge(index + 1)}-fold apart`);
+    const panels = metrics.map((metric) => {
+      const summary = between.metrics[metric.key];
+      const word = STATS_METRIC_WORDS[metric.key];
+      const share = (count) => statsShare(count, summary.pairs);
+      return statsInsightPanel({ key: `pairs-${metric.key}`, heading: `${metric.html} <span class="stats-range-unit">(fold between two papers)</span>`,
+        facts: [["Median", statsFoldText(summary.median, true)], ["Within 2-fold", escapeHtml(share(summary.within_2))], ["Within 10-fold", escapeHtml(share(summary.within_10))]],
+        counts: summary.counts, tip: (n, index) => `${word} ${binText(index)}: ${pairsWord(n)} (${share(n)})`,
+        axis: statsDecadeTicks(0, STATS_PAIR_BINS * width),
+        label: `${word}, fold difference between two papers: ${pairsWord(summary.pairs)}; median ${statsFoldText(summary.median)}; ${share(summary.within_2)} within 2-fold and ${share(summary.within_10)} within 10-fold.`,
+        count: pairsWord(summary.pairs) });
+    });
+    // The same temperature (to 1 °C) and pH (to 0.1): a table of the same numbers, with the records it uses under it.
+    const strict = between.same_conditions;
+    const strictCounts = ["records", "papers", "proteins"].map((key) => statsCount(strict?.[key]));
+    const strictMetrics = strictCounts.every(Boolean) ? STATS_METRICS.filter((metric) => holds(strict.metrics?.[metric.key], false)) : [];
+    const table = strictMetrics.length ? `<table class="stats-table stats-pairs-table">
+        <thead><tr><th scope="col">At the same temperature and pH</th><th scope="col" class="stats-num">Pairs</th><th scope="col" class="stats-num">Median</th><th scope="col" class="stats-num">Within 2-fold</th><th scope="col" class="stats-num">Within 10-fold</th></tr></thead>
+        <tbody>${strictMetrics.map((metric) => {
+          const summary = strict.metrics[metric.key];
+          return `<tr data-count="${summary.pairs}"><th scope="row">${metric.html}</th><td class="stats-num">${formatInteger(summary.pairs)}</td><td class="stats-num">${statsFoldText(summary.median, true)}</td><td class="stats-num">${escapeHtml(statsShare(summary.within_2, summary.pairs))}</td><td class="stats-num">${escapeHtml(statsShare(summary.within_10, summary.pairs))}</td></tr>`;
+        }).join("")}</tbody></table>
+      <p class="stats-note">At the same temperature (to 1 °C) and pH (to 0.1): ${statsUsedText(...strictCounts)}.</p>` : "";
+    const identical = metrics.map((metric) => `${formatInteger(between.metrics[metric.key].identical)} for ${STATS_METRIC_WORDS[metric.key]}`);
+    return {
+      id: "statsPairsTitle", key: "between-papers", title: "Between papers", wide: true,
+      body: `<div class="stats-ranges stats-pairs">${panels.join("")}</div>${table}`,
+      caption: escapeHtml(`Wild-type values of one enzyme (UniProt entry) and substrate in two papers, from ${statsUsedText(records, papers, enzymes)}; assays and constructs differ between papers, so a difference is not all error.`),
+      rules: `Each paper’s value is the median of its records for that enzyme and substrate (matched by structure, else by name), whatever their conditions; each pair of papers counts once per parameter. Pairs giving the very same number: ${statsListText(identical)}. The table compares two papers only at a temperature (to 1 °C) and pH (to 0.1) both give. Each bar is a quarter of a power of ten; the last holds 100-fold and more. Values without a recorded unit, or in another unit, are left out.`,
+    };
+  }
+
+  // Substrate specificity (from_paper_insights.substrate_range): one wild-type enzyme tested on three or more substrates in
+  // one paper and assay (a panel), the kcat/Km of its best substrate over its worst in half decades from 1-fold (the last
+  // bar holds 10⁶-fold and more); beside it the median range by how many substrates the panel tested.
+  const STATS_RANGE_BINS = 13;
+
+  function statsSubstrateRangeFigure(range) {
+    const [panels, records, papers, enzymes] = ["panels", "records", "papers", "enzymes"].map((key) => statsCount(range?.[key]));
+    const groups = Array.isArray(range?.by_substrates) ? range.by_substrates : [];
+    const width = range?.bin_width;
+    if (!panels || !records || !papers || !enzymes || width !== 0.5 || !statsWholeList(range.counts, STATS_RANGE_BINS)
+      || statsListSum(range.counts) !== panels || !(range.median >= 1) || statsCount(range.at_least_10, panels) === null
+      || statsCount(range.at_least_1000, range.at_least_10) === null || !groups.length
+      || !groups.every((item) => Number.isInteger(item?.from) && item.from >= 3 && (item.to === null || (Number.isInteger(item.to) && item.to >= item.from))
+        && statsCount(item.panels) && item.median >= 1)
+      || groups.reduce((sum, item) => sum + item.panels, 0) !== panels) return null;
+    const panelWord = (n) => statsNoun(n, "panel");
+    const share = (count) => statsShare(count, panels);
+    const edge = (index) => statsFoldWords(index * width);
+    const binText = (index) => (index === 0 ? `under ${edge(1)}-fold` : index === STATS_RANGE_BINS - 1 ? `${edge(index)}-fold or more`
+      : `${edge(index)}- to ${edge(index + 1)}-fold`);
+    const histogram = statsInsightPanel({ key: "substrate-range", heading: `<i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> <span class="stats-range-unit">(best substrate ÷ worst)</span>`,
+      facts: [["Median", statsFoldText(range.median, true)], ["10-fold or more", escapeHtml(share(range.at_least_10))], ["1,000-fold or more", escapeHtml(share(range.at_least_1000))]],
+      counts: range.counts, tip: (n, index) => `kcat/Km ${binText(index)} from the worst substrate to the best: ${panelWord(n)} (${share(n)})`,
+      axis: statsDecadeTicks(0, STATS_RANGE_BINS * width),
+      label: `kcat/Km of the best substrate over the worst: ${panelWord(panels)}; median ${statsFoldText(range.median)}; ${share(range.at_least_10)} 10-fold or more and ${share(range.at_least_1000)} 1,000-fold or more.`,
+      count: `${panelWord(panels)} of three or more substrates` });
+    const tested = (item) => (item.to === null ? `${formatInteger(item.from)} or more` : item.to === item.from ? formatInteger(item.from) : `${formatInteger(item.from)}–${formatInteger(item.to)}`);
+    const table = `<table class="stats-table stats-range-table">
+        <thead><tr><th scope="col">Substrates tested</th><th scope="col" class="stats-num">Panels</th><th scope="col" class="stats-num">Median range</th></tr></thead>
+        <tbody>${groups.map((item) => `<tr data-count="${item.panels}"><th scope="row">${tested(item)}</th><td class="stats-num">${formatInteger(item.panels)}</td><td class="stats-num">${statsFoldText(item.median, true)}</td></tr>`).join("")}</tbody></table>`;
+    return {
+      id: "statsSubstrateRangeTitle", key: "substrate-range", title: "Substrate specificity", wide: true,
+      body: `<div class="stats-insight-pair">${histogram}${table}</div>`,
+      caption: metricWordsHtml(escapeHtml(`The best over the worst kcat/Km of one wild-type enzyme tested on three or more substrates in one paper and assay (${statsUsedText(records, papers, enzymes)}); papers choose the substrates, and the range grows with their number.`)),
+      rules: "A panel is one enzyme (name and organism) on three or more substrates in one paper with one cosubstrate, pH and temperature; an enzyme tested in two assays makes two panels. Each substrate’s kcat/Km is the median of its records, a kcat/Km calculated as kcat ÷ Km included. Each bar is half a power of ten; the last holds 10⁶-fold and more.",
+    };
+  }
+
+  // A rank correlation as the page writes it: "−0.22", "0.875", "1".
+  function statsRhoText(value, places = 3) {
+    return `${value < 0 ? "−" : ""}${+Math.abs(value).toFixed(places)}`;
+  }
+
+  // Km and substrate size (from_paper_insights.km_by_size, supplement): the Km records by the size of their substrate
+  // (non-hydrogen atoms), median and middle half per size; beside it, within one enzyme's substrate panel (four or more
+  // substrates of at least two sizes), Spearman's rho of size and Km in bars of 0.25 centred on −1 ... 1, a dashed line
+  // at no trend.
+  const STATS_RHO_BINS = 9;
+
+  function statsKmSizeFigure(size) {
+    const [records, papers, enzymes] = ["records", "papers", "enzymes"].map((key) => statsCount(size?.[key]));
+    const bins = Array.isArray(size?.bins) ? size.bins : [];
+    if (!records || !papers || !enzymes || !bins.length || !bins.every((item) => Number.isInteger(item?.from) && item.from >= 1
+      && (item.to === null || (Number.isInteger(item.to) && item.to >= item.from)) && statsCount(item.n) && statsCount(item.papers, papers)
+      && statsSpreadHolds(item)) || bins.reduce((sum, item) => sum + item.n, 0) !== records) return null;
+    const recordWord = (n) => `${formatInteger(n)} ${n === 1 ? "record" : "records"}`;
+    const atoms = (item) => (item.to === null ? `${formatInteger(item.from)} or more` : `${formatInteger(item.from)}–${formatInteger(item.to)}`);
+    const sizes = statsMediansPanel({ key: "km-size", head: "Records", labelWidth: "6em",
+      heading: `<i>K</i><sub>m</sub> <span class="stats-range-unit">(mM) by substrate size, in non-hydrogen atoms</span>`,
+      rows: bins.map((item) => ({ ...item, label: atoms(item),
+        tip: `Substrates of ${atoms(item)} non-hydrogen atoms: median Km ${statsRangeNumber(item.median, { figures: 2 })} mM, middle half ${statsRangeNumber(item.low)}–${statsRangeNumber(item.high)} mM; ${recordWord(item.n)} from ${formatInteger(item.papers)} ${item.papers === 1 ? "paper" : "papers"}.` })) });
+    const within = size.panels;
+    const count = statsCount(within?.panels);
+    let correlation = "";
+    let rules = "";
+    if (count && within.bin_width === 0.25 && statsWholeList(within.counts, STATS_RHO_BINS) && statsListSum(within.counts) === count
+      && statsCount(within.falls, count) !== null && statsCount(within.rises, count - within.falls) !== null
+      && Number.isFinite(within.median_rho) && Math.abs(within.median_rho) <= 1 && ["records", "papers", "enzymes"].every((key) => statsCount(within[key]))) {
+      const panelWord = (n) => statsNoun(n, "panel");
+      const share = (n) => statsShare(n, count);
+      const from = -1 - within.bin_width / 2;
+      const span = STATS_RHO_BINS * within.bin_width;
+      const binText = (index) => {
+        const centre = -1 + index * within.bin_width;
+        return `ρ from ${statsRhoText(Math.max(-1, centre - within.bin_width / 2))} to ${statsRhoText(Math.min(1, centre + within.bin_width / 2))}`;
+      };
+      correlation = statsInsightPanel({ key: "km-size-rho", heading: `Within one enzyme’s substrates <span class="stats-range-unit">(ρ of size and <i>K</i><sub>m</sub>)</span>`,
+        facts: [[`<i>K</i><sub>m</sub> falls with size`, escapeHtml(share(within.falls))], ["Rises", escapeHtml(share(within.rises))], ["Median ρ", escapeHtml(statsRhoText(within.median_rho, 2))]],
+        counts: within.counts, tip: (n, index) => `${binText(index)}: ${panelWord(n)} (${share(n)})`,
+        axis: statsTicksAt([[-1, "−1"], [-0.5, "−0.5"], [0, "0"], [0.5, "0.5"], [1, "1"]], from, span),
+        line: { at: (0 - from) / span * 100, label: "no trend" }, linear: true,
+        label: `Rank correlation of substrate size and Km within one enzyme’s substrates: ${panelWord(count)}; Km falls with size in ${share(within.falls)} and rises in ${share(within.rises)}; median ρ ${statsRhoText(within.median_rho, 2)}.`,
+        count: `${panelWord(count)} of four or more substrates` });
+      rules = ` A panel is four or more substrates of at least two sizes for one enzyme (name and organism) in one paper with one cosubstrate, pH and temperature (${panelWord(count)}: ${statsUsedText(within.records, within.papers, within.enzymes)}); ρ is Spearman’s rank correlation of size with each substrate’s median Km, below 0 where Km falls as the substrates grow, and 0 where the Km values are all one number. Bars are 0.25 wide.`;
+    }
+    return {
+      id: "statsKmSizeTitle", key: "km-size", title: "<i>K</i><sub>m</sub> and substrate size", wide: true,
+      body: correlation ? `<div class="stats-insight-pair">${sizes}${correlation}</div>` : sizes,
+      caption: metricWordsHtml(escapeHtml(`Km of wild-type records read from the paper by substrate size (${statsUsedText(records, papers, enzymes)})${correlation ? " and, within one enzyme’s substrates, its rank correlation with size" : ""}; each size holds different enzymes${correlation ? ", so only the correlation compares substrates of one enzyme" : ""}.`)),
+      rules: `Size is the number of non-hydrogen atoms in the substrate’s structure (SMILES); a structure in several pieces is left out. The dot is the median and the line the middle half.${rules} Bar-Even et al. (Biochemistry 2011) found that low molecular mass appears to limit Km optimization.`,
+    };
+  }
+
+  // kcat and assay temperature (from_paper_insights.temperature, supplement): the kcat records in 10 °C bins, median and
+  // middle half per bin; beside it, one enzyme and substrate in one paper at two or more temperatures (a series), its
+  // change per 10 °C (Q₁₀) in bars of a tenth of a power of ten centred on 10^−0.5 ... 10^1 (the end bars hold the rest),
+  // a dashed line at no change.
+  const STATS_Q10_BINS = 16;
+
+  function statsTemperatureFigure(temperature) {
+    const [records, papers, enzymes] = ["records", "papers", "enzymes"].map((key) => statsCount(temperature?.[key]));
+    const bins = Array.isArray(temperature?.bins) ? temperature.bins : [];
+    const edge = (value) => value === null || Number.isInteger(value);
+    if (!records || !papers || !enzymes || !bins.length || !bins.every((item) => edge(item?.from) && edge(item?.below)
+      && (item.from === null || item.below === null || item.below > item.from) && statsCount(item.n) && statsCount(item.papers, papers)
+      && statsSpreadHolds(item)) || bins.reduce((sum, item) => sum + item.n, 0) !== records) return null;
+    const recordWord = (n) => `${formatInteger(n)} ${n === 1 ? "record" : "records"}`;
+    const label = (item) => (item.from === null ? `below ${item.below}` : item.below === null ? `${item.from} or more` : `${item.from}–${item.below}`);
+    const words = (item) => (item.from === null ? `Below ${item.below} °C` : item.below === null ? `${item.from} °C and above` : `${item.from} °C to below ${item.below} °C`);
+    const byBin = statsMediansPanel({ key: "kcat-temperature", head: "Records", labelWidth: "6em",
+      heading: `<i>k</i><sub>cat</sub> <span class="stats-range-unit">(s⁻¹) by assay temperature (°C)</span>`,
+      rows: bins.map((item) => ({ ...item, label: label(item),
+        tip: `${words(item)}: median kcat ${statsRangeNumber(item.median, { figures: 2 })} s⁻¹, middle half ${statsRangeNumber(item.low)}–${statsRangeNumber(item.high)} s⁻¹; ${recordWord(item.n)} from ${formatInteger(item.papers)} ${item.papers === 1 ? "paper" : "papers"}.` })) });
+    const series = temperature.series;
+    const count = statsCount(series?.series);
+    let change = "";
+    let rules = "";
+    if (count && series.bin_width === 0.1 && series.log10_start === -0.5 && statsWholeList(series.counts, STATS_Q10_BINS)
+      && statsListSum(series.counts) === count && statsSpreadHolds(series, "p25", "p75") && statsCount(series.rising, count) !== null
+      && statsCount(series.falling, count - series.rising) !== null && ["records", "papers", "enzymes"].every((key) => statsCount(series[key]))) {
+      const seriesWord = (n) => `${formatInteger(n)} series`;
+      const share = (n) => statsShare(n, count);
+      const width = series.bin_width;
+      const from = series.log10_start - width / 2;
+      const span = STATS_Q10_BINS * width;
+      const binText = (index) => {
+        const centre = series.log10_start + index * width;
+        const low = statsFoldWords(centre - width / 2);
+        const high = statsFoldWords(centre + width / 2);
+        return index === 0 ? `below ${high}` : index === STATS_Q10_BINS - 1 ? `${low} or more` : `${low}–${high}`;
+      };
+      change = statsInsightPanel({ key: "q10", heading: `Within one paper’s series <span class="stats-range-unit">(Q<sub>10</sub>: fold change per 10 °C)</span>`,
+        facts: [["Median Q<sub>10</sub>", statsRangeNumber(series.median, { html: true, figures: 2 })],
+          ["Middle half", `${statsRangeNumber(series.p25, { html: true, figures: 2 })}–${statsRangeNumber(series.p75, { html: true, figures: 2 })}`],
+          ["Rises with temperature", escapeHtml(share(series.rising))]],
+        counts: series.counts, tip: (n, index) => `Q₁₀ ${binText(index)}: ${seriesWord(n)} (${share(n)})`,
+        axis: statsTicksAt([[Math.log10(0.5), "0.5"], [0, "1"], [Math.log10(2), "2"], [Math.log10(5), "5"], [1, "10"]], from, span),
+        line: { at: (0 - from) / span * 100, label: "no change" }, linear: true,
+        label: `kcat change per 10 °C within one paper’s temperature series: ${seriesWord(count)}; median Q₁₀ ${statsRangeNumber(series.median, { figures: 2 })}, middle half ${statsRangeNumber(series.p25, { figures: 2 })}–${statsRangeNumber(series.p75, { figures: 2 })}; kcat rises with temperature in ${share(series.rising)}.`,
+        count: `${seriesWord(count)} of two or more temperatures` });
+      rules = ` A series is one enzyme and substrate in one paper at two or more temperatures with one cosubstrate and pH (${seriesWord(count)}: ${statsUsedText(series.records, series.papers, series.enzymes)}); Q₁₀ is 10 to the power of ten times the least-squares slope of log10 kcat against temperature. Its bars are a tenth of a power of ten; the end bars hold every value beyond them.`;
+    }
+    return {
+      id: "statsTemperatureTitle", key: "kcat-temperature", title: "<i>k</i><sub>cat</sub> and assay temperature", wide: true,
+      body: change ? `<div class="stats-insight-pair">${byBin}${change}</div>` : byBin,
+      caption: metricWordsHtml(escapeHtml(`kcat of wild-type records read from the paper by assay temperature (${statsUsedText(records, papers, enzymes)})${change ? " and its change per 10 °C within one paper’s series" : ""}; each bin holds different enzymes${change ? ", and a series can pass the enzyme’s best temperature" : ""}.`)),
+      rules: `Each bin starts at its lower edge and ends below the next; the dot is the median and the line the middle half.${rules}`,
+    };
+  }
+
+  // The typical wild-type enzyme (from_paper_insights.typical, supplement table): each parameter's median and middle 80%
+  // over the wild-type records read from the paper, beside the average enzyme of Bar-Even A, Noor E, Savir Y, Liebermeister
+  // W, Davidi D, Tawfik DS, Milo R, "The moderately efficient enzyme: evolutionary and physicochemical trends shaping enzyme
+  // parameters", Biochemistry 2011;50(21):4402-4410 (PMID 21506553). Its abstract gives the average enzyme's kcat/KM as
+  // ~10⁵ s⁻¹ M⁻¹ (checked in the abstract on PubMed and Europe PMC, 2026-10-21); its kcat and KM medians are not set beside
+  // CatLog's: the abstract's kcat lost a digit in PubMed's copy and the full text could not be checked.
+  // (log10 of the kcat/KM in M⁻¹ s⁻¹)
+  const STATS_BAR_EVEN = { href: "https://doi.org/10.1021/bi2002289", name: "Bar-Even et al. 2011", log10KcatOverKm: 5 };
+
+  function statsTypicalTable(typical) {
+    const rows = STATS_METRICS.filter((metric) => {
+      const item = typical?.[metric.key];
+      const n = statsCount(item?.n);
+      return n && statsCount(item.papers, n) && statsCount(item.enzymes, n) && statsSpreadHolds(item, "p10", "p90");
+    });
+    if (!rows.length) return null;
+    const cell = (value) => statsRangeNumber(value, { html: true, figures: 2 });
+    // Three columns, so the table fits a phone: each parameter's records, papers and enzymes on a line under its name.
+    const body = `<table class="stats-table stats-typical-table">
+      <thead><tr><th scope="col">Parameter</th><th scope="col" class="stats-num">Median</th><th scope="col" class="stats-num">10–90%</th></tr></thead>
+      <tbody>${rows.map((metric) => {
+        const item = typical[metric.key];
+        const molar = metric.key === "kcat_over_km" ? `<small>${cell(item.median * 1000)} M⁻¹ s⁻¹</small>` : "";
+        const counts = statsUsedText(item.n, item.papers, item.enzymes);
+        return `<tr data-stat-key="typical_${metric.key}" data-count="${item.n}"><th scope="row">${metric.html} <span class="stats-muted nowrap">(${escapeHtml(metric.unit)})</span><small>${counts}</small></th>
+          <td class="stats-num">${cell(item.median)}${molar}</td><td class="stats-num stats-muted">${cell(item.p10)}–${cell(item.p90)}</td></tr>`;
+      }).join("")}
+        <tr class="stats-row-reference"><th scope="row"><a class="stats-link" href="${escapeHtml(STATS_BAR_EVEN.href)}">${escapeHtml(STATS_BAR_EVEN.name)}</a>: the average enzyme’s <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub><small>in the paper’s abstract</small></th>
+          <td class="stats-num" colspan="2">about ${statsPowerOfTen(STATS_BAR_EVEN.log10KcatOverKm)} M⁻¹ s⁻¹</td></tr></tbody></table>`;
+    return {
+      id: "statsTypicalTitle", key: "typical", title: "The typical wild-type enzyme", kind: "Table", body,
+      caption: escapeHtml(`Medians of the wild-type records read from the paper, each row with its records, papers and enzymes, beside the average enzyme of ${STATS_BAR_EVEN.name}; CatLog counts every substrate and assay a paper reports, not one value per enzyme.`),
+      rules: `Each wild-type record with the parameter in the unit CatLog stores counts once; 10–90% is the range from the 10th to the 90th percentile. ${STATS_BAR_EVEN.name} (Biochemistry 50:4402–4410) give the average enzyme’s kcat/Km as about ${statsPowerOfTen(STATS_BAR_EVEN.log10KcatOverKm)} M⁻¹ s⁻¹ (${statsPowerOfTen(STATS_BAR_EVEN.log10KcatOverKm - 3)} mM⁻¹ s⁻¹).`,
+    };
+  }
+
   // Values against the databases by enzyme class (from_paper_insights.database_by_class): a 100% bar per class of the
   // values read from the paper, by each value's own result, counted as Figure 8 counts them; the class links to its
   // records read from the paper. The class colour stays off this figure: its segments are the results' colours.
@@ -7201,8 +7513,10 @@
     const insights = statsInsights(overview);
     toSupplement("biology", ...biology, statsSubstitutionsFigure(insights.substitutions), formsTable, statsVariantKindsTable(insights.variant_kinds));
 
-    // 4. Values: the overall ranges, kcat against Km and the variants against their wild type; the ranges per enzyme
-    // class, the assay temperature and pH, the units as printed and the cautions in the supplement.
+    // 4. Values: the overall ranges, the same protein and substrate between papers, kcat against Km, substrate
+    // specificity and the variants against their wild type; the ranges per enzyme class, the assay temperature and pH,
+    // kcat and assay temperature, Km and substrate size, the typical wild-type enzyme, the units as printed and the
+    // cautions in the supplement.
     const values = [];
     // Value ranges and Values by enzyme class share one log axis per parameter (statsValueAxis), drawn in the same columns.
     const ranges = STATS_METRICS.map((metric) => statsValueRange(metric, overview?.metrics?.[metric.key], statsValueAxis(overview?.metrics?.[metric.key])))
@@ -7219,7 +7533,9 @@
     // wild type (each only when the overview counts it).
     const classNames = Object.fromEntries((Array.isArray(overview?.ec_classes) ? overview.ec_classes : [])
       .filter((item) => Number.isInteger(item?.class)).map((item) => [item.class, String(item.name || "")]));
-    values.push(...[statsKcatKmFigure(insights.kcat_km, classNames), statsMutationsFigure(insights.mutations)].filter(Boolean));
+    // (round 16: Between papers after the ranges, Substrate specificity after kcat against Km)
+    values.push(...[statsBetweenPapersFigure(insights.between_papers), statsKcatKmFigure(insights.kcat_km, classNames),
+      statsSubstrateRangeFigure(insights.substrate_range), statsMutationsFigure(insights.mutations)].filter(Boolean));
     if (values.length) parts.push({ key: "values", title: "Values", items: values });
 
     // Cautions, with the same names as the Cautions filter (the supplement's last Values table).
@@ -7230,6 +7546,7 @@
       kind: "Table", body: statsTable(cautions, total, { head: "Caution" }),
       caption: "A caution marks a value that may be wrong; one record can carry several." } : null;
     toSupplement("values", statsRidgeFigure(overview), statsConditionsFigure(insights.conditions, fromPaper),
+      statsTemperatureFigure(insights.temperature), statsKmSizeFigure(insights.km_by_size), statsTypicalTable(insights.typical),
       statsPrintedUnitsTable(insights.printed_units), cautionsTable);
 
     // 5. Against the databases (summary.database_comparison): a short lead, each value against the databases and the
@@ -14501,6 +14818,13 @@
       statsVariantKindsTable,
       statsPrintedUnitsTable,
       statsUnitWords,
+      statsBetweenPapersFigure,
+      statsSubstrateRangeFigure,
+      statsKmSizeFigure,
+      statsTemperatureFigure,
+      statsTypicalTable,
+      statsMediansPanel,
+      statsUsedText,
       statsSupplementItemHtml,
       statsAddressTarget,
       statsAddressHeading,

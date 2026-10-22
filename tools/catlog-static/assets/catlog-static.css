@@ -1631,6 +1631,25 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-condition-bars > span:hover { background:var(--accent) }
 .stats-condition-top dd { display:flex; flex-wrap:wrap; gap:2px 16px }
 .stats-condition-value { white-space:nowrap }
+/* What the wild-type values show (round 16): Between papers' three histograms in Value ranges' grid over its table at
+   the same temperature and pH; Substrate specificity, Km and substrate size and kcat and assay temperature as two
+   panels side by side from 1024px (one under the other below). All of records read from the paper: Read from the
+   paper's cyan. The medians by size or temperature take Values by enzyme class's rows: a dot (median) on a line (middle
+   half) per row, a little lower than a ridge's row as no curve stands over it. */
+.stats-range.stats-insight, .stats-ridges.stats-medians { --part:var(--src-paper) }
+.stats-insight-pair { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:24px 48px; align-items:start }
+.stats-pairs-table { max-width:640px; margin-top:24px }
+.stats-range-table, .stats-typical-table { max-width:560px }
+.stats-medians .stats-ridge-row { height:26px; align-items:center }
+.stats-medians :is(.stats-ridge-label, .stats-ridge-value, .stats-ridge-n) { padding-bottom:0 }
+.stats-medians .stats-ridge-plot::after { top:50%; bottom:auto; border-bottom-color:var(--line-soft) }
+.stats-medians .stats-ridge-range { top:calc(50% - 1px); bottom:auto }
+.stats-medians .stats-ridge-median { top:calc(50% - 4.5px); bottom:auto }
+.stats-typical-table :is(th,td) small { display:block; margin-top:2px; color:var(--muted); font-size:var(--fs-12); font-weight:400; line-height:var(--lh-12) }
+/* The table at the same temperature and pH fits a phone: its number headings wrap. */
+.stats-pairs-table thead th.stats-num { white-space:normal }
+.stats-pairs-table :is(th,td) { padding-inline:6px }
+.stats-typical-table .stats-row-reference > * { border-top:1px solid var(--line) }
 /* Values by enzyme class: a ridge per class (each scaled to its own peak) overlapping the row above; the ridge under the
    pointer takes a thicker line and the others dim. The 10-90% line and the median dot sit on its baseline. Three panels side by side from
    1024px with the class number only (the name is in the tooltip line and in Biology); one per row below with names. */
@@ -1778,6 +1797,7 @@ a.stats-total-value:focus-visible { outline:0 }
   .stats-conditions { grid-template-columns:1fr; max-width:560px }
   .stats-shell { max-width:760px }
   .stats-ranges { grid-template-columns:1fr; max-width:560px }
+  .stats-insight-pair { grid-template-columns:1fr; max-width:560px }
   /* One panel per row, each class named. */
   .stats-ridge-panels { grid-template-columns:1fr; gap:32px; max-width:560px }
   .stats-ridges { --ridge-label:minmax(0,150px) }

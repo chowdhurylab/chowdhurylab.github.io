@@ -2976,6 +2976,125 @@ function row(overrides = {}) {
     api.renderStats();
   }
 
+  // What the wild-type values show (round 16): Between papers and Substrate specificity in Values; kcat and assay
+  // temperature, Km and substrate size and the typical wild-type enzyme in the supplement. Each only when its counts hold
+  // together; each caption one sentence with its records, papers and enzymes and one caveat.
+  {
+    const pairs = (counts) => ({ pairs: counts.reduce((sum, count) => sum + count, 0), groups: 2, median: 1.9, within_2: 3, within_10: 4, identical: 1, counts });
+    const between = { records: 12, papers: 4, proteins: 2, bin_width: 0.25,
+      metrics: { kcat: pairs([2, 1, 0, 1, 0, 0, 0, 0, 1]), km: pairs([3, 1, 0, 0, 0, 0, 0, 0, 1]) },
+      same_conditions: { records: 5, papers: 2, proteins: 1, metrics: { kcat: { pairs: 2, groups: 1, median: 1.5, within_2: 2, within_10: 2 } } } };
+    const figure = api.statsBetweenPapersFigure(between);
+    assert.equal(figure.key, "between-papers");
+    assert.deepEqual([...figure.body.matchAll(/data-panel="([\w-]+)" data-count="(\d+)"/g)].map((match) => `${match[1]}:${match[2]}`), ["pairs-kcat:5", "pairs-km:5"]);
+    // Quarter decades from 1-fold, the last open-ended, each bar's pairs in its tooltip line.
+    assert.match(figure.body, /data-tip="kcat within 1\.8-fold: 2 pairs of papers \(40\.0%\)"/);
+    assert.match(figure.body, /data-tip="kcat 1\.8- to 3\.2-fold apart: 1 pair of papers \(20\.0%\)"/);
+    assert.match(figure.body, /data-tip="kcat 100-fold or more apart: 1 pair of papers \(20\.0%\)"/);
+    assert.match(figure.body, /<dt>Median<\/dt><dd>1\.9×<\/dd><\/div><div><dt>Within 2-fold<\/dt><dd>60\.0%<\/dd>/);
+    assert.equal(figure.body.match(/<div class="stats-histogram-axis" aria-hidden="true">([\s\S]*?)<\/div>/)[1], api.statsDecadeTicks(0, 2.25));
+    // At the same temperature and pH: the table and the records it uses ("1 enzyme", in the singular).
+    assert.match(figure.body, /<tr data-count="2"><th scope="row"><i>k<\/i><sub>cat<\/sub><\/th><td class="stats-num">2<\/td><td class="stats-num">1\.5×<\/td><td class="stats-num">100\.0%<\/td><td class="stats-num">100\.0%<\/td><\/tr>/);
+    assert.match(figure.body, /At the same temperature \(to 1 °C\) and pH \(to 0\.1\): 5 records, 2 papers and 1 enzyme\.<\/p>/);
+    assert.equal(figure.caption, "Wild-type values of one enzyme (UniProt entry) and substrate in two papers, from 12 records, 4 papers and 2 enzymes; assays and constructs differ between papers, so a difference is not all error.");
+    assertPlainCaption(figure.caption);
+    assert.match(figure.rules, /Pairs giving the very same number: 1 for kcat and 1 for Km\./);
+    // A parameter whose bars do not add up is left out; without one that does, or without the counts, nothing is drawn.
+    assert.deepEqual([...api.statsBetweenPapersFigure({ ...between, metrics: { ...between.metrics, km: { ...between.metrics.km, pairs: 6 } } })
+      .body.matchAll(/data-panel="([\w-]+)"/g)].map((match) => match[1]), ["pairs-kcat"]);
+    assert.equal(api.statsBetweenPapersFigure({ ...between, metrics: { kcat: { ...between.metrics.kcat, within_2: 5 } } }), null, "Within 2-fold never above within 10-fold");
+    assert.equal(api.statsBetweenPapersFigure({ ...between, records: 0 }), null);
+    assert.equal(api.statsBetweenPapersFigure({ ...between, bin_width: 0.5 }), null);
+    assert.doesNotMatch(api.statsBetweenPapersFigure({ ...between, same_conditions: { ...between.same_conditions, papers: 0 } }).body, /stats-pairs-table/);
+
+    const range = { panels: 4, records: 15, papers: 3, enzymes: 1, median: 110, p25: 16, p75: 1100, at_least_10: 3, at_least_1000: 1,
+      bin_width: 0.5, counts: [1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1],
+      by_substrates: [{ from: 3, to: 3, panels: 2, median: 22 }, { from: 6, to: 9, panels: 1, median: 170 }, { from: 10, to: null, panels: 1, median: 830 }] };
+    const specificity = api.statsSubstrateRangeFigure(range);
+    assert.equal(specificity.key, "substrate-range");
+    assert.match(specificity.body, /data-tip="kcat\/Km under 3\.2-fold from the worst substrate to the best: 1 panel \(25\.0%\)"/);
+    assert.match(specificity.body, /data-tip="kcat\/Km 1\.0 × 10⁶-fold or more from the worst substrate to the best: 1 panel \(25\.0%\)"/);
+    assert.match(specificity.body, /<dt>Median<\/dt><dd>110×<\/dd>/);
+    assert.deepEqual([...specificity.body.matchAll(/<tr data-count="(\d+)"><th scope="row">([^<]+)<\/th><td class="stats-num">\d+<\/td><td class="stats-num">([^<]+)<\/td>/g)]
+      .map((match) => match.slice(1).join(" ")), ["2 3 22×", "1 6–9 170×", "1 10 or more 830×"]);
+    assert.equal(specificity.caption, "The best over the worst <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> of one wild-type enzyme tested on three or more substrates in one paper and assay (15 records, 3 papers and 1 enzyme); papers choose the substrates, and the range grows with their number.");
+    assertPlainCaption(specificity.caption);
+    assert.equal(api.statsSubstrateRangeFigure({ ...range, by_substrates: range.by_substrates.slice(1) }), null, "The panels by substrates add up to the panels");
+    assert.equal(api.statsSubstrateRangeFigure({ ...range, at_least_1000: 4 }), null);
+    assert.equal(api.statsSubstrateRangeFigure({ ...range, counts: range.counts.slice(1) }), null);
+
+    const spread = (n, median) => ({ n, papers: 1, median, low: median / 4, high: median * 4 });
+    const size = { records: 5, papers: 2, enzymes: 2, bins: [{ from: 1, to: 5, ...spread(2, 1.2) }, { from: 51, to: null, ...spread(3, 0.034) }],
+      panels: { panels: 4, records: 16, papers: 1, enzymes: 1, falls: 3, rises: 1, median_rho: -0.4, bin_width: 0.25, counts: [1, 0, 2, 0, 0, 0, 0, 1, 0] } };
+    const sizes = api.statsKmSizeFigure(size);
+    assert.equal(sizes.key, "km-size");
+    // The medians in Values by enzyme class's rows: one per size, the median dot on its middle half, on whole decades.
+    assert.deepEqual([...sizes.body.matchAll(/<li class="stats-ridge-row" data-count="(\d+)"[^>]*>\s*<span class="stats-ridge-label">([^<]+)<\/span>/g)]
+      .map((match) => `${match[2]}:${match[1]}`), ["1–5:2", "51 or more:3"]);
+    assert.match(sizes.body, /data-tip="Substrates of 51 or more non-hydrogen atoms: median Km 0\.034 mM, middle half 0\.0085–0\.136 mM; 3 records from 1 paper\."/);
+    assert.match(sizes.body, /<span class="stats-ridge-ticks">/);
+    // The rank correlation: bars of 0.25 centred on −1 ... 1, the dashed line at no trend in the middle.
+    assert.match(sizes.body, /<i class="stats-fold-zero" style="left:50%" aria-hidden="true"><span>no trend<\/span><\/i>/);
+    assert.match(sizes.body, /data-tip="ρ from −1 to −0\.875: 1 panel \(25\.0%\)"/);
+    assert.match(sizes.body, /data-tip="ρ from −0\.625 to −0\.375: 2 panels \(50\.0%\)"/);
+    assert.match(sizes.body, /<dt>Median ρ<\/dt><dd>−0\.4<\/dd>/);
+    assertPlainCaption(sizes.caption);
+    assert.match(sizes.caption, /\(5 records, 2 papers and 2 enzymes\) and, within one enzyme’s substrates, its rank correlation with size; each size holds different enzymes, so only the correlation compares substrates of one enzyme\.$/);
+    // Without its panels the figure keeps the medians and says nothing of the correlation.
+    const alone = api.statsKmSizeFigure({ ...size, panels: { ...size.panels, falls: 4 } });
+    assert.doesNotMatch(alone.body + alone.caption + alone.rules, /ρ|correlation/);
+    assert.equal(api.statsKmSizeFigure({ ...size, records: 6 }), null);
+    assert.equal(api.statsKmSizeFigure({ ...size, bins: [{ ...size.bins[0], low: 2 }, size.bins[1]] }), null, "A median outside its middle half");
+
+    const temperature = { records: 6, papers: 3, enzymes: 2,
+      bins: [{ from: null, below: 20, ...spread(1, 3.3) }, { from: 20, below: 30, ...spread(2, 4.5) }, { from: 80, below: null, ...spread(3, 24) }],
+      series: { series: 3, records: 7, papers: 2, enzymes: 2, median: 1.7, p25: 1.4, p75: 2.1, rising: 2, falling: 1, bin_width: 0.1, log10_start: -0.5,
+        counts: [0, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0] } };
+    const heat = api.statsTemperatureFigure(temperature);
+    assert.equal(heat.key, "kcat-temperature");
+    assert.deepEqual([...heat.body.matchAll(/<span class="stats-ridge-label">([^<]+)<\/span>/g)].map((match) => match[1]), ["below 20", "20–30", "80 or more"]);
+    assert.match(heat.body, /data-tip="20 °C to below 30 °C: median kcat 4\.5 s⁻¹/);
+    // Q₁₀ in tenths of a power of ten centred on 10^−0.5 ... 10^1: the dashed line at 1 (no change).
+    assert.match(heat.body, /<i class="stats-fold-zero" style="left:34\.375%" aria-hidden="true"><span>no change<\/span><\/i>/);
+    assert.match(heat.body, /data-tip="Q₁₀ 1\.8–2\.2: 2 series \(66\.7%\)"/);
+    assert.match(heat.body, /data-tip="Q₁₀ below 0\.35: 0 series \(0\.0%\)"/);
+    assert.match(heat.body, /<dt>Rises with temperature<\/dt><dd>66\.7%<\/dd>/);
+    assertPlainCaption(heat.caption);
+    assert.equal(api.statsTemperatureFigure({ ...temperature, bins: temperature.bins.slice(1) }), null);
+    assert.doesNotMatch(api.statsTemperatureFigure({ ...temperature, series: { ...temperature.series, log10_start: 0 } }).body, /Q<sub>10<\/sub>/);
+
+    const typical = { kcat: { n: 10, papers: 3, enzymes: 2, median: 4.7, p10: 0.042, p90: 190 },
+      kcat_over_km: { n: 1, papers: 1, enzymes: 1, median: 28, p10: 28, p90: 28 }, km: { n: 2, papers: 3, enzymes: 1, median: 0.16, p10: 0.003, p90: 7.7 } };
+    const table = api.statsTypicalTable(typical);
+    assert.equal(table.kind, "Table");
+    // Km's papers outnumber its records: that row is left out.
+    assert.deepEqual([...table.body.matchAll(/data-stat-key="typical_(\w+)" data-count="(\d+)"/g)].map((match) => `${match[1]}:${match[2]}`), ["kcat:10", "kcat_over_km:1"]);
+    assert.match(table.body, /<small>10 records, 3 papers and 2 enzymes<\/small>/);
+    assert.match(table.body, /<small>1 record, 1 paper and 1 enzyme<\/small>/);
+    assert.match(table.body, /<td class="stats-num">28<small>28,000 M⁻¹ s⁻¹<\/small><\/td>/);
+    assert.match(table.body, /<a class="stats-link" href="https:\/\/doi\.org\/10\.1021\/bi2002289">Bar-Even et al\. 2011<\/a>: the average enzyme’s <i>k<\/i><sub>cat<\/sub>\/<i>K<\/i><sub>m<\/sub><small>in the paper’s abstract<\/small><\/th>\s*<td class="stats-num" colspan="2">about 10⁵ M⁻¹ s⁻¹<\/td>/);
+    assertPlainCaption(table.caption);
+    assert.match(table.rules, /about 10⁵ M⁻¹ s⁻¹ \(10² mM⁻¹ s⁻¹\)\.$/);
+    assert.equal(api.statsTypicalTable({}), null);
+
+    // In the page: Between papers after Value ranges, Substrate specificity in Values; the three others in the
+    // supplement's Values group, the figures before the tables; each figure's rules in How these numbers are counted.
+    runtimeManifest.summary.overview = { ...overview, from_paper_insights: { between_papers: between, substrate_range: range,
+      km_by_size: size, temperature, typical } };
+    api.renderStats();
+    const titles = headings();
+    assert.deepEqual(titles.slice(titles.indexOf("Value ranges"), titles.indexOf("Value ranges") + 3), ["Value ranges", "Between papers", "Substrate specificity"]);
+    const supplement = supplementTitles();
+    const at = (title) => supplement.findIndex((item) => item.endsWith(title));
+    assert.ok(at("kcat and assay temperature") >= 0 && at("Km and substrate size") === at("kcat and assay temperature") + 1, supplement.join(" | "));
+    assert.ok(/^Table S\d+ The typical wild-type enzyme$/.test(supplement[at("The typical wild-type enzyme")]), supplement.join(" | "));
+    assert.match(methodHtml(), /<span class="stats-method-title">Between papers\.<\/span> Each paper’s value is the median/);
+    assert.match(methodHtml(), /<span class="stats-method-title">The typical wild-type enzyme\.<\/span>/);
+    assert.doesNotMatch(element("statsCharts").innerHTML, /NaN|Infinity|undefined/);
+    runtimeManifest.summary.overview = overview;
+    api.renderStats();
+  }
+
   // The supplement's new figures and tables (round 14), each only when its counts hold together.
   {
     // Papers by parameter: of the papers read (the band's count), each parameter, kcat and Km together and all three.

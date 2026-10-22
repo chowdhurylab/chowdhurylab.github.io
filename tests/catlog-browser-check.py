@@ -1747,14 +1747,29 @@ STATS_INSIGHTS_JS = """
       const middle = bars.find((bar) => /0\\.75 to 1\\.3 times/.test(bar.dataset.tip));
       zero = middle ? Math.abs(line.left - (box(middle).left + box(middle).width / 2)) : null;
     }
-    for (const section of document.querySelectorAll('[data-figure="kcat-km"], [data-figure="mutations"], [data-figure="conditions"], [data-figure="db-classes"]')) {
+    for (const section of document.querySelectorAll('[data-figure="kcat-km"], [data-figure="mutations"], [data-figure="conditions"], [data-figure="db-classes"], [data-figure="between-papers"], [data-figure="substrate-range"], [data-figure="km-size"], [data-figure="kcat-temperature"], [data-figure="typical"]')) {
       const own = box(section);
-      section.querySelectorAll('.stats-map-iso-label, .stats-map-limit-label, .stats-map-x > span, .stats-map-y > span, .stats-histogram-axis > span, .stats-condition-axis > span, .stats-chart-value, .stats-fold-zero > span')
+      section.querySelectorAll('.stats-map-iso-label, .stats-map-limit-label, .stats-map-x > span, .stats-map-y > span, .stats-histogram-axis > span, .stats-condition-axis > span, .stats-ridge-ticks > span, .stats-chart-value, .stats-fold-zero > span, .stats-table td, .stats-table th')
         .forEach((label) => { const b = box(label); if (b.width && (b.left < own.left - 1 || b.right > own.right + 1)) out.push(section.dataset.figure + ': ' + label.textContent.trim() + ' leaves its figure'); });
     }
+    // What the wild-type values show (round 16): per panel its own count and what its bars' tooltip lines (or its rows) add
+    // up to; the typical table's rows; where each figure stands (a main part or the supplement).
+    const wild = {};
+    for (const panel of document.querySelectorAll('#statsCharts [data-panel]')) {
+      const bars = [...panel.querySelectorAll('.stats-histogram-bars > span')].map((bar) => bar.dataset.tip || '');
+      const rows = [...panel.querySelectorAll('.stats-ridge-row')].map((row) => Number(row.dataset.count));
+      wild[panel.dataset.panel] = { n: Number(panel.dataset.count), sum: bars.length
+        ? bars.reduce((sum, tip) => { const m = tip.match(/: ([\\d,]+) (?:pairs? of papers|panels?|series) \\(/); return sum + (m ? Number(m[1].replace(/,/g, '')) : 0); }, 0)
+        : rows.reduce((sum, count) => sum + count, 0), bars: bars.length };
+    }
+    const typical = Object.fromEntries([...document.querySelectorAll('[data-figure="typical"] tr[data-stat-key]')].map((row) => [row.dataset.statKey, Number(row.dataset.count)]));
+    const where = Object.fromEntries(['between-papers', 'substrate-range', 'km-size', 'kcat-temperature', 'typical'].map((key) => {
+      const section = document.querySelector(`[data-figure="${key}"]`);
+      return [key, section ? (section.closest('.stats-supp-item') ? 'supplement' : section.closest('[data-part]')?.dataset.part) : null];
+    }));
     return { map: mapFacts, folds: panels('[data-figure="mutations"] .stats-fold'), conditions: panels('[data-figure="conditions"] .stats-condition'),
       zero, classes: [...document.querySelectorAll('[data-figure="db-classes"] .stats-chart-row')].map((row) => [row.dataset.row, Number(row.dataset.count)]),
-      out };
+      wild, typical, where, out };
 """
 
 
@@ -1790,6 +1805,31 @@ def check_stats_insights(driver, browser, overview):
         for link in panel["links"]:
             params = dict(parse_qsl(link.partition("?")[2]))
             assert link.startswith("browse?") and params.get("source") == "paper" and set(params) - {"source"} <= set(keys), link
+    # What the wild-type values show (round 16): Between papers and Substrate specificity in Values, the rest in the
+    # supplement; each histogram's bars hold its pairs of papers, panels or series and each medians panel's rows its
+    # records, as the overview counts them; the typical table gives each parameter's records.
+    wild, where = drawn["wild"], drawn["where"]
+    expected = {}
+    between = insights.get("between_papers") or {}
+    for metric, summary in (between.get("metrics") or {}).items():
+        expected[f"pairs-{metric}"] = summary["pairs"]
+    if insights.get("substrate_range"):
+        expected["substrate-range"] = insights["substrate_range"]["panels"]
+    if insights.get("km_by_size"):
+        expected["km-size"] = insights["km_by_size"]["records"]
+        if insights["km_by_size"].get("panels"):
+            expected["km-size-rho"] = insights["km_by_size"]["panels"]["panels"]
+    if insights.get("temperature"):
+        expected["kcat-temperature"] = insights["temperature"]["records"]
+        if insights["temperature"].get("series"):
+            expected["q10"] = insights["temperature"]["series"]["series"]
+    assert {key: panel["n"] for key, panel in wild.items()} == expected, (wild, expected)
+    assert all(panel["sum"] == panel["n"] for panel in wild.values()), wild
+    assert where == {"between-papers": "values" if between else None, "substrate-range": "values" if insights.get("substrate_range") else None,
+                     "km-size": "supplement" if insights.get("km_by_size") else None,
+                     "kcat-temperature": "supplement" if insights.get("temperature") else None,
+                     "typical": "supplement" if insights.get("typical") else None}, where
+    assert drawn["typical"] == {f"typical_{metric}": item["n"] for metric, item in (insights.get("typical") or {}).items()}, drawn["typical"]
     by_class = insights.get("database_by_class") or []
     if driver.find_elements(By.CSS_SELECTOR, "[data-figure='db-classes']"):
         assert drawn["classes"] == [[f"ec_{item['class']}", sum(item[key] for key in ("same", "other_label", "corrects", "differs", "not_listed"))]
@@ -2037,6 +2077,24 @@ MORE_FIXTURE_JS = """
             conditions: { temperature: { n: read, start: 0, width: 1, decimals: 1, counts: bins(read, 25) },
               ph: { n: read, start: 2, width: 0.1, decimals: 2, counts: bins(read, 55) } },
             database_by_class: classes.map((item) => ({ class: item.class, same: 1200, other_label: 40, corrects: 9, differs: 7, not_listed: 300 })),
+            // Round 16: the wild-type analyses, small counts that add up.
+            between_papers: { records: 30, papers: 9, proteins: 4, bin_width: 0.25,
+              metrics: Object.fromEntries(["kcat", "km", "kcat_over_km"].map((key) => [key, { pairs: 12, groups: 5, median: 1.9, within_2: 6, within_10: 11,
+                identical: 1, counts: [5, 3, 2, 1, 0, 0, 0, 0, 1] }])),
+              same_conditions: { records: 8, papers: 4, proteins: 2, metrics: { kcat: { pairs: 3, groups: 2, median: 1.5, within_2: 2, within_10: 3 } } } },
+            substrate_range: { panels: 10, records: 40, papers: 6, enzymes: 7, median: 110, p25: 16, p75: 1100, at_least_10: 8, at_least_1000: 3,
+              bin_width: 0.5, counts: [1, 1, 2, 2, 1, 0, 1, 1, 0, 0, 0, 0, 1],
+              by_substrates: [{ from: 3, to: 3, panels: 6, median: 22 }, { from: 10, to: null, panels: 4, median: 830 }] },
+            km_by_size: { records: 12, papers: 5, enzymes: 6,
+              bins: [{ from: 1, to: 5, n: 5, papers: 2, median: 1.2, low: 0.13, high: 8.7 }, { from: 51, to: null, n: 7, papers: 3, median: 0.034, low: 0.009, high: 0.19 }],
+              panels: { panels: 6, records: 30, papers: 3, enzymes: 3, falls: 4, rises: 2, median_rho: -0.22, bin_width: 0.25, counts: [1, 1, 1, 1, 0, 1, 1, 0, 0] } },
+            temperature: { records: 9, papers: 4, enzymes: 4,
+              bins: [{ from: 20, below: 30, n: 4, papers: 2, median: 4.5, low: 0.43, high: 29 }, { from: 80, below: null, n: 5, papers: 2, median: 24, low: 2.8, high: 200 }],
+              series: { series: 5, records: 11, papers: 2, enzymes: 2, median: 1.7, p25: 1.4, p75: 2.1, rising: 4, falling: 1, bin_width: 0.1, log10_start: -0.5,
+                counts: [0, 0, 0, 0, 1, 0, 0, 2, 2, 0, 0, 0, 0, 0, 0, 0] } },
+            typical: { kcat: { n: 31, papers: 4, enzymes: 5, median: 4.7, p10: 0.042, p90: 190 },
+              km: { n: 40, papers: 4, enzymes: 6, median: 0.16, p10: 0.003, p90: 7.7 },
+              kcat_over_km: { n: 32, papers: 4, enzymes: 5, median: 28, p10: 0.11, p90: 3000 } },
           };
         }
         Object.defineProperty(window, "CATLOG_STATIC_MANIFEST", { value, writable: true, configurable: true });
@@ -2135,11 +2193,14 @@ def check_stats_new_figures(driver, browser, url):
             check_stats_more(driver, browser, overview, manifest["total_rows"])
             titles = stats_figure_titles(driver)
             for title in ("Values per paper", "Most common organisms among records read from the paper", "Values by enzyme class",
-                          "kcat against Km", "Variants against their wild type", "Assay temperature and pH"):
+                          "kcat against Km", "Variants against their wild type", "Assay temperature and pH", "Between papers",
+                          "Substrate specificity", "kcat and assay temperature", "Km and substrate size", "The typical wild-type enzyme"):
                 assert title in titles, titles
-            # The main parts' figures first, then the supplement's in its groups' order.
-            assert titles.index("Value ranges") < titles.index("kcat against Km") < titles.index("Variants against their wild type") \
-                < titles.index("Values by enzyme class") < titles.index("Assay temperature and pH") < titles.index("Cautions on values"), titles
+            # The main parts' figures first, then the supplement's in its groups' order (its figures before its tables).
+            assert titles.index("Value ranges") < titles.index("Between papers") < titles.index("kcat against Km") \
+                < titles.index("Substrate specificity") < titles.index("Variants against their wild type") \
+                < titles.index("Values by enzyme class") < titles.index("Assay temperature and pH") < titles.index("kcat and assay temperature") \
+                < titles.index("Km and substrate size") < titles.index("The typical wild-type enzyme") < titles.index("Cautions on values"), titles
             if driver.find_elements(By.CSS_SELECTOR, "#statsCharts [data-part='databases']"):
                 assert titles.index("Cautions on values") < titles.index(DATABASE_CLASS_TITLE) < titles.index("Results by database"), titles
             # Each enzyme class wears its own colour in Values by enzyme class (a ridge line per class, none alike).

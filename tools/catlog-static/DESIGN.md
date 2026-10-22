@@ -556,7 +556,7 @@ colour itself goes on the mark beside the words.
 | salmon #F39B7F | Not confirmed | status dot (ringed), chips, Stats bars and donut | ring #c4664a, 3.9:1 (the words are ink) |
 | slate #8491B4 | Not checked (both kinds, Unverified and Not reviewed: one word, one colour; the record names which) | status dot, chips; in Stats' bars, donut and swatches slate hatching on white (135° lines, 1.5px every 4px, a slate outline), never a flat fill: slate at 60% (#B5BDD2) is navy at 60% (#8A98B8) a step lighter in the same hue | the words are ink |
 | deep red #DC0000 | Disputed | status dot, chips, Stats bars | itself, 5.2:1 |
-| cyan #4DBBD5 | CatLog's reading of the paper: Read from the paper; Not in the databases (a value only that reading has); Added, the source had none (an earlier version read it from the paper) | Read from the paper's count and label, its chip and the Source dot while chosen, Stats' from-paper marks (Values per paper, Enzyme classes' stripe, From paper counts, the from-paper tables, variants against wild type, assay temperature and pH, the Checks meters of the AI checks), Not in the databases' square and bars (a database's own "not listed" kinds as cyan hatching, a light cyan and the full fill), the AI agents on Team | text #207286, 5.5:1; ring #2DA1BD, 3.0:1 |
+| cyan #4DBBD5 | CatLog's reading of the paper: Read from the paper; Not in the databases (a value only that reading has); Added, the source had none (an earlier version read it from the paper) | Read from the paper's count and label, its chip and the Source dot while chosen, Stats' from-paper marks (Values per paper, Enzyme classes' stripe, From paper counts, the from-paper tables, variants against wild type, assay temperature and pH, the wild-type analyses of round 16, the Checks meters of the AI checks), Not in the databases' square and bars (a database's own "not listed" kinds as cyan hatching, a light cyan and the full fill), the AI agents on Team | text #207286, 5.5:1; ring #2DA1BD, 3.0:1 |
 | green #00A087 | Agreement with a second source: Same number (a database lists the paper's number); human-checked (a human reviewer approved the values) | Same number's square, chip and bars; human-checked's tick, word and counts (Browse, record, Stats' Human review, its Checks meter) | text and tick #007664, 5.6:1 (4.7:1 on its 12% tint) |
 | mint #91D1C2 | The same number in another form: Same, other label (database); More digits or rounding (an earlier correction) | their squares, chips and bars | ring #45A48E, 3.0:1 (the words are ink) |
 | brown #7E6148 | Different number (database; an earlier correction's "a different number") | square, chip, bars | itself, 5.7:1 |
@@ -1168,15 +1168,19 @@ covered, what it found and a small bar of the share kept or approved; the review
 approved values read from the paper again are the supplement's Quality tables), 3 What is in the catalog (the review-result donut and its legend
 table, records by main source with a Records | Share switch, then the enzyme classes with accepted and
 read-from-the-paper records), 4 Values (value ranges on one log axis per parameter; then, from the records read from
-the paper, kcat against Km as a density map with lines of equal kcat/Km, the diffusion limit and each class's median,
-and variants against their wild type of the same paper, enzyme, substrate, pH and temperature), 5 Against the databases
+the paper, Between papers (round 16) after the ranges, kcat against Km as a density map with lines of equal kcat/Km, the
+diffusion limit and each class's median, Substrate specificity (round 16), and variants against their wild type of the
+same paper, enzyme, substrate, pH and temperature), 5 Against the databases
 (from the manifest's database comparison: a two-sentence lead that says once that a different number can mean a different
 measurement, values against the databases, corrections by cause), then S Supplementary figures and tables (round 14):
 every other figure and table, numbered apart (Figure S1, Table S1), in five groups (Quality; What is in the catalog;
 Organisms, enzymes and variants, called Biology until round 14's polish; Values; Against the databases), each item one
 closed line (a details whose summary holds its number and title) that opens its figure, with its own address
 (#stats-s3, #stats-table-s2) that opens it; new there: papers by parameter, single substitutions by residue, kinds of
-variant and units as printed, counted by build_overview from the records read from the paper.
+variant and units as printed, counted by build_overview from the records read from the paper; round 16 added kcat and
+assay temperature, Km and substrate size (Values' figures, after Assay temperature and pH) and The typical wild-type
+enzyme (Values' first table). No caption or rule names a figure's number: the numbers follow reading order, so a main
+figure added later (the BRENDA comparison by year) renumbers the rest by itself.
 Figures and tables, two to a row from 1024px, each have "Figure N." or "Table N." with a short caption in plain words
 (one sentence, no filler, about 15 words at most since round 14's fix pass: what a mark means beyond that, such as the
 ridges' hatched stubs and dashed curves or why a value counts for several databases, is the figure's rule under its
@@ -1189,6 +1193,40 @@ histograms and the ridges are images with a summary;
 the bar charts are HTML, so their names stay links and their counts text. Names Browse can filter on link to
 `#browse?` with the shared filter keys. The full rules are in the site's
 DESIGN.md, "Stats".
+
+## Stats: what the wild-type values show (round 16)
+
+The user, 2026-10-21: "more stats that are more scientifically insightful and important, even as supplementary".
+Five analyses of the wild-type records read from the paper (enzyme_form wild; each value in the unit CatLog stores, a
+value in another unit or without one left out), counted at stage time by scripts/build-catlog-followup-summary.py
+(WildTypeInsights, into overview.from_paper_insights: between_papers, substrate_range, km_by_size, temperature, typical;
+about 3.3 KB) from the Full data download. An enzyme is a name and organism (name_key of each); between papers it is a
+UniProt entry. Every fold is 10 to the power of a median of log10 values. Each caption is one sentence: what is drawn,
+the records, papers and enzymes it uses (statsUsedText, "1 enzyme" in the singular) and the one caveat that matters; the
+rest of the rule is under the figure's number in How these numbers are counted. Nothing pairs what it cannot match, and
+no sentence is causal. Each is drawn only when its counts hold together (bars add up to their total, quantiles in
+order). All wear Read from the paper's cyan (records read from the paper), in Variants against their wild type's panel
+style (stats-range stats-insight: a heading, a line of facts, bars with a tooltip line each, a count line) or in Values
+by enzyme class's rows (statsMediansPanel: a dot for the median on a line for the middle half, the median and the count,
+the rows centred on their line).
+
+| Figure | Where | What is counted |
+|---|---|---|
+| Between papers | main, Values, after Value ranges | one UniProt entry and substrate (its SMILES, else its name) as wild type in two papers: each paper's value the median of its records, each pair of papers once per parameter; fold difference in quarter decades from 1-fold (the last bar 100-fold and more), median, within 2-fold and 10-fold; a table of the same at a temperature (to 1 °C) and pH (to 0.1) both papers give (per shared condition the difference of medians, the pair's fold their median); the rule counts pairs giving the very same number |
+| Substrate specificity | main, Values, after kcat against Km | a panel: one enzyme on three or more substrates in one paper with one cosubstrate, pH and temperature; per substrate the median kcat/Km (a calculated one included); the best over the worst in half decades from 1-fold (the last 10⁶-fold and more); a table of the median range by substrates tested (3, 4, 5, 6–9, 10 or more), since the range grows with them |
+| kcat and assay temperature | supplement, Values | the kcat records in 10 °C bins (below 20 ... 80 and above, each from its lower edge) as medians and middle halves (different enzymes in each bin); a series, one enzyme and substrate in one paper at two or more temperatures with one cosubstrate and pH: Q₁₀ = 10^(10 × least-squares slope of log10 kcat on °C), bars of a tenth of a decade centred on 10^−0.5 ... 10^1, a dashed line at no change |
+| Km and substrate size | supplement, Values | the Km records by the substrate's non-hydrogen atoms (counted from a one-piece SMILES: 1–5, 6–10, 11–15, 16–20, 21–30, 31–50, 51 or more) as medians and middle halves; within a panel of four or more substrates of at least two sizes, Spearman's ρ of size and median Km, bars of 0.25 centred on −1 ... 1, a dashed line at no trend (all-equal Km counts at 0) |
+| The typical wild-type enzyme (Table) | supplement, Values' first table | each parameter's median and 10–90% over its wild-type records, its records, papers and enzymes on a line under its name (three columns, so it fits a phone), beside the average enzyme of Bar-Even et al., Biochemistry 2011 (doi:10.1021/bi2002289) |
+
+Bar-Even et al. 2011 was checked against the paper's abstract (PubMed 21506553 and Europe PMC, 2026-10-21): the average
+enzyme's kcat/KM is about 10⁵ s⁻¹ M⁻¹ there, so only that number is set beside CatLog's (a constant in the page,
+STATS_BAR_EVEN, with the link). Its kcat and KM medians are not used: PubMed's copy of the abstract lost the kcat's digit
+("~0 s(-1)") and the full text (ACS) could not be reached. Km and substrate size's rule cites the abstract's finding that
+low molecular mass appears to limit Km optimization. The linear axes (ρ, Q₁₀) take the conditions' axis class
+(stats-condition-axis), so the narrow rule that thins a log axis's labels as powers of ten never touches them. Tests:
+the builder's unit tests (test_wild_type_insights_pair_papers_panels_sizes_and_series, test_heavy_atoms_and_rank_correlation),
+the page's node test of the five figures, and the browser check (check_stats_insights: each panel's bars or rows add up
+to the overview's count, each figure in its part; the Chrome fixture adds all five), which reads only the DOM (Safari-safe).
 
 ## Team
 

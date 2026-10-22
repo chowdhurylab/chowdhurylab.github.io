@@ -81,7 +81,8 @@ each, so the legend table keeps its room beside the donut), one below. Figures a
    approved in its meaning colour), each row with its own base, so the counts are never read as one set. The review's
    flags by kind and the reviewers' approved values read from the paper again are the supplement's Quality tables.
 3. What is in the catalog: Review result (the donut) beside Records by main source, then Enzyme classes across the row.
-4. Values: Value ranges, kcat against Km and Variants against their wild type, each full width.
+4. Values: Value ranges, Between papers, kcat against Km, Substrate specificity and Variants against their wild type, each
+   full width (round 16 added the second and fourth).
 5. Against the databases (manifest `summary.database_comparison`; round 9 brief section 5): a two-sentence lead
    (round 14: it ran to about 110 words and five links): what was compared and how often a paired number is the
    paper's, then the corrections and the different numbers, linked into Browse, with the caveat right after them
@@ -97,8 +98,9 @@ S. Supplementary figures and tables (round 14, the user: "not every figure has t
    from the paper and not yet re-read, Values per paper,
    Papers by parameter, What the records contain; Organisms, enzymes and variants (Biology
    until round 14's polish): Single substitutions, the four top-ten tables, Wild type and variants (with the
-   variants since the fix pass), Kinds of variant; Values: Values by enzyme class, Assay temperature and pH, Units as
-   printed, Cautions on values; Against the databases: the same by enzyme class, Results by database, Corrections on
+   variants since the fix pass), Kinds of variant; Values: Values by enzyme class, Assay temperature and pH, kcat and
+   assay temperature, Km and substrate size, The typical wild-type enzyme, Units as printed, Cautions on values; Against
+   the databases: the same by enzyme class, Results by database, Corrections on
    records not yet re-read, Entries replaced by reading the paper, Paired values by database, Corrections by cause and
    database). Figures and tables are numbered apart from the main ones and from each other, in the order the list
    shows them ("Figure S1", "Table S1"); a figure the snapshot cannot draw takes no number. Each item is one closed line on a
@@ -412,6 +414,42 @@ its accessible description; no figure or table has a data line. The parts' figur
     their shares, for the keyboard. Its axes have their own class (stats-condition-axis), since their labels are not
     powers of ten. Axes 0-100 °C (every 10, labelled every 20) and pH 2-12
     (every 1, labelled every 2).
+- What the wild-type values show (round 16, the user 2026-10-21: "more stats that are more scientifically insightful and
+  important, even as supplementary"; `from_paper_insights.between_papers`, `substrate_range`, `km_by_size`,
+  `temperature`, `typical`, counted by `build_overview` (WildTypeInsights) from the wild-type records read from the paper,
+  each value in the unit CatLog stores; about 3.3 KB). An enzyme is a name and organism; between papers a UniProt entry.
+  Each caption is one sentence: what is drawn, the records, papers and enzymes it uses and the caveat that matters; the
+  rest of its rule is under its number in How these numbers are counted. All in Read from the paper's cyan; each only
+  when its counts hold together. The tooltip line of each bar or row gives its range and count.
+  - Between papers (main, Values, after Value ranges): one UniProt entry and substrate (SMILES, else name) as wild type
+    in two papers; each paper's value the median of its records, each pair of papers once per parameter; per parameter a
+    histogram of the fold difference in quarter decades from 1-fold (the last bar 100-fold and more), Median, Within
+    2-fold and Within 10-fold above it; under the three, a table of the same at a temperature (to 1 °C) and pH (to 0.1)
+    both papers give, and the records it uses. Caveat: assays and constructs differ between papers, so a difference is
+    not all error.
+  - Substrate specificity (main, Values, after kcat against Km): one wild-type enzyme on three or more substrates in one
+    paper with one cosubstrate, pH and temperature (a panel), the kcat/Km of its best substrate over its worst in half
+    decades from 1-fold (the last bar 10⁶-fold and more), beside a table of the median range by substrates tested (3,
+    4, 5, 6–9, 10 or more). Caveat: papers choose the substrates, and the range grows with their number.
+  - kcat and assay temperature (supplement figure): the kcat records in 10 °C bins (each from its lower edge) as a dot
+    (median) on a line (middle half) per row, in Values by enzyme class's rows (statsMediansPanel); beside it, one
+    paper's series of one enzyme and substrate at two or more temperatures with one cosubstrate and pH, Q₁₀ (10 to the
+    power of ten times the least-squares slope of log10 kcat on temperature) in bars of a tenth of a decade centred on
+    10^−0.5 ... 10^1, a dashed line at no change. Caveat: each bin holds different enzymes, and a series can pass the
+    enzyme's best temperature.
+  - Km and substrate size (supplement figure): the Km records by the substrate's non-hydrogen atoms (from a one-piece
+    SMILES) as medians on lines; beside it, within a panel of four or more substrates of at least two sizes, Spearman's
+    ρ of size and median Km in bars of 0.25 centred on −1 ... 1, a dashed line at no trend. Caveat: each size holds
+    different enzymes, so only the correlation compares substrates of one enzyme. Its rule cites Bar-Even et al. 2011's
+    abstract: low molecular mass appears to limit Km optimization.
+  - The typical wild-type enzyme (supplement, Values' first table): median and 10–90% per parameter, the records, papers
+    and enzymes on a line under its name (three columns fit a phone), and the average enzyme's kcat/Km of Bar-Even et
+    al., Biochemistry 2011 (doi:10.1021/bi2002289), about 10⁵ M⁻¹ s⁻¹, the one number checked against the paper (its
+    abstract, PubMed and Europe PMC, 2026-10-21; its kcat and KM medians are not used: PubMed's copy of the abstract lost
+    the kcat's digit and the ACS full text could not be reached). Caveat: CatLog counts every substrate and assay a paper
+    reports, not one value per enzyme.
+  The linear axes (ρ, Q₁₀) use stats-condition-axis, as Assay temperature and pH do. No caption or rule names a figure's
+  number, so the BRENDA comparison by year (another round 16 lane) can join the main figures and the rest renumber.
 - Against the databases by enzyme class (`from_paper_insights.database_by_class`, part 7, after Values against the
   databases, only with the comparison): a 100% bar per class of the values read from the paper by each value's own
   result (its proof line's database_status, as part 7's figures count them: a correction found by an exact factor alone
