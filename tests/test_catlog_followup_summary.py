@@ -329,7 +329,7 @@ class OverviewTests(unittest.TestCase):
         # in view (whole counts and days) and the review's counts over the entries with a paper (review.v1.checkable).
         errors = {"audit": {"values": 74, "papers": 26}, "sweep": {"values": 1254, "papers": 97, "reprinted": 1058,
                                                                    "partial_constant": 103},
-                  "unit_fix": {"values": 108, "papers": 13}, "database_check": {"values": 12, "papers": 4},
+                  "unit_fix": {"values": 108, "papers": 13}, "difference_check": {"values": 12, "papers": 4},
                   "all": {"values": 1435, "papers": 127}}
         exposed = {"papers": 309, "reader": 173, "checker_only": 136, "first": "2026-10-09", "last": "2026-10-21",
                    "reread_blind": 303, "reread_blind_read": 173, "reread_blind_verify": 130, "reread_blind_on": "2026-10-21",
@@ -366,7 +366,7 @@ class OverviewTests(unittest.TestCase):
         errors = {"audit": {"values": 74, "papers": 26},
                   "sweep": {"values": 1254, "papers": 97, "reprinted": 1058, "partial_constant": 103, "other": 93},
                   "unit_fix": {"values": 108, "papers": 13},
-                  "database_check": {"values": 7, "papers": 1, "removed": 5, "corrected": 2},
+                  "difference_check": {"values": 7, "papers": 1, "removed": 5, "corrected": 2},
                   "all": {"values": 1433, "papers": 125}}
         quality = {"as_of": "2026-10-22", "audit_values": 6477, "audit_wrong": 28, "audit_wrong_ci95": "0.30-0.62",
                    "audit_wrong_papers": 22, "audit_targeted_values": 188, "audit_targeted_wrong": 46, "catlog_errors": errors,

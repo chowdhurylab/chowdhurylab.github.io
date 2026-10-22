@@ -1237,7 +1237,7 @@ QUALITY_16B_FIXTURE = {
     "catlog_errors": {"audit": {"values": 74, "papers": 26},
                       "sweep": {"values": 1254, "papers": 97, "reprinted": 1058, "partial_constant": 103, "other": 93},
                       "unit_fix": {"values": 108, "papers": 13},
-                      "database_check": {"values": 12, "papers": 4, "removed": 5, "corrected": 2},
+                      "difference_check": {"values": 12, "papers": 4, "removed": 5, "corrected": 2},
                       "all": {"values": 1435, "papers": 127}},
     "exposed": {"papers": 309, "reader": 173, "checker_only": 136, "first": "2026-10-09", "last": "2026-10-21",
                 "reread_blind": 303, "reread_blind_on": "2026-10-21", "reread_blind_done": 0},
@@ -1319,10 +1319,10 @@ def check_quality_round16b(driver, browser, url):
                 .map(row => [row.dataset.route, ...[...row.children].map(cell => cell.innerText.trim().split('\\n')[0])])""")
             assert errors == [["audit", "AI audit", "74", "26"], ["sweep", "Searches for an error an audit or check had found", "1,254", "97"],
                               ["unit_fix", "Unit misprinted in the paper, corrected", "108", "13"],
-                              ["database_check", "Check of a database difference against the paper", "12", "4"],
+                              ["difference_check", "Check of a database difference against the paper", "12", "4"],
                               ["all", "All, each value once", "1,435", "127"]], errors
             assert "1,058 reprinted from an earlier paper, 103 per-product (partial) rate constants, 93 others" in text(driver.find_element(By.CSS_SELECTOR, ".stats-errors-table [data-route='sweep'] th"))
-            assert "5 removed, 2 corrected, 5 awaiting a further check" in text(driver.find_element(By.CSS_SELECTOR, ".stats-errors-table [data-route='database_check'] th"))
+            assert "5 removed, 2 corrected, 5 awaiting a further check" in text(driver.find_element(By.CSS_SELECTOR, ".stats-errors-table [data-route='difference_check'] th"))
             # Quality's three tables share one measure, and the checks have no meters (fix pass after round 16b); on a
             # phone each check stands stacked, its name over what it covered and what it found.
             widths = driver.execute_script("return [...document.querySelectorAll('#stats-quality table')].map(t => Math.round(t.getBoundingClientRect().width))")

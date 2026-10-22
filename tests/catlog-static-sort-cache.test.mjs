@@ -2145,18 +2145,18 @@ function row(overrides = {}) {
     assert.match(api.statsExposureText({ exposed: { papers: 309, reader: 173, checker_only: 136, reread_blind: 303, reread_blind_read: 173, reread_blind_verify: 130, reread_blind_on: "2026-10-21", reread_blind_done: 0 } }),
       / 303 of them were sent back on Oct 21, 2026 to be read or checked again without them \(173 to be read and 130 to be checked; none finished yet\); the other 6 have not been sent back\./);
     const errors = { audit: { values: 74, papers: 26 }, sweep: { values: 1254, papers: 97, reprinted: 1058, partial_constant: 103 },
-      unit_fix: { values: 108, papers: 13 }, database_check: { values: 12, papers: 4 }, all: { values: 1435, papers: 127 } };
+      unit_fix: { values: 108, papers: 13 }, difference_check: { values: 12, papers: 4 }, all: { values: 1435, papers: 127 } };
     const table = api.statsErrorsHtml({ catlog_errors: errors });
-    assert.deepEqual([...table.matchAll(/<tr data-route="([^"]+)"/g)].map((match) => match[1]), ["audit", "sweep", "unit_fix", "database_check", "all"]);
+    assert.deepEqual([...table.matchAll(/<tr data-route="([^"]+)"/g)].map((match) => match[1]), ["audit", "sweep", "unit_fix", "difference_check", "all"]);
     assert.match(plainText(table), /Searches for an error an audit or check had found1,058 reprinted from an earlier paper, 103 per-product \(partial\) rate constants\s*1,254\s*97/);
     // catlog-v2 from 2026-10-22: the sweep's other values, and what became of the values database checks found wrong.
-    const later = { ...errors, sweep: { ...errors.sweep, other: 93 }, database_check: { values: 12, papers: 4, removed: 5, corrected: 2 } };
+    const later = { ...errors, sweep: { ...errors.sweep, other: 93 }, difference_check: { values: 12, papers: 4, removed: 5, corrected: 2 } };
     assert.match(plainText(api.statsErrorsHtml({ catlog_errors: later })), /1,058 reprinted from an earlier paper, 103 per-product \(partial\) rate constants, 93 others\s*1,254/);
     assert.match(plainText(api.statsErrorsHtml({ catlog_errors: later })), /Check of a database difference against the paper5 removed, 2 corrected, 5 awaiting a further check\s*12\s*4/);
-    assert.match(plainText(api.statsErrorsHtml({ catlog_errors: { ...later, database_check: { values: 7, papers: 1, removed: 7, corrected: 0 } } })), /against the paperall removed\s*7\s*1/);
-    assert.match(plainText(api.statsErrorsHtml({ catlog_errors: { ...later, database_check: { values: 7, papers: 1, removed: 0 } } })), /against the paperall awaiting a further check\s*7/);
+    assert.match(plainText(api.statsErrorsHtml({ catlog_errors: { ...later, difference_check: { values: 7, papers: 1, removed: 7, corrected: 0 } } })), /against the paperall removed\s*7\s*1/);
+    assert.match(plainText(api.statsErrorsHtml({ catlog_errors: { ...later, difference_check: { values: 7, papers: 1, removed: 0 } } })), /against the paperall awaiting a further check\s*7/);
     assert.match(plainText(api.statsErrorsHtml({ catlog_errors: { ...later, sweep: { ...later.sweep, other: 94 } } })), /Searches for an error an audit or check had found\s*1,254/, "Parts that miss the route: no breakdown");
-    assert.match(plainText(api.statsErrorsHtml({ catlog_errors: { ...later, database_check: { values: 12, papers: 4, removed: 10, corrected: 3 } } })), /against the paper\s*12\s*4/);
+    assert.match(plainText(api.statsErrorsHtml({ catlog_errors: { ...later, difference_check: { values: 12, papers: 4, removed: 10, corrected: 3 } } })), /against the paper\s*12\s*4/);
     assert.match(plainText(table), /All, each value once\s*1,435\s*127/);
     assert.equal(api.statsErrorsHtml({ catlog_errors: { ...errors, sweep: { values: 2000, papers: 97 } } }), "", "A route above All says nothing");
     assert.equal(api.statsErrorsHtml({ catlog_errors: { ...errors, all: { values: "1435", papers: 127 } } }), "");

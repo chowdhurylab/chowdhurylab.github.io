@@ -6420,7 +6420,7 @@
   // 16b, item 3 of its publication review): values an AI audit found wrong, values removed by searches for an error an
   // audit or check had found (the reprinted values and per-product (partial) rate constants among them said, and from
   // 2026-10-22 the others, sweep.other), values whose unit the paper misprints, corrected, and values a check of a
-  // database difference against the paper found wrong (from 2026-10-22 what became of them: database_check.removed and
+  // database difference against the paper found wrong (from 2026-10-22 what became of them: difference_check.removed and
   // .corrected, the rest awaiting a further check, as catlog-v2's README says); All counts each value once. Rows whose
   // counts are not whole are left out; "" without All, or when a route holds more than All. A breakdown whose parts do
   // not fit its route is left out.
@@ -6428,7 +6428,7 @@
     ["audit", "AI audit"],
     ["sweep", "Searches for an error an audit or check had found"],
     ["unit_fix", "Unit misprinted in the paper, corrected"],
-    ["database_check", "Check of a database difference against the paper"],
+    ["difference_check", "Check of a database difference against the paper"],
   ];
 
   function statsErrorKinds(key, route, values) {
@@ -6442,7 +6442,7 @@
         partial ? `${formatInteger(partial)} per-product (partial) rate constants` : "",
         other && (reprinted || partial) ? `${formatInteger(other)} ${other === 1 ? "other" : "others"}` : ""].filter(Boolean).join(", ");
     }
-    if (key === "database_check" && route.removed !== undefined) {
+    if (key === "difference_check" && route.removed !== undefined) {
       const removed = statsCount(route.removed, values);
       const corrected = statsCount(route.corrected ?? 0, values);
       if (removed === null || corrected === null || removed + corrected > values) return "";
