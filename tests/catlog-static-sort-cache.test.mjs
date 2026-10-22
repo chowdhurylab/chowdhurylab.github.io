@@ -3072,9 +3072,10 @@ function row(overrides = {}) {
     assert.match(table.body, /<small>10 records, 3 papers and 2 enzymes<\/small>/);
     assert.match(table.body, /<small>1 record, 1 paper and 1 enzyme<\/small>/);
     assert.match(table.body, /<td class="stats-num">28<small>28,000 M⁻¹ s⁻¹<\/small><\/td>/);
-    assert.match(table.body, /<a class="stats-link" href="https:\/\/doi\.org\/10\.1021\/bi2002289">Bar-Even et al\. 2011<\/a>: the average enzyme’s <i>k<\/i><sub>cat<\/sub>\/<i>K<\/i><sub>m<\/sub><small>in the paper’s abstract<\/small><\/th>\s*<td class="stats-num" colspan="2">about 10⁵ M⁻¹ s⁻¹<\/td>/);
+    assert.match(table.body, /<a class="stats-ref-link" href="https:\/\/doi\.org\/10\.1021\/bi2002289" target="_blank" rel="noreferrer">Bar-Even et al\. 2011<\/a>: the average enzyme’s <i>k<\/i><sub>cat<\/sub>\/<i>K<\/i><sub>m<\/sub><small>in the paper’s abstract<\/small><\/th>\s*<td class="stats-num" colspan="2">about 10⁵ M⁻¹ s⁻¹<\/td>/);
     assertPlainCaption(table.caption);
     assert.match(table.rules, /about 10⁵ M⁻¹ s⁻¹ \(10² mM⁻¹ s⁻¹\)\.$/);
+    assert.doesNotMatch(table.body, /class="stats-link"/, "stats-link opens Browse; the paper's DOI is a reference link");
     assert.equal(api.statsTypicalTable({}), null);
 
     // In the page: Between papers after Value ranges, Substrate specificity in Values; the three others in the

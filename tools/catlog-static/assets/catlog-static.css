@@ -1179,8 +1179,8 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-fig-title { margin:0 0 12px; font-size:var(--fs-16); font-weight:600; line-height:var(--lh-16) }
 .stats-narrow > .stats-fig { max-width:760px }
 .stats-stack { display:grid; gap:48px; align-content:start; min-width:0 }
-.stats-link, .stats-guide-link { color:var(--accent); text-decoration:underline; text-decoration-color:var(--accent-line); text-underline-offset:3px }
-.stats-link:hover, .stats-guide-link:hover { text-decoration-color:currentColor }
+.stats-link, .stats-guide-link, .stats-ref-link { color:var(--accent); text-decoration:underline; text-decoration-color:var(--accent-line); text-underline-offset:3px }
+.stats-link:hover, .stats-guide-link:hover, .stats-ref-link:hover { text-decoration-color:currentColor }
 .stats-muted { color:var(--muted) }
 .stats-num { text-align:right; white-space:nowrap }
 .stats-note { margin:12px 0 0; max-width:80ch; color:var(--text-2); font-size:var(--fs-13); line-height:var(--lh-13) }

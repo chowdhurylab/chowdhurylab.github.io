@@ -5704,7 +5704,7 @@
         return `<tr data-stat-key="typical_${metric.key}" data-count="${item.n}"><th scope="row">${metric.html} <span class="stats-muted nowrap">(${escapeHtml(metric.unit)})</span><small>${counts}</small></th>
           <td class="stats-num">${cell(item.median)}${molar}</td><td class="stats-num stats-muted">${cell(item.p10)}–${cell(item.p90)}</td></tr>`;
       }).join("")}
-        <tr class="stats-row-reference"><th scope="row"><a class="stats-link" href="${escapeHtml(STATS_BAR_EVEN.href)}">${escapeHtml(STATS_BAR_EVEN.name)}</a>: the average enzyme’s <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub><small>in the paper’s abstract</small></th>
+        <tr class="stats-row-reference"><th scope="row"><a class="stats-ref-link" href="${escapeHtml(STATS_BAR_EVEN.href)}" target="_blank" rel="noreferrer">${escapeHtml(STATS_BAR_EVEN.name)}</a>: the average enzyme’s <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub><small>in the paper’s abstract</small></th>
           <td class="stats-num" colspan="2">about ${statsPowerOfTen(STATS_BAR_EVEN.log10KcatOverKm)} M⁻¹ s⁻¹</td></tr></tbody></table>`;
     return {
       id: "statsTypicalTitle", key: "typical", title: "The typical wild-type enzyme", kind: "Table", body,
