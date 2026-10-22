@@ -6082,7 +6082,7 @@
     ["differ_same_value_other_name", (n) => `${formatInteger(n)} ${n === 1 ? "is" : "are"} the same value under another name`],
     ["differ_catlog_right", (n) => `${formatInteger(n)} ${n === 1 ? "is a value" : "are values"} the paper supports as CatLog reads ${n === 1 ? "it" : "them"} (the earlier entry’s number or label was wrong)`],
     ["differ_rounding", (n) => `${formatInteger(n)} ${n === 1 ? "differs" : "differ"} by rounding`],
-    ["differ_not_comparable", (n) => `${formatInteger(n)} cannot be compared`],
+    ["differ_not_comparable", (n) => `${formatInteger(n)} ${n === 1 ? "is" : "are"} left out by CatLog’s reading rules (a reprint, a Hill fit)`],
     ["differ_not_adjudicated", (n) => `${formatInteger(n)} ${n === 1 ? "is" : "are"} not yet checked`],
   ];
 
@@ -6286,19 +6286,35 @@
     const items = [{ value: "same", label: "Same value", count: match.same },
       ...(checks ? [...kinds.filter(([key]) => match.breakdown[key]).map(([key, label]) => ({ value: key, label, count: match.breakdown[key] })),
         ...(match.wrong !== null ? [{ value: "catlog_wrong", label: "CatLog error", count: match.wrong }] : []),
-        ...(checks.notComparable ? [{ value: "not_comparable", label: "Cannot be compared", count: checks.notComparable }] : []),
+        ...(checks.notComparable ? [{ value: "not_comparable", label: "Left out by CatLog’s rules (reprint, Hill fit)", count: checks.notComparable }] : []),
         ...(checks.toCheck ? [{ value: "to_check", label: "Still to check", count: checks.toCheck }] : [])]
         : [{ value: "other", label: "Not the same", count: match.differ },
           ...(match.wrong !== null ? [{ value: "catlog_wrong", label: "CatLog error", note: "Among those not the same.", count: match.wrong, sub: true }] : [])]),
     ];
-    // who checked the values that differ, and how many of how many (round 16b): "AI agents checked 323 of the 554 that
-    // differ against the paper; 231 are still to check."
+    // who checked the values that differ, and how many of how many (round 16b): "AI agents checked 323 of the 555 values
+    // that still differ against the paper; 232 are still to check."
     const checked = checks && match.differ
-      ? ` AI agents checked ${formatInteger(checks.checked)} of the ${formatInteger(match.differ)} that differ against the paper${checks.toCheck ? `; ${formatInteger(checks.toCheck)} ${checks.toCheck === 1 ? "is" : "are"} still to check` : ""}.` : "";
+      ? ` AI agents checked ${formatInteger(checks.checked)} of the ${formatInteger(match.differ)} values that still differ against the paper${checks.toCheck ? `; ${formatInteger(checks.toCheck)} ${checks.toCheck === 1 ? "is" : "are"} still to check` : ""}.` : "";
+    // The errors this comparison found in CatLog and fixed (fix pass after round 16b: "CatLog error 0" alone hid them):
+    // "Comparing them found 68 wrong labels and 1 missed value in CatLog, all fixed since." (agreement.first_catlog_errors
+    // and its parts, fixed_after_comparison); "" when the parts do not add up.
+    const found = statsReviewErrorsFound(overview?.quality?.agreement);
     return { id: "statsReviewMatchTitle", key: "review-match", title: "Approved values read from the paper again", kind: "Table",
       body: statsTable(items, match.approved, { scale: match.approved, head: "CatLog’s value", countHead: "Values" }),
       // (re-read is kept whole by the page's own pass over Stats, keepReRead)
-      caption: escapeHtml(`The ${formatInteger(match.approved)} values reviewers approved, where CatLog has re-read the paper${match.papers !== null ? ` (${formatInteger(match.papers)} ${match.papers === 1 ? "paper" : "papers"})` : ""}.${checked}`) };
+      caption: escapeHtml(`The ${formatInteger(match.approved)} values reviewers approved on ${match.papers !== null ? `${formatInteger(match.papers)} ${match.papers === 1 ? "paper" : "papers"}` : "papers"} CatLog has since read, as CatLog has them now.${found ? ` ${found}` : ""}${checked}`) };
+  }
+
+  function statsReviewErrorsFound(agreement) {
+    const all = statsCount(agreement?.first_catlog_errors);
+    if (!all) return "";
+    const parts = [["first_catlog_errors_value", "wrong number or unit", "wrong numbers or units"], ["first_catlog_errors_label", "wrong label", "wrong labels"],
+      ["first_catlog_errors_missed", "missed value", "missed values"]].map(([key, one, many]) => [statsCount(agreement[key] ?? 0, all), one, many]);
+    if (parts.some(([count]) => count === null) || parts.reduce((sum, [count]) => sum + count, 0) !== all) return "";
+    const fixed = statsCount(agreement.fixed_after_comparison, all);
+    const what = sentenceList(parts.filter(([count]) => count).map(([count, one, many]) => `${formatInteger(count)} ${count === 1 ? one : many}`));
+    const since = fixed === null ? "" : fixed === all ? `, ${all === 1 ? "fixed" : "all fixed"} since` : fixed ? `; ${formatInteger(fixed)} ${fixed === 1 ? "is" : "are"} fixed since` : "";
+    return `Comparing them found ${what} in CatLog${since}.`;
   }
 
   // Quality's Checks on the values (round 14: a table, not three cards with big numbers): each check, what it covered
@@ -15326,6 +15342,7 @@
       reviewGlanceText,
       reviewGlanceTitle,
       reviewFromPaperText,
+      statsReviewErrorsFound,
       statsHumanCheckedBridge,
       renderTeam,
       teamNumbers,

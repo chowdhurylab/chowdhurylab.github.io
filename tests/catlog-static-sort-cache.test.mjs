@@ -2178,7 +2178,7 @@ function row(overrides = {}) {
   // (no second big number: At a glance gives the share, round 14)
   assert.doesNotMatch(lead, /stats-lead-figure|<strong>/);
   // The other values, each kind counted (the user's sentence, 2026-10-15), only when the kinds add up to them.
-  assert.match(lead, /<p class="stats-lead-sentence">Where CatLog has <span class="nowrap">re-read<\/span> a paper the reviewers checked, its value matches the approved value for 2,232 of 2,489 \(89\.7%\)\. Of the other 257, AI agents checked 152 against the paper: 16 are the same value under another name, 109 are values the paper supports as CatLog reads them \(the earlier entry’s number or label was wrong\), 3 differ by rounding and 24 cannot be compared; none is a CatLog error\. 105 are still to check\.<\/p>/);
+  assert.match(lead, /<p class="stats-lead-sentence">Where CatLog has <span class="nowrap">re-read<\/span> a paper the reviewers checked, its value matches the approved value for 2,232 of 2,489 \(89\.7%\)\. Of the other 257, AI agents checked 152 against the paper: 16 are the same value under another name, 109 are values the paper supports as CatLog reads them \(the earlier entry’s number or label was wrong\), 3 differ by rounding and 24 are left out by CatLog’s reading rules \(a reprint, a Hill fit\); none is a CatLog error\. 105 are still to check\.<\/p>/);
   assert.match(lead, /href="https:\/\/example\.test\/tools\/catlog-latest\.html#team">People behind CatLog/);
   assert.doesNotMatch(lead, /independent|AI run|Claude|Codex|first comparison|blind|95% range/);
   assert.doesNotMatch(element("statsCharts").innerHTML, /data-check="agreement"/, "The match is the lead's, not repeated in the checks");
@@ -2242,7 +2242,10 @@ function row(overrides = {}) {
   assert.match(qualitySupplement, /<span class="stats-supp-number">Table S2<\/span> <span class="stats-supp-name">Approved values read from the paper again<\/span>/);
   assert.deepEqual([...qualitySupplement.slice(qualitySupplement.indexOf("Table S2")).matchAll(/data-stat-key="(same|other|catlog_wrong)" data-count="(\d+)"/g)].map((match) => [match[1], Number(match[2])]),
     [["same", 3625], ["other", 449], ["catlog_wrong", 0]]);
-  assert.match(qualitySupplement, /The 4,074 values reviewers approved, where CatLog has <span class="nowrap">re-read<\/span> the paper \(311 papers\)\./);
+  assert.match(qualitySupplement, /The 4,074 values reviewers approved on 311 papers CatLog has since read, as CatLog has them now\. Comparing them found 68 wrong labels and 1 missed value in CatLog, all fixed since\./);
+  assert.equal(api.statsReviewErrorsFound({ first_catlog_errors: 3, first_catlog_errors_value: 1, first_catlog_errors_label: 2, fixed_after_comparison: 1 }),
+    "Comparing them found 1 wrong number or unit and 2 wrong labels in CatLog; 1 is fixed since.");
+  assert.equal(api.statsReviewErrorsFound({ first_catlog_errors: 3, first_catlog_errors_label: 2 }), "", "Parts that miss the total say nothing");
   assert.doesNotMatch(lead.replace(/<[^>]*>/g, " "), /\bv[12]\b/, "CatLog is the one name");
   // What the review counts is said once, under How these numbers are counted, not under the lead.
   assert.doesNotMatch(lead, /Counted|own files|stats-fig-data/);
@@ -2735,7 +2738,7 @@ function row(overrides = {}) {
   // that counts, in the user's order.
   assert.equal(api.v2MatchSentence(api.v2MatchFacts({ agreement: { values_approved: 20, agree: 10, differ_same_value_other_name: 4,
     differ_catlog_right: 0, differ_rounding: 1, differ_not_comparable: 2, differ_not_adjudicated: 2, differ_catlog_wrong: 1 } })),
-    "Where CatLog has re-read a paper the reviewers checked, its value matches the approved value for 10 of 20 (50.0%). Of the other 10, AI agents checked 8 against the paper: 4 are the same value under another name, 1 differs by rounding and 2 cannot be compared; 1 is a CatLog error. 2 are still to check.");
+    "Where CatLog has re-read a paper the reviewers checked, its value matches the approved value for 10 of 20 (50.0%). Of the other 10, AI agents checked 8 against the paper: 4 are the same value under another name, 1 differs by rounding and 2 are left out by CatLog’s reading rules (a reprint, a Hill fit); 1 is a CatLog error. 2 are still to check.");
   assert.equal(api.v2MatchSentence(api.v2MatchFacts({ agreement: { values_approved: 20, agree: 10, differ_same_value_other_name: 4,
     differ_catlog_right: 0, differ_rounding: 1, differ_not_comparable: 2, differ_not_adjudicated: 9, differ_catlog_wrong: 0 } })),
     "Where CatLog has re-read a paper the reviewers checked, its value matches the approved value for 10 of 20 (50.0%). Of the other 10, none has been found to be a CatLog error.");

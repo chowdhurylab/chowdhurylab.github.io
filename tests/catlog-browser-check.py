@@ -1327,7 +1327,8 @@ def check_quality_round16b(driver, browser, url):
             kinds = text(driver.find_element(By.CSS_SELECTOR, ".stats-supp-item[data-supp='review-kinds']"))
             assert "Flags on the 2,604 entries people could check against a paper" in kinds and "Could not find" not in kinds, kinds
             match = text(driver.find_element(By.CSS_SELECTOR, ".stats-supp-item[data-supp='review-match']"))
-            assert "AI agents checked 323 of the 555 that differ against the paper; 232 are still to check." in match, match
+            assert "AI agents checked 323 of the 555 values that still differ against the paper; 232 are still to check." in match, match
+            assert "Left out by CatLog’s rules (reprint, Hill fit)" in match and "Cannot be compared" not in match, match
             assert driver.execute_script("return document.documentElement.scrollWidth <= innerWidth + 1"), f"Stats scrolls sideways at {width}px"
             driver.execute_script("document.querySelector('[data-figure=errors]').scrollIntoView()")
             driver.save_screenshot(str(OUTPUT / f"{browser}-stats-quality-16b-{width}.png"))

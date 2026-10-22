@@ -1555,3 +1555,10 @@ manifest's database comparison; a field an older snapshot lacks leaves its words
   (statsHumanCheckedBridge). The review of records read from the paper (quality.review.v2) is said in counts, never as a
   share of so few: how many were drawn at random and picked as hard cases, the free-to-read papers, and how many had a
   value disputed (reviewFromPaperText; its values when catlog-v2 counts them).
+- Approved values read from the paper again (Table S2): its caption says what it counts ("The 4,522 values reviewers
+  approved on 383 papers CatLog has since read, as CatLog has them now."), then the errors this comparison found in CatLog
+  and their fixes from agreement.first_catlog_errors and its parts ("Comparing them found 68 wrong labels and 1 missed
+  value in CatLog, all fixed since."; nothing when the parts miss the total), then the AI agents' checks of the values
+  that still differ. "Cannot be compared" is "Left out by CatLog’s rules (reprint, Hill fit)" (and in the older lead,
+  "left out by CatLog’s reading rules (a reprint, a Hill fit)"). The first comparison's share and the share on papers
+  read without database values stay off the site, as round 6 (2026-10-13) decided.
