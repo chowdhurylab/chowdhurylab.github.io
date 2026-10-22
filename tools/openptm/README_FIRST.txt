@@ -65,6 +65,26 @@ are a defined working set, not a universal count of all PTMs. Paper comparisons
 are selected examples, not a systematic review. Upper bounds, uncertainty,
 study conditions and source links are retained in the record details.
 
+Paper reading, round 43
+- Three previously unread papers received selected reads for S-guanylation,
+  isonicotinylation and S-itaconation, outside round 42's primary-paper families.
+- The AUTAC study uses a synthetic degradation tag, without establishing
+  S-guanylation of its protein target. The DMD study explicitly uses a
+  gene-expression proxy for isonicotinylation, rather than measuring that PTM.
+- The granzyme A study supports modification by a 4-octyl itaconate derivative,
+  but the inspected text and captions provide no printed functional value.
+  Its checked supplement panel shows plotted results without printed group
+  values. Native itaconate and its derivative are kept distinct.
+- A separate PD-L1 stabilization paper remains access-held. Access checks,
+  discovery abstracts and linked preprint metadata are not counted as
+  additional original papers read.
+- Independent source review supports zero new numerical comparisons.
+  The data and interface are unchanged: 253 comparisons, 307 entries,
+  92 numerical papers, 87 numerical families and 24 gaps in this selection.
+- Originals: https://doi.org/10.1038/s41419-026-08835-6,
+  https://doi.org/10.3389/fmolb.2026.1853169 and
+  https://doi.org/10.1111/cpr.13711
+
 Paper reading, round 42
 - Two previously unread papers received selected reads on ethanolamine
   phosphoglycerol addition and MIO cofactor formation, outside round 41's
