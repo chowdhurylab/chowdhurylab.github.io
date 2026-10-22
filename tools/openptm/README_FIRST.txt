@@ -65,6 +65,23 @@ are a defined working set, not a universal count of all PTMs. Paper comparisons
 are selected examples, not a systematic review. Upper bounds, uncertainty,
 study conditions and source links are retained in the record details.
 
+Paper reading, round 41
+- Three previously unread papers received selected reads on diphthamide
+  and S-selanylation, outside round 40's primary-paper families.
+- In the 2026 yeast study, the fourfold readthrough result concerns an eS31
+  domain deletion. Its diphthamide-related result is categorical. The other
+  yeast paper reports calculated spectra and light-sensitive gene deletions;
+  it leaves the role of the eEF2 modification unresolved.
+- Rat selenocysteine lyase forms a selenium-bound catalytic intermediate.
+  Its printed kinetic values measure substrate catalysis, without an
+  assigned numerical comparison between protein modification states.
+- No numerical additions qualified. The 24 gaps remain; the 253 comparisons,
+  307 entries, 92 papers, interface and audit workbook are unchanged.
+  A review identified through metadata is counted separately from originals.
+  Sources: https://doi.org/10.1111/febs.70510
+           https://doi.org/10.1186/s12915-020-00867-4
+           https://doi.org/10.1074/jbc.M109.084475
+
 Paper reading, round 40
 - Three papers new to this reading record received selected relevant reads
   on GABARAP processing, UbaA auto-SAMPylation and yeast Urm1 conjugation.
