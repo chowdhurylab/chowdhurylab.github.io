@@ -1320,6 +1320,11 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-legend li { display:inline-flex; align-items:flex-start; gap:6px }
 .stats-legend li > .stats-swatch { margin-top:3px }
 .stats-legend-count { color:var(--muted) }
+/* A legend's names that open Browse are underlined only under the pointer or focus (fix pass after round 16b: beside a
+   name with no Browse filter, Same number, the underlined ones made the plain one look broken); the pointer and the
+   name's title still say it is a link. */
+.stats-legend a.stats-link { text-decoration-color:transparent }
+.stats-legend a.stats-link:is(:hover, :focus-visible) { text-decoration-color:currentColor }
 /* A count chart's legend with its Records | Share switch at the right. */
 .stats-chart-tools { display:flex; flex-wrap:wrap; align-items:flex-start; justify-content:space-between; gap:8px 16px; margin:0 0 12px }
 .stats-chart-tools .stats-legend { margin:0 }
@@ -1466,7 +1471,6 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-share-table tr > :first-child { padding-left:0; text-align:left }
 .stats-share-table thead th { max-width:9em; padding-bottom:4px; border-bottom:1px solid var(--line-soft); color:var(--text-2); font-weight:500; white-space:normal }
 .stats-share-table thead td { border-bottom:1px solid var(--line-soft) }
-.stats-share-table thead .stats-swatch { margin-right:4px; vertical-align:-1px }
 .stats-share-table tbody th { min-width:72px; color:var(--text) }
 .stats-share-table.stats-share-tall { display:none }
 .stats-share-tall tbody th { white-space:normal }

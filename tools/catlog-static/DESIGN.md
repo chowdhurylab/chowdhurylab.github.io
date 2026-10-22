@@ -1576,3 +1576,7 @@ manifest's database comparison; a field an older snapshot lacks leaves its words
   organism), so kcat, Km and kcat/Km stay in the 536px pane at 1024px and the names get Organism's room at 1280px; the
   records title takes no row when nothing in it shows (its visually hidden lines kept a 30px row and a 45px empty band
   above Columns, Export and Sort). The browser check opens a record at 1024 and 1280px and measures both.
+- One key per percent chart: Values against the databases and the earlier version's corrections keep their legend (its
+  names link to Browse) and their share table's heads in words; the table's heads and the counts beside the bars no
+  longer repeat the legend's swatches. A legend's linked names are underlined only under the pointer or focus, so a name
+  with no Browse filter (Same number) does not look broken beside them.

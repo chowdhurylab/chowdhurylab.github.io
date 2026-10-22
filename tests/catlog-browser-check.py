@@ -1605,14 +1605,16 @@ def check_stats_figures(driver, browser, url):
                 const shown = [...document.querySelectorAll("[data-figure='db-values'] .stats-share-table")].filter(t => t.getClientRects().length);
                 return shown.map(t => ({heads: [...t.querySelectorAll('thead th')].map(th => th.textContent.trim()),
                                         rows: [...t.querySelectorAll('tbody th')].map(th => th.textContent.trim()),
-                                        cells: t.querySelectorAll('tbody td').length, swatchesInCells: t.querySelectorAll('tbody td .stats-swatch').length}));
+                                        cells: t.querySelectorAll('tbody td').length, swatchesInCells: t.querySelectorAll('.stats-swatch').length}));
             """)
             # Shares under the bars: one table in view, its results named by the legend's words (colour never the only
-            # key): the column heads, or on a phone (the table turned round) the row heads.
+            # key): the column heads, or on a phone (the table turned round) the row heads; the colours are the legend's
+            # alone (fix pass after round 16b: no swatch in the table, none before the counts beside the bars).
             names = ["Same number", "Same, other label"]
             assert len(shares) == 1 and names in (shares[0]["heads"][:2], shares[0]["rows"][:2]) and shares[0]["cells"] and not shares[0]["swatchesInCells"], shares
             # The numbers beside the bars are named: Figure 8's two counts stand right-aligned under Corrects a value and Different number
-            # (each count's swatch and number inside its column), Figure 9's under Values.
+            # (each count inside its column), Figure 9's under Values.
+            assert not driver.find_elements(By.CSS_SELECTOR, "[data-chart='db-values'] .stats-chart-row .stats-db-thin .stats-swatch")
             columns = driver.execute_script("""
                 return ['db-values', 'db-sources'].map((key) => {
                     const chart = document.querySelector(`[data-chart="${key}"]`);

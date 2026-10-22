@@ -2407,7 +2407,8 @@ function row(overrides = {}) {
     [["kcat", 41541], ["km", 48066], ["kcatkm", 37344], ["all", 126951]]);
   // Until Browse matches a compared parameter (dbpar), a parameter's counts are plain numbers: a link would open every
   // record with that result. All values links by result alone.
-  assert.match(values, /data-row="kcat"[\s\S]*?stats-part-corrects" aria-hidden="true"><\/i>328<\/span><\/span><span class="stats-value-part" data-sizer="[^"]*"><span><i class="stats-swatch stats-part-differs" aria-hidden="true"><\/i>269<\/span><\/span>/);
+  // (fix pass after round 16b: no swatch before a count, its column head names it and the legend colours it)
+  assert.match(values, /data-row="kcat"[\s\S]*?<span class="stats-db-thin"><span class="stats-value-part" data-sizer="[^"]*"><span>328<\/span><\/span><span class="stats-value-part" data-sizer="[^"]*"><span>269<\/span><\/span>/);
   // The two counts beside each bar stand under their headings, the legend's names in two lines ("Corrects" / "a value",
   // "Different" / "number"; round 15 polish), each column as wide as its widest count or heading line.
   assert.match(values, /<div class="stats-chart stats-chart-percent has-value-heads" data-chart="db-values"/);
@@ -2447,8 +2448,10 @@ function row(overrides = {}) {
   assert.equal(api.statsNotReproducedText({ not_reproduced: { distinct: { possible_catlog_miss: 1.5 } } }), "");
   // The shares under the bars: a table headed by the legend's names, each after its swatch (round 15 polish: colour is
   // never the only key), and on a phone the same table turned round.
-  assert.match(values, /<table class="stats-share-table stats-share-wide">[\s\S]*?<th scope="col"><i class="stats-swatch stats-part-same" aria-hidden="true"><\/i>Same number<\/th>[\s\S]*?82\.3%/);
-  assert.match(values, /<table class="stats-share-table stats-share-tall">[\s\S]*?<th scope="row"><i class="stats-swatch stats-part-corrects" aria-hidden="true"><\/i>Corrects a value<\/th>/);
+  // The share table's heads are the legend's names, without its colours a second time (fix pass after round 16b).
+  assert.match(values, /<table class="stats-share-table stats-share-wide">[\s\S]*?<th scope="col">Same number<\/th>[\s\S]*?82\.3%/);
+  assert.match(values, /<table class="stats-share-table stats-share-tall">[\s\S]*?<th scope="row">Corrects a value<\/th>/);
+  assert.doesNotMatch(values.match(/<table class="stats-share-table[\s\S]*?<\/table>/)[0], /stats-swatch/);
   assert.doesNotMatch(values, /stats-share-lines|<td><i class="stats-swatch/);
   // Each database against the values read from its papers: a bar per database in order, its papers' values right of
   // it, the others under it; STRENDA DB by the Source filter's name.

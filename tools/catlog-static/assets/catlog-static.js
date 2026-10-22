@@ -6768,15 +6768,16 @@
   }
 
   // Under a percent chart, each row's shares in segment order (exact counts are in the row's hover titles and text): a
-  // table whose column heads are the legend's names, each after its swatch (round 15 polish: a grid of percentages each
-  // behind a colour square, with no heads, had left colour the only key). With `rateBase`, a row of fewer values than that
+  // table whose column heads are the legend's names (round 15 polish: a grid of percentages each behind a colour square,
+  // with no heads, had left colour the only key). The colours are the legend's alone (fix pass after round 16b: a swatch
+  // before each head gave the key a second time, under the legend). With `rateBase`, a row of fewer values than that
   // gives its counts instead of shares.
   // On a phone the same numbers turn round (one table shows at a time, the other is display:none): the results as rows,
   // their names whole beside their swatches, the chart's rows as four short column heads.
   function statsShareLines(rows, { rateBase = 0 } = {}) {
     const heads = rows[0]?.shares || [];
     const share = (row, index) => escapeHtml(row.count < rateBase ? formatInteger(row.shares[index].count) : statsShare(row.shares[index].count, row.count));
-    const name = (item) => `<i class="stats-swatch stats-part-${item.part}" aria-hidden="true"></i>${escapeHtml(item.label)}`;
+    const name = (item) => escapeHtml(item.label);
     const caption = '<caption class="visually-hidden">Share of each row’s values</caption>';
     const wide = `<table class="stats-share-table stats-share-wide">${caption}`
       + `<thead><tr><td></td>${heads.map((item) => `<th scope="col">${name(item)}</th>`).join("")}</tr></thead>`
@@ -7133,9 +7134,10 @@
         const count = counts[STATS_DATABASE_RESULTS.indexOf(result)];
         const words = `${label}, ${result.label}: ${formatInteger(count)}`;
         const href = count ? statsDatabaseHref({ db: result.db, ...params }) : "";
-        return column(index, `<i class="stats-swatch stats-part-${result.part}" aria-hidden="true"></i>${href
+        // (no swatch before the count: its column head names it, and the legend gives its colour)
+        return column(index, href
           ? `<a class="stats-link" href="${escapeHtml(href)}" aria-label="${escapeHtml(words)}">${formatInteger(count)}</a>`
-          : formatInteger(count)}`);
+          : formatInteger(count));
       }).join("")}</span>`;
       return statsDatabaseRow(key, labelHtml, label, parts, { note, value,
         hrefOf: (item) => (item.db && item.count ? statsDatabaseHref({ db: item.db, ...params }) : "") });
@@ -7144,7 +7146,7 @@
       ...values.rows.map((row) => rowOf(row.key, row.html, row.note ? `${row.note} ${row.label}` : row.label, row.parts, { note: row.note || "", dbpar: row.key })),
       rowOf("all", "All values", "All values", values.all),
     ];
-    // The thin counts' column: both counts or their headings, their swatches and gaps (the value labels are 12px); fitted
+    // The thin counts' column: both counts or their headings and gaps (the value labels are 12px); fitted
     // to the heading line once drawn (statsFitValueColumns).
     const chars = thin.reduce((total, result, index) => total + Math.max(...result.head.map((line) => line.length),
       ...rows.map((row) => formatInteger(row.shares[STATS_DATABASE_RESULTS.indexOf(result)].count).length)), 0);
