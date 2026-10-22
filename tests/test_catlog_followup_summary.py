@@ -553,6 +553,91 @@ class OverviewTests(unittest.TestCase):
                                   ("kcat_over_km", "L/µmol/s", None), ("km", "mmol", None), ("kcat", "seconds^-1", None)]:
             self.assertEqual(followup.printed_unit(metric, raw), unit, raw)
 
+    def test_wild_type_insights_pair_papers_panels_sizes_and_series(self):
+        def read(key, pmid, **fields):
+            row = {"record_key": key, "verification_status": "verified", "verification_method": "catlog_v2_read_and_independent_verify",
+                   "source_db": "primary_paper_direct", "supporting_pmids": [pmid], "pubmed_id": pmid, "ec_number": "3.2.1.21",
+                   "enzyme_display_name": "beta-glucosidase", "organism": "Thermus thermophilus", "primary_uniprot_id": "P00001",
+                   "substrate_name": "cellobiose", "smiles": "OCC1OC(O)C(O)C(O)C1O", "wild_type": True,
+                   "kcat_unit": "s^(-1)", "km_unit": "mM", "kcat_over_km_unit": "s^(-1)*mM^(-1)",
+                   "temperature_display": "25", "ph_display": 7.0}
+            row.update(fields)
+            return row
+        rows = [
+            # Between papers: one protein and substrate in three papers. Paper 1 has two records (median 10 s^-1 at 25 °C,
+            # pH 7); paper 2 gives 40 at 25 °C, pH 7 and 20 at 37 °C; paper 3 gives 10 at 50 °C only; paper 4 names no
+            # UniProt entry; a variant and a record in min^-1 are left out.
+            read("p1a", "1", kcat=8.0), read("p1b", "1", kcat=12.5),
+            read("p2a", "2", kcat=40.0), read("p2b", "2", kcat=20.0, temperature_display="37"),
+            read("p3", "3", kcat=10.0, temperature_display="50"),
+            read("p4", "4", kcat=10.0, primary_uniprot_id=None),
+            read("p1v", "1", kcat=1.0, wild_type=False, mutation_signature="E166A"),
+            read("p3m", "3", kcat=600.0, kcat_unit="min^(-1)"),
+            # Across substrates: paper 5 tests one enzyme on three substrates (kcat/Km 1, 10 and 1000) and on two at pH 5.
+            read("s1", "5", substrate_name="a", smiles="C", kcat_over_km=1.0, km=1.0),
+            read("s2", "5", substrate_name="b", smiles="CCCCCCCCCC", kcat_over_km=10.0, km=0.1),
+            read("s3", "5", substrate_name="c", smiles="CCCCCCCCCCCCCCCCCCCC", kcat_over_km=1000.0, km=0.01),
+            read("s4", "5", substrate_name="d", smiles="CCCCCCCCCCCCCCCCCCCCCCCCCCCCCC", km=0.001),
+            read("s5", "5", substrate_name="a", kcat_over_km=1.0, ph_display=5.0),
+            read("s6", "5", substrate_name="b", kcat_over_km=5.0, ph_display=5.0),
+            # A temperature series: kcat 2 at 30 °C and 4 at 40 °C (Q10 2); a series at one temperature is none.
+            read("t1", "6", primary_uniprot_id=None, substrate_name="x", smiles="", kcat=2.0, temperature_display="30"),
+            read("t2", "6", primary_uniprot_id=None, substrate_name="x", smiles="", kcat=4.0, temperature_display="40"),
+            # A record not read from the paper never counts.
+            {"record_key": "old", "verification_status": "unverified", "source_db": "brenda", "supporting_pmids": ["9"],
+             "primary_uniprot_id": "P00001", "smiles": "OCC1OC(O)C(O)C(O)C1O", "wild_type": True, "kcat": 1000.0,
+             "kcat_unit": "s^-1", "temperature_display": "25", "ph_display": 7.0},
+        ]
+        with tempfile.TemporaryDirectory() as directory:
+            manifest, path, _marks = self.write_fixture(directory, rows, {})
+            insights = followup.build_overview(manifest, path)["from_paper_insights"]
+        pairs = insights["between_papers"]
+        # Papers 1, 2, 3: medians 10, ~28.3 (40 and 20), 10: pairs 2.83x, 1x (identical) and 2.83x.
+        kcat = pairs["metrics"]["kcat"]
+        self.assertEqual((pairs["records"], pairs["papers"], pairs["proteins"]), (5, 3, 1))
+        self.assertEqual((kcat["pairs"], kcat["groups"], kcat["median"], kcat["within_2"], kcat["within_10"], kcat["identical"]),
+                         (3, 1, 2.8, 1, 3, 1))
+        self.assertEqual(kcat["counts"][:3], [1, 2, 0], "1x in the first quarter decade, 2.8x in the second")
+        self.assertEqual(sum(kcat["counts"]), kcat["pairs"])
+        # The same temperature and pH: only papers 1 and 2 share one (25 °C, pH 7): 10 against 40.
+        same = pairs["same_conditions"]
+        self.assertEqual((same["records"], same["papers"], same["proteins"]), (3, 2, 1))
+        self.assertEqual((same["metrics"]["kcat"]["pairs"], same["metrics"]["kcat"]["median"], same["metrics"]["kcat"]["within_2"]), (1, 4.0, 0))
+        # Across substrates: one panel of three (pH 7; d gives no kcat/Km); the two at pH 5 are not a panel.
+        ranges = insights["substrate_range"]
+        self.assertEqual((ranges["panels"], ranges["records"], ranges["papers"], ranges["enzymes"], ranges["median"]), (1, 3, 1, 1, 1000.0))
+        self.assertEqual((ranges["at_least_10"], ranges["at_least_1000"], ranges["counts"][6]), (1, 1, 1))
+        self.assertEqual(ranges["by_substrates"], [{"from": 3, "to": 3, "panels": 1, "median": 1000.0}])
+        # Km and size: four sizes (1, 10, 20, 30 atoms), Km falling with each; the cellobiose records give no Km.
+        size = insights["km_by_size"]
+        self.assertEqual((size["records"], [item["n"] for item in size["bins"]]), (4, [1, 1, 1, 1]))
+        self.assertEqual([(item["from"], item["to"]) for item in size["bins"]], [(1, 5), (6, 10), (16, 20), (21, 30)])
+        self.assertEqual((size["panels"]["panels"], size["panels"]["falls"], size["panels"]["rises"], size["panels"]["median_rho"]), (1, 1, 0, -1.0))
+        self.assertEqual(size["panels"]["counts"], [1, 0, 0, 0, 0, 0, 0, 0, 0])
+        # Temperature: kcat records by 10 °C bin (paper 4's too: it needs no UniProt entry); the series of paper 6 doubles over 10 °C, paper 2's two temperatures
+        # make a series too (40 to 20 from 25 to 37 °C).
+        temperature = insights["temperature"]
+        self.assertEqual([(item["from"], item["below"], item["n"]) for item in temperature["bins"]],
+                         [(20, 30, 4), (30, 40, 2), (40, 50, 1), (50, 60, 1)])
+        series = temperature["series"]
+        self.assertEqual((series["series"], series["records"], series["papers"], series["rising"], series["falling"]), (2, 4, 2, 1, 1))
+        self.assertEqual(series["counts"][8], 1, "Q10 2 is 0.30 in log10: the bin centred on 0.3")
+        self.assertEqual(sum(series["counts"]), 2)
+        # The typical wild-type values: every wild-type record in the catalog unit.
+        typical = insights["typical"]
+        self.assertEqual((typical["kcat"]["n"], typical["kcat"]["papers"], typical["kcat"]["median"]), (8, 5, 10.0))
+        self.assertEqual(typical["km"]["n"], 4)
+
+    def test_heavy_atoms_and_rank_correlation(self):
+        for smiles, atoms in [("CC(=O)O", 4), ("c1ccccc1", 6), ("ClCBr", 3), ("[2H]C([2H])([2H])O", 2), ("[nH]1cccc1", 5),
+                              ("OC[C@H]1O[C@@H](O)[C@H](O)[C@@H](O)[C@@H]1O", 12), ("[Na+].[Cl-]", None), ("", None), (None, None)]:
+            self.assertEqual(followup.heavy_atoms(smiles), atoms, smiles)
+        self.assertEqual(followup.spearman([1, 2, 3, 4], [4, 3, 2, 1]), -1.0)
+        self.assertEqual(followup.spearman([1, 2, 3, 4], [1, 1, 1, 1]), 0.0)
+        self.assertAlmostEqual(followup.spearman([1, 2, 2, 3], [1, 2, 3, 4]), 0.9486832980505138)
+        self.assertEqual(followup.ranks([5, 1, 5, 2]), [3.5, 1.0, 3.5, 2.0])
+        self.assertEqual([followup.temperature_bin(value) for value in (-5, 19.9, 20, 29.99, 37, 80, 105)], [0, 0, 1, 1, 2, 7, 7])
+
     def test_overview_counts_factor_only_corrections_by_parameter_and_database(self):
         line = lambda metric, found, sources: {"metric": metric, "database_status": "corrected", "database_found_by": found,
                                                "database_by_source": [{"db": db, "kind": kind} for db, kind in sources]}

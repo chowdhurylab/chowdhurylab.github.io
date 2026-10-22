@@ -848,6 +848,360 @@ def add_factor_only(counts, row):
                 counts["by_database"][str(source["db"])] += 1
 
 
+# What the wild-type values show (round 16, the user 2026-10-21: "more stats that are more scientifically insightful and
+# important, even as supplementary"): five analyses of the wild-type records read from the paper (enzyme_form wild), each
+# value in the catalog unit (s^-1, mM, mM^-1 s^-1; a value in another unit or without one is left out). An enzyme is a
+# name and organism (name_key of each); one record's paper is its paper_keys. Each analysis says how many records, papers
+# and enzymes it uses, and never pairs what it cannot match. The fold numbers are 10 to the power of a median of log10
+# values, to two significant figures.
+INSIGHT_METRICS = ("kcat", "km", "kcat_over_km")
+
+
+def enzyme_identity(row):
+    return name_key(row.get("enzyme_display_name")), name_key(row.get("organism"))
+
+
+def log_median(values):
+    """The median of a list of log10 values."""
+    return percentile(sorted(values), 0.5)
+
+
+def spread(values, low=0.25, high=0.75):
+    """median, p25 and p75 (or the fractions given) of positive values, each to two significant figures."""
+    ordered = sorted(values)
+    return {"median": significant(percentile(ordered, 0.5), 2), "low": significant(percentile(ordered, low), 2),
+            "high": significant(percentile(ordered, high), 2)}
+
+
+# 1. Between papers: the same protein (its UniProt accession, primary_uniprot_id) and substrate (its SMILES, else its
+# name) as wild type in two papers. Each paper's value is the median of its records for that protein and substrate
+# (whatever their conditions); each pair of papers gives the fold difference between their values, counted in quarter
+# decades from 1-fold (the last bin holds 100-fold and more), with how many pairs are within 2-fold and 10-fold and how
+# many give the very same number. The stricter subset compares two papers only at a temperature (to 1 °C) and pH (to
+# 0.1) both give: per shared condition the difference of the two papers' medians, the pair's fold the median of those.
+PAIR_BIN_WIDTH = 0.25
+PAIR_BINS = 9
+TWOFOLD = math.log10(2)
+
+
+def substrate_identity(row):
+    smiles = str(row.get("smiles") or "").strip()
+    return ("smiles", smiles) if smiles else ("name", name_key(row.get("substrate_name")))
+
+
+def pair_summary(differences, histogram=True):
+    """differences: |log10 fold| per pair of papers."""
+    ordered = sorted(differences)
+    summary = {"pairs": len(ordered), "median": significant(10 ** percentile(ordered, 0.5), 2),
+               "within_2": sum(difference <= TWOFOLD + 1e-9 for difference in ordered),
+               "within_10": sum(difference <= 1 + 1e-9 for difference in ordered)}
+    if histogram:
+        counts = [0] * PAIR_BINS
+        for difference in ordered:
+            counts[min(int(difference / PAIR_BIN_WIDTH + 1e-9), PAIR_BINS - 1)] += 1
+        summary["identical"] = sum(difference < 1e-9 for difference in ordered)
+        summary["counts"] = counts
+    return summary
+
+
+def between_papers(groups):
+    """groups: (accession, substrate) -> paper key -> [(record index, catalog values, condition or None)]."""
+    found = {"all": {}, "same_conditions": {}}
+    used = {key: {"records": set(), "papers": set(), "proteins": set()} for key in found}
+    for metric in INSIGHT_METRICS:
+        loose, strict, loose_groups, strict_groups = [], [], 0, 0
+        for (accession, _substrate), per_paper in groups.items():
+            medians, cells, holders = {}, {}, {}
+            for paper, records in per_paper.items():
+                logs = [math.log10(values[metric]) for _index, values, _cell in records if metric in values]
+                if not logs:
+                    continue
+                medians[paper] = log_median(logs)
+                holders[paper] = [index for index, values, _cell in records if metric in values]
+                by_cell = defaultdict(list)
+                for _index, values, cell in records:
+                    if metric in values and cell is not None:
+                        by_cell[cell].append(math.log10(values[metric]))
+                cells[paper] = {cell: log_median(logs) for cell, logs in by_cell.items()}
+            if len(medians) < 2:
+                continue
+            loose_groups += 1
+            papers = sorted(medians)
+            used["all"]["proteins"].add(accession)
+            used["all"]["papers"].update(papers)
+            for paper in papers:
+                used["all"]["records"].update(holders[paper])
+            matched = False
+            for first, paper in enumerate(papers):
+                for other in papers[first + 1:]:
+                    loose.append(abs(medians[paper] - medians[other]))
+                    shared = sorted(set(cells[paper]) & set(cells[other]))
+                    if not shared:
+                        continue
+                    matched = True
+                    strict.append(abs(log_median([cells[paper][cell] - cells[other][cell] for cell in shared])))
+                    used["same_conditions"]["papers"].update((paper, other))
+                    for index, values, cell in per_paper[paper] + per_paper[other]:
+                        if metric in values and cell in shared:
+                            used["same_conditions"]["records"].add(index)
+            if matched:
+                strict_groups += 1
+                used["same_conditions"]["proteins"].add(accession)
+        if loose:
+            found["all"][metric] = {**pair_summary(loose), "groups": loose_groups}
+        if strict:
+            found["same_conditions"][metric] = {**pair_summary(strict, histogram=False), "groups": strict_groups}
+    if not found["all"]:
+        return None
+    result = {key: len(used["all"][key]) for key in ("records", "papers", "proteins")}
+    result.update({"bin_width": PAIR_BIN_WIDTH, "metrics": found["all"]})
+    if found["same_conditions"]:
+        result["same_conditions"] = {**{key: len(used["same_conditions"][key]) for key in ("records", "papers", "proteins")},
+                                     "metrics": found["same_conditions"]}
+    return result
+
+
+# 2. Across substrates: one wild-type enzyme tested on three or more substrates in one paper under one assay (the same
+# cosubstrate, pH and temperature: a substrate panel). Per substrate (its name) the median of its kcat/Km records; the
+# panel's fold range is its best substrate's over its worst's, counted in half decades from 1-fold (the last bin holds
+# 10^6-fold and more), and by how many substrates the panel holds (the range grows with them).
+RANGE_BIN_WIDTH = 0.5
+RANGE_BINS = 13
+RANGE_GROUPS = ((3, 3), (4, 4), (5, 5), (6, 9), (10, None))
+
+
+def substrate_range(panels):
+    """panels: (paper keys, enzyme, organism, cosubstrates, pH, temperature) -> substrate -> [log10 kcat/Km]."""
+    ranges, records, papers, enzymes = [], 0, set(), set()
+    by_size = defaultdict(list)
+    for (paper, enzyme, organism, *_assay), substrates in panels.items():
+        if len(substrates) < 3:
+            continue
+        medians = [log_median(logs) for logs in substrates.values()]
+        width = max(medians) - min(medians)
+        ranges.append(width)
+        records += sum(len(logs) for logs in substrates.values())
+        papers.update(paper)
+        enzymes.add((enzyme, organism))
+        by_size[next(index for index, (low, high) in enumerate(RANGE_GROUPS) if len(substrates) >= low
+                     and (high is None or len(substrates) <= high))].append(width)
+    if not ranges:
+        return None
+    counts = [0] * RANGE_BINS
+    for width in ranges:
+        counts[min(int(width / RANGE_BIN_WIDTH + 1e-9), RANGE_BINS - 1)] += 1
+    ordered = sorted(ranges)
+    return {"panels": len(ranges), "records": records, "papers": len(papers), "enzymes": len(enzymes),
+            "median": significant(10 ** percentile(ordered, 0.5), 2), "p25": significant(10 ** percentile(ordered, 0.25), 2),
+            "p75": significant(10 ** percentile(ordered, 0.75), 2),
+            "at_least_10": sum(width >= 1 - 1e-9 for width in ordered), "at_least_1000": sum(width >= 3 - 1e-9 for width in ordered),
+            "bin_width": RANGE_BIN_WIDTH, "counts": counts,
+            "by_substrates": [{"from": low, "to": high, "panels": len(by_size[index]),
+                               "median": significant(10 ** log_median(by_size[index]), 2)}
+                              for index, (low, high) in enumerate(RANGE_GROUPS) if by_size[index]]}
+
+
+# 3. Km and substrate size: the size of a substrate is the number of its non-hydrogen atoms, counted from its SMILES (a
+# structure of one piece: a salt or mixture, written with ".", is left out). The Km records in size bins, each with its
+# median and middle half; and, within one enzyme's substrate panel (as above, four or more substrates of at least two
+# sizes), the rank correlation (Spearman's rho) between size and the median Km per substrate: below 0 when Km falls as
+# the substrates grow, in nine bins of 0.25 centred on -1, -0.75 ... 1 (a panel whose Km values are all one number
+# counts at 0).
+SIZE_BINS = ((1, 5), (6, 10), (11, 15), (16, 20), (21, 30), (31, 50), (51, None))
+SMILES_ATOM = re.compile(r"\[[^\]]*\]|Cl|Br|[BCNOPSFI]|[bcnops]")
+SMILES_BRACKET_ELEMENT = re.compile(r"^\[\d*([A-Z][a-z]?|[a-z]{1,2})")
+RHO_BIN_WIDTH = 0.25
+
+
+def heavy_atoms(smiles):
+    """Non-hydrogen atoms in a one-piece SMILES (bracket atoms count once, a bracketed hydrogen not at all), or None."""
+    text = str(smiles or "").strip()
+    if not text or "." in text:
+        return None
+    count = 0
+    for atom in SMILES_ATOM.findall(text):
+        if atom.startswith("["):
+            element = SMILES_BRACKET_ELEMENT.match(atom)
+            count += bool(element and element.group(1) != "H")
+        else:
+            count += 1
+    return count or None
+
+
+def ranks(values):
+    """Ranks from 1, ties sharing their mean rank."""
+    order = sorted(range(len(values)), key=lambda index: values[index])
+    result = [0.0] * len(values)
+    start = 0
+    while start < len(order):
+        end = start
+        while end + 1 < len(order) and values[order[end + 1]] == values[order[start]]:
+            end += 1
+        for position in range(start, end + 1):
+            result[order[position]] = (start + end) / 2 + 1
+        start = end + 1
+    return result
+
+
+def spearman(xs, ys):
+    """Spearman's rank correlation; 0 when either list holds one value only."""
+    rx, ry = ranks(xs), ranks(ys)
+    mx, my = sum(rx) / len(rx), sum(ry) / len(ry)
+    sx = sum((value - mx) ** 2 for value in rx)
+    sy = sum((value - my) ** 2 for value in ry)
+    if not sx or not sy:
+        return 0.0
+    return sum((a - mx) * (b - my) for a, b in zip(rx, ry)) / math.sqrt(sx * sy)
+
+
+def km_by_size(records, panels):
+    """records: (size, Km, paper keys, enzyme); panels: assay key -> SMILES -> (size, [log10 Km])."""
+    if not records:
+        return None
+    bins = []
+    for low, high in SIZE_BINS:
+        found = [record for record in records if record[0] >= low and (high is None or record[0] <= high)]
+        if found:
+            bins.append({"from": low, "to": high, "n": len(found), "papers": len({key for record in found for key in record[2]}),
+                         **spread([record[1] for record in found])})
+    result = {"records": len(records), "papers": len({key for record in records for key in record[2]}),
+              "enzymes": len({record[3] for record in records}), "bins": bins}
+    rhos, used, papers, enzymes = [], 0, set(), set()
+    for (paper, enzyme, organism, *_assay), substrates in panels.items():
+        sizes = [size for size, _logs in substrates.values()]
+        if len(substrates) < 4 or len(set(sizes)) < 2:
+            continue
+        rhos.append(spearman(sizes, [log_median(logs) for _size, logs in substrates.values()]))
+        used += sum(len(logs) for _size, logs in substrates.values())
+        papers.update(paper)
+        enzymes.add((enzyme, organism))
+    if rhos:
+        counts = [0] * 9
+        for rho in rhos:
+            counts[min(max(round((rho + 1) / RHO_BIN_WIDTH), 0), 8)] += 1
+        result["panels"] = {"panels": len(rhos), "records": used, "papers": len(papers), "enzymes": len(enzymes),
+                            "falls": sum(rho < 0 for rho in rhos), "rises": sum(rho > 0 for rho in rhos),
+                            "median_rho": round(percentile(sorted(rhos), 0.5), 2), "bin_width": RHO_BIN_WIDTH, "counts": counts}
+    return result
+
+
+# 4. Temperature: the kcat records by assay temperature in 10 °C bins (below 20, 20 to below 30 ... 80 °C and above), each with
+# its median and middle half (different enzymes stand in each bin); and series, one enzyme and substrate in one paper at
+# two or more temperatures with the same cosubstrate and pH: the slope of log10 kcat (the median per temperature) against
+# temperature by least squares, as the fold change per 10 °C (Q10), counted in bins of 0.1 in log10 centred on -0.5 ...
+# 1.0 (the end bins hold every value beyond them).
+TEMPERATURE_EDGES = (20, 30, 40, 50, 60, 70, 80)
+Q10_BIN_WIDTH = 0.1
+Q10_LOG10_START = -0.5
+Q10_BINS = 16
+
+
+def temperature_bin(value):
+    """0 below the first edge, then one bin per edge, each from its edge to below the next."""
+    return sum(value >= edge for edge in TEMPERATURE_EDGES)
+
+
+def temperature_effects(records, series):
+    """records: (temperature, kcat, paper keys, enzyme); series: key -> temperature -> [log10 kcat]."""
+    if not records:
+        return None
+    grouped = defaultdict(list)
+    for record in records:
+        grouped[temperature_bin(record[0])].append(record)
+    result = {"records": len(records), "papers": len({key for record in records for key in record[2]}),
+              "enzymes": len({record[3] for record in records}),
+              "bins": [{"from": low, "below": high, "n": len(grouped[index]),
+                        "papers": len({key for record in grouped[index] for key in record[2]}),
+                        **spread([record[1] for record in grouped[index]])}
+                       for index, (low, high) in enumerate(zip((None, *TEMPERATURE_EDGES), (*TEMPERATURE_EDGES, None)))
+                       if grouped[index]]}
+    slopes, used, papers, enzymes = [], 0, set(), set()
+    for (paper, enzyme, organism, *_rest), temperatures in series.items():
+        if len(temperatures) < 2:
+            continue
+        xs = sorted(temperatures)
+        ys = [log_median(temperatures[value]) for value in xs]
+        mx, my = sum(xs) / len(xs), sum(ys) / len(ys)
+        slopes.append(10 * sum((x - mx) * (y - my) for x, y in zip(xs, ys)) / sum((x - mx) ** 2 for x in xs))
+        used += sum(len(logs) for logs in temperatures.values())
+        papers.update(paper)
+        enzymes.add((enzyme, organism))
+    if slopes:
+        counts = [0] * Q10_BINS
+        for slope in slopes:
+            counts[min(max(math.floor((slope - Q10_LOG10_START) / Q10_BIN_WIDTH + 0.5 + 1e-9), 0), Q10_BINS - 1)] += 1
+        ordered = sorted(slopes)
+        result["series"] = {"series": len(slopes), "records": used, "papers": len(papers), "enzymes": len(enzymes),
+                            "median": significant(10 ** percentile(ordered, 0.5), 2),
+                            "p25": significant(10 ** percentile(ordered, 0.25), 2),
+                            "p75": significant(10 ** percentile(ordered, 0.75), 2),
+                            "rising": sum(slope > 0 for slope in slopes), "falling": sum(slope < 0 for slope in slopes),
+                            "bin_width": Q10_BIN_WIDTH, "log10_start": Q10_LOG10_START, "counts": counts}
+    return result
+
+
+# 5. The typical wild-type enzyme: each parameter's median and the middle 80% of its wild-type records read from the paper,
+# with their papers and enzymes (the page sets it beside the average enzyme of Bar-Even et al., Biochemistry 2011).
+def typical_values(found):
+    """found: metric -> (values, papers, enzymes)."""
+    result = {metric: {"n": len(values), "papers": len(papers), "enzymes": len(enzymes),
+                       **{key: value for key, value in zip(("median", "p10", "p90"), spread(values, 0.1, 0.9).values())}}
+              for metric, (values, papers, enzymes) in found.items() if values}
+    return result or None
+
+
+class WildTypeInsights:
+    """Collects the wild-type records read from the paper for the five analyses above."""
+
+    def __init__(self):
+        self.index = 0
+        self.pairs = defaultdict(lambda: defaultdict(list))
+        self.panels_range = defaultdict(lambda: defaultdict(list))
+        self.size_records, self.panels_size = [], defaultdict(dict)
+        self.temperature_records, self.series = [], defaultdict(lambda: defaultdict(list))
+        self.typical = {metric: ([], set(), set()) for metric in INSIGHT_METRICS}
+
+    def add(self, row, own, keys):
+        if not own:
+            return
+        self.index += 1
+        enzyme = enzyme_identity(row)
+        temperature, ph = temperature_c(row), ph_value(row)
+        for metric, value in own.items():
+            values, papers, enzymes = self.typical[metric]
+            values.append(value)
+            papers.update(keys)
+            enzymes.add(enzyme)
+        paper = tuple(sorted(keys))
+        if not paper:
+            return
+        substrate = name_key(row.get("substrate_name"))
+        assay = (paper, *enzyme, cosubstrate_key(row), ph, temperature)
+        accession = str(row.get("primary_uniprot_id") or "").strip()
+        identity = substrate_identity(row)
+        if accession and identity[1] and len(keys) == 1:
+            cell = (round(temperature), round(ph * 10)) if temperature is not None and ph is not None else None
+            self.pairs[(accession, identity)][paper[0]].append((self.index, own, cell))
+        if substrate and "kcat_over_km" in own:
+            self.panels_range[assay][substrate].append(math.log10(own["kcat_over_km"]))
+        size = heavy_atoms(row.get("smiles"))
+        if size and "km" in own:
+            self.size_records.append((size, own["km"], keys, enzyme))
+            smiles = str(row.get("smiles")).strip()
+            self.panels_size[assay].setdefault(smiles, (size, []))[1].append(math.log10(own["km"]))
+        if temperature is not None and "kcat" in own:
+            self.temperature_records.append((temperature, own["kcat"], keys, enzyme))
+            if substrate:
+                self.series[(paper, *enzyme, substrate, cosubstrate_key(row), ph)][round(temperature, 1)].append(math.log10(own["kcat"]))
+
+    def result(self):
+        found = {"between_papers": between_papers(self.pairs), "substrate_range": substrate_range(self.panels_range),
+                 "km_by_size": km_by_size(self.size_records, self.panels_size),
+                 "temperature": temperature_effects(self.temperature_records, self.series),
+                 "typical": typical_values(self.typical)}
+        return {key: value for key, value in found.items() if value}
+
+
 def summarize_overview(rows, marks=None):
     statuses = Counter()
     papers, v2_papers = set(), set()
@@ -876,6 +1230,7 @@ def summarize_overview(rows, marks=None):
     v2_database = defaultdict(Counter)
     v2_parameters, v2_kinds, v2_substitutions, v2_units = defaultdict(set), Counter(), {}, defaultdict(Counter)
     factor_only = {"values": 0, "by_parameter": Counter(), "by_database": Counter()}
+    wild_insights = WildTypeInsights()
     for row in rows:
         add_factor_only(factor_only, row)
         status = row.get("verification_status")
@@ -951,6 +1306,7 @@ def summarize_overview(rows, marks=None):
                 v2_pairs.append((own["kcat"], own["km"], classes))
             if form == "wild":
                 v2_groups[mutation_key(row)]["wild"].append(own)
+                wild_insights.add(row, own, keys)
             elif form == "variant":
                 v2_groups[mutation_key(row)]["variant"].append((own, keys, variant_key(row)))
             if has_temperature:
@@ -1029,6 +1385,7 @@ def summarize_overview(rows, marks=None):
         "variant_kinds": variant_kinds(v2_kinds),
         "substitutions": substitution_matrix(v2_substitutions),
         "printed_units": printed_units(v2_units),
+        **wild_insights.result(),
     }
     insights = {key: value for key, value in insights.items() if value}
     if insights:
