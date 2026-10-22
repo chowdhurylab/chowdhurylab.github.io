@@ -1599,6 +1599,10 @@ def check_stats_figures(driver, browser, url):
                         key: row.dataset.row, count: +row.dataset.count,
                         width: [...row.querySelectorAll('.stats-seg')].reduce((sum, seg) => sum + parseFloat(seg.style.width), 0)}))}));
             """)
+            # Every 100% bar has one length wherever it stands (fix pass after round 16b: 900 to 580px at 1440).
+            lengths = driver.execute_script("""return [...document.querySelectorAll('.stats-chart-percent')].filter(c => c.getClientRects().length)
+                .map(c => Math.round(c.querySelector('.stats-track').getBoundingClientRect().width))""")
+            assert len(set(lengths)) <= 1, lengths
             percent_keys = ["db-values", "db-sources", "earlier-corrections", "replaced"]
             if driver.find_elements(By.CSS_SELECTOR, "[data-figure='db-classes']"):
                 percent_keys.insert(1, "db-classes")

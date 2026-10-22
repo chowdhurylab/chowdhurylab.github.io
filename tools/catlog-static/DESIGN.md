@@ -1628,3 +1628,6 @@ manifest's database comparison; a field an older snapshot lacks leaves its words
 - Figure 1 (Review result) draws its results as one 100% bar over its legend table, as wide as the table (640px at
   most; statsStatusBar: a segment per result, Not checked's hatched, its count on its tooltip line, lit with its row);
   the donut with "185,804 records" in its hole repeated the table beside it and was the page's most dashboard-like mark.
+- Every 100% bar (Values against the databases, by enzyme class, by database, the earlier version's corrections) is one
+  length, 560px, wherever it stands (a narrower column shrinks it; on a phone it spans the row), its label, bar and
+  value columns starting at the left: at 1440px they had been 900, 916, 580 and 584px.
