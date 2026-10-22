@@ -1179,8 +1179,8 @@ review in one sentence over a small table of its verdicts, then Checks on the va
 with what it covered and what it found (no meter since the fix pass after round 16b: the shares are in the words; on a
 phone each check is stacked, its name over the two), then Errors found in CatLog (round 16b), the three tables at one
 measure (640px at most); the review's flags by kind and the reviewers' approved values read from the paper again are the supplement's
-Quality tables), 3 What is in the catalog (the review-result donut and its legend
-table, records by main source with a Records | Share switch, then CatLog and BRENDA by publication year (round 16, when
+Quality tables), 3 What is in the catalog (the review results as one 100% bar over their legend
+table (fix pass after round 16b; a donut until then), records by main source with a Records | Share switch, then CatLog and BRENDA by publication year (round 16, when
 the manifest has summary.publication_years), then the enzyme classes with accepted and read-from-the-paper records), 4 Values (value ranges on one log axis per parameter; then, from the records read from
 the paper, Between papers (round 16) after the ranges, kcat against Km as a density map with lines of equal kcat/Km, the
 diffusion limit and each class's median, Substrate specificity (round 16), and variants against their wild type of the
@@ -1203,7 +1203,7 @@ number in How these numbers are counted; a chart names its number columns above 
 line: the snapshot's date, its Data ID and the counting rules (each figure's own under its number) are said once, in
 the closed How these numbers are counted that ends the page; flat fills, the colour at 60% with 1px opaque outlines, in the
 review-result and comparison tokens, --bar-neutral for the single-series value figures and the enzyme classes' own
-colours where a figure draws the classes apart, Read from the paper's cyan for the figures of records read from the paper; pointing at a mark gives it a 2px outline in its colour, dims the others and gives its exact count. The donut, the
+colours where a figure draws the classes apart, Read from the paper's cyan for the figures of records read from the paper; pointing at a mark gives it a 2px outline in its colour, dims the others and gives its exact count. Figure 1's bar, the
 histograms and the ridges are images with a summary;
 the bar charts are HTML, so their names stay links and their counts text. Names Browse can filter on link to
 `#browse?` with the shared filter keys. The full rules are in the site's
@@ -1625,3 +1625,6 @@ manifest's database comparison; a field an older snapshot lacks leaves its words
 - Stats sets the exponents of its sentences, legends and table cells with <sup>, as its axes, table heads and the record
   do (statsSuperscriptsHtml on the drawn page: text only, never a tag, an attribute or an SVG); the page's plural
   possessives are written with ’ ("the AI agents’ readings", "the reviewers’ own files").
+- Figure 1 (Review result) draws its results as one 100% bar over its legend table, as wide as the table (640px at
+  most; statsStatusBar: a segment per result, Not checked's hatched, its count on its tooltip line, lit with its row);
+  the donut with "185,804 records" in its hole repeated the table beside it and was the page's most dashboard-like mark.

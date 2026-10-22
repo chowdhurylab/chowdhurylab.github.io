@@ -11,7 +11,7 @@
   --fs-16:16px; --lh-16:24px;   /* Guide body, record values-table numbers */
   --fs-18:18px; --lh-18:24px;   /* Stats section headings */
   --fs-20:20px; --lh-20:24px;   /* counts band numbers, record title, Stats headline line 2 */
-  --fs-24:24px; --lh-24:28px;   /* Stats page title, donut centre total */
+  --fs-24:24px; --lh-24:28px;   /* Stats page title */
   --fs-28:28px; --lh-28:32px;   /* Stats headline key numbers on phones */
   --fs-32:32px; --lh-32:36px;   /* Stats lead figure; headline key numbers' top on tablets */
   --fs-40:40px; --lh-40:44px;   /* Stats headline key numbers */
@@ -1277,9 +1277,8 @@ a.stats-total-value:focus-visible { outline:0 }
 :is(.stats-seg, .stats-swatch):is(.stats-part-corrects-2, .stats-part-not-listed-hatch) { background:var(--bg); background:repeating-linear-gradient(135deg, var(--part) 0 1.5px, var(--bg) 1.5px 4px) }
 /* Not checked (both its kinds, Unverified and Not reviewed) is slate hatching on white with a slate outline, never a
    flat slate fill: slate at 60% (#B5BDD2) is Accepted's navy at 60% (#8A98B8) a step lighter in the same hue, so the
-   pattern, not lightness alone, tells the two apart (the donut draws it with an SVG pattern of the same lines). */
+   pattern, not lightness alone, tells the two apart. */
 :is(.stats-seg, .stats-swatch):is(.stats-part-unverified, .stats-part-not-reviewed, .stats-part-not-checked) { background:var(--bg); background:repeating-linear-gradient(135deg, var(--part) 0 1.5px, var(--bg) 1.5px 4px) }
-.stats-donut path:is(.stats-part-unverified, .stats-part-not-reviewed, .stats-part-not-checked) { fill:url(#statsHatchNotChecked) }
 .stats-hatch-ground { fill:var(--bg) }
 .stats-hatch-line { fill:var(--st-unverified) }
 .stats-seg.is-start { border-top-left-radius:2px; border-bottom-left-radius:2px }
@@ -1297,22 +1296,19 @@ a.stats-total-value:focus-visible { outline:0 }
 /* No glow anywhere. Pointing at a mark (or focusing the link in its row) dims the other marks of its figure (data-hl:
    bars, slices, ridges with their range, median and end stubs) and gives the mark a 2px outline in its own colour; its
    exact count shows in the tooltip line. Names and counts stay at full ink, so their contrast holds. */
-.stats-fig.has-active [data-hl]:not(.is-active) :is(.stats-seg, .stats-ridge-svg, .stats-ridge-range, .stats-ridge-median, .stats-ridge-end),
-.stats-fig.has-active path[data-hl]:not(.is-active) { opacity:0.42 }
+.stats-fig.has-active [data-hl]:not(.is-active) :is(.stats-seg, .stats-ridge-svg, .stats-ridge-range, .stats-ridge-median, .stats-ridge-end) { opacity:0.42 }
 .stats-chart-row.is-active .stats-seg:not(.stats-part-records, .stats-part-catlog-mark), .stats-seg[data-tip]:not(.stats-part-catlog-mark):hover { box-shadow:inset 0 0 0 2px var(--part-line, var(--part)) }
 /* A lit row of the review-result table is tinted (more specific than the stats tables' transparent cells, which hid it). */
 .stats-status-table.stats-table tbody tr.is-active > :is(th,td) { background:var(--surface-2) }
 @media (prefers-reduced-motion: no-preference) {
   .stats-seg { transition:left 450ms cubic-bezier(0.2,0.7,0.2,1), width 450ms cubic-bezier(0.2,0.7,0.2,1), opacity 150ms ease }
-  .stats-donut path[data-hl], .stats-ridge-row :is(.stats-ridge-svg, .stats-ridge-range, .stats-ridge-median, .stats-ridge-end) { transition:opacity 150ms ease }
+  .stats-ridge-row :is(.stats-ridge-svg, .stats-ridge-range, .stats-ridge-median, .stats-ridge-end) { transition:opacity 150ms ease }
 }
 .stats-tip { position:fixed; left:0; top:0; z-index:150; max-width:min(340px, calc(100vw - 16px)); border-radius:var(--radius); background:var(--text); box-shadow:var(--tip-shadow); color:var(--bg); padding:6px 10px; font-size:var(--fs-12); line-height:var(--lh-12); pointer-events:none; font-variant-numeric:tabular-nums lining-nums }
 /* Records (spec figure 8): a light grey bar (--line, outlined --line-strong) under the accepted overlay. */
 .stats-part-records.stats-seg, .stats-part-records.stats-swatch { background:var(--line); box-shadow:inset 0 0 0 1px var(--line-strong) }
 /* Each slice has one fill, its colour at 60% with a 1px opaque outline (design spec section 2): no gradient, so a slice
    reads as its colour all along and navy (Accepted) and slate (Not checked) stay apart; the bars keep theirs. */
-.stats-donut path { fill:var(--part); fill:color-mix(in srgb, var(--part) 60%, var(--bg)); stroke:var(--part-line, var(--part)); stroke-width:1 }
-.stats-donut path.is-active { stroke-width:2 }
 .stats-swatch { display:inline-block; flex:0 0 10px; width:10px; height:10px; vertical-align:-1px }
 
 /* Legends: inline above the plot, in segment order. */
@@ -1489,13 +1485,13 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-by-database li { white-space:nowrap }
 .stats-by-database .stats-num { margin-left:2px; color:var(--muted) }
 
-/* Figure 1: the review-result donut beside its legend table. */
-/* Drawn at its viewBox size (200px), so the ring's radii (88 and 56) and the 24px total are the sizes on screen. */
-.stats-donut-layout { display:grid; grid-template-columns:200px minmax(0,1fr); gap:24px; align-items:start }
-.stats-donut { display:block; width:200px; height:200px; overflow:visible }
-.stats-donut-gap { stroke:var(--bg); stroke-width:1.5 }
-.stats-donut-total { fill:var(--text); font-size:var(--fs-24); font-weight:600; text-anchor:middle; dominant-baseline:middle; font-variant-numeric:tabular-nums lining-nums }
-.stats-donut-unit { fill:var(--muted); font-size:var(--fs-12); text-anchor:middle; dominant-baseline:middle }
+/* Figure 1: the review results as one 100% bar over their legend table, as wide as the table (fix pass after round 16b:
+   a donut with the total in its hole). Pointing at a segment, or at its row, outlines it in its colour and dims the
+   other segments. */
+.stats-status-layout { display:grid; gap:12px; max-width:640px }
+.stats-status-bar { height:20px }
+.stats-status-bar .stats-seg.is-active { box-shadow:inset 0 0 0 2px var(--part-line, var(--part)) }
+.stats-fig.has-active .stats-status-bar .stats-seg[data-hl]:not(.is-active) { opacity:0.42 }
 
 /* Tables: compact rows, numbers right-aligned, an 80px bar. */
 .stats-table { width:100%; min-width:0; table-layout:auto; border-collapse:collapse; font-size:var(--fs-13); line-height:var(--lh-13) }
@@ -1832,8 +1828,8 @@ a.stats-total-value:focus-visible { outline:0 }
   .team-highlight .team-station, .team-highlight .team-actor { transition:none }
 }
 
-/* 1024-1279px: a half-width column is too narrow for the legend table beside the donut, so Figure 1 takes the row
-   (donut and table side by side) and Figure 2 the next one, as on tablets; the figures after them pair up as before. */
+/* 1024-1279px: Figure 1 takes the row (its bar over its legend table, 640px at most) and Figure 2 the next one, as on
+   tablets; the figures after them pair up as before. */
 @media (min-width: 1024px) and (max-width: 1279px) {
   .stats-part-grid > .stats-status-section, .stats-part-grid > .stats-status-section + .stats-figure-section { grid-column:1 / -1 }
   .stats-part-grid > .stats-status-section + .stats-figure-section .stats-chart:not(.stats-chart-percent) { --label-w:minmax(96px,240px) }
@@ -1916,7 +1912,6 @@ a.stats-total-value:focus-visible { outline:0 }
      same in the class medians beside kcat against Km, so their numbers keep their columns. */
   .stats-ridges { --ridge-label:44px }
   .stats-ridge-name, .stats-map-classes .stats-ec-name { display:none }
-  .stats-donut-layout { grid-template-columns:1fr; justify-items:start }
   /* On phones each name sits above its bar, with its numbers right-aligned on the name's line (under Figure 5's
      headings), 8px from it, and the bar and the axis span the row, so the bars take the full width and a small segment
      (OED's accepted, BRENDA's) stays wide enough to see. A long class name (Figure 5) hyphenates; a name with a

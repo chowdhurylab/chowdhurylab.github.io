@@ -4068,7 +4068,6 @@
   // A supplement item drawn closed has no layout: its widths are fitted once it opens.
   function statsFitOpened(item) {
     if (!item?.open) return;
-    statsFitDonutTotals(item);
     statsFitValueColumns(item);
     statsFitDatabaseTables(item);
   }
@@ -4234,60 +4233,21 @@
     figure.querySelectorAll("[data-axis-mode]").forEach((axis) => { axis.hidden = axis.dataset.axisMode !== mode; });
   }
 
-  // A donut of parts that make one whole (12 o'clock, clockwise, 1px white gaps), the total in its centre. Each slice
-  // has one fill, its colour at 60% with a 1px opaque outline (design spec section 2), so every point of a slice reads as
-  // its colour (a fade to the tint made navy and slate alike near the hole); pointing at a slice (or its row in the
-  // legend table, data-hl) outlines it in its own colour, dims the others and gives its exact count.
-  function statsDonut(parts, total, { title, unit = "records" } = {}) {
-    const cx = 100, cy = 100, outer = 88, inner = 56, full = 2 * Math.PI;
-    const point = (radius, angle) => `${+(cx + radius * Math.sin(angle)).toFixed(3)} ${+(cy - radius * Math.cos(angle)).toFixed(3)}`;
-    const arc = (from, to) => {
-      const large = to - from > Math.PI ? 1 : 0;
-      return `M${point(outer, from)}A${outer} ${outer} 0 ${large} 1 ${point(outer, to)}L${point(inner, to)}A${inner} ${inner} 0 ${large} 0 ${point(inner, from)}Z`;
-    };
-    let angle = 0;
-    const paths = [];
-    const cuts = new Set();
-    for (const part of parts) {
-      if (!(part.count > 0) || !(total > 0)) continue;
-      const sweep = part.count / total * full;
-      const whole = sweep >= full - 1e-9;
-      // A whole ring is drawn as two halves: an arc cannot start and end at the same point.
-      const d = whole ? `${arc(0, Math.PI)}${arc(Math.PI, full)}` : arc(angle, Math.min(full, angle + sweep));
-      const tip = `${part.label}: ${formatInteger(part.count)} (${statsShare(part.count, total)})`;
-      paths.push(`<path class="stats-part-${part.part}" d="${d}"${part.key ? ` data-hl="${escapeHtml(part.key)}"` : ""} data-tip="${escapeHtml(tip)}"></path>`);
-      if (!whole) {
-        cuts.add(+angle.toFixed(6));
-        cuts.add(+Math.min(full, angle + sweep).toFixed(6) % +full.toFixed(6));
-      }
-      angle += sweep;
-    }
-    const gaps = [...cuts].map((cut) => {
-      const [x1, y1] = point(inner - 1, cut).split(" ");
-      const [x2, y2] = point(outer + 1, cut).split(" ");
-      return `<line class="stats-donut-gap" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`;
-    }).join("");
-    const description = parts.filter((part) => part.count > 0).map((part) => `${part.label} ${formatInteger(part.count)} (${statsShare(part.count, total)})`).join("; ");
-    // (Not checked's slices are slate hatching, the bars' 135° lines: the stylesheet fills them with this pattern)
-    const hatch = parts.some((part) => /^(unverified|not-reviewed|not-checked)$/.test(part.part) && part.count > 0)
-      ? `<defs><pattern id="statsHatchNotChecked" patternUnits="userSpaceOnUse" width="4" height="4" patternTransform="rotate(45)"><rect class="stats-hatch-ground" width="4" height="4"/><rect class="stats-hatch-line" width="1.5" height="4"/></pattern></defs>` : "";
-    return `<svg class="stats-donut" viewBox="0 0 200 200" role="img" aria-label="${escapeHtml(`${title}: ${formatInteger(total)} ${unit}. ${description}.`)}">
-      ${hatch}<g class="stats-donut-slices">${paths.join("")}</g>${gaps}
-      <text class="stats-donut-total" x="100" y="100" data-room="${2 * inner - 8}">${formatInteger(total)}</text>
-      <text class="stats-donut-unit" x="100" y="120">${escapeHtml(unit)}</text>
-    </svg>`;
-  }
-
-  // The donut's centre total stays inside the hole whatever font the viewer's system draws it in: a total wider than
-  // the hole's room (data-room, in px: the donut is drawn 1:1) is set smaller to fit. Run once Stats is on screen.
-  function statsFitDonutTotals(root) {
-    for (const text of root?.querySelectorAll?.(".stats-donut-total") || []) {
-      text.style?.removeProperty?.("font-size");
-      const room = Number(text.getAttribute("data-room")) || 0;
-      const width = typeof text.getComputedTextLength === "function" ? text.getComputedTextLength() : 0;
-      const size = parseFloat(window.getComputedStyle?.(text)?.fontSize || "") || 0;
-      if (room > 0 && size > 0 && width > room) text.style.fontSize = `${Math.floor(size * room / width * 10) / 10}px`;
-    }
+  // Figure 1's review results as one 100% bar above their table (fix pass after round 16b: a donut with the total in its
+  // hole, beside a table giving every count and share, was the page's most dashboard-like mark): a segment per result
+  // in the result's colour (Not checked's hatched, as everywhere), its exact count on its tooltip line, lit with its
+  // table row; the bar is an image whose accessible name gives every count.
+  function statsStatusBar(parts, total, { title, unit = "records" } = {}) {
+    const shown = parts.filter((part) => part.count > 0 && total > 0);
+    let left = 0;
+    const segments = shown.map((part, index) => {
+      const width = part.count / total * 100;
+      const html = `<span class="stats-seg stats-part-${part.part}${index === 0 ? " is-start" : ""}${index === shown.length - 1 ? " is-end" : ""}" style="left:${+left.toFixed(4)}%;width:${+width.toFixed(4)}%"${part.key ? ` data-hl="${escapeHtml(part.key)}"` : ""} data-tip="${escapeHtml(`${part.label}: ${formatInteger(part.count)} (${statsShare(part.count, total)})`)}"></span>`;
+      left += width;
+      return html;
+    });
+    const description = shown.map((part) => `${part.label} ${formatInteger(part.count)} (${statsShare(part.count, total)})`).join("; ");
+    return `<div class="stats-track stats-status-bar" role="img" aria-label="${escapeHtml(`${title}: ${formatInteger(total)} ${unit}. ${description}.`)}">${segments.join("")}</div>`;
   }
 
   // A chart with value headings (Figure 5) sizes its value column to the headings' line as drawn: every column there is
@@ -7535,7 +7495,7 @@
   }
 
   // Pointing at a mark (or focusing the link in its row) lights it and every mark of the same name in its figure
-  // (data-hl: a donut slice and its table row, a class's ridge in all three panels) and dims the rest. A row that stands
+  // (data-hl: a review result's segment and its table row, a class's ridge in all three panels) and dims the rest. A row that stands
   // for several marks names each (Not checked: "unverified mathematically_inferred"): it lights them all, and a mark
   // lights such a row only when the row stands for nothing else (Unverified alone does not light Not checked); a tooltip line
   // gives the mark's exact count (data-tip, the same words as its accessible text). Escape puts the line and the light
@@ -7766,7 +7726,7 @@
     // 3. What is in the catalog: the review result, the main sources and the enzyme classes.
     const content = [];
     // Review result: Accepted, Not confirmed, Not checked (Unverified and Not reviewed under it) and Disputed, the words
-    // Browse uses; a donut (the one partition that is a true whole) and its legend table.
+    // Browse uses; one 100% bar (the one partition that is a true whole) above its legend table.
     const fromPaperAccepted = statsCount(overview?.from_paper?.records, counts.verified || 0);
     const noPaperRule = followsReviewRules();
     const notChecked = (counts.unverified || 0) + (counts.mathematically_inferred || 0);
@@ -7803,9 +7763,9 @@
         note: stateDescriptions.disputed },
       ...(otherStatus ? [{ value: "other_status", label: "Other status", part: "neutral", count: otherStatus, note: "Not one of the results above." }] : []),
     ];
-    // The donut's slices are named with the review result's word: "Not checked (Unverified)", as the record says it.
+    // The bar's segments are named with the review result's word: "Not checked (Unverified)", as the record says it.
     const notCheckedGroup = statusItems.find((item) => item.group);
-    const donutParts = statusItems.filter((item) => !item.detail && !item.group).map((item) => ({ part: item.part, key: item.value,
+    const barParts = statusItems.filter((item) => !item.detail && !item.group).map((item) => ({ part: item.part, key: item.value,
       label: item.sub && notCheckedGroup ? `${notCheckedGroup.label} (${item.label})` : item.label, count: item.count }));
     // A row lights its slice: Accepted's parts light Accepted; Not checked lights both of its parts with their rows.
     const groupParts = statusItems.filter((item) => item.sub && !item.detail).map((item) => item.value).join(" ");
@@ -7819,7 +7779,7 @@
     // definition is its title, and the Guide defines them (the caption links there).
     content.push({
       id: "statsStatusTitle", key: "status", className: "stats-status-section", title: "Review result",
-      body: `<div class="stats-donut-layout">${statsDonut(donutParts, total, { title: "Review result of all records" })}${statusTable}</div>`,
+      body: `<div class="stats-status-layout">${statsStatusBar(barParts, total, { title: "Review result of all records" })}${statusTable}</div>`,
       caption: `Each record has exactly one review result (<a class="stats-guide-link" href="${escapeHtml(viewUrl("guide-status").href)}">defined in the Guide</a>).`,
       // Under the review rules the Not reviewed row already names the records without a paper (round 14: say it once).
       after: `${identityOnly && !noPaperRule ? `<p class="stats-note">${formatInteger(identityOnly)} accepted records have no PMID or DOI linked, so their values cannot be traced to a paper.</p>` : ""}
@@ -8229,7 +8189,6 @@
         `<li><a href="#stats-${escapeHtml(entry.key)}"><span class="stats-contents-number" aria-hidden="true">${entry.number}</span> ${escapeHtml(entry.title)}</a></li>`).join("")}</ul>`;
       contentsLine.hidden = false;
     }
-    statsFitDonutTotals($("statsCharts"));
     statsFitValueColumns($("statsCharts"));
     statsFitDatabaseTables($("statsCharts"));
     statsWatchMapDots($("statsCharts"));
@@ -8239,7 +8198,7 @@
       statsRefitOnFonts = true;
       document.fonts.addEventListener("loadingdone", () => {
         const root = $("statsCharts");
-        if (root?.isConnected) { statsFitDonutTotals(root); statsFitValueColumns(root); statsFitDatabaseTables(root); statsPlaceYearLabels(root); }
+        if (root?.isConnected) { statsFitValueColumns(root); statsFitDatabaseTables(root); statsPlaceYearLabels(root); }
       });
     }
     // A window that changes width changes the room of Corrections by cause and database's table (once per page).
@@ -15477,7 +15436,7 @@
       statsNumbersText,
       statsSharesRule,
       statsValueSizer,
-      statsDonut,
+      statsStatusBar,
       statsNiceScale,
       statsMainSources,
       statsClassGrid,
@@ -15510,7 +15469,6 @@
       statsSmoothPath,
       statsSwitchMode,
       statsRangeNumber,
-      statsFitDonutTotals,
       statsFitValueColumns,
       statsOpenMethodForPrint,
       statsCloseMethodAfterPrint,

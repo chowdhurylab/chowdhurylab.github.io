@@ -1903,17 +1903,18 @@ function row(overrides = {}) {
   // no heading of its own.
   assert.match(element("statsCharts").innerHTML, /<details class="stats-supp-item" id="stats-table-s1" data-supp="contents">\s*<summary><h4 id="statsContentsTitle" class="stats-supp-title"><span class="stats-supp-number">Table S1<\/span> <span class="stats-supp-name">What the records contain<\/span><\/h4><\/summary>\s*<div class="stats-supp-body"><section class="stats-section stats-figure-section" aria-labelledby="statsContentsTitle" data-figure="contents">\s*<figure/);
   assert.doesNotMatch(element("statsCharts").innerHTML, /<details class="stats-supp-item"[^>]* open/);
-  // The review result is a donut (the one partition that is a true whole) beside its legend table; Accepted is split in
-  // the rows under it.
-  assert.match(element("statsCharts").innerHTML, /<svg class="stats-donut" viewBox="0 0 200 200" role="img" aria-label="Review result of all records: 6 records\. Accepted 3 \(50\.0%\); Not confirmed 1 \(16\.7%\); Not checked \(Unverified\) 1 \(16\.7%\); Disputed 1 \(16\.7%\)\."/);
-  // Each slice has one fill (its colour at 60%, from the stylesheet), no gradient, and lights with its table row.
-  assert.match(element("statsCharts").innerHTML, /<path class="stats-part-unverified" d="[^"]+" data-hl="unverified" data-tip="Not checked \(Unverified\): 1 \(16\.7%\)"><\/path>/);
+  // The review result is one 100% bar (the one partition that is a true whole) over its legend table (fix pass after
+  // round 16b: a donut with the total in its hole); Accepted is split in the rows under it.
+  assert.match(element("statsCharts").innerHTML, /<div class="stats-status-layout"><div class="stats-track stats-status-bar" role="img" aria-label="Review result of all records: 6 records\. Accepted 3 \(50\.0%\); Not confirmed 1 \(16\.7%\); Not checked \(Unverified\) 1 \(16\.7%\); Disputed 1 \(16\.7%\)\.">/);
+  // Each segment has one fill (its colour at 60%, from the stylesheet), no gradient, and lights with its table row.
+  assert.match(element("statsCharts").innerHTML, /<span class="stats-seg stats-part-unverified" style="left:66\.6667%;width:16\.6667%" data-hl="unverified" data-tip="Not checked \(Unverified\): 1 \(16\.7%\)"><\/span>/);
+  assert.doesNotMatch(element("statsCharts").innerHTML, /stats-donut/);
   assert.doesNotMatch(element("statsCharts").innerHTML, /radialGradient|statsDonutFill/);
   assert.match(element("statsCharts").innerHTML, /data-stat-key="unverified" data-count="1" data-hl="unverified"/);
   // Not checked stands for both of its parts: pointing at it lights the Unverified and Not reviewed slices and rows.
   assert.match(element("statsCharts").innerHTML, /<tr class="stats-row-group" data-stat-key="not_verified" data-count="1" data-hl="unverified mathematically_inferred" title="No review result\.">/);
   assert.match(element("statsCharts").innerHTML, /data-part="accepted_printed" data-count="2" data-hl="accepted"/, "Accepted's parts light Accepted");
-  assert.equal((element("statsCharts").innerHTML.match(/<path class="stats-part-/g) || []).length, 4, "One slice per review result with records");
+  assert.equal((element("statsCharts").innerHTML.match(/stats-status-bar[\s\S]*?<\/div>/)[0].match(/<span class="stats-seg stats-part-/g) || []).length, 4, "One segment per review result with records");
   assert.match(element("statsCharts").innerHTML, /data-part="accepted_printed" data-count="2"[\s\S]*?As printed/);
   assert.doesNotMatch(element("statsCharts").innerHTML, /Agreement with human reviewers|stats-lead/, "No lead without agreement counts");
   assert.equal(element("statsScope").textContent, "All 6 records in this snapshot. Select a name to see those records in Browse.");
@@ -2942,18 +2943,6 @@ function row(overrides = {}) {
     // Medians rounded for a column: 7 → 7.0, 12.8 → 13, 0.0573 → 0.057, 1,234 → 1,200; unrounded as before.
     assert.deepEqual([7, 12.8, 0.0573, 1234, 370].map((value) => api.statsRangeNumber(value, { figures: 2 })), ["7.0", "13", "0.057", "1,200", "370"]);
     assert.equal(api.statsRangeNumber(0.0573), "0.0573");
-    // The donut's centre total is set smaller only when it is wider than the hole's room (data-room, px).
-    const fitted = new Map();
-    const total = { getAttribute: (name) => (name === "data-room" ? "104" : null), getComputedTextLength: () => 130,
-      style: { removeProperty: (name) => fitted.delete(name), set fontSize(value) { fitted.set("font-size", value); } } };
-    window.getComputedStyle = () => ({ fontSize: "24px" });
-    api.statsFitDonutTotals({ querySelectorAll: () => [total] });
-    assert.equal(fitted.get("font-size"), "19.2px");
-    total.getComputedTextLength = () => 90;
-    api.statsFitDonutTotals({ querySelectorAll: () => [total] });
-    assert.ok(!fitted.has("font-size"));
-    delete window.getComputedStyle;
-    assert.match(element("statsCharts").innerHTML, /<text class="stats-donut-total" x="100" y="100" data-room="104">/);
     const path = api.statsSmoothPath([[0, 40], [10, 40], [20, 4], [30, 39], [40, 40], [100, 40]]);
     const ys = [...path.matchAll(/-?[\d.]+ (-?[\d.]+)/g)].map((match) => Number(match[1]));
     assert.ok(ys.length > 6 && ys.every((y) => y >= 4 - 1e-9 && y <= 40 + 1e-9), path);
@@ -3466,11 +3455,10 @@ function row(overrides = {}) {
   assert.equal(JSON.stringify(api.statsNiceScale(81355)), JSON.stringify({ max: 90000, step: 30000 }));
   assert.equal(JSON.stringify(api.statsNiceScale(59012)), JSON.stringify({ max: 60000, step: 20000 }));
   assert.equal(JSON.stringify(api.statsNiceScale(7)), JSON.stringify({ max: 8, step: 2 }));
-  // A donut of one part is a whole ring (two half arcs), with no gap lines.
-  const ring = api.statsDonut([{ part: "accepted", label: "Accepted", count: 4 }], 4, { title: "Test" });
-  assert.equal((ring.match(/A88 88/g) || []).length, 2);
-  assert.doesNotMatch(ring, /stats-donut-gap/);
-  assert.doesNotMatch(ring, /NaN/);
+  // A bar of one part is one whole segment, rounded at both ends.
+  const ring = api.statsStatusBar([{ part: "accepted", label: "Accepted", count: 4 }, { part: "pending", label: "Not confirmed", count: 0 }], 4, { title: "Test" });
+  assert.match(ring, /<span class="stats-seg stats-part-accepted is-start is-end" style="left:0%;width:100%" data-tip="Accepted: 4 \(100\.0%\)"><\/span><\/div>$/);
+  assert.doesNotMatch(ring, /NaN|stats-part-pending/);
   assert.equal(api.statsShare(8, 156431), "<0.1%", "A real nonzero outcome must never look like zero");
   assert.equal(api.statsShare(0, 156431), "0.0%");
   assert.equal(api.statsShare(0, 0), "—");

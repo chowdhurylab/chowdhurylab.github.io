@@ -1858,7 +1858,7 @@ STATS_DIMMED_JS = """
     const figure = document.querySelector(`[data-figure="${arguments[0]}"] .stats-fig`);
     const shown = (node) => { let o = 1; for (let n = node; n && n !== figure.parentElement; n = n.parentElement) o *= +getComputedStyle(n).opacity; return o; };
     const rest = [...figure.querySelectorAll('[data-hl]:not(.is-active)')];
-    const marks = rest.flatMap((row) => row.matches('path') ? [row] : [...row.querySelectorAll('.stats-seg, .stats-ridge-svg')]);
+    const marks = rest.flatMap((row) => row.matches('path, .stats-seg') ? [row] : [...row.querySelectorAll('.stats-seg, .stats-ridge-svg')]);
     const texts = rest.flatMap((row) => [...row.querySelectorAll('*')]).filter((node) => [...node.childNodes].some((child) => child.nodeType === 3 && child.textContent.trim()));
     return {marks: Math.max(0, ...marks.map(shown)), text: Math.min(1, ...texts.map(shown))};
 """
@@ -2121,8 +2121,8 @@ def check_stats_more(driver, browser, overview, total):
     assert not driver.find_elements(By.CSS_SELECTOR, "#statsCharts .stats-fig-data")
     if browser != "chrome":
         return
-    # Pointing at the Not confirmed slice lights it and its table row, dims the rest and gives its exact count.
-    slice_ = driver.find_elements(By.CSS_SELECTOR, ".stats-donut path[data-hl='manual_review_required']")
+    # Pointing at the Not confirmed segment lights it and its table row, dims the rest and gives its exact count.
+    slice_ = driver.find_elements(By.CSS_SELECTOR, ".stats-status-bar .stats-seg[data-hl='manual_review_required']")
     if slice_:
         driver.execute_script("arguments[0].scrollIntoView({block: 'center'})", slice_[0])
         box = driver.execute_script("const r = arguments[0].getBoundingClientRect(); return [r.left + r.width * 0.3, r.top + r.height * 0.6]", slice_[0])
@@ -2133,7 +2133,7 @@ def check_stats_more(driver, browser, overview, total):
         pending = int(driver.find_element(By.CSS_SELECTOR, ".stats-status-section tr[data-stat-key='manual_review_required']").get_attribute("data-count"))
         assert tip.startswith(f"Not confirmed: {pending:,} ("), tip
         lit = driver.execute_script("return [...document.querySelectorAll('[data-figure=\"status\"] .is-active')].map(e => e.tagName.toLowerCase())")
-        assert sorted(lit) == ["path", "tr"], lit
+        assert sorted(lit) == ["span", "tr"], lit
         assert driver.execute_script("return document.querySelector('[data-figure=\"status\"] .stats-fig').classList.contains('has-active')")
         # Only the other marks dim: the legend table's names and counts keep full ink.
         WebDriverWait(driver, 5).until(lambda d: d.execute_script(STATS_DIMMED_JS, "status")["marks"] < 0.5)
@@ -2334,7 +2334,7 @@ WIDE_FONT_JS = """
 def check_stats_new_figures(driver, browser, url):
     """Chrome: with a newer overview's counts (MORE_FIXTURE_JS) Stats draws the added figures in order and they add up
     (check_stats_more) at 1440 and 375px; the motion respects a reduced-motion setting, print drops every glow, and a
-    wide fallback font keeps the donut's total and every value label inside their figures."""
+    wide fallback font keeps every value label inside its figure."""
     if browser != "chrome":
         return {"route": "stats-new-figures", "skipped": "Chrome only"}
     wait = WebDriverWait(driver, 60, ignored_exceptions=(StaleElementReferenceException,))
@@ -2406,19 +2406,18 @@ def check_stats_new_figures(driver, browser, url):
             const second = fill('.stats-swatch.stats-part-corrects-2'), unchecked = fill('.stats-seg.stats-part-not-checked, .stats-seg.stats-part-unverified');
             return {de: pending && corrects ? de(pending.backgroundColor, corrects.backgroundColor) : null,
                     second: second && second.backgroundImage, unchecked: unchecked && unchecked.backgroundImage,
-                    donut: [...document.querySelectorAll('.stats-donut path.stats-part-unverified, .stats-donut path.stats-part-not-reviewed')].map(e => getComputedStyle(e).fill)};
+                    bar: [...document.querySelectorAll('.stats-status-bar .stats-seg:is(.stats-part-unverified, .stats-part-not-reviewed)')].map(e => getComputedStyle(e).backgroundImage)};
         """)
         assert fills["de"] is None or fills["de"] > 20, fills
         assert all(value is None or value.startswith("repeating-linear-gradient") for value in (fills["second"], fills["unchecked"])), fills
-        assert all("statsHatchNotChecked" in value for value in fills["donut"]), fills
+        assert all(value.startswith("repeating-linear-gradient") for value in fills["bar"]), fills
         driver.execute_cdp_cmd("Emulation.setEmulatedMedia", {"media": "print"})
         assert driver.execute_script(glow) is False
         driver.execute_cdp_cmd("Emulation.setEmulatedMedia", {"media": "", "features": [{"name": "prefers-reduced-motion", "value": "reduce"}]})
         assert driver.execute_script("return getComputedStyle(document.querySelector('.stats-seg')).transitionDuration") in ("0s", "")
         driver.execute_cdp_cmd("Emulation.setEmulatedMedia", {"media": "", "features": []})
         assert driver.execute_script("return getComputedStyle(document.querySelector('.stats-seg')).transitionDuration") != "0s"
-        # A wide fallback font from the start (Verdana, letter-spacing 0.5px): the donut's total is set smaller to stay
-        # inside its hole, and every value label stays inside its figure.
+        # A wide fallback font from the start (Verdana, letter-spacing 0.5px): every value label stays inside its figure.
         wide = driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {"source": WIDE_FONT_JS})
         try:
             driver.execute_cdp_cmd("Emulation.setDeviceMetricsOverride", {"width": 1280, "height": 900, "deviceScaleFactor": 1, "mobile": False})
@@ -2426,11 +2425,11 @@ def check_stats_new_figures(driver, browser, url):
             driver.get(url.replace("catlog-latest.html", "catlog-stats.html"))
             wait.until(lambda d: d.find_elements(By.ID, "statsClassValuesTitle"))
             open_stats_supplement(driver)
-            fit = driver.execute_script("""const t = document.querySelector('.stats-donut-total');
-                return {family: getComputedStyle(t).fontFamily, width: t.getComputedTextLength(), room: Number(t.getAttribute('data-room')),
+            fit = driver.execute_script("""const t = document.querySelector('.stats-status-table th');
+                return {family: getComputedStyle(t).fontFamily,
                         spill: [...document.querySelectorAll('.stats-chart-value, .stats-ridge-value, .stats-ridge-n')].filter(v =>
                           v.getBoundingClientRect().right > v.closest('.stats-section').getBoundingClientRect().right + 1).map(v => v.innerText)};""")
-            assert "Verdana" in fit["family"] and fit["width"] <= fit["room"] + 0.5 and not fit["spill"], fit
+            assert "Verdana" in fit["family"] and not fit["spill"], fit
             ragged = driver.execute_script(STATS_VALUE_COLUMNS_JS)
             assert not ragged, f"Value labels do not line up in a wide font: {ragged}"
             # No two labels on a bar chart's axis touch in the wide font, on a 320px phone, at 660px (where Figure 5's
@@ -6172,14 +6171,14 @@ def check(driver, browser, url):
     detail_rows = {row.get_attribute("data-part"): int(row.get_attribute("data-count"))
                    for row in driver.find_elements(By.CSS_SELECTOR, ".stats-status-section tr[data-part]")}
     assert sum(detail_rows.values()) == accepted, f"Accepted's parts add up to Accepted: {detail_rows}"
-    # The donut: one slice per review result with records, in the snapshot's numbers.
-    donut = driver.find_element(By.CSS_SELECTOR, ".stats-status-section svg.stats-donut")
+    # The bar: one segment per review result with records, in the snapshot's numbers (fix pass after round 16b: no donut).
+    donut = driver.find_element(By.CSS_SELECTOR, ".stats-status-section .stats-status-bar")
     assert donut.get_attribute("role") == "img" and f"{total:,} records" in donut.get_attribute("aria-label")
-    # Its slices say the review result's word, as the record does: Not checked (Unverified), Not checked (Not reviewed).
+    # Its segments say the review result's word, as the record does: Not checked (Unverified), Not checked (Not reviewed).
     for key, word in (("unverified", "Unverified"), ("mathematically_inferred", "Not reviewed")):
         if expected.get(key, 0):
             assert f"Not checked ({word}) {expected[key]:,}" in donut.get_attribute("aria-label"), donut.get_attribute("aria-label")
-    assert len(donut.find_elements(By.CSS_SELECTOR, "path")) == sum(1 for key in ("manual_review_required", "unverified",
+    assert len(donut.find_elements(By.CSS_SELECTOR, ".stats-seg")) == sum(1 for key in ("manual_review_required", "unverified",
         "mathematically_inferred", "disputed") if expected.get(key, 0)) + bool(accepted)
     if overview:
         # Accepted splits into the records read from the paper by CatLog and those not yet re-read.
@@ -6569,14 +6568,14 @@ def check(driver, browser, url):
     first_figures = """
         const box = (selector) => document.querySelector(selector).getBoundingClientRect();
         const charts = box('#statsCharts'), status = box('.stats-status-section'), sources = box('.stats-sources-section');
-        const donut = box('.stats-status-section .stats-donut'), table = box('.stats-status-table');
+        const bar = box('.stats-status-section .stats-status-bar'), table = box('.stats-status-table');
         return {wide: Math.abs(status.width - charts.width) <= 1 && Math.abs(sources.width - charts.width) <= 1 && sources.top >= status.bottom,
                 paired: Math.abs(status.top - sources.top) <= 1 && sources.left >= status.right,
-                beside: table.left >= donut.right && Math.abs(table.top - donut.top) <= 1, donut: [donut.width, donut.height]};
+                over: bar.bottom <= table.top && Math.abs(bar.left - table.left) <= 1 && Math.abs(bar.width - table.width) <= 1, bar: [bar.width, bar.height]};
     """
-    # 1024-1279px: Figure 1 takes the row (its legend table beside the 200px donut) and Figure 2 the next one.
+    # 1024-1279px: Figure 1 takes the row (its bar over its legend table) and Figure 2 the next one.
     layout = driver.execute_script(first_figures)
-    assert layout["wide"] and layout["beside"] and all(abs(size - 200) <= 0.5 for size in layout["donut"]), f"Figures 1 and 2 at 1080px: {layout}"
+    assert layout["wide"] and layout["over"] and layout["bar"][1] >= 16, f"Figures 1 and 2 at 1080px: {layout}"
     if browser == "chrome":
         # The key numbers grow with the window, from the phones' 28px to 40px at 1200px: never smaller on a wider window,
         # no jump where the layout changes (720/721, 1023/1024, 1199/1200), and each number inside its item.
