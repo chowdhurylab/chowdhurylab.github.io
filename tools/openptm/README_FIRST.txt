@@ -1,7 +1,7 @@
 openPTM
 
 Website: https://chowdhurylab.github.io/tools/openptm/
-Release: 2026-10-21
+Release: 2026-10-22
 
 Browse measurements, statistics, PTM families, sites, disease studies and the guide. The page contains its data,
 styles and scripts; it does not need external fonts or JavaScript libraries.
@@ -64,6 +64,28 @@ overlap and must not be summed as unique biological sites. The 111 families
 are a defined working set, not a universal count of all PTMs. Paper comparisons
 are selected examples, not a systematic review. Upper bounds, uncertainty,
 study conditions and source links are retained in the record details.
+
+Paper reading, round 40
+- Three papers new to this reading record received selected relevant reads
+  on GABARAP processing, UbaA auto-SAMPylation and yeast Urm1 conjugation.
+  These searches cover families outside round 39's original readings.
+- The GABARAP study prints receptor-current differences for WT and a
+  processing-site variant, but does not directly establish PE conjugation
+  in those functional preparations. The measurements remain on HOLD.
+- UbaA auto-SAMPylation is chemically supported. Its numerical affinities
+  compare nucleotide conditions, while the proposed effects of conjugation
+  are inferred from residue function. The yeast study leaves the conjugated
+  protein targets unidentified. Neither supplies a numerical target-state pair.
+- A newly read droplet commentary points to a primary paper already covered
+  in round 30 and receives no new-primary credit. Two new access-only leads,
+  one new metadata-only lead and prior-identity screens are counted separately.
+- No numerical additions qualified. Data remain 253 comparisons, 307 entries,
+  92 papers and 87/111 numerical families; 24 gaps remain in this selection.
+  Independent source and custody checks passed. Existing data and interface
+  are unchanged. One reused helper and bounded reads; no PDF rendering.
+  Sources: https://doi.org/10.1523/JNEUROSCI.0919-07.2007
+           https://doi.org/10.1111/febs.13819
+           https://doi.org/10.1091/mbc.e03-02-0079
 
 Paper reading, round 39
 - Four papers new to this reading record received selected relevant reads
