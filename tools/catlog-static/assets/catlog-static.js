@@ -5040,8 +5040,9 @@
   // last_year), BRENDA's numeric kcat, Km and kcat/Km entries in its release (fixed until the next release) and CatLog's
   // values read from the paper (every catalog row in the site's units, so its total is the Full data download's), each
   // paper dated by PubMed, a paper without a PubMed ID by BRENDA's reference year on both sides. A line per
-  // source with a dot per year: CatLog in Read from the paper's cyan, BRENDA in the grey of a count with no meaning colour
-  // (a database's own hue would give a colour a second meaning beside CatLog's cyan: DESIGN.md, "Type And Color"); the
+  // source with a dot per year: CatLog in Read from the paper's cyan, BRENDA in the dark grey of secondary text, which has
+  // no data meaning and is much darker than CatLog's line, so the two stay apart in greyscale where they cross (a
+  // database's own hue would give a colour a second meaning beside CatLog's cyan: DESIGN.md, "Type And Color"); the
   // years BRENDA is still adding papers from (shaded_from on, else STATS_YEARS_SHADED_FROM) on a plain grey band with open
   // dots; direct labels on the lines and BRENDA's highest year and its last year before the band labelled with their
   // counts (statsPlaceYearLabels); CatLog's total above the plot. CatLog's values from papers before first_year (when the

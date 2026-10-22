@@ -1650,7 +1650,9 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-years-label { position:absolute; z-index:4; visibility:hidden; color:var(--years-ink); white-space:nowrap; pointer-events:none }
 .stats-years-label.is-placed { visibility:visible }
 .stats-years-name { font-size:var(--fs-13); font-weight:600; line-height:var(--lh-13) }
-:is(.stats-years-line, .stats-years-dot, .stats-years-label, .stats-years-key-line).is-brenda { --years-line:var(--bar-neutral); --years-fill:var(--bar-neutral); --years-ink:var(--muted) }
+/* BRENDA in the dark grey of secondary text (no data meaning), not --bar-neutral: that grey has CatLog's line's lightness
+   (1.07:1), so in print or greyscale the two lines were one grey where they cross (round 16 review); this one is 2.4:1 */
+:is(.stats-years-line, .stats-years-dot, .stats-years-label, .stats-years-key-line).is-brenda { --years-line:var(--text-2); --years-fill:var(--text-2); --years-ink:var(--text-2) }
 :is(.stats-years-line, .stats-years-dot, .stats-years-label, .stats-years-key-line).is-catlog { --years-line:var(--src-paper-line); --years-fill:var(--src-paper); --years-ink:var(--src-paper-ink) }
 /* Variants against their wild type: three histograms like Value ranges, a dashed line at the wild type (its name above
    the bars, clear of the peak beside it). */

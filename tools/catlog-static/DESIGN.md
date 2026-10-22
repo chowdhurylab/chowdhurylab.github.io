@@ -567,8 +567,10 @@ colour itself goes on the mark beside the words.
 
 Not BPG, and carrying no data meaning: the ink and greys (--text, --text-2, --muted, --line; --bar-neutral #7d8885 for a
 count with no meaning colour: the value ranges of all records, the tables of all records, No cautions, Other status,
-Corrected earlier, a chip naming several results, BRENDA's dots and line in CatLog and BRENDA by publication year, its words
---muted; --plot-band #eef1f0 for that figure's grey band of years), and the accent for what a visitor picks or can act on (links,
+Corrected earlier, a chip naming several results; --plot-band #eef1f0 for CatLog and BRENDA by publication year's grey
+band of years, and --text-2 #3d4845, the grey of secondary text, for BRENDA's dots, line and words there: --bar-neutral has
+CatLog's line's lightness (1.07:1), so in print or greyscale the two lines were one grey where they cross (round 16
+review); --text-2 stands 2.4:1 from it, the approved figure's dark line beside a light one), and the accent for what a visitor picks or can act on (links,
 buttons, the focus ring, the selected row, the current tab) and for the filters with no meaning colour (Not yet re-read,
 a source database, the enzyme fields, the measurement). Round 14 moved the accent from teal #245f58 to ink #172120: the
 teal, Human-checked's green and Read from the paper's dark cyan sat side by side in the counts band as one teal family,
@@ -590,8 +592,8 @@ the category's name or number, so the hue names the category alone there.
   Part 7's figures and tables, the record's comparison, the Source database filter), so there the names tell them
   apart and a hue per database would give a colour a second meaning in the same view. CatLog and BRENDA by publication
   year (round 16) is not one: CatLog's cyan stands beside BRENDA there, and --db-brenda's navy is Accepted's on the same
-  page, so BRENDA's line is --bar-neutral's grey (a count with no meaning colour), as the approved figure's navy could
-  not be.
+  page, so BRENDA's line is --text-2's dark grey (no data meaning; darker than CatLog's line, as the approved figure's
+  navy was), as the approved figure's navy could not be.
 Table numbers share regular weight; enzyme names use medium weight. Reserve
 semibold for counts, section headings, and the selected record's main values. Numeric
 headers and values align right. Names wrap to two lines; the full name is on
@@ -1485,8 +1487,8 @@ Generated mockups guide layout only; their text is not a scientific source.
   ("BRENDA 2026.1", "CatLog, read so far"), no legend box; BRENDA's highest year and its last year before the band
   labelled with their counts; "CatLog on Oct 21, 2026: 217,969 values from 6,116 papers" above the plot; kcat and Km
   italic with subscripts in the axis title; the comparison ends at last_year, and CatLog's values from papers published
-  after it are in the caption, not drawn. The site's own look: CatLog in Read from the paper's cyan, BRENDA in grey (Type
-  And Color), light gridlines, the counts in full ("15,000", not thousands), ticks every 5 years.
+  after it are in the caption, not drawn. The site's own look: CatLog in Read from the paper's cyan, BRENDA in dark grey
+  (--text-2, Type And Color), light gridlines, the counts in full ("15,000", not thousands), ticks every 5 years.
 - One sentence of caption: the band and CatLog's values outside the years drawn, so the lines and the caption add up to
   the note above the plot ("BRENDA is still adding papers from the shaded years (2020 on); CatLog also has 33,203 values
   from 956 papers published before 2000 and 9,086 from 349 papers published after 2025."); the counting rules (PubMed

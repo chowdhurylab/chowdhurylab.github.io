@@ -2430,6 +2430,7 @@ return {problems, labelled: figure.classList.contains('is-labelled'), keyShown: 
   columnWidths: [...section.querySelectorAll('.stats-years-col')].map((col) => Math.round(col.getBoundingClientRect().width * 10) / 10),
   plotWidth: frame.width, bandLeft: band ? box(band).l : null,
   contrast: strokes.map((stroke) => [contrast(stroke, [255, 255, 255]), contrast(stroke, bandColour)]),
+  between: strokes.length === 2 ? contrast(strokes[0], strokes[1]) : 0,
   note: section.querySelector('.stats-years-note').textContent, caption: section.querySelector('.stats-fig-caption').textContent,
   aria: plot.getAttribute('role') === 'img' ? plot.getAttribute('aria-label') : '', order,
   overflow: document.documentElement.scrollWidth > innerWidth + 1 || (v => v.scrollWidth > v.clientWidth + 1)(document.getElementById('statsView')),
@@ -2543,6 +2544,8 @@ def check_stats_years(driver, browser, url):
                                             f"paper{'' if item['catlog_papers'] == 1 else 's'}" for item in years], facts["columns"][:2]
                 assert max(facts["columnWidths"]) - min(facts["columnWidths"]) <= 1 and abs(sum(facts["columnWidths"]) - facts["plotWidth"]) <= 2, facts["columnWidths"]
                 assert all(on_white >= 3 and on_band >= 3 for on_white, on_band in facts["contrast"]), facts["contrast"]
+                # the two lines differ in lightness too, so they stay apart in print and greyscale where they cross
+                assert facts["between"] >= 2, facts["between"]
                 assert facts["keyShown"] != facts["labelled"], facts
                 assert not facts["labelled"] or set(facts["names"]) <= set(facts["placed"]), facts
                 assert facts["lastTick"] and not facts["overflow"], f"{name} overflows at {width}px"
