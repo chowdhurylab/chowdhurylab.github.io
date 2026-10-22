@@ -6322,13 +6322,29 @@
   // drew as a full bar). Round 16b: the audit's share with its 95% interval and the two papers most of its wrong
   // values sit in; human-checked records with their values beside them (one record holds up to three values); the
   // papers read or checked with database values in view, under the table (statsExposureText).
-  function statsChecksHtml({ fromPaper, papersRead, audit, humanChecked, humanValues = null, marked, compared, exposure = "" }) {
+  // What the second AI check found of the values read from the paper (overview.from_paper.values and checks, counted at
+  // stage time from each value's proof line; fix pass after round 16b: the row had given its method, "Every value
+  // compared with the paper", where the others give a result); null when the counts do not add up.
+  function secondCheckFacts(fromPaperOverview) {
+    const values = statsCount(fromPaperOverview?.values);
+    const checks = fromPaperOverview?.checks;
+    if (!values || !checks || typeof checks !== "object") return null;
+    const [confirmed, corrected, other] = ["confirmed", "corrected", "other"].map((key) => statsCount(checks[key] ?? 0, values));
+    if ([confirmed, corrected, other].includes(null) || confirmed + corrected + other !== values) return null;
+    return { values, confirmed, corrected, other };
+  }
+
+  function statsChecksHtml({ fromPaper, papersRead, audit, humanChecked, humanValues = null, marked, compared, exposure = "", secondCheck = null }) {
     const auditShare = audit?.wrong ? `${qualityShare(audit.wrong, audit.values)}${audit.ci ? `; 95% interval ${audit.ci[0]}–${audit.ci[1]}%` : ""}` : "";
     const auditPapers = audit?.top2 ? ` ${formatInteger(audit.top2)} of the ${formatInteger(audit.wrong)} are in two papers.` : "";
     const rows = [
       fromPaper ? { key: "second_check", name: "Second AI check",
-        covered: `<a class="stats-link" href="${escapeHtml(statsBrowseHref({ source: "paper" }))}">${formatInteger(fromPaper)}</a> records${papersRead !== null ? ` from ${formatInteger(papersRead)} papers` : ""}`,
-        result: "Every value compared with the paper" } : null,
+        covered: secondCheck
+          ? `${formatInteger(secondCheck.values)} values in <a class="stats-link" href="${escapeHtml(statsBrowseHref({ source: "paper" }))}">${formatInteger(fromPaper)}</a> records${papersRead !== null ? ` (${formatInteger(papersRead)} papers)` : ""}`
+          : `<a class="stats-link" href="${escapeHtml(statsBrowseHref({ source: "paper" }))}">${formatInteger(fromPaper)}</a> records${papersRead !== null ? ` from ${formatInteger(papersRead)} papers` : ""}`,
+        result: secondCheck
+          ? `${formatInteger(secondCheck.confirmed)} values confirmed, ${formatInteger(secondCheck.corrected)} corrected (${qualityShare(secondCheck.corrected, secondCheck.values)})${secondCheck.other ? `, ${formatInteger(secondCheck.other)} with no result recorded` : ""}; values it rejected are left out`
+          : "Every value compared with the paper" } : null,
       audit ? { key: "audit", name: "AI audits", covered: `${formatInteger(audit.values)} values`,
         result: `${audit.wrong ? `${formatInteger(audit.values - audit.wrong)} kept, ${formatInteger(audit.wrong)} removed as wrong (${auditShare})` : "None was wrong"}${audit.date ? `, as of ${audit.date}` : ""}${audit.wrong && auditPapers ? `.${auditPapers}` : ""}` } : null,
       compared ? { key: "review", name: "Human review", covered: `${formatInteger(compared.values)} values${compared.papers ? ` on ${formatInteger(compared.papers)} ${compared.papers === 1 ? "paper" : "papers"}` : ""}`,
@@ -7680,7 +7696,7 @@
       ? { values: reviewedValues, wrong: comparedWrong, labels: labelErrors, papers: statsCount(quality.compared_papers_v1) } : null;
     const humanValues = humanChecked !== null ? statsCount(overview?.human_checked_values) : null;
     const checksHtml = statsChecksHtml({ fromPaper, papersRead, audit, humanChecked, humanValues, marked, compared,
-      exposure: statsExposureText(quality) });
+      exposure: statsExposureText(quality), secondCheck: secondCheckFacts(overview?.from_paper) });
     const errorsHtml = checksHtml ? statsErrorsHtml(quality) : "";
     const quality_ = [reviewHtml, checksHtml, errorsHtml].filter(Boolean).map((html) => ({ html }));
     if (checksHtml && !reviewHtml) {
@@ -15425,6 +15441,7 @@
       statsExposureText,
       auditFacts,
       reviewGlanceText,
+      secondCheckFacts,
       substrateStarts,
       substrateHasStart,
       wordMatches,

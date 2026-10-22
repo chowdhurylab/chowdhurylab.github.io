@@ -2108,6 +2108,11 @@ function row(overrides = {}) {
       exposure: api.statsExposureText({ exposed: { papers: 309, reader: 173, checker_only: 136, first: "2026-10-09", last: "2026-10-21", reread_blind: 303, reread_blind_on: "2026-10-21", reread_blind_done: 0 } }) }));
     assert.match(checks, /6,577 kept, 74 removed as wrong \(1\.1%; 95% interval 0\.89–1\.39%\), as of Oct 21, 2026\. 50 of the 74 are in two papers\./);
     assert.match(checks, /2,005 records with a reviewer’s verdict 1,721 \(85\.8%\) accepted with every value approved \(3,486 values\)/);
+    // The second AI check's result from each value's proof line (fix pass after round 16b), not its method.
+    const second = api.secondCheckFacts({ records: 75000, papers: 4324, values: 169901, checks: { confirmed: 163908, corrected: 5993, other: 0 } });
+    assert.match(plainText(api.statsChecksHtml({ fromPaper: 75000, papersRead: 4324, audit: null, humanChecked: null, marked: null, compared: null, secondCheck: second })),
+      /Second AI check ?169,901 values in 75,000 records \(4,324 papers\) 163,908 values confirmed, 5,993 corrected \(3\.5%\); values it rejected are left out/);
+    assert.equal(api.secondCheckFacts({ values: 10, checks: { confirmed: 8, corrected: 1 } }), null, "Parts that miss the values say nothing");
     // How the counts relate (fix pass after round 16b): the records left out, and what the review and the match count.
     assert.equal(api.statsHumanCheckedBridge(1721, 2005, {}, {}), " Of the 2,005 records with a reviewer’s verdict, the other 284 have a value not approved or are not accepted. The human review counts entries, earlier records as reviewers saw them, with no value disputed, and Approved values read from the paper again counts approved values one by one, also on a record with another value not approved; a record counts here only when every value it shows was approved.");
     assert.equal(api.statsHumanCheckedBridge(1721, null, {}, {}), "");

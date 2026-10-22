@@ -587,6 +587,11 @@ class OverviewTests(unittest.TestCase):
         self.assertEqual(overview["from_paper_parameters"],
                          {"papers": 3, "kcat": 2, "km": 3, "kcat_km": 2, "kcat_over_km": 1, "all": 1})
         self.assertEqual(overview["from_paper_parameters"]["papers"], overview["from_paper"]["papers"])
+        # What the second AI check found of each value read from the paper (its proof line's check; the record not read
+        # from the paper never counts): no check recorded is neither confirmed nor corrected.
+        self.assertEqual((overview["from_paper"]["values"], overview["from_paper"]["checks"]),
+                         (9, {"confirmed": 0, "corrected": 0, "other": 9}))
+        self.assertEqual([followup.check_result(word) for word in ("confirmed", "Corrected: unit", None)], ["confirmed", "corrected", "other"])
         insights = overview["from_paper_insights"]
         self.assertEqual(insights["variant_kinds"], {"records": 6, "kinds": {
             "substitution": 3, "multi_substitution": 1, "deletion": 1, "insertion": 0, "truncation": 0, "other": 1}})

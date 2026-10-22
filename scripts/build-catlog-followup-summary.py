@@ -1218,6 +1218,13 @@ class WildTypeInsights:
         return {key: value for key, value in found.items() if value}
 
 
+def check_result(check):
+    """A proof line's check in one word: confirmed, corrected (the second AI check changed what the reader gave), or other
+    (anything else, kept apart so the two counts never take it in)."""
+    word = str(check or "").strip().lower()
+    return "confirmed" if word.startswith("confirmed") else "corrected" if word.startswith("corrected") else "other"
+
+
 def summarize_overview(rows, marks=None):
     statuses = Counter()
     papers, v2_papers = set(), set()
@@ -1246,6 +1253,7 @@ def summarize_overview(rows, marks=None):
     v2_database = defaultdict(Counter)
     v2_parameters, v2_kinds, v2_substitutions, v2_units = defaultdict(set), Counter(), {}, defaultdict(Counter)
     factor_only = {"values": 0, "by_parameter": Counter(), "by_database": Counter()}
+    v2_checks = Counter()
     wild_insights = WildTypeInsights()
     for row in rows:
         add_factor_only(factor_only, row)
@@ -1348,13 +1356,18 @@ def summarize_overview(rows, marks=None):
                 metric = PRINTED_METRICS.get(str(line.get("metric") or "")) if isinstance(line, dict) else None
                 if metric:
                     v2_units[metric][printed_unit(metric, line.get("raw_unit"))] += 1
+                    # what the second AI check found of each value (the proof line's check: "confirmed" or "corrected"),
+                    # said as the Second AI check's result on Stats (fix pass after round 16b)
+                    v2_checks[check_result(line.get("check"))] += 1
     total = sum(statuses.values())
     overview = {
         "records": total,
         "accepted": statuses["verified"] + statuses["corrected"],
         "accepted_as_reported": statuses["verified"],
         "corrected": statuses["corrected"],
-        "from_paper": {"records": v2_records, "papers": len(v2_papers)},
+        "from_paper": {"records": v2_records, "papers": len(v2_papers),
+                       **({"values": sum(v2_checks.values()), "checks": {key: v2_checks[key] for key in ("confirmed", "corrected", "other")}}
+                          if v2_checks else {})},
         "papers": len(papers),
         "with_paper": with_paper,
         "enzymes": len(names["enzyme_display_name"]),

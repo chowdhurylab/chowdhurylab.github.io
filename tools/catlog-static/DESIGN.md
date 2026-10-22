@@ -1590,3 +1590,7 @@ manifest's database comparison; a field an older snapshot lacks leaves its words
   with reread_blind_read and _verify when catlog-v2 gives them, and "the other 6 have not been sent back") and says that
   their values stay in CatLog and in the comparison meanwhile. The Guide's Read step adds "without seeing what the
   databases list". No Browse filter or record tag marks these papers yet: the data has no per-paper field for it.
+- Checks on the values' Second AI check gives a result as the other rows do: "169,901 values in 75,000 records (4,324
+  papers)" and "163,908 values confirmed, 5,993 corrected (3.5%); values it rejected are left out", from
+  overview.from_paper.values and .checks, which build_overview counts at stage time from each value's proof line
+  (check_result: confirmed, corrected or other); a snapshot without them keeps the method in words.
