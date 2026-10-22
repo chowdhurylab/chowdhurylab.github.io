@@ -1616,3 +1616,5 @@ manifest's database comparison; a field an older snapshot lacks leaves its words
   were): "otherwise the field stays empty (uniprot_candidate_ids lists the candidates)". Sources and licenses says the
   licence once, in its summary line, with the field (source_license). The README's file names for the Data ID check are
   catlog-v2's (site_release.py).
+- Value ranges and Values by enzyme class say in their captions that they count all records, those not yet re-read
+  included (about 45% of the kcat values drawn), as the figures round them count only records read from the paper.

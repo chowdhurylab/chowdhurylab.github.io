@@ -4696,7 +4696,7 @@
     return {
       id: "statsClassValuesTitle", key: "class-values", title: "Values by enzyme class", wide: true,
       body: `<div class="stats-ridge-panels">${panels.join("")}</div>`,
-      caption: "One curve per enzyme class, scaled to its peak, with the median (dot) and middle 80% (line).",
+      caption: "One curve per enzyme class over all records, those not yet re-read included, scaled to its peak, with the median (dot) and middle 80% (line).",
       rules: `${marks ? `${marks} ` : ""}Curves run through ${binWord} bins; n is the class’s number of values. A record in several classes counts in each. The end bins hold every value beyond them, so the curve leaves them out (their counts are in the tooltip). Values without a recorded unit, or in another unit, are left out.`,
     };
   }
@@ -8094,7 +8094,8 @@
       values.push({
         id: "statsRangesTitle", key: "ranges", title: "Value ranges", wide: true,
         body: `<div class="stats-ranges">${ranges.join("")}</div>`,
-        caption: "Values per power of ten, with the median (dot) and the middle 80% (line).",
+        // (fix pass after round 16b: the figures round it are of records read from the paper; this one is not)
+        caption: "Values of all records, those not yet re-read included, per power of ten, with the median (dot) and the middle 80% (line).",
         rules: "The end bars hold every value beyond them. Values without a recorded unit, or in another unit, are left out. Medians have two significant figures.",
       });
     }

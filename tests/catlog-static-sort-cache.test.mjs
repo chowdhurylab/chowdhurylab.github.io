@@ -2849,7 +2849,7 @@ function row(overrides = {}) {
     assert.match(more, /<li class="stats-ridge-row is-few stats-ec-1" data-hl="ec_1" data-class="1" data-count="3" data-tip="EC 1 Oxidoreductases, kcat: 3 values; median 2\.0 s⁻¹; 10–90% 0\.5–9 s⁻¹\. The link lists every EC 1 record with a kcat, in any unit\.">/);
     assert.match(more, /<span class="stats-method-title">Values by enzyme class\.<\/span> Hatched stubs mark values beyond the curve\. A dashed curve has fewer than 300 values\. Curves run through half-decade bins; n is the class’s number of values\. A record in several classes counts in each\. The end bins hold every value beyond them, so the curve leaves them out \(their counts are in the tooltip\)\./);
     // One short sentence: what is drawn.
-    assert.match(more, /<strong>Figure S3\.<\/strong> One curve per enzyme class, scaled to its peak, with the median \(dot\) and middle 80% \(line\)\.<\/span>/);
+    assert.match(more, /<strong>Figure S3\.<\/strong> One curve per enzyme class over all records, those not yet <span class="nowrap">re-read<\/span> included, scaled to its peak, with the median \(dot\) and middle 80% \(line\)\.<\/span>/);
     // Each class's number of values in a muted n column after the median, sized in ch to the longest count.
     assert.match(more, /<span class="stats-ridges-head">Median<\/span><span class="stats-ridges-head">n<\/span><\/p>/);
     assert.deepEqual([...more.matchAll(/<span class="stats-ridge-n">([^<]+)<\/span>/g)].map((match) => match[1]), ["3", "1"]);
