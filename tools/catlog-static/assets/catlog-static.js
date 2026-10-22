@@ -6513,7 +6513,7 @@
     renderRereadLines();
     // The review rules this snapshot follows decide the Accepted definition (the static Not checked and no paper linked
     // ones, "no PMID or DOI", hold under both).
-    if ($("guideAcceptedDefinition")) $("guideAcceptedDefinition").textContent = guideAcceptedDefinition();
+    if ($("guideAcceptedDefinition")) $("guideAcceptedDefinition").innerHTML = keepReRead(escapeHtml(guideAcceptedDefinition()));
   }
 
   // ---- Guide: Against the databases (#guide-databases) ----
