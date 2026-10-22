@@ -215,7 +215,8 @@ def check_guide(driver, wait):
     earlier = driver.find_element(By.ID, "guide-earlier")
     assert earlier.is_displayed() and "earlier version, built from enzyme database entries" in earlier.text, earlier.text
     assert driver.execute_script("return document.getElementById('guide-method').contains(document.getElementById('guide-earlier'))")
-    assert "CatLog reads enzyme kinetics" in guide_heading_text(driver) and "back from the papers the enzyme databases cite" in guide_heading_text(driver)
+    # (fix pass after round 16b: CatLog also reads papers no database cites, found by a literature search)
+    assert "CatLog reads enzyme kinetics" in guide_heading_text(driver) and "from the original papers, mostly those the enzyme databases cite" in guide_heading_text(driver)
     assert driver.execute_script(GUIDE_PICTURES_JS) == [], driver.execute_script(GUIDE_PICTURES_JS)
     # Round 15 polish: the Guide sits in Stats' and Team's container (a view's title keeps its place when the tabs change),
     # and no paragraph outside a table runs past 68 characters of its own size.
@@ -2793,7 +2794,7 @@ def check_team(driver, browser, url):
     for word in ("Claude", "Codex", "Anthropic", "OpenAI", "independent", "Dr.", "Professor"):
         assert word not in text, f"Team says {word}"
     # CatLog re-verifies published values: no agent downloads, fetches or collects papers (round 13).
-    assert "reads enzyme kinetics back from the papers the enzyme databases cite" in text and not re.search(r"(?i)download|fetch|collect", text), text[:600]
+    assert "reads enzyme kinetics from the original papers, mostly those the enzyme databases cite" in text and not re.search(r"(?i)download|fetch|collect", text), text[:600]
     wide = driver.find_element(By.CSS_SELECTOR, "svg.team-loop-wide")
     assert wide.is_displayed()
     # Supantha also stands at Website (he builds the website): a second chip with its own line to that station, lit with

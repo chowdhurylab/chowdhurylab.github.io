@@ -1455,7 +1455,7 @@ assert.doesNotMatch(guideHtml, /guideMethodLead|guideMethodMore|guide-check-grid
 }
 // The framing (round 13; round 14's one verb, read from the paper): CatLog reads published values back from their papers;
 // never a download agent or papers in bulk.
-assert.match(guideHtml, /CatLog reads enzyme kinetics \(<i>k<\/i><sub>cat<\/sub>, <i>K<\/i><sub>m<\/sub>, <i>k<\/i><sub>cat<\/sub>\/<i>K<\/i><sub>m<\/sub>\) back from the papers the enzyme databases cite\./);
+assert.match(guideHtml, /CatLog reads enzyme kinetics \(<i>k<\/i><sub>cat<\/sub>, <i>K<\/i><sub>m<\/sub>, <i>k<\/i><sub>cat<\/sub>\/<i>K<\/i><sub>m<\/sub>\) from the original papers, mostly those the enzyme databases cite\./);
 assert.doesNotMatch(indexHtml, /re-verifies|re-checked against their papers/);
 assert.doesNotMatch(guideHtml, /download agent|in bulk|mass download/i);
 assert.match(guideMethod, /A second, separate AI check compares every value with the paper\./);

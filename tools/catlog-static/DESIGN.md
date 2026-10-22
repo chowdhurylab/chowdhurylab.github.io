@@ -1248,7 +1248,8 @@ to the overview's count, each figure in its part; the Chrome fixture adds all fi
 
 ## Team
 
-"People behind CatLog" (#team): one line (CatLog reads enzyme kinetics back from the papers the enzyme databases cite),
+"People behind CatLog" (#team): one line (CatLog reads enzyme kinetics from the original papers, mostly those the enzyme databases cite; fix pass after
+round 16b: CatLog also reads papers no database cites, found by a literature search),
 then the loop of stations
 (Cited papers, AI reading, AI check, AI audit, Human check, Rules updated) with AI agents above
 and people below by first name (Supantha also above Website; Vaishnavey at AI critique, which feeds Rules updated from
