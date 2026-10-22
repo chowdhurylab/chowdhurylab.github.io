@@ -8336,7 +8336,7 @@
     const counts = manifestDistribution("verification_status");
     const humanChecked = statsCount(overview?.human_checked_accepted, (counts.verified || 0) + (counts.corrected || 0));
     // the review first: the records line is the shortest, so on the wide loop it is the one level with Rules updated
-    numbers.human = [teamReviewFact(overview), humanChecked !== null ? `${formatInteger(humanChecked)} human-checked records` : ""].filter(Boolean);
+    numbers.human = [teamReviewFact(overview), humanChecked !== null ? `${formatInteger(humanChecked)} human-checked ${humanChecked === 1 ? "record" : "records"}` : ""].filter(Boolean);
     numbers.website = total ? [`${formatInteger(total)} records`] : [];
     return numbers;
   }
@@ -8351,9 +8351,11 @@
     if (review) {
       const entries = `${formatInteger(review.entries)} ${review.entries === 1 ? "entry" : "entries"}`;
       const of = `${formatInteger(review.undisputed)} of ${entries}`;
+      // Drawn in one short line on the wide loop and two on the upright one (fix pass after round 16b: three and five
+      // lines inside the loop, at 375px running into AI audit); the label keeps the phrase in full.
       return { label: `no value disputed on ${of} (${review.share}) from the earlier version`,
-        wide: [`no value disputed on ${of}`, `(${review.share}) from the earlier version`],
-        narrow: ["no value disputed on", of, `(${review.share}) from the`, "earlier version"] };
+        wide: [`${review.share} of ${entries} undisputed`],
+        narrow: [`${review.share} undisputed`, `of ${entries}`] };
     }
     const match = v2MatchFacts(quality);
     if (!match) return null;
@@ -8401,7 +8403,7 @@
       const length = Math.hypot(target.x - fromX, target.y - fromY) || 1;
       const toX = Math.round((target.x - ((target.x - fromX) / length) * 9) * 10) / 10;
       const toY = Math.round((target.y - ((target.y - fromY) / length) * 9) * 10) / 10;
-      return `<g class="team-actor team-actor-${actor.kind}${extra ? " team-actor-also" : ""}" data-actor="${actor.key}" data-stations="${actor.stations.join(" ")}" ${extra ? 'aria-hidden="true"' : `tabindex="0" role="img" aria-label="${escapeHtml(`${actor.name}${actor.kind === "ai" ? " (AI)" : ""}: ${actor.phrase}. At ${teamStationsText(actor.stations)}.`)}"`}>
+      return `<g class="team-actor team-actor-${actor.kind}${extra ? " team-actor-also" : ""}" data-actor="${actor.key}" data-stations="${actor.stations.join(" ")}" ${extra ? 'aria-hidden="true"' : `tabindex="0" role="img" aria-label="${escapeHtml(`${actor.name}${actor.kind === "ai" ? " (AI)" : ""}: ${actor.phrase}. At ${teamStationsText(actor.stations)}.`)}"`} data-chip="${x} ${y} ${target.x} ${target.y}">
         <line class="team-link" x1="${fromX}" y1="${fromY}" x2="${toX}" y2="${toY}"/>
         <rect class="team-chip" x="${x - width / 2}" y="${y - height / 2}" width="${width}" height="${height}" rx="${actor.kind === "ai" ? 4 : height / 2}"/>
         <text x="${x}" y="${y + 5}" text-anchor="middle">${escapeHtml(actor.name)}</text>
@@ -8422,6 +8424,34 @@
     </svg>`;
   }
 
+  // Each chip on the figure as wide as its name in the viewer's own font plus 14px a side (fix pass after round 16b: the
+  // width guessed from the letters left "Mohammad" about 3px a side in DejaVu Sans, the other names about 14px), and
+  // the line from a chip level with its station starting at the chip's new side. Only a drawn loop is measured (a hidden
+  // one measures nothing and keeps its widths until it shows).
+  function teamFitChips(root) {
+    for (const actor of root?.querySelectorAll?.(".team-actor[data-chip]") || []) {
+      const text = actor.querySelector("text");
+      const length = typeof text?.getComputedTextLength === "function" ? text.getComputedTextLength() : 0;
+      if (!(length > 0)) continue;
+      const [x, y, targetX, targetY] = actor.dataset.chip.split(" ").map(Number);
+      const width = Math.round(length + 28);
+      const chip = actor.querySelector(".team-chip");
+      chip?.setAttribute("x", String(x - width / 2));
+      chip?.setAttribute("width", String(width));
+      const ring = actor.querySelector(".team-focus-ring");
+      ring?.setAttribute("x", String(x - width / 2 - 4));
+      ring?.setAttribute("width", String(width + 8));
+      const line = actor.querySelector(".team-link");
+      if (line && Math.abs(targetY - y) <= 14) {
+        const fromX = x + (targetX < x ? -width / 2 : width / 2);
+        const length2 = Math.hypot(targetX - fromX, targetY - y) || 1;
+        line.setAttribute("x1", String(fromX));
+        line.setAttribute("x2", String(Math.round((targetX - ((targetX - fromX) / length2) * 9) * 10) / 10));
+        line.setAttribute("y2", String(Math.round((targetY - ((targetY - y) / length2) * 9) * 10) / 10));
+      }
+    }
+  }
+
   function renderTeam() {
     const numbers = teamNumbers();
     // Each legend line is a toggle button: pressing it (a click, a tap, Enter or Space) keeps its stations lit until it
@@ -8431,6 +8461,17 @@
     const people = TEAM_LEGEND.filter((item) => TEAM_ACTORS.find((actor) => actor.key === item.actors[0]).kind === "person");
     const agents = TEAM_LEGEND.filter((item) => TEAM_ACTORS.find((actor) => actor.key === item.actors[0]).kind === "ai");
     $("teamFigure").innerHTML = `${teamFigureSvg("wide", numbers)}${teamFigureSvg("narrow", numbers)}`;
+    teamFitChips($("teamFigure"));
+    // A font that loads later, or a window that brings the wide loop into view, changes the names' widths: fit again.
+    if (!state.teamChipsBound) {
+      state.teamChipsBound = true;
+      document.fonts?.addEventListener?.("loadingdone", () => teamFitChips($("teamFigure")));
+      let frame = 0;
+      window.addEventListener?.("resize", () => {
+        window.cancelAnimationFrame?.(frame);
+        frame = window.requestAnimationFrame ? window.requestAnimationFrame(() => teamFitChips($("teamFigure"))) : 0;
+      });
+    }
     $("teamLegend").innerHTML = `<div><h2 id="teamPeopleTitle">People</h2><ul aria-labelledby="teamPeopleTitle">${people.map(legendItem).join("")}</ul></div>
       <div><h2 id="teamAgentsTitle">AI agents</h2><ul aria-labelledby="teamAgentsTitle">${agents.map(legendItem).join("")}</ul></div>`;
     const figure = $("teamFigure");

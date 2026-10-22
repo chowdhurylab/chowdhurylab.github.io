@@ -1580,3 +1580,7 @@ manifest's database comparison; a field an older snapshot lacks leaves its words
   names link to Browse) and their share table's heads in words; the table's heads and the counts beside the bars no
   longer repeat the legend's swatches. A legend's linked names are underlined only under the pointer or focus, so a name
   with no Browse filter (Same number) does not look broken beside them.
+- Team's Human check draws its share in one short line on the wide loop ("99.9% of 2,604 entries undisputed") and two on
+  the upright one, over "1,721 human-checked records"; its label keeps the phrase in full. The people's and agents'
+  chips are as wide as their names in the viewer's font plus 14 units a side (teamFitChips, measured once the loop is
+  drawn, again when a font loads or the window changes), so "Mohammad" in DejaVu Sans has the room the other names have.

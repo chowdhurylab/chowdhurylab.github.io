@@ -2803,6 +2803,12 @@ def check_team(driver, browser, url):
         const dot = document.querySelector("svg.team-loop-wide [data-station='website'] .team-station-dot").getBoundingClientRect();
         return Math.abs((chip.left + chip.right) / 2 - (dot.left + dot.right) / 2) < 4 && chip.bottom < dot.top;
     """, also[0]), "Supantha's second chip stands above the Website station"
+    # Each chip is as wide as its name in the page's own font plus room each side (fix pass after round 16b: a width
+    # guessed from the letters left "Mohammad" about 3px a side in DejaVu Sans).
+    pads = driver.execute_script("""return [...document.querySelectorAll('svg.team-loop-wide .team-actor')].map(actor => {
+        const chip = actor.querySelector('.team-chip').getBoundingClientRect(), text = actor.querySelector('text').getBoundingClientRect();
+        return [actor.dataset.actor, Math.round(text.left - chip.left), Math.round(chip.right - text.right)]; })""")
+    assert pads and all(min(left, right) >= 8 and abs(left - right) <= 2 for _, left, right in pads), pads
     assert sorted(g.get_attribute("data-station") for g in wide.find_elements(By.CSS_SELECTOR, "[data-station]")) == sorted(TEAM_STATIONS)
     manifest = driver.execute_script("return window.CATLOG_STATIC_MANIFEST")
     overview = stats_overview(manifest)

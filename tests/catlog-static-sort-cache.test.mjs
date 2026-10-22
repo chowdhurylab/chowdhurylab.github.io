@@ -2262,16 +2262,16 @@ function row(overrides = {}) {
   // the human-checked records; the review in full in the disclosure.
   api.renderGuideMethod();
   // The disclosure does not repeat the tiles' headline: it starts with what they do not say.
-  // Team's Human check: no value disputed, on two lines on the wide loop and four on the upright one, one phrase for
-  // its label.
+  // Team's Human check: the share undisputed in one line on the wide loop and two on the upright one (fix pass after
+  // round 16b), the phrase in full for its label.
   api.renderTeam();
   const teamHtml = element("teamFigure").innerHTML;
-  assert.equal((teamHtml.match(/aria-label="Human check: no value disputed on 2,671 of 2,674 entries \(99\.9%\) from the earlier version, 1 human-checked records"/g) || []).length, 2);
+  assert.equal((teamHtml.match(/aria-label="Human check: no value disputed on 2,671 of 2,674 entries \(99\.9%\) from the earlier version, 1 human-checked record"/g) || []).length, 2);
   const humanLines = (layout) => [...teamHtml.match(new RegExp(`class="team-loop team-loop-${layout}"[\\s\\S]*?</svg>`))[0]
     .match(/data-station="human"[\s\S]*?<\/g>/)[0].matchAll(/class="team-station-number"[^>]*>([^<]*)</g)].map((match) => match[1]);
-  assert.deepEqual(humanLines("wide"), ["no value disputed on 2,671 of 2,674 entries", "(99.9%) from the earlier version", "1 human-checked records"]);
+  assert.deepEqual(humanLines("wide"), ["99.9% of 2,674 entries undisputed", "1 human-checked record"]);
   // The upright loop's lines keep within its 23 characters, broken where the phrase reads on.
-  assert.deepEqual(humanLines("narrow"), ["no value disputed on", "2,671 of 2,674 entries", "(99.9%) from the", "earlier version", "1 human-checked records"]);
+  assert.deepEqual(humanLines("narrow"), ["99.9% undisputed", "of 2,674 entries", "1 human-checked record"]);
   assert.doesNotMatch(teamHtml.replace(/<[^>]*>/g, " "), /\bv[12]\b/);
   assert.doesNotMatch(teamHtml, /first comparison|blind|95% range/);
   // No dispute, a dispute only partly checked against the paper, and a review of records read from the paper.
