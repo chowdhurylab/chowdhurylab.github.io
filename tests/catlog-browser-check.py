@@ -977,7 +977,9 @@ def check_quality(driver, browser, url, quality=None):
         wait.until(lambda d: d.find_elements(By.ID, "statsChecksTitle"))
         if audited:
             audit = driver.find_element(By.CSS_SELECTOR, "[data-check='audit']")
-            assert audit.find_element(By.CSS_SELECTOR, ".stats-check-covered").get_attribute("innerText").strip() == f"{quality['audit_values']:,} values"
+            # ("drawn at random" when the snapshot counts the follow-up audits apart, from 2026-10-22)
+            assert re.fullmatch(rf"{quality['audit_values']:,} values( drawn at random)?",
+                                audit.find_element(By.CSS_SELECTOR, ".stats-check-covered").get_attribute("innerText").strip()), audit.text
             assert f"{quality['audit_values'] - quality['audit_wrong']:,} kept" in audit.get_attribute("innerText"), audit.text
             assert "independent" not in audit.get_attribute("innerText").lower(), audit.text
         if compared:
