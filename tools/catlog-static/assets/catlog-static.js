@@ -5458,8 +5458,10 @@
     </figure>`;
   }
 
-  // Medians by group, in the rows of Values by enzyme class: per row its label, the middle half as a line and the median
-  // as a dot on a log axis of whole decades (at least two), the median and the count; the row's tooltip line says it all.
+  // Medians by group, in the rows of Values by enzyme class: per row its label, the middle 80% (low to high: the 10th to
+  // the 90th percentile, as Value ranges and Values by enzyme class draw it, so one mark means one spread on the page) as
+  // a line and the median as a dot on a log axis of whole decades (at least two), the median and the count (n, as there);
+  // the row's tooltip line says it all.
   function statsMediansPanel({ key, heading, rows, head, labelWidth }) {
     const from = Math.floor(Math.log10(Math.min(...rows.map((row) => row.low))) + 1e-9);
     const to = Math.max(Math.ceil(Math.log10(Math.max(...rows.map((row) => row.high))) - 1e-9), from + 2);
@@ -5576,7 +5578,7 @@
   }
 
   // Km and substrate size (from_paper_insights.km_by_size, supplement): the Km records by the size of their substrate
-  // (non-hydrogen atoms), median and middle half per size; beside it, within one enzyme's substrate panel (four or more
+  // (non-hydrogen atoms), median and middle 80% (p10, p90) per size; beside it, within one enzyme's substrate panel (four or more
   // substrates of at least two sizes), Spearman's rho of size and Km in bars of 0.25 centred on −1 ... 1, a dashed line
   // at no trend.
   const STATS_RHO_BINS = 9;
@@ -5586,13 +5588,13 @@
     const bins = Array.isArray(size?.bins) ? size.bins : [];
     if (!records || !papers || !enzymes || !bins.length || !bins.every((item) => Number.isInteger(item?.from) && item.from >= 1
       && (item.to === null || (Number.isInteger(item.to) && item.to >= item.from)) && statsCount(item.n) && statsCount(item.papers, papers)
-      && statsSpreadHolds(item)) || bins.reduce((sum, item) => sum + item.n, 0) !== records) return null;
+      && statsSpreadHolds(item, "p10", "p90")) || bins.reduce((sum, item) => sum + item.n, 0) !== records) return null;
     const recordWord = (n) => `${formatInteger(n)} ${n === 1 ? "record" : "records"}`;
     const atoms = (item) => (item.to === null ? `${formatInteger(item.from)} or more` : `${formatInteger(item.from)}–${formatInteger(item.to)}`);
-    const sizes = statsMediansPanel({ key: "km-size", head: "Records", labelWidth: "6em",
+    const sizes = statsMediansPanel({ key: "km-size", head: "n", labelWidth: "6em",
       heading: `<i>K</i><sub>m</sub> <span class="stats-range-unit">(mM) by substrate size, in non-hydrogen atoms</span>`,
-      rows: bins.map((item) => ({ ...item, label: atoms(item),
-        tip: `Substrates of ${atoms(item)} non-hydrogen atoms: median Km ${statsRangeNumber(item.median, { figures: 2 })} mM, middle half ${statsRangeNumber(item.low)}–${statsRangeNumber(item.high)} mM; ${recordWord(item.n)} from ${formatInteger(item.papers)} ${item.papers === 1 ? "paper" : "papers"}.` })) });
+      rows: bins.map((item) => ({ ...item, low: item.p10, high: item.p90, label: atoms(item),
+        tip: `Substrates of ${atoms(item)} non-hydrogen atoms: median Km ${statsRangeNumber(item.median, { figures: 2 })} mM, 10–90% ${statsRangeNumber(item.p10)}–${statsRangeNumber(item.p90)} mM; ${recordWord(item.n)} from ${formatInteger(item.papers)} ${item.papers === 1 ? "paper" : "papers"}.` })) });
     const within = size.panels;
     const count = statsCount(within?.panels);
     let correlation = "";
@@ -5621,12 +5623,12 @@
       id: "statsKmSizeTitle", key: "km-size", title: "<i>K</i><sub>m</sub> and substrate size", wide: true,
       body: correlation ? `<div class="stats-insight-pair">${sizes}${correlation}</div>` : sizes,
       caption: metricWordsHtml(escapeHtml(`Km of wild-type records read from the paper by substrate size (${statsUsedText(records, papers, enzymes)})${correlation ? " and, within one enzyme’s substrates, its rank correlation with size" : ""}; each size holds different enzymes${correlation ? ", so only the correlation compares substrates of one enzyme" : ""}.`)),
-      rules: `Size is the number of non-hydrogen atoms in the substrate’s structure (SMILES); a structure in several pieces is left out. The dot is the median and the line the middle half.${rules} Bar-Even et al. (Biochemistry 2011) found that low molecular mass appears to limit Km optimization.`,
+      rules: `Size is the number of non-hydrogen atoms in the substrate’s structure (SMILES); a structure in several pieces is left out. The dot is the median and the line the middle 80% (10th to 90th percentile), as in Value ranges; n is the size’s number of records.${rules} Bar-Even et al. (Biochemistry 2011) found that low molecular mass appears to limit Km optimization.`,
     };
   }
 
   // kcat and assay temperature (from_paper_insights.temperature, supplement): the kcat records in 10 °C bins, median and
-  // middle half per bin; beside it, one enzyme and substrate in one paper at two or more temperatures (a series), its
+  // middle 80% (p10, p90) per bin; beside it, one enzyme and substrate in one paper at two or more temperatures (a series), its
   // change per 10 °C (Q₁₀) in bars of a tenth of a power of ten centred on 10^−0.5 ... 10^1 (the end bars hold the rest),
   // a dashed line at no change.
   const STATS_Q10_BINS = 16;
@@ -5637,14 +5639,14 @@
     const edge = (value) => value === null || Number.isInteger(value);
     if (!records || !papers || !enzymes || !bins.length || !bins.every((item) => edge(item?.from) && edge(item?.below)
       && (item.from === null || item.below === null || item.below > item.from) && statsCount(item.n) && statsCount(item.papers, papers)
-      && statsSpreadHolds(item)) || bins.reduce((sum, item) => sum + item.n, 0) !== records) return null;
+      && statsSpreadHolds(item, "p10", "p90")) || bins.reduce((sum, item) => sum + item.n, 0) !== records) return null;
     const recordWord = (n) => `${formatInteger(n)} ${n === 1 ? "record" : "records"}`;
     const label = (item) => (item.from === null ? `below ${item.below}` : item.below === null ? `${item.from} or more` : `${item.from}–${item.below}`);
     const words = (item) => (item.from === null ? `Below ${item.below} °C` : item.below === null ? `${item.from} °C and above` : `${item.from} °C to below ${item.below} °C`);
-    const byBin = statsMediansPanel({ key: "kcat-temperature", head: "Records", labelWidth: "6em",
+    const byBin = statsMediansPanel({ key: "kcat-temperature", head: "n", labelWidth: "6em",
       heading: `<i>k</i><sub>cat</sub> <span class="stats-range-unit">(s⁻¹) by assay temperature (°C)</span>`,
-      rows: bins.map((item) => ({ ...item, label: label(item),
-        tip: `${words(item)}: median kcat ${statsRangeNumber(item.median, { figures: 2 })} s⁻¹, middle half ${statsRangeNumber(item.low)}–${statsRangeNumber(item.high)} s⁻¹; ${recordWord(item.n)} from ${formatInteger(item.papers)} ${item.papers === 1 ? "paper" : "papers"}.` })) });
+      rows: bins.map((item) => ({ ...item, low: item.p10, high: item.p90, label: label(item),
+        tip: `${words(item)}: median kcat ${statsRangeNumber(item.median, { figures: 2 })} s⁻¹, 10–90% ${statsRangeNumber(item.p10)}–${statsRangeNumber(item.p90)} s⁻¹; ${recordWord(item.n)} from ${formatInteger(item.papers)} ${item.papers === 1 ? "paper" : "papers"}.` })) });
     const series = temperature.series;
     const count = statsCount(series?.series);
     let change = "";
@@ -5678,7 +5680,7 @@
       id: "statsTemperatureTitle", key: "kcat-temperature", title: "<i>k</i><sub>cat</sub> and assay temperature", wide: true,
       body: change ? `<div class="stats-insight-pair">${byBin}${change}</div>` : byBin,
       caption: metricWordsHtml(escapeHtml(`kcat of wild-type records read from the paper by assay temperature (${statsUsedText(records, papers, enzymes)})${change ? " and its change per 10 °C within one paper’s series" : ""}; each bin holds different enzymes${change ? ", and a series can pass the enzyme’s best temperature" : ""}.`)),
-      rules: `Each bin starts at its lower edge and ends below the next; the dot is the median and the line the middle half.${rules}`,
+      rules: `Each bin starts at its lower edge and ends below the next; the dot is the median and the line the middle 80% (10th to 90th percentile), as in Value ranges; n is the bin’s number of records.${rules}`,
     };
   }
 

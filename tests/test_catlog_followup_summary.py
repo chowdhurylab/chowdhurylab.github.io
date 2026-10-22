@@ -614,6 +614,8 @@ class OverviewTests(unittest.TestCase):
         size = insights["km_by_size"]
         self.assertEqual((size["records"], [item["n"] for item in size["bins"]]), (4, [1, 1, 1, 1]))
         self.assertEqual([(item["from"], item["to"]) for item in size["bins"]], [(1, 5), (6, 10), (16, 20), (21, 30)])
+        # each bin's median and middle 80% (p10, p90), as Value ranges and Values by enzyme class draw them
+        self.assertEqual(set(size["bins"][0]), {"from", "to", "n", "papers", "median", "p10", "p90"})
         self.assertEqual((size["panels"]["panels"], size["panels"]["falls"], size["panels"]["rises"], size["panels"]["median_rho"]), (1, 1, 0, -1.0))
         self.assertEqual(size["panels"]["counts"], [1, 0, 0, 0, 0, 0, 0, 0, 0])
         # Temperature: kcat records by 10 °C bin (paper 4's too: it needs no UniProt entry); the series of paper 6 doubles over 10 °C, paper 2's two temperatures
@@ -621,6 +623,8 @@ class OverviewTests(unittest.TestCase):
         temperature = insights["temperature"]
         self.assertEqual([(item["from"], item["below"], item["n"]) for item in temperature["bins"]],
                          [(20, 30, 4), (30, 40, 2), (40, 50, 1), (50, 60, 1)])
+        self.assertEqual(set(temperature["bins"][0]), {"from", "below", "n", "papers", "median", "p10", "p90"})
+        self.assertEqual(followup.spread_80([1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0]), {"median": 6.0, "p10": 2.0, "p90": 10.0})
         series = temperature["series"]
         self.assertEqual((series["series"], series["records"], series["papers"], series["rising"], series["falling"]), (2, 4, 2, 1, 1))
         self.assertEqual(series["counts"][8], 1, "Q10 2 is 0.30 in log10: the bin centred on 0.3")

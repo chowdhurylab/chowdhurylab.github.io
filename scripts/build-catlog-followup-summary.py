@@ -873,6 +873,13 @@ def spread(values, low=0.25, high=0.75):
             "high": significant(percentile(ordered, high), 2)}
 
 
+def spread_80(values):
+    """median, p10 and p90 of positive values, each to two significant figures: the middle 80% that Value ranges and
+    Values by enzyme class draw as a line, so the same dot on a line means the same spread in every figure."""
+    found = spread(values, 0.1, 0.9)
+    return {"median": found["median"], "p10": found["low"], "p90": found["high"]}
+
+
 # 1. Between papers: the same protein (its UniProt accession, primary_uniprot_id) and substrate (its SMILES, else its
 # name) as wild type in two papers. Each paper's value is the median of its records for that protein and substrate
 # (whatever their conditions); each pair of papers gives the fold difference between their values, counted in quarter
@@ -1013,7 +1020,7 @@ def substrate_range(panels):
 
 # 3. Km and substrate size: the size of a substrate is the number of its non-hydrogen atoms, counted from its SMILES (a
 # structure of one piece: a salt or mixture, written with ".", is left out). The Km records in size bins, each with its
-# median and middle half; and, within one enzyme's substrate panel (as above, four or more substrates of at least two
+# median and middle 80% (p10, p90); and, within one enzyme's substrate panel (as above, four or more substrates of at least two
 # sizes), the rank correlation (Spearman's rho) between size and the median Km per substrate: below 0 when Km falls as
 # the substrates grow, in nine bins of 0.25 centred on -1, -0.75 ... 1 (a panel whose Km values are all one number
 # counts at 0).
@@ -1073,7 +1080,7 @@ def km_by_size(records, panels):
         found = [record for record in records if record[0] >= low and (high is None or record[0] <= high)]
         if found:
             bins.append({"from": low, "to": high, "n": len(found), "papers": len({key for record in found for key in record[2]}),
-                         **spread([record[1] for record in found])})
+                         **spread_80([record[1] for record in found])})
     result = {"records": len(records), "papers": len({key for record in records for key in record[2]}),
               "enzymes": len({record[3] for record in records}), "bins": bins}
     rhos, used, papers, enzymes = [], 0, set(), set()
@@ -1096,7 +1103,7 @@ def km_by_size(records, panels):
 
 
 # 4. Temperature: the kcat records by assay temperature in 10 °C bins (below 20, 20 to below 30 ... 80 °C and above), each with
-# its median and middle half (different enzymes stand in each bin); and series, one enzyme and substrate in one paper at
+# its median and middle 80% (p10, p90; different enzymes stand in each bin); and series, one enzyme and substrate in one paper at
 # two or more temperatures with the same cosubstrate and pH: the slope of log10 kcat (the median per temperature) against
 # temperature by least squares, as the fold change per 10 °C (Q10), counted in bins of 0.1 in log10 centred on -0.5 ...
 # 1.0 (the end bins hold every value beyond them).
@@ -1122,7 +1129,7 @@ def temperature_effects(records, series):
               "enzymes": len({record[3] for record in records}),
               "bins": [{"from": low, "below": high, "n": len(grouped[index]),
                         "papers": len({key for record in grouped[index] for key in record[2]}),
-                        **spread([record[1] for record in grouped[index]])}
+                        **spread_80([record[1] for record in grouped[index]])}
                        for index, (low, high) in enumerate(zip((None, *TEMPERATURE_EDGES), (*TEMPERATURE_EDGES, None)))
                        if grouped[index]]}
     slopes, used, papers, enzymes = [], 0, set(), set()
@@ -1154,8 +1161,7 @@ def temperature_effects(records, series):
 # with their papers and enzymes (the page sets it beside the average enzyme of Bar-Even et al., Biochemistry 2011).
 def typical_values(found):
     """found: metric -> (values, papers, enzymes)."""
-    result = {metric: {"n": len(values), "papers": len(papers), "enzymes": len(enzymes),
-                       **{key: value for key, value in zip(("median", "p10", "p90"), spread(values, 0.1, 0.9).values())}}
+    result = {metric: {"n": len(values), "papers": len(papers), "enzymes": len(enzymes), **spread_80(values)}
               for metric, (values, papers, enzymes) in found.items() if values}
     return result or None
 

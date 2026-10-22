@@ -3025,7 +3025,7 @@ function row(overrides = {}) {
     assert.equal(api.statsSubstrateRangeFigure({ ...range, at_least_1000: 4 }), null);
     assert.equal(api.statsSubstrateRangeFigure({ ...range, counts: range.counts.slice(1) }), null);
 
-    const spread = (n, median) => ({ n, papers: 1, median, low: median / 4, high: median * 4 });
+    const spread = (n, median) => ({ n, papers: 1, median, p10: median / 4, p90: median * 4 });
     const size = { records: 5, papers: 2, enzymes: 2, bins: [{ from: 1, to: 5, ...spread(2, 1.2) }, { from: 51, to: null, ...spread(3, 0.034) }],
       panels: { panels: 4, records: 16, papers: 1, enzymes: 1, falls: 3, rises: 1, median_rho: -0.4, bin_width: 0.25, counts: [1, 0, 2, 0, 0, 0, 0, 1, 0] } };
     const sizes = api.statsKmSizeFigure(size);
@@ -3033,7 +3033,12 @@ function row(overrides = {}) {
     // The medians in Values by enzyme class's rows: one per size, the median dot on its middle half, on whole decades.
     assert.deepEqual([...sizes.body.matchAll(/<li class="stats-ridge-row" data-count="(\d+)"[^>]*>\s*<span class="stats-ridge-label">([^<]+)<\/span>/g)]
       .map((match) => `${match[2]}:${match[1]}`), ["1–5:2", "51 or more:3"]);
-    assert.match(sizes.body, /data-tip="Substrates of 51 or more non-hydrogen atoms: median Km 0\.034 mM, middle half 0\.0085–0\.136 mM; 3 records from 1 paper\."/);
+    assert.match(sizes.body, /data-tip="Substrates of 51 or more non-hydrogen atoms: median Km 0\.034 mM, 10–90% 0\.0085–0\.136 mM; 3 records from 1 paper\."/);
+    // The line is the middle 80%, as in Value ranges and Values by enzyme class, and the count column is headed n as there.
+    assert.match(sizes.rules, /The dot is the median and the line the middle 80% \(10th to 90th percentile\), as in Value ranges; n is the size’s number of records\./);
+    assert.match(sizes.body, /<span class="stats-ridges-head">Median<\/span><span class="stats-ridges-head">n<\/span>/);
+    assert.equal(api.statsKmSizeFigure({ ...size, bins: size.bins.map(({ p10, p90, ...item }) => ({ ...item, low: p10, high: p90 })) }), null,
+      "Bins without their 10th and 90th percentiles are not drawn");
     assert.match(sizes.body, /<span class="stats-ridge-ticks">/);
     // The rank correlation: bars of 0.25 centred on −1 ... 1, the dashed line at no trend in the middle.
     assert.match(sizes.body, /<i class="stats-fold-zero" style="left:50%" aria-hidden="true"><span>no trend<\/span><\/i>/);
@@ -3046,7 +3051,7 @@ function row(overrides = {}) {
     const alone = api.statsKmSizeFigure({ ...size, panels: { ...size.panels, falls: 4 } });
     assert.doesNotMatch(alone.body + alone.caption + alone.rules, /ρ|correlation/);
     assert.equal(api.statsKmSizeFigure({ ...size, records: 6 }), null);
-    assert.equal(api.statsKmSizeFigure({ ...size, bins: [{ ...size.bins[0], low: 2 }, size.bins[1]] }), null, "A median outside its middle half");
+    assert.equal(api.statsKmSizeFigure({ ...size, bins: [{ ...size.bins[0], p10: 2 }, size.bins[1]] }), null, "A median outside its middle 80%");
 
     const temperature = { records: 6, papers: 3, enzymes: 2,
       bins: [{ from: null, below: 20, ...spread(1, 3.3) }, { from: 20, below: 30, ...spread(2, 4.5) }, { from: 80, below: null, ...spread(3, 24) }],
@@ -3055,7 +3060,8 @@ function row(overrides = {}) {
     const heat = api.statsTemperatureFigure(temperature);
     assert.equal(heat.key, "kcat-temperature");
     assert.deepEqual([...heat.body.matchAll(/<span class="stats-ridge-label">([^<]+)<\/span>/g)].map((match) => match[1]), ["below 20", "20–30", "80 or more"]);
-    assert.match(heat.body, /data-tip="20 °C to below 30 °C: median kcat 4\.5 s⁻¹/);
+    assert.match(heat.body, /data-tip="20 °C to below 30 °C: median kcat 4\.5 s⁻¹, 10–90% 1\.125–18 s⁻¹;/);
+    assert.match(heat.rules, /^Each bin starts at its lower edge and ends below the next; the dot is the median and the line the middle 80% \(10th to 90th percentile\), as in Value ranges; n is the bin’s number of records\./);
     // Q₁₀ in tenths of a power of ten centred on 10^−0.5 ... 10^1: the dashed line at 1 (no change).
     assert.match(heat.body, /<i class="stats-fold-zero" style="left:34\.375%" aria-hidden="true"><span>no change<\/span><\/i>/);
     assert.match(heat.body, /data-tip="Q₁₀ 1\.8–2\.2: 2 series \(66\.7%\)"/);
