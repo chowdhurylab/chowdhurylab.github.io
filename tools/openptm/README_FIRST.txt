@@ -65,6 +65,26 @@ are a defined working set, not a universal count of all PTMs. Paper comparisons
 are selected examples, not a systematic review. Upper bounds, uncertainty,
 study conditions and source links are retained in the record details.
 
+Paper reading, round 42
+- Two previously unread papers received selected reads on ethanolamine
+  phosphoglycerol addition and MIO cofactor formation, outside round 41's
+  primary-paper families.
+- The mouse-liver study measures modification abundance and proposes a
+  possible effect on Strap relocation; it does not measure that effect.
+  The GkHAL enzyme paper reports active-site variant kinetics without an
+  established difference in MIO modification status for those comparisons.
+- A separate author-hosted MIO-less PAL excerpt contains promising relative
+  activity values. Its publication identity and complete context remain
+  unresolved, so the values are held for source verification.
+- Two other new MIO paper identities remain access-held. A previous PrsA
+  access lead was rechecked without recovering its original. Reviews,
+  discovery excerpts and access checks are separate from original reading.
+- Independent source review supports zero new numerical comparisons.
+  The data and interface are unchanged: 253 comparisons, 307 entries,
+  92 numerical papers, 87 numerical families and 24 gaps in this selection.
+- Originals: https://doi.org/10.3390/ijms242216172 and
+  https://doi.org/10.3390/ijms251810163
+
 Paper reading, round 41
 - Three previously unread papers received selected reads on diphthamide
   and S-selanylation, outside round 40's primary-paper families.
