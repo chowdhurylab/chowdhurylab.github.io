@@ -1596,3 +1596,10 @@ manifest's database comparison; a field an older snapshot lacks leaves its words
   papers)" and "163,908 values confirmed, 5,993 corrected (3.5%); values it rejected are left out", from
   overview.from_paper.values and .checks, which build_overview counts at stage time from each value's proof line
   (check_result: confirmed, corrected or other); a snapshot without them keeps the method in words.
+- Against the databases' lead keeps two sentences but no longer splices: "Of the other 3,359, 2,681 correct a database’s
+  number (1,745 found by an AI check of the paper, 936 by an exact factor found automatically); the remaining 678 differ
+  for a reason not yet known, and some may be other measurements in the paper rather than database errors." The note
+  under Values against the databases gives one total as the Dataset notes do (20,403 numbers that match no value CatLog
+  read), then what CatLog has in another form (paired with a CatLog value of another number, a calculated kcat/Km,
+  another parameter), the reprints and the possible misses, which are not yet checked (statsNotReproducedText), and links
+  the Dataset notes (README_FIRST.txt, datasetNotesHref, as the Download menu names it) for the reasons of the rest.

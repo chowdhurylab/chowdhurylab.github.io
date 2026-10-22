@@ -4,6 +4,8 @@
     ? new URL("../", appScript.src)
     : new URL(appScript?.dataset.catalogBase || "./", document.baseURI);
   const manifest = window.CATLOG_STATIC_MANIFEST || {};
+  // The Dataset notes (README_FIRST.txt beside the snapshot), as the Download menu and Stats link them.
+  const datasetNotesHref = () => new URL("README_FIRST.txt", catalogBaseUrl).href;
   const assetVersion = String(manifest.asset_version || manifest.source_sha256 || manifest.generated_at || "20260709")
     .replace(/[^a-zA-Z0-9_-]/g, "")
     .slice(0, 16) || "20260709";
@@ -1189,7 +1191,7 @@
       $("tableIndexDescription").textContent = describe("The table’s columns; no sequences, SMILES or paper links", `${total} rows`, tableSize, "JSON Lines (gzip)");
     }
     if ($("datasetNotesLink")) {
-      $("datasetNotesLink").href = new URL("README_FIRST.txt", catalogBaseUrl).href;
+      $("datasetNotesLink").href = datasetNotesHref();
     }
     // The comparison with the databases as a file (manifest database_comparison_download: the README documents it), in
     // the Download menu and the Guide's Downloads, hidden when the snapshot has none.
@@ -7076,15 +7078,24 @@
     const fold = Number(comparison.checked_from_factor);
     const lowerBound = corrects && Number.isFinite(fold) && fold > 1
       ? `These corrections are a lower bound on the databases’ errors, since only differences of ${String(fold)}-fold or more are checked.` : "";
-    const changed = [
-      corrects ? `${link(`${formatInteger(corrects)} ${plural(corrects, "corrects", "correct")} a database’s number`, "corrects", corrects)}${escapeHtml(foundBy)}` : "",
-      differs ? `${link(`${formatInteger(differs)} ${plural(differs, "differs", "differ")}, cause not yet known`, "differs", differs)}${factorOnly ? ` (${formatInteger(factorOnly)} by an exact factor, not yet checked)` : ""}` : "",
-    ].filter(Boolean);
+    // The values whose paired number is not the paper's, in one sentence of two halves (fix pass after round 16b: it had
+    // spliced "678 differ, cause not yet known, which can mean ..." into the corrections; the lead keeps its two
+    // sentences, round 14): "Of the other 3,359, 2,681 correct a database’s number (1,745 found by an AI check of the
+    // paper, 936 by an exact factor found automatically); the remaining 678 differ for a reason not yet known, and some
+    // may be other measurements in the paper rather than database errors."
+    const correctsHtml = corrects ? `${link(`${formatInteger(corrects)} ${plural(corrects, "corrects", "correct")} a database’s number`, "corrects", corrects)}${escapeHtml(foundBy)}` : "";
+    const differsHtml = differs ? `${link(`${formatInteger(differs)} ${plural(differs, "differs", "differ")}`, "differs", differs)} for a reason not yet known${factorOnly ? ` (${formatInteger(factorOnly)} by an exact factor, not yet checked)` : ""}` : "";
+    const other = corrects + differs;
+    const unknown = "some may be other measurements in the paper rather than database errors.";
+    const changedText = corrects && differs
+      ? `${paired ? `Of the other ${formatInteger(other)}, ` : ""}${correctsHtml}; the remaining ${differsHtml}, and ${unknown}`
+      : corrects ? `${paired ? `The other ${formatInteger(corrects)} ${plural(corrects, "corrects", "correct")}` : `${link(`${formatInteger(corrects)} ${plural(corrects, "corrects", "correct")}`, "corrects", corrects)}`}${paired ? ` ${link("a database’s number", "corrects", corrects)}` : " a database’s number"}${escapeHtml(foundBy)}.`
+        : differs ? `${paired ? "The other " : ""}${differsHtml}; ${unknown}` : "";
     const sentences = [
       escapeHtml(`CatLog compared ${formatInteger(compared)} ${plural(compared, "value", "values")} read from ${from} with what the databases list for the same ${papers === 1 ? "paper" : "papers"}${pairedText}.`),
-      changed.length ? `${paired ? "For the rest, " : ""}${changed.join(" and ")}${differs ? ", which can mean a different measurement rather than a database error" : ""}.`.replace(/^./, (letter) => letter.toUpperCase()) : "",
-      changed.length && !differs ? escapeHtml(STATS_DATABASE_CAVEAT) : "",
-      changed.length ? "" : escapeHtml(STATS_DATABASE_CAVEAT),
+      changedText ? changedText.replace(/^./, (letter) => letter.toUpperCase()) : "",
+      changedText && !differs ? escapeHtml(STATS_DATABASE_CAVEAT) : "",
+      changedText ? "" : escapeHtml(STATS_DATABASE_CAVEAT),
       escapeHtml(lowerBound),
     ].filter(Boolean);
     return `<p class="stats-part-lead" data-lead="databases">${sentences.join(" ")}</p>`;
@@ -7125,26 +7136,45 @@
   }
 
   // The numbers the databases list for these papers that match no value CatLog read from them (not_reproduced.distinct:
-  // each paper, parameter and number counted once, by the first reason that applies). Two reasons are numbers CatLog
-  // does have, as a kcat/Km it calculated or under another parameter: they are named apart, never counted as numbers
-  // CatLog does not have. The README is named for the reasons only when this snapshot's README has its section on the
-  // comparison, which the CatLog side writes with the comparison download (manifest database_comparison_download).
-  const STATS_NOT_REPRODUCED_HELD = [
-    ["equals_catlog_calculated_ratio", "that equals a kcat/Km CatLog calculated", "that equal a kcat/Km CatLog calculated"],
-    ["another_parameter_in_catlog", "that CatLog has under another parameter", "that CatLog has under another parameter"],
+  // each paper, parameter and number counted once, by the first reason that applies), in one total with the Dataset
+  // notes' framing (fix pass after round 16b: Stats had said 17,807 "that CatLog does not have" where the notes say
+  // 20,403, and sent readers to "the README", unlinked, for the reasons): first the numbers CatLog has in another form
+  // (paired with a CatLog value of another number, as a kcat/Km it calculated, under another parameter), then the
+  // reprints CatLog leaves out and the possible misses, which are not yet checked, then the Dataset notes for the rest.
+  const STATS_NOT_REPRODUCED_PARTS = [
+    ["paired_with_different_number", "is paired with a CatLog value of another number", "are paired with a CatLog value of another number"],
+    ["equals_catlog_calculated_ratio", "equals a kcat/Km CatLog calculated", "equal a kcat/Km CatLog calculated"],
+    ["another_parameter_in_catlog", "is in CatLog under another parameter", "are in CatLog under another parameter"],
+    ["reprinted_from_other_work", "is reprinted in the paper from earlier work", "are reprinted in the paper from earlier work"],
   ];
+  const STATS_NOT_REPRODUCED_MISS = ["possible_catlog_miss", "possible_miss_weak"];
+  const STATS_NOTES_WORDS = "Dataset notes";
 
   function statsNotReproducedText(comparison) {
     const counts = statsCountMap(comparison?.not_reproduced?.distinct);
     if (!counts) return "";
     const total = Object.values(counts).reduce((sum, count) => sum + count, 0);
-    const held = STATS_NOT_REPRODUCED_HELD.map(([code, one, many]) => [counts[code] || 0, one, many]);
-    const missing = total - held.reduce((sum, [count]) => sum + count, 0);
-    const parts = [[missing, "that CatLog does not have", "that CatLog does not have"], ...held].filter(([count]) => count > 0);
-    if (!parts.length) return "";
-    const clauses = parts.map(([count, one, many], index) => `${formatInteger(count)}${index ? "" : ` ${count === 1 ? "number" : "numbers"} for these papers`} ${count === 1 ? one : many}`);
-    const readme = typeof manifest.database_comparison_download?.path === "string" ? "; the README gives the reasons" : "";
-    return `The databases also list ${statsListText(clauses)}${readme}.`;
+    if (!total) return "";
+    const parts = STATS_NOT_REPRODUCED_PARTS.map(([code, one, many]) => [counts[code] || 0, one, many]).filter(([count]) => count > 0)
+      .map(([count, one, many]) => `${formatInteger(count)} ${count === 1 ? one : many}`);
+    const [likely, weak] = STATS_NOT_REPRODUCED_MISS.map((code) => counts[code] || 0);
+    const missed = likely + weak;
+    if (missed) {
+      parts.push(`${formatInteger(missed)} may be ${missed === 1 ? "a value" : "values"} CatLog missed, not yet checked${likely && weak ? ` (${formatInteger(weak)} of them only weakly)` : ""}`);
+    }
+    const named = STATS_NOT_REPRODUCED_PARTS.reduce((sum, [code]) => sum + (counts[code] || 0), 0) + missed;
+    const rest = total - named;
+    const notes = typeof manifest.database_comparison_download?.path === "string";
+    const lead = `The databases also list ${formatInteger(total)} ${total === 1 ? "number" : "numbers"} for these papers that ${total === 1 ? "matches" : "match"} no value CatLog read from them`;
+    const after = rest && notes ? ` The ${STATS_NOTES_WORDS} give the reasons for the other ${formatInteger(rest)}.` : "";
+    return parts.length ? `${lead}: ${statsListText(parts)}.${after}` : `${lead}.${notes ? ` The ${STATS_NOTES_WORDS} give the reasons.` : ""}`;
+  }
+
+  // The same as HTML, the Dataset notes named as a link to them, as the Download menu names and links them.
+  function statsNotReproducedHtml(comparison) {
+    const text = statsNotReproducedText(comparison);
+    const html = metricWordsHtml(escapeHtml(text));
+    return html.replace(` ${STATS_NOTES_WORDS} `, () => ` <a class="stats-ref-link" href="${escapeHtml(datasetNotesHref())}" target="_blank" rel="noopener">${STATS_NOTES_WORDS}</a> `);
   }
 
   // Figure: each value against the databases, a 100% bar per parameter and for all values; the thin results (corrects,
@@ -7182,7 +7212,7 @@
       ...rows.map((row) => formatInteger(row.shares[STATS_DATABASE_RESULTS.indexOf(result)].count).length)), 0);
     const notes = values.calculated ? `${formatInteger(values.calculated)} kcat/Km calculated by CatLog ${values.calculated === 1 ? "is" : "are"} not compared.` : "";
     // A result, not a rule: said under the figure.
-    const notReproduced = statsNotReproducedText(comparison);
+    const notReproduced = statsNotReproducedHtml(comparison);
     const names = statsListText(sources.map((source) => statsDatabaseNameHtml(source.display)));
     return {
       id: "statsDbValuesTitle", key: "db-values", title: "Values against the databases",
@@ -7192,7 +7222,7 @@
         + statsShareLines(rows, { rateBase: STATS_RATE_BASE }),
       caption: `Values read from the paper, compared with ${names || "the databases"}.`,
       rules: notes,
-      after: notReproduced ? `<p class="stats-note">${metricWordsHtml(escapeHtml(notReproduced))}</p>` : "",
+      after: notReproduced ? `<p class="stats-note">${notReproduced}</p>` : "",
     };
   }
 
@@ -15443,6 +15473,7 @@
       statsExposureText,
       auditFacts,
       reviewGlanceText,
+      statsNotReproducedHtml,
       secondCheckFacts,
       substrateStarts,
       substrateHasStart,

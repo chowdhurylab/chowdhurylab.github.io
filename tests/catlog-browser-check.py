@@ -1576,7 +1576,7 @@ def check_stats_figures(driver, browser, url):
             if isinstance(lead_papers, int):
                 assert f"values read from {lead_papers:,} paper" in lead_text, (lead_papers, lead_text)
             # The caveat is said once in part 7, at the end of its two-sentence lead (round 14), never under each figure.
-            caveats = ("which can mean a different measurement rather than a database error.", "it does not by itself mean a database is wrong.")
+            caveats = ("some may be other measurements in the paper rather than database errors.", "it does not by itself mean a database is wrong.")
             assert any(text in lead_text for text in caveats) and sum(part.get_attribute("innerText").count(text) for text in caveats) == 1, lead_text
             assert len(re.findall(r"[.!?](?:\s|$)", lead_text)) <= 2, f"The lead runs to two sentences: {lead_text}"
             # Its corrections and different numbers link into Browse (a result with no values has none), each titled with
@@ -1638,10 +1638,11 @@ def check_stats_figures(driver, browser, url):
             # The caveat is the lead's last sentence, said once, not repeated under the figures.
             for key in ("db-values", "db-sources", "db-found"):
                 caption = driver.find_element(By.CSS_SELECTOR, f"[data-figure='{key}'] figcaption").get_attribute("innerText").strip()
-                assert "by itself mean a database is wrong" not in caption and "rather than a database error" not in caption, caption
+                assert "by itself mean a database is wrong" not in caption and "rather than database errors" not in caption, caption
             # ...and stands right after the different numbers (under Different number only).
             lead_sentences = lead.get_attribute("innerText").strip()
-            assert re.search(r"differs?, cause not yet known[^.]*, which can mean a different measurement rather than a database error\.$", lead_sentences), lead_sentences
+            # (fix pass after round 16b: the corrections, then "the remaining N differ for a reason not yet known", unspliced)
+            assert re.search(r"differs? for a reason not yet known[^.]*(?:, and|;) some may be other measurements in the paper rather than database errors\.$", lead_sentences), lead_sentences
             # Figure 2: stacked by review result, with its legend.
             legend = driver.find_element(By.CSS_SELECTOR, "[data-figure='main-source'] .stats-legend").text
             for word in ("Accepted", "Not confirmed", "Not checked"):

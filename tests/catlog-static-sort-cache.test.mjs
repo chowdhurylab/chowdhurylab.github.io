@@ -2399,9 +2399,9 @@ function row(overrides = {}) {
   // Two sentences (round 14: it ran to about 110 words and 5 links): what was compared and how often a paired number is
   // the paper's, then the corrections and the different numbers with the caveat right after them; the other results
   // are Figure 7's, its legend linking each.
-  assert.equal(plain(dbLead), "CatLog compared 126,951 values read from 2,598 papers with what the databases list for the same papers; a database lists a number for the same measurement for 100,390 of them, and for 97.4% that number is the paper’s. For the rest, 1,548 correct a database’s number and 1,051 differ, cause not yet known, which can mean a different measurement rather than a database error.");
+  assert.equal(plain(dbLead), "CatLog compared 126,951 values read from 2,598 papers with what the databases list for the same papers; a database lists a number for the same measurement for 100,390 of them, and for 97.4% that number is the paper’s. Of the other 2,599, 1,548 correct a database’s number; the remaining 1,051 differ for a reason not yet known, and some may be other measurements in the paper rather than database errors.");
   // The caveat is said once in part 7, here, never under each figure.
-  assert.equal((databaseSection().match(/does not by itself mean a database is wrong|rather than a database error/g) || []).length, 1);
+  assert.equal((databaseSection().match(/does not by itself mean a database is wrong|rather than (?:a )?database errors?/g) || []).length, 1);
   // Browse lists records: each link's title says how many it opens.
   assert.match(dbLead, /href="[^"]*#browse\?db=corrects" title="1,548 values in 1,443 records">1,548 correct a database/);
   assert.match(dbLead, /href="[^"]*#browse\?db=differs" title="1,051 values in 955 records">1,051 differ/);
@@ -2437,18 +2437,23 @@ function row(overrides = {}) {
   // when the snapshot has its comparison download (the README's section on the comparison comes with it).
   // A result, so it is said under the figure; the rule (calculated kcat/Km not compared) under How these numbers are
   // counted, under the figure's number.
-  assert.match(values, /<\/figure><p class="stats-note">The databases also list 12,483 numbers for these papers that CatLog does not have, 1,687 that equal a <i>k<\/i><sub>cat<\/sub>\/<i>K<\/i><sub>m<\/sub> CatLog calculated and 463 that CatLog has under another parameter\.<\/p>/);
+  // (fix pass after round 16b: one total, as the Dataset notes give it; first what CatLog has in another form, then the
+  // reprints and the possible misses, which are not yet checked)
+  assert.match(values, /<\/figure><p class="stats-note">The databases also list 14,633 numbers for these papers that match no value CatLog read from them: 5,635 are paired with a CatLog value of another number, 1,687 equal a <i>k<\/i><sub>cat<\/sub>\/<i>K<\/i><sub>m<\/sub> CatLog calculated, 463 are in CatLog under another parameter, 2,372 are reprinted in the paper from earlier work and 1,566 may be values CatLog missed, not yet checked \(448 of them only weakly\)\.<\/p>/);
   assert.match(methodHtml(), /<dt>Figure \d+<\/dt><dd><span class="stats-method-title">Values against the databases\.<\/span> 5,946 kcat\/Km calculated by CatLog are not compared\.<\/dd>/);
   assert.doesNotMatch(values, /not compared|README/);
   assert.doesNotMatch(methodHtml(), /README|databases also list/);
   // Part 7's own rules, once.
   assert.match(methodHtml(), /<dt>Against the databases<\/dt><dd>Numbers are compared within the same paper and parameter\. Its papers are those with a compared value\. Shares only on 1,000 values or more\.<\/dd>/);
   assert.equal(api.statsNotReproducedText({ not_reproduced: { distinct: { equals_catlog_calculated_ratio: 1, another_parameter_in_catlog: 0 } } }),
-    "The databases also list 1 number for these papers that equals a kcat/Km CatLog calculated.");
+    "The databases also list 1 number for these papers that matches no value CatLog read from them: 1 equals a kcat/Km CatLog calculated.");
   runtimeManifest.database_comparison_download = { path: "data/catlog-database-comparison.0123456789ab.csv.gz", rows: 10 };
   try {
     assert.equal(api.statsNotReproducedText({ not_reproduced: { distinct: { possible_catlog_miss: 1 } } }),
-      "The databases also list 1 number for these papers that CatLog does not have; the README gives the reasons.");
+      "The databases also list 1 number for these papers that matches no value CatLog read from them: 1 may be a value CatLog missed, not yet checked.");
+    // The reasons for the rest are the Dataset notes', named and linked as the Download menu names them.
+    const notes = api.statsNotReproducedHtml({ not_reproduced: { distinct: { possible_catlog_miss: 1, not_in_paper_text: 2 } } });
+    assert.match(notes, /: 1 may be a value CatLog missed, not yet checked\. The <a class="stats-ref-link" href="[^"]*README_FIRST\.txt" target="_blank" rel="noopener">Dataset notes<\/a> give the reasons for the other 2\.$/);
   } finally {
     delete runtimeManifest.database_comparison_download;
   }
@@ -2645,7 +2650,7 @@ function row(overrides = {}) {
   // bound when it says only larger differences are checked (checked_from_factor).
   withOut((data) => { data.corrections.by_cause_found_by = { power_of_ten: { factor_cross_checked: 557 }, unit_not_converted: { paper_check: 991 } }; data.checked_from_factor = 1.5; });
   assert.match(plain(databaseSection().match(/<p class="stats-part-lead"[\s\S]*?<\/p>/)[0]),
-    /For the rest, 1,548 correct a database’s number \(991 found by an AI check of the paper, 557 by an exact factor found automatically\) and 1,051 differ, cause not yet known, which can mean a different measurement rather than a database error\. These corrections are a lower bound on the databases’ errors, since only differences of 1\.5-fold or more are checked\.$/);
+    /Of the other 2,599, 1,548 correct a database’s number \(991 found by an AI check of the paper, 557 by an exact factor found automatically\); the remaining 1,051 differ for a reason not yet known, and some may be other measurements in the paper rather than database errors\. These corrections are a lower bound on the databases’ errors, since only differences of 1\.5-fold or more are checked\.$/);
   withOut((data) => { data.corrections.by_cause_found_by = { power_of_ten: { factor_cross_checked: 556 }, unit_not_converted: { paper_check: 991 } }; data.checked_from_factor = "x"; });
   assert.doesNotMatch(databaseSection(), /found by an AI check of the paper, 556|lower bound/, "Counts that do not add up and a factor that is not a number say nothing");
   withOut((data) => { data.corrections.by_cause.new_cause = 2; data.corrections.by_cause.time_unit -= 2; });
@@ -2656,7 +2661,7 @@ function row(overrides = {}) {
   // Figure 10 and the All column take them out of their causes (the per-database columns keep them, said in the rule).
   withOut((data) => { data.corrections.by_cause_found_by = { power_of_ten: { factor_cross_checked: 300, factor_only: 257 }, unit_not_converted: { paper_check: 126 } }; });
   assert.match(plain(databaseSection().match(/<p class="stats-part-lead"[\s\S]*?<\/p>/)[0]),
-    /For the rest, 1,291 correct a database’s number and 1,308 differ, cause not yet known \(257 by an exact factor, not yet checked\), which can mean a different measurement rather than a database error\./);
+    /Of the other 2,599, 1,291 correct a database’s number; the remaining 1,308 differ for a reason not yet known \(257 by an exact factor, not yet checked\), and some may be other measurements in the paper rather than database errors\./);
   assert.match(plain(databaseSection().match(/<p class="stats-note stats-part-note">[\s\S]*?<\/p>/)[0]),
     /^The figures below still count 257 exact-factor values not yet checked against the paper under Corrects\.$/);
   assert.deepEqual([...figureHtml("db-found").matchAll(/data-row="([^"]+)" data-count="(\d+)"/g)].map((match) => [match[1], Number(match[2])]),
@@ -2676,7 +2681,7 @@ function row(overrides = {}) {
     assert.match(figureHtml("db-values"), /kcat, Corrects a value: 271\b/);
     assert.match(figureHtml("db-values"), /kcat, Different number: 326\b/);
     assert.match(figureHtml("db-paired"), /<td class="stats-num" data-count="956">[\s\S]*?956/);
-    assert.match(plain(databaseSection().match(/<p class="stats-part-lead"[\s\S]*?<\/p>/)[0]), /For the rest, 1,291 correct a database’s number/);
+    assert.match(plain(databaseSection().match(/<p class="stats-part-lead"[\s\S]*?<\/p>/)[0]), /Of the other 2,599, 1,291 correct a database’s number/);
     // A split that does not add up to the comparison's count is not used: the note stays.
     runtimeManifest.summary.overview = { ...before, database_factor_only: { values: 250, by_parameter: { Km: 250 }, by_database: {} } };
     withOut((data) => { data.corrections.by_cause_found_by = { power_of_ten: { factor_cross_checked: 300, factor_only: 257 }, unit_not_converted: { paper_check: 126 } }; });
@@ -2686,14 +2691,14 @@ function row(overrides = {}) {
   // A comparison that counts them under Different number itself (a status of their own): in the Differs segment, no
   // move and no note.
   withOut((data) => { data.values.kcat.differs_factor_only = 40; data.values.all.differs_factor_only = 40; data.values.all.differs += 0; });
-  assert.match(plain(databaseSection().match(/<p class="stats-part-lead"[\s\S]*?<\/p>/)[0]), /For the rest, 1,548 correct a database’s number and 1,091 differ, cause not yet known \(40 by an exact factor, not yet checked\), which/);
+  assert.match(plain(databaseSection().match(/<p class="stats-part-lead"[\s\S]*?<\/p>/)[0]), /Of the other 2,639, 1,548 correct a database’s number; the remaining 1,091 differ for a reason not yet known \(40 by an exact factor, not yet checked\), and some/);
   assert.doesNotMatch(databaseSection(), /stats-part-note/);
   assert.match(figureHtml("db-values"), /kcat, Different number: 309 \(0\.7%\)"/);
   // Small counts: no shares on a base under 1,000 values, counts under the bars, singular words.
   runtimeManifest.summary.database_comparison = { values: { kcat: { confirmed: 1, corrected: 1, new: 2 }, Km: { confirmed: 3, differs: 1 } }, papers: 1 };
   api.renderStats();
   assert.equal(plain(databaseSection().match(/<p class="stats-part-lead"[\s\S]*?<\/p>/)[0]),
-    "CatLog compared 8 values read from 1 paper with what the databases list for the same paper; a database lists a number for the same measurement for 6 of them, and for 4 that number is the paper’s. For the rest, 1 corrects a database’s number and 1 differs, cause not yet known, which can mean a different measurement rather than a database error.");
+    "CatLog compared 8 values read from 1 paper with what the databases list for the same paper; a database lists a number for the same measurement for 6 of them, and for 4 that number is the paper’s. Of the other 2, 1 corrects a database’s number; the remaining 1 differs for a reason not yet known, and some may be other measurements in the paper rather than database errors.");
   assert.doesNotMatch(databaseSection().match(/<p class="stats-part-lead"[\s\S]*?<\/p>/)[0], /title=/, "No record counts, no titles");
   runtimeManifest.summary.database_comparison.records_with_kind = { corrected: 1, differs: "1" };
   api.renderStats();
