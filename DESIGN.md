@@ -137,8 +137,9 @@ S. Supplementary figures and tables (round 14, the user: "not every figure has t
      by `printed_unit` (per s, min or h; M, mM, µM, nM or pM, mol/L spelled out too; a lower-case m standing alone is
      the molar sign, as small capitals come out of a text layer), in a table grouped by parameter with its stored unit,
      shares of that parameter's values.
-   No publication year or journal: the Full data has neither, so no figure by year (the brief's example); no organism
-   kingdom or substrate kind either (no field gives them).
+   No publication year or journal in the Full data, so no figure from it by year (the brief's example; the one figure
+   by year, CatLog and BRENDA by publication year, reads the manifest's `summary.publication_years`, which catlog-v2's
+   build dates by PubMed); no organism kingdom or substrate kind either (no field gives them).
 
 A closed "How these numbers are counted" ends the page: the one place the snapshot's date, its Data ID and the counting
 rules are said (the user, 2026-10-15, of the line that stood under every figure, "Snapshot Oct 15, 2026 · Data ID ... ·
@@ -227,7 +228,8 @@ its accessible description; no figure or table has a data line. The parts' figur
   and BRENDA's highest year and last year before the band labelled with their counts (placed in the viewer's font where
   they touch nothing; a key above the plot when a name finds no room), "CatLog on <date>: N values from M papers" above
   the plot. One caption sentence carries the band and CatLog's values from papers after 2025, which are not drawn; the
-  counting rules are the figure's in How these numbers are counted. A column per year gives its tooltip line. No field,
+  counting rules are the figure's in How these numbers are counted (with the build's catlog_before_first_year and
+  catlog_papers_without_year the parts must make CatLog's totals, and the rules name the values before 2000). A column per year gives its tooltip line. No field,
   or counts that do not hold together: no figure (tools/catlog-static/DESIGN.md, "Round 16").
 - Read from the paper and not yet re-read: two bars stacked by review result (Read from the paper: the main source
   CatLog's own reading; Not yet re-read: every other record, so the two make all records, as its caption says), its
@@ -236,7 +238,8 @@ its accessible description; no figure or table has a data line. The parts' figur
 - Values per paper (`overview.from_paper_values`): the papers CatLog has read, by how many kcat, Km and
   printed kcat/Km values it read from each (1, 2-4, 5-9, 10-19, 20-49, 50-99, 100-199, 200-499, 500 or more; a
   calculated kcat/Km is not a value read), its number columns named Papers and % of papers; drawn only when the bins add up to
-  the papers CatLog has read. No publication years: the data has none.
+  the papers CatLog has read. No publication years here: the Full data has none (CatLog and BRENDA by publication year
+  reads the manifest's own field).
 - Part 7, Against the databases, reads only the manifest's `summary.database_comparison` (the page never parses a
   value's database line): whole counts, checked to add up (the parameters to `values.all`, the causes to
   `corrections.values`); a figure whose keys are absent or damaged is left out, and the part has no heading without

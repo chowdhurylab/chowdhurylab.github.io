@@ -5044,7 +5044,8 @@
   // years BRENDA is still adding papers from (shaded_from on, else STATS_YEARS_SHADED_FROM) on a plain grey band with open
   // dots; direct labels on the lines and BRENDA's highest year and its last year before the band labelled with their
   // counts (statsPlaceYearLabels); CatLog's total above the plot. CatLog's values from papers after last_year are in the
-  // caption, not drawn: the comparison ends where BRENDA's years end. Nothing is drawn unless the counts hold together.
+  // caption, not drawn: the comparison ends where BRENDA's years end; its values before first_year (when the build gives
+  // them) and those with no PubMed year are named in the counting rules. Nothing is drawn unless the counts hold together.
   const STATS_YEARS_SHADED_FROM = 2020;
   const STATS_YEARS_CATLOG = "CatLog, read so far";
 
@@ -5066,8 +5067,23 @@
     const drawnValues = statsListSum(years.map((item) => item.catlog_values));
     const drawnPapers = statsListSum(years.map((item) => item.catlog_papers));
     if (drawnValues + after.values + undated > values || drawnPapers + after.papers > papers || !years.some((item) => item.brenda_values > 0)) return null;
+    // catlog-v2's build also gives CatLog's values from papers before first_year and the papers with no PubMed year
+    // (catlog_before_first_year, catlog_papers_without_year; each paper has one year or none): with them the parts make
+    // the totals exactly, and a count that is there but does not fit leaves the figure out.
+    let before = null;
+    if (field.catlog_before_first_year !== undefined) {
+      before = { values: statsCount(field.catlog_before_first_year?.values), papers: statsCount(field.catlog_before_first_year?.papers) };
+      if (before.values === null || before.papers === null || before.papers > before.values
+        || drawnValues + after.values + undated + before.values !== values) return null;
+    }
+    if (field.catlog_papers_without_year !== undefined) {
+      const undatedPapers = statsCount(field.catlog_papers_without_year, undated);
+      if (undatedPapers === null || (undated > 0) !== (undatedPapers > 0)
+        || drawnPapers + after.papers + undatedPapers + (before ? before.papers : 0) > papers
+        || (before && drawnPapers + after.papers + undatedPapers + before.papers !== papers)) return null;
+    }
     const shade = Number.isInteger(field.shaded_from) ? field.shaded_from : STATS_YEARS_SHADED_FROM;
-    return { first, last, years, release, asOf, values, papers, undated, after, shadedFrom: shade > first && shade <= last ? shade : null };
+    return { first, last, years, release, asOf, values, papers, undated, after, before, shadedFrom: shade > first && shade <= last ? shade : null };
   }
 
   function statsPublicationYearsFigure(field) {
@@ -5119,6 +5135,10 @@
       data.after.values ? `CatLog also has ${valuesText(data.after.values)} from ${papersText(data.after.papers)} published after ${last}` : "",
     ].filter(Boolean);
     const caption = words.length ? `${words.join("; ")}.` : `Values per publication year of their paper in ${release} and read by CatLog.`;
+    // CatLog's values counted in its total only (no PubMed year; before first_year, when the build gives them).
+    const outside = [data.undated ? [data.undated, "from papers with no PubMed year"] : null,
+      data.before?.values ? [data.before.values, `from papers published before ${first}`] : null].filter(Boolean);
+    const totalOnly = outside.length ? `${outside.map(([count, words], index) => `${index ? formatInteger(count) : valuesText(count)} ${words}`).join(" and ")} ${outside.length === 1 && outside[0][0] === 1 ? "counts" : "count"} only in the total` : "";
     return {
       id: "statsYearsTitle", key: "publication-years", title: "CatLog and BRENDA by publication year", wide: true,
       body: `<p class="stats-years-note">CatLog on ${escapeHtml(formatDate(data.asOf))}: ${valuesText(data.values)} from ${papersText(data.papers)}</p>
@@ -5133,7 +5153,7 @@
           <p class="stats-years-x-title" aria-hidden="true">Publication year of the paper</p>
         </div>`,
       caption: escapeHtml(caption),
-      rules: `Each value counts in the PubMed publication year of its paper. CatLog: every kcat, Km and kcat/Km value read from the paper by ${formatDate(data.asOf)}${data.undated ? `; ${valuesText(data.undated)} from papers with no PubMed year count only in the total` : ""}. ${release}: its numeric kcat, Km and kcat/Km entries; an entry counts under each paper it cites, a paper without a PubMed ID in the year BRENDA gives.`,
+      rules: `Each value counts in the PubMed publication year of its paper. CatLog: every kcat, Km and kcat/Km value read from the paper by ${formatDate(data.asOf)}${totalOnly ? `; ${totalOnly}` : ""}. ${release}: its numeric kcat, Km and kcat/Km entries; an entry counts under each paper it cites, a paper without a PubMed ID in the year BRENDA gives.`,
     };
   }
 
@@ -15063,6 +15083,8 @@
       statsPrintedUnitsTable,
       statsUnitWords,
       statsBetweenPapersFigure,
+      statsPublicationYears,
+      statsPublicationYearsFigure,
       statsSubstrateRangeFigure,
       statsKmSizeFigure,
       statsTemperatureFigure,

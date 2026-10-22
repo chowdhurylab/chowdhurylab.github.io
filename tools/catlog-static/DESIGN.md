@@ -1468,9 +1468,13 @@ Generated mockups guide layout only; their text is not a scientific source.
   kcat/Km values per publication year of their paper, first_year to last_year (2000-2025), in BRENDA's release (BRENDA
   2026.1) and read by CatLog, from the manifest's summary.publication_years, which catlog-v2's build writes (the data
   contract: tools/site_patches/20261021-site-round16-brief.md in catlog-v2; an optional shaded_from moves the band, else
-  2020). No field, or counts that do not hold together (a year missing or out of order, a count that is not a whole
-  number, more values or papers in the parts than in CatLog's totals, no release name or date): no figure, nothing else
-  changes.
+  2020). catlog-v2's build (tools/publication_years.py) adds definition, catlog_papers_without_year and
+  catlog_before_first_year: with them the years drawn, the values before and after them and those with no PubMed year
+  make CatLog's totals exactly (each paper has one year or none), and the counting rules name the values before
+  first_year beside those with no year, both counted only in the total. No field, or counts that do not hold together (a
+  year missing or out of order, a count that is not a whole number, more values or papers in the parts than in CatLog's
+  totals, parts that miss the totals when the build's two counts are there, no release name or date): no figure, nothing
+  else changes.
 - As approved: a line with a dot per year for each source; the years BRENDA is still adding papers from (2020 on) on a
   plain grey band with open dots, explained in the caption (never "curation incomplete"); direct labels on the lines
   ("BRENDA 2026.1", "CatLog, read so far"), no legend box; BRENDA's highest year and its last year before the band
@@ -1480,8 +1484,8 @@ Generated mockups guide layout only; their text is not a scientific source.
   And Color), light gridlines, the counts in full ("15,000", not thousands), ticks every 5 years.
 - One sentence of caption: the band and CatLog's values after last_year ("BRENDA is still adding papers from the shaded
   years (2020 on); CatLog also has 9,086 values from 349 papers published after 2025."); the counting rules (PubMed year,
-  CatLog's values with no PubMed year counted only in its total, how BRENDA's entries count) are the figure's under its
-  number in How these numbers are counted.
+  CatLog's values with no PubMed year and those from papers before first_year counted only in its total, how BRENDA's
+  entries count) are the figure's under its number in How these numbers are counted.
 - Lines in an SVG stretched over the plot (2px, non-scaling); dots, labels and ticks are HTML placed in percent, so they
   stay round and upright at every width. statsPlaceYearLabels places the labels in the viewer's own font, when Stats is
   drawn and whenever the plot changes size: each name along the flattest stretch of its line before the band, on the

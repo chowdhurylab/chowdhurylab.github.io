@@ -3095,6 +3095,59 @@ function row(overrides = {}) {
     api.renderStats();
   }
 
+  // CatLog and BRENDA by publication year (round 16), from summary.publication_years as catlog-v2's build writes it
+  // (tools/publication_years.py: the brief's data contract plus definition, catlog_papers_without_year and
+  // catlog_before_first_year, with which the parts make CatLog's totals exactly).
+  {
+    const brenda = [6561, 6408, 6983, 9419, 10460, 11154];
+    const field = { brenda_release: "BRENDA 2026.1", as_of: "2026-10-21", first_year: 2000, last_year: 2005,
+      years: brenda.map((count, index) => ({ year: 2000 + index, brenda_values: count, catlog_values: 10 * (index + 1), catlog_papers: index + 1 })),
+      catlog_values_total: 210 + 7 + 40 + 1, catlog_papers_total: 21 + 2 + 3 + 1, catlog_values_without_year: 7, catlog_papers_without_year: 2,
+      catlog_after_last_year: { values: 1, papers: 1 }, catlog_before_first_year: { values: 40, papers: 3 }, shaded_from: 2004,
+      definition: "kcat, Km and kcat/Km values per publication year of the source paper, 2000-2005." };
+    assert.equal(api.statsPublicationYears(field).before.values, 40);
+    const years = api.statsPublicationYearsFigure(field);
+    assert.equal(years.key, "publication-years");
+    assert.equal(years.caption, "BRENDA is still adding papers from the shaded years (2004 on); CatLog also has 1 value from 1 paper published after 2005.");
+    assertPlainCaption(years.caption);
+    assert.match(years.body, /<p class="stats-years-note">CatLog on Oct 21, 2026: 258 values from 27 papers<\/p>/);
+    assert.match(years.body, /data-tip="2003: BRENDA 2026\.1, 9,419 values; CatLog, 40 values from 4 papers"/);
+    assert.equal((years.body.match(/class="stats-years-dot[^"]*is-open/g) || []).length, 4, "2004 and 2005, both lines");
+    assert.match(years.rules, /by Oct 21, 2026; 7 values from papers with no PubMed year and 40 from papers published before 2000 count only in the total\./);
+    // Without the build's two extra counts the brief's contract alone still draws it; the rule then names the undated only.
+    const contract = { ...field };
+    delete contract.catlog_before_first_year;
+    delete contract.catlog_papers_without_year;
+    assert.match(api.statsPublicationYearsFigure(contract).rules, /; 7 values from papers with no PubMed year count only in the total\./);
+    assert.match(api.statsPublicationYearsFigure({ ...contract, catlog_values_without_year: 1, catlog_values_total: 212 }).rules,
+      /; 1 value from papers with no PubMed year counts only in the total\./);
+    // Parts that do not make the totals, a damaged extra count or a year missing: no figure.
+    assert.equal(api.statsPublicationYears({ ...field, catlog_before_first_year: { values: 39, papers: 3 } }), null);
+    assert.equal(api.statsPublicationYears({ ...field, catlog_papers_without_year: 3 }), null);
+    assert.equal(api.statsPublicationYears({ ...field, catlog_papers_without_year: 0 }), null, "values without a year come from papers without one");
+    assert.equal(api.statsPublicationYears({ ...field, catlog_before_first_year: null }), null);
+    assert.equal(api.statsPublicationYears({ ...field, years: field.years.slice(1) }), null);
+    assert.equal(api.statsPublicationYears({ ...field, as_of: "Oct 21" }), null);
+    assert.equal(api.statsPublicationYears(undefined), null);
+    // In the page: in What is in the catalog after Records by main source and before Enzyme classes, numbered in order;
+    // without the field nothing else changes.
+    const before = headings();
+    runtimeManifest.summary.publication_years = field;
+    api.renderStats();
+    const withYears = headings();
+    assert.deepEqual(withYears.filter((title) => title !== "CatLog and BRENDA by publication year"), before);
+    assert.equal(withYears.indexOf("CatLog and BRENDA by publication year"), withYears.indexOf("Records by main source") + 1);
+    const figureNumber = (key) => Number(element("statsCharts").innerHTML.match(new RegExp(`data-figure="${key}">[\\s\\S]*?<strong>Figure (\\d+)\\.</strong>`))?.[1]);
+    const number = figureNumber("publication-years");
+    assert.deepEqual([figureNumber("main-source"), figureNumber("ec-classes")], [number - 1, number + 1], "The figures run in order");
+    assert.match(element("statsCharts").innerHTML, new RegExp(`<strong>Figure ${number}\\.</strong> BRENDA is still adding papers`));
+    assert.match(methodHtml(), new RegExp(`<dt>Figure ${number}</dt><dd><span class="stats-method-title">CatLog and BRENDA by publication year\\.</span> Each value counts in the PubMed publication year of its paper\\.`));
+    assert.doesNotMatch(element("statsCharts").innerHTML, /NaN|Infinity|undefined/);
+    delete runtimeManifest.summary.publication_years;
+    api.renderStats();
+    assert.deepEqual(headings(), before);
+  }
+
   // The supplement's new figures and tables (round 14), each only when its counts hold together.
   {
     // Papers by parameter: of the papers read (the band's count), each parameter, kcat and Km together and all three.

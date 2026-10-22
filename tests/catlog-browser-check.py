@@ -2370,6 +2370,9 @@ PUBLICATION_YEARS_FIXTURE = {
               for index, (brenda, catlog, papers) in enumerate(zip(_YEARS_BRENDA, _YEARS_CATLOG, _YEARS_PAPERS))],
     "catlog_values_total": 217969, "catlog_papers_total": 6116, "catlog_values_without_year": 5607,
     "catlog_after_last_year": {"values": 9086, "papers": 349},
+    # what catlog-v2's build adds (tools/publication_years.py): the parts then make the totals exactly
+    "catlog_papers_without_year": 172, "catlog_before_first_year": {"values": 33203, "papers": 956},
+    "definition": "kcat, Km and kcat/Km values per publication year of the source paper, 2000-2025.",
 }
 PUBLICATION_YEARS_JS = """
     Object.defineProperty(window, "CATLOG_STATIC_MANIFEST", { configurable: true, get() { return undefined; },
@@ -2451,8 +2454,24 @@ def publication_years_valid(field):
     if not str(field.get("brenda_release") or "").strip() or not re.fullmatch(r"\d{4}-\d{2}-\d{2}", str(field.get("as_of") or "")) or not all(map(whole, numbers)):
         return False
     values, papers, undated = numbers[:3]
-    return after["papers"] <= after["values"] and sum(item["catlog_values"] for item in years) + after["values"] + undated <= values \
-        and sum(item["catlog_papers"] for item in years) + after["papers"] <= papers and any(item["brenda_values"] for item in years)
+    drawn_values, drawn_papers = sum(item["catlog_values"] for item in years), sum(item["catlog_papers"] for item in years)
+    if not (after["papers"] <= after["values"] and drawn_values + after["values"] + undated <= values
+            and drawn_papers + after["papers"] <= papers and any(item["brenda_values"] for item in years)):
+        return False
+    # catlog-v2's build also gives the values before first_year and the papers with no year: then the parts make the totals.
+    before = field.get("catlog_before_first_year")
+    if "catlog_before_first_year" in field:
+        if not (isinstance(before, dict) and whole(before.get("values")) and whole(before.get("papers"), before.get("values"))
+                and drawn_values + after["values"] + undated + before["values"] == values):
+            return False
+    if "catlog_papers_without_year" in field:
+        undated_papers = field["catlog_papers_without_year"]
+        if not whole(undated_papers, undated) or (undated > 0) != (undated_papers > 0):
+            return False
+        parts = drawn_papers + after["papers"] + undated_papers + (before["papers"] if isinstance(before, dict) else 0)
+        if parts > papers or (isinstance(before, dict) and parts != papers):
+            return False
+    return True
 
 
 def publication_years_caption(field):
@@ -2468,8 +2487,8 @@ def publication_years_caption(field):
 def check_stats_years(driver, browser, url):
     """CatLog and BRENDA by publication year: drawn from the manifest's summary.publication_years when its counts hold
     together, else left out with the rest of Stats unchanged (no field, a year missing, more values in the parts than in
-    CatLog's total). In What is in the catalog after Records by main source; the caption, the note above the plot, the
-    tooltip line per year, open dots for the shaded years, the lines' contrast on white and on the band, the counting
+    CatLog's total, or, with the build's values before the first year, parts that do not make the total). In What is in
+    the catalog after Records by main source; the caption, the note above the plot, the tooltip line per year, open dots for the shaded years, the lines' contrast on white and on the band, the counting
     rules in How these numbers are counted; the labels placed apart and clear of the lines and dots at 1440, 375 and
     320px, the key shown only when a name finds no room; pointing at a year (Chrome) gives its line and grows its dots.
     Chrome sets the approved figure's numbers when the snapshot has none and also checks the figure left out; Safari
@@ -2478,7 +2497,8 @@ def check_stats_years(driver, browser, url):
     stats_url = url.replace("catlog-latest.html", "catlog-stats.html")
     fill = "if (!summary.publication_years) summary.publication_years = %s;" % json.dumps(PUBLICATION_YEARS_FIXTURE)
     variants = [("filled", fill), ("missing", "delete summary.publication_years;"), ("short", fill + " summary.publication_years.years.pop();"),
-                ("too many", fill + " summary.publication_years.catlog_values_total = 1;")] if browser == "chrome" else [("snapshot", "")]
+                ("too many", fill + " summary.publication_years.catlog_values_total = 1;"),
+                ("parts", fill + " summary.publication_years.catlog_before_first_year.values += 1;")] if browser == "chrome" else [("snapshot", "")]
     results = {}
     for name, patch in variants:
         injected = driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {"source": PUBLICATION_YEARS_JS % patch}) if patch else None
@@ -2524,6 +2544,9 @@ def check_stats_years(driver, browser, url):
                 assert facts["lastTick"] and not facts["overflow"], f"{name} overflows at {width}px"
                 assert f"{release}: " in facts["aria"] and f"{last}" in facts["aria"], facts["aria"]
                 assert facts["rules"].startswith(f"Figure {facts['order'].index('publication-years') + 1}") and "PubMed publication year" in facts["rules"], facts["rules"]
+                before = (field.get("catlog_before_first_year") or {}).get("values")
+                assert not before or f"{before:,} from papers published before {field['first_year']}" in facts["rules"] \
+                    or f"{before:,} values from papers published before {field['first_year']}" in facts["rules"], facts["rules"]
                 if name == "filled":
                     # The approved numbers leave room for every label from 641px and for both names on a phone.
                     assert facts["labelled"], (width, facts["placed"])
