@@ -4426,11 +4426,14 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   const twin = (key, extra = {}) => Object.assign(row({ record_key: key, measurement_key: key, substrate_name: "pyruvate" }), { _pmids: 25401076, _dois: null }, extra);
   const page = [twin("a"), twin("b"), twin("c", { kcat_display: "2" }), twin("d", { condition_note: "+10 mM FBP" }), twin("e", { _pmids: 1 })];
   const alike = api.lookAlikeRowKeys(page);
-  assert.deepEqual([...alike.keys()].sort(), ["a", "b"]);
+  assert.deepEqual([...alike.keys()].sort(), ["a", "b", "c"]);
+  assert.deepEqual(["a", "b", "c"].map((key) => alike.get(key)), ["", "", "other assay details"]);
   assert.equal(api.substrateNoteHtml(page[0], alike), '<small class="condition-note" title="same values as another record of this paper">like another record</small>');
   const empty = (key) => twin(key, { kcat_display: "", km_display: "", kcat_over_km_display: "" });
   assert.equal(api.lookAlikeRowKeys([empty("x"), empty("y")]).size, 0, "records without values are not called look-alikes");
-  assert.equal(api.substrateNoteHtml(page[2], alike), "");
+  // A record of the same paper, enzyme, substrate, pH and temperature with other values says that its record tells how
+  // it differs (fix pass after round 16b: such rows had looked identical but for their values).
+  assert.equal(api.substrateNoteHtml(page[2], alike), '<small class="condition-note" title="the same enzyme, substrate, pH and temperature as another record of this paper, with other values; the record’s Assay and Preparation say how they differ">other assay details</small>');
   assert.match(api.substrateNoteHtml(page[3], alike), /title="\+10 mM FBP">\+10 mM FBP<\/small>/);
   // The table shows no temperature or pH: look-alikes that differ only there say which, and only the part that differs.
   const assay = [twin("p1", { ph_display: "6.5", temperature_display: "25" }), twin("p2", { ph_display: "8.5", temperature_display: "25" }),

@@ -1607,3 +1607,8 @@ manifest's database comparison; a field an older snapshot lacks leaves its words
   (statsCorrectionsQualifiers): the caption says Corrects is a lower bound when the comparison gives checked_from_factor,
   and the rule says how all the corrections were found (an AI check of the paper, an exact factor), which the comparison
   does not count per database; so no per-database share reads as a database's error rate.
+- Look-alike rows: records of one paper, enzyme, variant and substrate at one temperature and pH whose values differ (6,448
+  groups among the records read from the paper on Oct 18) say "other assay details" under the substrate, titled with
+  what it means (the record's Assay and Preparation say how they differ), so rows that read the same but for their values
+  no longer look like duplicates. The difference itself (free or immobilised, buffer or milk) needs catlog-v2's export
+  to write it into condition_note; the table then shows that note instead, as it does today.

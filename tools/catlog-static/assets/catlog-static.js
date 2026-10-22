@@ -10508,6 +10508,11 @@
     "kcat_display", "kcat_unit", "km_display", "km_unit", "kcat_over_km_display", "kcat_over_km_unit", "verification_status",
     "source_db"];
   const SERIES_ROW_FIELDS = ["enzyme_display_name", "mutation_signature", "ec_number", "organism", "substrate_name", "source_db"];
+  const SERIES_VALUE_FIELDS = ["kcat_display", "kcat_unit", "km_display", "km_unit", "kcat_over_km_display", "kcat_over_km_unit"];
+  // Records of one paper, enzyme and substrate at one temperature and pH with other values: what tells them apart (an
+  // immobilised enzyme, another medium or buffer, another cosubstrate) is in the record's Assay and Preparation.
+  const OTHER_ASSAY_NOTE = "other assay details";
+  const OTHER_ASSAY_TITLE = "the same enzyme, substrate, pH and temperature as another record of this paper, with other values; the record’s Assay and Preparation say how they differ";
 
   function conditionNoteText(...rows) {
     for (const row of rows) {
@@ -10540,11 +10545,22 @@
     };
     const notes = new Map();
     notes.titles = new Map();
-    // A series whose temperature or pH differs: each record says its own, only the part that differs.
+    // A series whose temperature or pH differs: each record says its own, only the part that differs. One whose
+    // temperature and pH are the same but whose values differ (fix pass after round 16b: 6,448 such groups of records
+    // read from the paper, e.g. a β-galactosidase free and immobilised, in buffer and in milk) differs in what only the
+    // record shows: each record says so (records with the same values still read alike, below).
     series.forEach((rows) => {
       if (rows.length < 2) return;
       const differs = [0, 1].map((at) => new Set(rows.map((row) => condition(row)[at])).size > 1);
-      if (!differs.some(Boolean)) return;
+      if (!differs.some(Boolean)) {
+        const values = (row) => JSON.stringify(SERIES_VALUE_FIELDS.map((field) => row[field] ?? null));
+        if (new Set(rows.map(values)).size < 2) return;
+        rows.forEach((row) => {
+          notes.set(row.record_key, OTHER_ASSAY_NOTE);
+          notes.titles.set(row.record_key, OTHER_ASSAY_TITLE);
+        });
+        return;
+      }
       const other = differs[0] && differs[1] ? "pH or temperature" : differs[0] ? "pH" : "temperature";
       rows.forEach((row) => {
         const [ph, temperature] = condition(row);
