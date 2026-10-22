@@ -1169,9 +1169,11 @@ Database attribution belongs in Guide and dataset notes, not the Browse footer.
 
 One page from the snapshot manifest (never the record index) in numbered parts, each with one plain heading:
 1 At a glance (the headline band, the page's focal point: a plain white card with a 1px --line hairline, no glow, halo, wash or motion (round 14); 40px key numbers in the counts band's meaning colours (28px on phones, growing with the window from 721px to 30px at 1023px and on to 40px at 1200px, never smaller on a wider window, so a wide font keeps a six-digit count inside its column), then 20px scope counts),
-2 Quality (round 14: the review's 99.9% is At a glance's alone, "of 2,604 entries (earlier records as reviewers saw
-them) people could check, 3 had a value disputed; 166 had no paper" (round 16b; an older snapshot: "of 2,770 entries
-(...) people checked, ...; 153 (5.5%) not found in the paper"); here no second big number and no dashboard cards: Human
+2 Quality (round 14: the review's 99.9% is At a glance's alone, with one line as the other notes have, "no value
+disputed, 2,601 of 2,604" (fix pass after round 16b: the gloss and the entries without a paper had made a three- to
+seven-line paragraph of a headline cell; the item's title says it in full, and Quality's lead says the rest; an older
+snapshot: "no value disputed, 2,767 of 2,770; 153 (5.5%) not found in the paper"); each item's label and number are two
+rows of the band (a subgrid), so the numbers of a row start at one height whatever label wraps); here no second big number and no dashboard cards: Human
 review in one sentence over a small table of its verdicts, then Checks on the values as a table of the checks, each row
 with what it covered, what it found and a small bar of the share kept or approved, then Errors found in CatLog (round
 16b); the review's flags by kind and the reviewers' approved values read from the paper again are the supplement's
@@ -1519,9 +1521,10 @@ Generated mockups guide layout only; their text is not a scientific source.
 Every number comes from overview.quality (catlog-v2 human_review.quality, copied by build_overview's marks_quality) or the
 manifest's database comparison; a field an older snapshot lacks leaves its words out, and the page reads as before.
 - Human review: the share is over the entries a reviewer could check against a paper (review.v1.checkable); the 166
-  entries without a paper are said beside it (At a glance's note, Quality's sentence, "Shares are of the 2,604 entries
+  entries without a paper are said beside it (At a glance's title, Quality's sentence, "Shares are of the 2,604 entries
   with a paper." under the verdicts) and Table S1 counts the flags of the checkable entries. "Entries" is glossed where
-  Stats first uses it: "(earlier records as reviewers saw them)". Team's Human check gives the same share.
+  Stats first uses it, Quality's lead since the fix pass ("People checked 2,770 entries from the earlier version (431
+  papers), each a record as reviewers saw it; ..."). Team's Human check gives the same share.
 - Checks on the values: the audit's share with its 95% Wilson interval (audit_wrong_ci95, kept only when it holds the
   share) and how many of the wrong values sit in two papers (audit_wrong_top2 of audit_wrong, with more than two papers);
   human-checked records with their values beside them (overview.human_checked_values: the approved values on those

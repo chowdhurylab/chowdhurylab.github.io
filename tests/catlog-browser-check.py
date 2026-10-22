@@ -1045,8 +1045,9 @@ REVIEW_FIXTURE = {
 # value the reviewer could not find, never the base again.
 # At a glance's Human review note (round 14: the headline stated once, the not-found entries beside it).
 # Round 16b: the word "entries" glossed where Stats first uses it.
-REVIEW_HEADLINE_NOTE = "of 2,674 entries (earlier records as reviewers saw them) people checked, 3 had a value disputed; 153 (5.7%) not found in the paper"
-REVIEW_SENTENCE = "People checked 2,674 entries from the earlier version (408 papers); a check of the paper found all 3 disputed values printed as the entry gives them."
+# Fix pass after round 16b: the note is one line, and the gloss is Quality's lead's, Stats' first use of "entries".
+REVIEW_HEADLINE_NOTE = "no value disputed, 2,671 of 2,674; 153 (5.7%) not found in the paper"
+REVIEW_SENTENCE = "People checked 2,674 entries from the earlier version (408 papers), each a record as reviewers saw it; a check of the paper found all 3 disputed values printed as the entry gives them."
 # The base's "(408 papers)" in the given places: its text and how many lines it takes.
 REVIEW_BASE_PARENS = """
     return [...document.querySelectorAll(arguments[0])].flatMap(place => [...place.querySelectorAll('.nowrap')])
@@ -1271,10 +1272,18 @@ def check_quality_round16b(driver, browser, url):
             driver.get(url.replace("catlog-latest.html", "catlog-stats.html"))
             lead = wait.until(lambda d: d.find_element(By.CSS_SELECTOR, "#statsCharts .stats-lead"))
             band = text(driver.find_element(By.CSS_SELECTOR, ".stats-total[data-total='review']"))
-            assert "99.9%" in band and ("of 2,604 entries (earlier records as reviewers saw them) people could check, 3 had a "
-                                        "value disputed; 166 had no paper") in band, band
+            assert "99.9%" in band and band.endswith("no value disputed, 2,601 of 2,604"), band
+            # the note keeps one line wherever a column has the room (fix pass after round 16b), and the key numbers of a
+            # row start at one height whatever wraps above them
+            tops = driver.execute_script("""return [...document.querySelectorAll('.stats-totals-main .stats-total')].map(item =>
+                [Math.round(item.querySelector('.stats-total-value').getBoundingClientRect().top), item.querySelector('small')
+                  ? item.querySelector('small').getClientRects().length && Math.round(item.querySelector('small').getBoundingClientRect().height) : 0])""")
+            assert len({top for top, _ in (tops if width >= 721 else tops[2:])}) == 1, tops
+            if width >= 1280:
+                assert all(height <= 20 for _, height in tops), tops
             assert text(lead.find_element(By.CSS_SELECTOR, ".stats-lead-sentence")) == (
-                "People checked 2,770 entries from the earlier version (431 papers); 166 had no paper and could not be checked. "
+                "People checked 2,770 entries from the earlier version (431 papers), each a record as reviewers saw it; 166 had "
+                "no paper and could not be checked. "
                 "A check of the paper found all 3 disputed values printed as the entry gives them."), text(lead)
             rows = driver.execute_script("""return [...arguments[0].querySelectorAll('.stats-review-table tbody tr')]
                 .map(row => [...row.children].map(cell => cell.innerText.trim()))""", lead)

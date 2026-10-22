@@ -2198,12 +2198,14 @@ function row(overrides = {}) {
   assert.match(lead, /<h3 id="statsReviewTitle" class="stats-fig-title">Human review<\/h3>/);
   // The headline is At a glance's alone (round 14: stated once): the share, then in a few words the entries checked, the
   // disputed ones and, beside the share as the user asked (2026-10-15), the entries whose value was not found.
-  assert.match(element("statsTotals").innerHTML, /<dt>Human review<\/dt><dd><span class="stats-total-value">99\.9%<\/span><small>of 2,674 entries \(earlier records as reviewers saw them\) people checked, 3 had a value disputed; 153 \(5\.7%\) not found in the paper<\/small>/);
-  assert.equal(api.reviewGlanceText(api.reviewFacts({ entries: 10, value_disputed: 0 })), "of 10 entries (earlier records as reviewers saw them) people checked, none had a value disputed");
+  // Fix pass after round 16b: one line, as the other notes; the cell's title says it in full.
+  assert.match(element("statsTotals").innerHTML, /<div class="stats-total" data-total="review" title="No value disputed in 2,671 of the 2,674 entries from CatLog’s earlier version that people checked\."><dt>Human review<\/dt><dd><span class="stats-total-value">99\.9%<\/span><small>no value disputed, 2,671 of 2,674; 153 \(5\.7%\) not found in the paper<\/small>/);
+  assert.equal(api.reviewGlanceText(api.reviewFacts({ entries: 10, value_disputed: 0 })), "no value disputed, 10 of 10");
   // Round 16b: with the counts over the entries a reviewer could check against a paper (review.checkable), the share is
   // theirs and the entries without a paper are said beside it; counts that do not add up keep the older reading.
   const checkable = { entries: 10, papers: 4, entries_without_paper: 2, value_disputed: 1, checkable: { entries: 8, value_disputed: 1, other_disputed: 1, other_by_kind: { DOI: 1 } } };
-  assert.equal(api.reviewGlanceText(api.reviewFacts(checkable)), "of 8 entries (earlier records as reviewers saw them) people could check, 1 had a value disputed; 2 had no paper");
+  assert.equal(api.reviewGlanceText(api.reviewFacts(checkable)), "no value disputed, 7 of 8");
+  assert.equal(api.reviewGlanceTitle(api.reviewFacts(checkable)), "No value disputed in 7 of the 8 entries from CatLog’s earlier version that people checked against a paper; 2 more had no paper.");
   assert.deepEqual([api.reviewFacts(checkable).share, api.reviewFacts(checkable).all, api.reviewFacts(checkable).unchecked, api.reviewFacts(checkable).papers], ["87.5%", 10, 2, 4]);
   assert.equal(api.reviewFacts({ ...checkable, entries_without_paper: 3 }).unchecked, null);
   // The review in one sentence says every entry checked, those without a paper and the share over the others.
@@ -2212,7 +2214,7 @@ function row(overrides = {}) {
   assert.equal(api.reviewFacts({ ...checkable, checkable: { entries: "8" } }).share, "90.0%");
   // Quality says it once more only as one sentence and a table of the verdicts; the not-found entries are a table row.
   assert.doesNotMatch(lead, /stats-lead-figure|<strong>|could not find the value in the paper\./);
-  assert.match(lead, /<p class="stats-lead-sentence">People checked 2,674 entries from the earlier version <span class="nowrap">\(408 papers\)<\/span>; a check of the paper found all 3 disputed values printed as the entry gives them\.<\/p>/);
+  assert.match(lead, /<p class="stats-lead-sentence">People checked 2,674 entries from the earlier version <span class="nowrap">\(408 papers\)<\/span>, each a record as reviewers saw it; a check of the paper found all 3 disputed values printed as the entry gives them\.<\/p>/);
   assert.doesNotMatch(lead, /values correct|A reviewer disputed/);
   const verdicts = [...lead.matchAll(/<tr(?: class="([^"]*)")?><th scope="row"[^>]*>([^<]*)<\/th><td class="stats-num">([\d,]+)<\/td><td class="stats-num stats-muted">([^<]*)<\/td><\/tr>/g)]
     .map(([, cls, label, count, share]) => [cls || "", label, count, share]);

@@ -1150,6 +1150,10 @@ p.cmp-note { padding-left:16px }
 .stats-totals-main .stats-total[data-total="catlog"] { --key:var(--src-paper-ink) }
 .stats-totals-main .stats-total[data-total="review"] { --key:var(--checked) }
 .stats-totals-main .stats-total-value { display:inline-block; color:var(--key) }
+/* The key numbers line up across a row whatever wraps above them (fix pass after round 16b: at 375px in a wide font
+   "Read from the paper" took two lines and its 75,000 stood 18px below 99.9%): each item's label and number are two rows
+   of the band (a subgrid), so a row's labels end together and its numbers start together. */
+.stats-totals .stats-totals-main > .stats-total { display:grid; grid-row:span 2; grid-template-rows:subgrid; row-gap:0; align-content:start }
 /* As on Browse's counts band: the labels muted, the meaning colour on a mark before the label (Accepted's dot, Read
    from the paper's cyan square) and on the number. */
 .stats-totals-main .stats-total:is([data-total="accepted"], [data-total="catlog"]) dt::before { content:""; display:inline-block; width:8px; height:8px; margin-right:6px; border-radius:50%; background:var(--st-accepted); vertical-align:0 }

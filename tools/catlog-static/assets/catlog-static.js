@@ -6157,21 +6157,30 @@
     ].filter(Boolean).join(" ");
   }
 
-  // At a glance's Human review note (round 14: the headline is stated once, there), with the gloss of "entries" where
-  // Stats first uses the word (round 16b): "of 2,604 entries (earlier records as reviewers saw them) people could check,
-  // 3 had a value disputed; 166 had no paper" when the share is over the entries with a paper (reviewFacts), else "of
-  // 2,770 entries (...) people checked, 3 had a value disputed; 153 (5.5%) not found in the paper" (the entries whose
-  // value the reviewer could not find stay beside the share wherever it stands, the user, 2026-10-15).
-  const REVIEW_ENTRIES_GLOSS = "earlier records as reviewers saw them";
+  // At a glance's Human review note (round 14: the headline is stated once, there): one line, as the other three notes
+  // (fix pass after round 16b: the gloss and the entries without a paper had made it a paragraph of three to seven lines
+  // in a headline cell), saying what the share counts: "no value disputed, 2,601 of 2,604". The word "entries" is
+  // Quality's first, where its gloss stands; the item's title says it in full (reviewGlanceTitle). An older snapshot
+  // (no counts over the entries with a paper) keeps the entries whose value the reviewer could not find beside the share
+  // (the user, 2026-10-15): "no value disputed, 2,767 of 2,770; 153 (5.5%) not found in the paper".
+  // The gloss of "entries" where Stats first uses the word (round 16b), Quality's lead.
+  const REVIEW_ENTRIES_GLOSS = "each a record as reviewers saw it";
   function reviewGlanceText(facts) {
-    const disputed = facts.disputed ? `${formatInteger(facts.disputed)} had a value disputed` : "none had a value disputed";
-    const entries = `${formatInteger(facts.entries)} ${facts.entries === 1 ? "entry" : "entries"} (${REVIEW_ENTRIES_GLOSS})`;
-    if (facts.unchecked !== null && facts.unchecked !== undefined) {
-      return `of ${entries} people could check, ${disputed}${facts.unchecked ? `; ${formatInteger(facts.unchecked)} had no paper` : ""}`;
-    }
+    const base = `no value disputed, ${formatInteger(facts.undisputed)} of ${formatInteger(facts.entries)}`;
+    if (facts.unchecked !== null && facts.unchecked !== undefined) return base;
     const notFound = facts.notFound === null || facts.notFound === undefined ? ""
       : `; ${formatInteger(facts.notFound)} (${qualityShare(facts.notFound, facts.entries)}) not found in the paper`;
-    return `of ${entries} people checked, ${disputed}${notFound}`;
+    return `${base}${notFound}`;
+  }
+
+  // The headline cell's title, in full: "No value disputed in 2,601 of the 2,604 entries from CatLog’s earlier version
+  // that people checked against a paper; 166 more had no paper."
+  function reviewGlanceTitle(facts) {
+    const one = facts.entries === 1;
+    const checked = facts.unchecked !== null && facts.unchecked !== undefined
+      ? `${one ? "entry" : "entries"} from CatLog’s earlier version that people checked against a paper${facts.unchecked ? `; ${formatInteger(facts.unchecked)} more had no paper` : ""}`
+      : `${one ? "entry" : "entries"} from CatLog’s earlier version that people checked`;
+    return `No value disputed in ${formatInteger(facts.undisputed)} of the ${formatInteger(facts.entries)} ${checked}.`;
   }
 
   // Quality's Human review (round 14: no second big number; At a glance gives the headline): one sentence, who checked
@@ -6194,10 +6203,13 @@
     }
     const after = reviewDisputedText(review);
     // with the entries a reviewer could not check said (round 16b): "People checked 2,770 entries from the earlier version
-    // (431 papers); 166 had no paper and could not be checked. A check of the paper found all 3 disputed values ..."
+    // (431 papers), each a record as reviewers saw it; 166 had no paper and could not be checked. A check of the paper
+    // found all 3 disputed values ..."; the gloss of "entries" (round 16b) stands here, Stats' first use of the word (the
+    // band's note says only "no value disputed, 2,601 of 2,604").
+    const base = `People checked ${reviewBaseText(review)}, ${REVIEW_ENTRIES_GLOSS}`;
     const sentence = review.unchecked
-      ? `People checked ${reviewBaseText(review)}; ${formatInteger(review.unchecked)} had no paper and could not be checked.${after ? ` ${after}` : ""}`
-      : `People checked ${reviewBaseText(review)}${after ? `; ${after.charAt(0).toLowerCase()}${after.slice(1)}` : "."}`;
+      ? `${base}; ${formatInteger(review.unchecked)} had no paper and could not be checked.${after ? ` ${after}` : ""}`
+      : `${base}${after ? `; ${after.charAt(0).toLowerCase()}${after.slice(1)}` : "."}`;
     const row = (label, count, { sub = 0, title = "" } = {}) => `<tr${sub ? ` class="stats-row-sub${sub > 1 ? " stats-row-sub2" : ""}"` : ""}><th scope="row"${title ? ` title="${escapeHtml(title)}"` : ""}>${words(label)}</th><td class="stats-num">${formatInteger(count)}</td><td class="stats-num stats-muted">${escapeHtml(qualityShare(count, review.entries))}</td></tr>`;
     const noted = [
       review.missing !== null ? row("Value missing", review.missing, { sub: 1, title: "The paper prints a value the entry lacked" }) : "",
@@ -7551,7 +7563,7 @@
     // read from the paper and the human review's headline, stated here only (99.9%, of 2,770 earlier entries people
     // checked, 3 had a value disputed; 153 (5.5%) not found in the paper); line 2 (20px): the catalog's scope. A number
     // Browse can filter links there.
-    const reviewHeadline = review ? { value: review.share, note: reviewGlanceText(review) }
+    const reviewHeadline = review ? { value: review.share, note: reviewGlanceText(review), title: reviewGlanceTitle(review) }
       : match ? { value: qualityShare(match.same, match.approved), note: "of approved values the same where CatLog has re-read the paper",
         noteHtml: keepReRead("of approved values the same where CatLog has re-read the paper") } : null;
     const main = [
@@ -7561,7 +7573,7 @@
       fromPaper !== null ? { key: "catlog", label: SOURCE_CATLOG_LABEL, value: formatInteger(fromPaper),
         note: papersRead !== null ? `from ${formatInteger(papersRead)} papers` : "", params: fromPaper ? { source: "paper" } : null } : null,
       reviewHeadline ? { key: "review", label: "Human review", value: reviewHeadline.value, note: reviewHeadline.note,
-        noteHtml: reviewHeadline.noteHtml } : null,
+        noteHtml: reviewHeadline.noteHtml, title: reviewHeadline.title } : null,
     ].filter(Boolean);
     const scope = [
       ["papers", "Papers", statsCount(overview?.papers)],
@@ -7570,7 +7582,7 @@
       ["organisms", "Organisms", statsCount(overview?.organisms) ?? statsCount(totals.unique_organisms)],
       ["substrates", "Substrates", statsCount(overview?.substrates) ?? statsCount(totals.unique_substrates)],
     ].filter(([, , value]) => value !== null).map(([key, label, value]) => ({ key, label, value: formatInteger(value) }));
-    const totalHtml = (item) => `<div class="stats-total" data-total="${item.key}"><dt>${escapeHtml(item.label)}</dt><dd>${item.params
+    const totalHtml = (item) => `<div class="stats-total" data-total="${item.key}"${item.title ? ` title="${escapeHtml(item.title)}"` : ""}><dt>${escapeHtml(item.label)}</dt><dd>${item.params
       ? `<a class="stats-total-value" href="${escapeHtml(statsBrowseHref(item.params))}">${escapeHtml(item.value)}</a>`
       : `<span class="stats-total-value">${escapeHtml(item.value)}</span>`}${item.note ? `<small>${item.noteHtml || escapeHtml(item.note)}</small>` : ""}</dd></div>`;
     const totalsHtml = (items, className) => `<dl class="${className}" style="--stats-columns:${items.length}">${items.map(totalHtml).join("")}</dl>`;
@@ -15270,6 +15282,7 @@
       statsExposureText,
       auditFacts,
       reviewGlanceText,
+      reviewGlanceTitle,
       renderTeam,
       teamNumbers,
       teamWrappedLines,
