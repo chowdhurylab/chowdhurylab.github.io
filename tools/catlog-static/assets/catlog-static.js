@@ -2579,7 +2579,8 @@
     return extra;
   }
 
-  // The folded text the search box matches, built the first time a search needs it.
+  // The folded text the search box matches, built the first time a search needs it. The substrate is matched apart, at
+  // the start of a part of its name (substrateHasStart), as the Substrate field matches it.
   function searchText(row) {
     row._search ??= compactSearch(foldSearch(row._search_text || [
       row.measurement_key,
@@ -2588,7 +2589,6 @@
       row.enzyme_display_name,
       row.organism,
       organismSearchText(row.organism),
-      row.substrate_name,
       row.mutation_signature === "Unknown" ? "" : row.mutation_signature,
       row.source_db,
       row.primary_uniprot_id,
@@ -2741,7 +2741,7 @@
     if (word.ec) return ecMatches(row, word.ec);
     if (word.doi) return rowHasDoi(row, word.doi);
     if (word.pmid && rowHasPmid(row, word.pmid)) return true;
-    return word.text !== undefined && text.includes(word.text);
+    return word.text !== undefined && (text.includes(word.text) || substrateHasStart(row.substrate_name, word.text));
   }
 
   // A value sort (from an address) waits for every record: a top 25 of the records loaded so far would change.
@@ -9979,8 +9979,39 @@
     return words;
   }
 
+  // A substrate matches a word only where the word starts a part of its name (fix pass after round 16b: "lactose" had
+  // found D-galactose and UDP-galactose, 1,089 of its 1,472 records; "ethanol" methanol, "alanine" phenylalanine,
+  // "pyruvate" phosphoenolpyruvate): at the start of the name, after any character that is not a letter or digit (a
+  // space, hyphen, comma, bracket, apostrophe), after a digit (a locant: "4nitrophenyl"), after capitals written onto
+  // the name ("UDPgalactose") or where capitals follow a small letter ("MgATP", "dATP"). Each start is kept as the folded, compacted rest of the name, so "4 nitrophenyl",
+  // "4-nitrophenyl" and "D glucose" still find their names; enzyme and organism names keep matching inside a word
+  // ("kinase" finds hexokinase).
+  function substrateStarts(value) {
+    const cache = foldedFieldCache();
+    const key = `substrate-starts|${value}`;
+    let starts = cache.get(key);
+    if (starts === undefined) {
+      const folded = foldSearch(String(value || "").replace(/([A-Z]{2,})(?=[a-z]{3})/g, "$1 ").replace(/([a-z])(?=[A-Z])/g, "$1 "));
+      const set = new Set();
+      for (let index = 0; index < folded.length; index += 1) {
+        const char = folded[index];
+        if (!/[a-z0-9]/.test(char)) continue;
+        const before = index ? folded[index - 1] : "";
+        if (!before || !/[a-z0-9]/.test(before) || (/[0-9]/.test(before) && /[a-z]/.test(char))) set.add(compactSearch(folded.slice(index)));
+      }
+      starts = [...set];
+      cache.set(key, starts);
+    }
+    return starts;
+  }
+
+  function substrateHasStart(value, word) {
+    return Boolean(value) && substrateStarts(value).some((start) => start.startsWith(word));
+  }
+
   function fieldContains(row, field, words) {
     if (!words?.length) return true;
+    if (field === "substrate_name") return words.every((word) => substrateHasStart(row[field] || "", word));
     const value = foldedField(row[field] || "", field);
     if (field !== "organism") return words.every((word) => value.includes(word));
     return words.every((word) => (COMMON_ORGANISM_WORDS.has(word) ? organismWordSet(row[field] || "").has(word) : value.includes(word)));
@@ -15340,6 +15371,10 @@
       statsExposureText,
       auditFacts,
       reviewGlanceText,
+      substrateStarts,
+      substrateHasStart,
+      wordMatches,
+      searchText,
       reviewGlanceTitle,
       reviewFromPaperText,
       statsReviewErrorsFound,

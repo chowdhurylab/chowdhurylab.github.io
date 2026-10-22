@@ -1562,3 +1562,10 @@ manifest's database comparison; a field an older snapshot lacks leaves its words
   that still differ. "Cannot be compared" is "Left out by CatLog’s rules (reprint, Hill fit)" (and in the older lead,
   "left out by CatLog’s reading rules (a reprint, a Hill fit)"). The first comparison's share and the share on papers
   read without database values stay off the site, as round 6 (2026-10-13) decided.
+- Substrate matching (Browse's Substrate field and the substrate part of the search box): a word matches only where it
+  starts a part of the name (substrateStarts: the name's start, after a character that is not a letter or digit, after a
+  digit, after capitals written onto the name, "UDPgalactose", or where capitals follow a small letter, "MgATP"), each
+  start kept folded and compacted so locants typed apart or together still match. "lactose" finds 383 records, not
+  1,472 (D-galactose, UDP-galactose ...); "ethanol" no longer finds methanol, "pyruvate" phosphoenolpyruvate, "alanine"
+  phenylalanine. Enzyme and organism names still match inside a word ("kinase" finds hexokinase). The Substrate field's
+  title and the Guide's Search line say it in one sentence.

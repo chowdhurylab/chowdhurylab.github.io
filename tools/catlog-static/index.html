@@ -135,7 +135,7 @@ CSV (gzip)</span>
                   <label for="organismFilterInput">Organism</label>
                   <input id="organismFilterInput" type="search" placeholder="e.g. E. coli" autocomplete="off" />
                   <label for="substrateFilterInput">Substrate</label>
-                  <input id="substrateFilterInput" type="search" placeholder="e.g. NADH" autocomplete="off" />
+                  <input id="substrateFilterInput" type="search" placeholder="e.g. NADH" autocomplete="off" title="Each word matches the start of a part of the name, so lactose finds D-lactose but not D-galactose" />
                 </div>
               </details>
               <details class="filter-section has-about" open>
@@ -620,7 +620,7 @@ JSON</span>
             <details class="guide-ref" id="guide-find">
               <summary><h3 id="guide-find-title">Find records</h3><span class="guide-ref-gist">Search, filters and links</span></summary>
               <dl class="guide-term-list">
-                <div><dt>Search</dt><dd>An enzyme, EC number, organism, substrate, UniProt accession, PMID or DOI: <code class="guide-try">laccase</code> <code class="guide-try">1.10.3.2</code> <code class="guide-try">P11509</code> <code class="guide-try">12514023</code>. Gene names are not indexed.</dd></div>
+                <div><dt>Search</dt><dd>An enzyme, EC number, organism, substrate, UniProt accession, PMID or DOI: <code class="guide-try">laccase</code> <code class="guide-try">1.10.3.2</code> <code class="guide-try">P11509</code> <code class="guide-try">12514023</code>. A substrate word matches the start of a part of the name, so lactose does not find galactose. Gene names are not indexed.</dd></div>
                 <div><dt>Filters</dt><dd>Enzyme, EC number, organism, substrate; measurement type; review result.</dd></div>
                 <div><dt>More filters</dt><dd>Source, wild type or variant, assay conditions,<span data-guide-databases hidden> against the databases,</span> cautions and source database; it opens by itself when one is set.</dd></div>
                 <div><dt>Share</dt><dd>Every view and open record has its own address.</dd></div>

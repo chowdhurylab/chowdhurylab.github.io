@@ -7712,6 +7712,27 @@ for (const hash of ["#stats", "#guide", "#guide-units"]) {
   assert.doesNotMatch(aboutStatus, /Tags<\/p>|earlier extraction|no paper linked|from paper<\/strong>/);
   assert.equal((aboutStatus.match(/<p>/g) || []).length, 6);
 }
+// A substrate matches a word only where it starts a part of the name (fix pass after round 16b): "lactose" finds
+// lactose and D-lactose, not D-galactose or UDP-galactose; "ethanol" not methanol; "pyruvate" not phosphoenolpyruvate;
+// locants and prefixes typed apart or together still find their names, and capitals written onto a name start a part.
+{
+  const has = (name, typed) => api.substrateHasStart(name, typed);
+  for (const [name, word, expected] of [["D-lactose", "lactose", true], ["D-galactose", "lactose", false], ["UDP-galactose", "lactose", false],
+    ["UDPgalactose", "galactose", true], ["methanol", "ethanol", false], ["ethanol", "ethanol", true], ["phosphoenolpyruvate", "pyruvate", false],
+    ["sodium pyruvate", "pyruvate", true], ["L-phenylalanine", "alanine", false], ["beta-Alanine", "alanine", true],
+    ["4-nitrophenyl β-D-galactopyranoside", "4nitrophenyl", true], ["4-nitrophenyl β-D-galactopyranoside", "nitrophenyl", true],
+    ["4-nitrophenyl β-D-galactopyranoside", "betadgalactopyranoside", true], ["2,4-dinitrophenyl acetate", "nitrophenyl", false],
+    ["MgATP2-", "atp", true], ["D-glucose 6-phosphate", "glucose6phosphate", true], ["D-glucose 6-phosphate", "dglucose", true]]) {
+    assert.equal(has(name, word), expected, `${word} in ${name}`);
+  }
+  // The search box matches the substrate the same way, and other fields inside a word ("kinase" finds hexokinase).
+  const row = { enzyme_display_name: "hexokinase", substrate_name: "D-galactose", organism: "Homo sapiens" };
+  const text = api.searchText(row);
+  assert.equal(api.wordMatches(row, { text: "lactose" }, text), false);
+  assert.equal(api.wordMatches(row, { text: "galactose" }, text), true);
+  assert.equal(api.wordMatches(row, { text: "kinase" }, text), true);
+}
+
 console.log("CatLog viewer behavior checks passed.");
 
 // value_display is compared with the stored number (the display string is rounded to 5 figures), and a printed integer
