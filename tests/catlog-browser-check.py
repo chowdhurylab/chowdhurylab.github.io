@@ -2566,7 +2566,10 @@ def check_stats_years(driver, browser, url):
                         assert sorted(facts["placed"]) == sorted(["14,970", "9,133", release, "CatLog, read so far"]), facts["placed"]
                     if width == 1440 and browser == "chrome":
                         column = driver.find_elements(By.CSS_SELECTOR, "[data-figure='publication-years'] .stats-years-col")[9]
-                        ActionChains(driver).move_to_element(column).perform()
+                        # (from the note above the plot first, so the pointer always moves into the column, wherever an
+                        # earlier check left it)
+                        note = driver.find_element(By.CSS_SELECTOR, "[data-figure='publication-years'] .stats-years-note")
+                        ActionChains(driver).move_to_element(note).move_to_element(column).perform()
                         wait.until(lambda d: d.execute_script("const t = document.getElementById('statsTip'); return !t.hidden && t.textContent === arguments[0]", facts["columns"][9]))
                         lit = driver.execute_script("return [...document.querySelectorAll('[data-figure=\"publication-years\"] .is-active')].map((e) => e.className)")
                         assert sum("stats-years-dot" in item for item in lit) == 2 and any("stats-years-col" in item for item in lit), lit
