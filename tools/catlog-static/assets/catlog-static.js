@@ -5038,7 +5038,8 @@
   // work/brenda_lag_20261021/broad and asked for it "similar, but up to date"). Drawn from the manifest's
   // summary.publication_years, which catlog-v2's build writes: per publication year of the paper (first_year to
   // last_year), BRENDA's numeric kcat, Km and kcat/Km entries in its release (fixed until the next release) and CatLog's
-  // values read from the paper (every catalog row, as its status counts them), each paper dated by PubMed. A line per
+  // values read from the paper (every catalog row in the site's units, so its total is the Full data download's), each
+  // paper dated by PubMed, a paper without a PubMed ID by BRENDA's reference year on both sides. A line per
   // source with a dot per year: CatLog in Read from the paper's cyan, BRENDA in the grey of a count with no meaning colour
   // (a database's own hue would give a colour a second meaning beside CatLog's cyan: DESIGN.md, "Type And Color"); the
   // years BRENDA is still adding papers from (shaded_from on, else STATS_YEARS_SHADED_FROM) on a plain grey band with open
@@ -5140,8 +5141,8 @@
       outside.length ? `CatLog also has ${outside.join(" and ")}` : "",
     ].filter(Boolean);
     const caption = words.length ? `${words.join("; ")}.` : `Values per publication year of their paper in ${release} and read by CatLog.`;
-    // CatLog's values counted in its total only: papers with no PubMed year.
-    const totalOnly = data.undated ? `${valuesText(data.undated)} from papers with no PubMed year ${data.undated === 1 ? "counts" : "count"} only in the total` : "";
+    // CatLog's values counted in its total only: papers with neither a PubMed year nor one from BRENDA.
+    const totalOnly = data.undated ? `${valuesText(data.undated)} from papers with no publication year ${data.undated === 1 ? "counts" : "count"} only in the total` : "";
     return {
       id: "statsYearsTitle", key: "publication-years", title: "CatLog and BRENDA by publication year", wide: true,
       body: `<p class="stats-years-note">CatLog on ${escapeHtml(formatDate(data.asOf))}: ${valuesText(data.values)} from ${papersText(data.papers)}</p>
@@ -5156,7 +5157,7 @@
           <p class="stats-years-x-title" aria-hidden="true">Publication year of the paper</p>
         </div>`,
       caption: escapeHtml(caption),
-      rules: `Each value counts in the PubMed publication year of its paper. CatLog: every kcat, Km and kcat/Km value read from the paper by ${formatDate(data.asOf)}${totalOnly ? `; ${totalOnly}` : ""}. ${release}: its numeric kcat, Km and kcat/Km entries; an entry counts under each paper it cites, a paper without a PubMed ID in the year BRENDA gives.`,
+      rules: `Each value counts in the PubMed publication year of its paper, and a paper without a PubMed ID in the year BRENDA gives, for CatLog and BRENDA alike. CatLog: every kcat, Km and kcat/Km value read from the paper by ${formatDate(data.asOf)} in the units the site shows (a Km or kcat/Km per mg/mL is left out)${totalOnly ? `; ${totalOnly}` : ""}. ${release}: its numeric kcat, Km and kcat/Km entries; an entry counts under each paper it cites.`,
     };
   }
 

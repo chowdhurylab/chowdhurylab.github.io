@@ -1471,7 +1471,10 @@ Generated mockups guide layout only; their text is not a scientific source.
   2020). catlog-v2's build (tools/publication_years.py) adds definition, catlog_papers_without_year and
   catlog_before_first_year: with them the years drawn, the values before and after them and those with no PubMed year
   make CatLog's totals exactly (each paper has one year or none): the caption names the values before first_year and after
-  last_year, the counting rules those with no year (counted only in the total). No field, or counts that do not hold together (a
+  last_year, the counting rules those with no year (counted only in the total). Since the round 16 review CatLog's side
+  dates a paper without a PubMed ID by BRENDA's reference year (sources/nopmid_refs.tsv), as BRENDA's side does, and counts
+  only values in the site's units (a Km or kcat/Km per mg/mL left out), so its total is the Full data download's and
+  Values per paper's. No field, or counts that do not hold together (a
   year missing or out of order, a count that is not a whole number, more values or papers in the parts than in CatLog's
   totals, parts that miss the totals when the build's two counts are there, no release name or date): no figure, nothing
   else changes.
@@ -1485,8 +1488,9 @@ Generated mockups guide layout only; their text is not a scientific source.
 - One sentence of caption: the band and CatLog's values outside the years drawn, so the lines and the caption add up to
   the note above the plot ("BRENDA is still adding papers from the shaded years (2020 on); CatLog also has 33,203 values
   from 956 papers published before 2000 and 9,086 from 349 papers published after 2025."); the counting rules (PubMed
-  year, CatLog's values with no PubMed year counted only in its total, how BRENDA's entries count) are the figure's under
-  its number in How these numbers are counted.
+  year, a paper without a PubMed ID in the year BRENDA gives for both sources, CatLog's values in the site's units, those
+  with no year counted only in its total, how BRENDA's entries count) are the figure's under its number in How these
+  numbers are counted.
 - Lines in an SVG stretched over the plot (2px, non-scaling); dots, labels and ticks are HTML placed in percent, so they
   stay round and upright at every width. statsPlaceYearLabels places the labels in the viewer's own font, when Stats is
   drawn and whenever the plot changes size: each name along the flattest stretch of its line before the band, on the

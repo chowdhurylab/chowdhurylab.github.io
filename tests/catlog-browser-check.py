@@ -2547,9 +2547,10 @@ def check_stats_years(driver, browser, url):
                 assert not facts["labelled"] or set(facts["names"]) <= set(facts["placed"]), facts
                 assert facts["lastTick"] and not facts["overflow"], f"{name} overflows at {width}px"
                 assert f"{release}: " in facts["aria"] and f"{last}" in facts["aria"], facts["aria"]
-                assert facts["rules"].startswith(f"Figure {facts['order'].index('publication-years') + 1}") and "PubMed publication year" in facts["rules"], facts["rules"]
+                assert facts["rules"].startswith(f"Figure {facts['order'].index('publication-years') + 1}") and "PubMed publication year" in facts["rules"] \
+                    and "a paper without a PubMed ID in the year BRENDA gives, for CatLog and BRENDA alike" in facts["rules"], facts["rules"]
                 undated = field["catlog_values_without_year"]
-                assert (f"{undated:,} value{'' if undated == 1 else 's'} from papers with no PubMed year" in facts["rules"]) == bool(undated), facts["rules"]
+                assert (f"{undated:,} value{'' if undated == 1 else 's'} from papers with no publication year" in facts["rules"]) == bool(undated), facts["rules"]
                 if name == "filled":
                     # The approved numbers leave room for every label from 641px and for both names on a phone.
                     assert facts["labelled"], (width, facts["placed"])

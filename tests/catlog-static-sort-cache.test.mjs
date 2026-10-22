@@ -3117,16 +3117,17 @@ function row(overrides = {}) {
     assert.match(years.body, /<p class="stats-years-note">CatLog on Oct 21, 2026: 258 values from 27 papers<\/p>/);
     assert.match(years.body, /data-tip="2003: BRENDA 2026\.1, 9,419 values; CatLog, 40 values from 4 papers"/);
     assert.equal((years.body.match(/class="stats-years-dot[^"]*is-open/g) || []).length, 4, "2004 and 2005, both lines");
-    assert.match(years.rules, /by Oct 21, 2026; 7 values from papers with no PubMed year count only in the total\./);
+    // Both sources date a paper without a PubMed ID by BRENDA's year; CatLog counts the values the site shows.
+    assert.match(years.rules, /^Each value counts in the PubMed publication year of its paper, and a paper without a PubMed ID in the year BRENDA gives, for CatLog and BRENDA alike\. CatLog: every kcat, Km and kcat\/Km value read from the paper by Oct 21, 2026 in the units the site shows \(a Km or kcat\/Km per mg\/mL is left out\); 7 values from papers with no publication year count only in the total\. BRENDA 2026\.1: its numeric kcat, Km and kcat\/Km entries; an entry counts under each paper it cites\.$/);
     // Without the build's two extra counts the brief's contract alone still draws it; the caption then names the later
     // values only.
     const contract = { ...field };
     delete contract.catlog_before_first_year;
     delete contract.catlog_papers_without_year;
-    assert.match(api.statsPublicationYearsFigure(contract).rules, /; 7 values from papers with no PubMed year count only in the total\./);
+    assert.match(api.statsPublicationYearsFigure(contract).rules, /; 7 values from papers with no publication year count only in the total\./);
     assert.equal(api.statsPublicationYearsFigure(contract).caption, "BRENDA is still adding papers from the shaded years (2004 on); CatLog also has 1 value from 1 paper published after 2005.");
     assert.match(api.statsPublicationYearsFigure({ ...contract, catlog_values_without_year: 1, catlog_values_total: 212 }).rules,
-      /; 1 value from papers with no PubMed year counts only in the total\./);
+      /; 1 value from papers with no publication year counts only in the total\./);
     assert.doesNotMatch(api.statsPublicationYearsFigure({ ...field, catlog_values_without_year: 0, catlog_papers_without_year: 0, catlog_values_total: 251,
       catlog_papers_total: 25 }).rules, /only in the total/);
     // Parts that do not make the totals, a damaged extra count or a year missing: no figure.
@@ -3149,7 +3150,7 @@ function row(overrides = {}) {
     const number = figureNumber("publication-years");
     assert.deepEqual([figureNumber("main-source"), figureNumber("ec-classes")], [number - 1, number + 1], "The figures run in order");
     assert.match(element("statsCharts").innerHTML, new RegExp(`<strong>Figure ${number}\\.</strong> BRENDA is still adding papers`));
-    assert.match(methodHtml(), new RegExp(`<dt>Figure ${number}</dt><dd><span class="stats-method-title">CatLog and BRENDA by publication year\\.</span> Each value counts in the PubMed publication year of its paper\\.`));
+    assert.match(methodHtml(), new RegExp(`<dt>Figure ${number}</dt><dd><span class="stats-method-title">CatLog and BRENDA by publication year\\.</span> Each value counts in the PubMed publication year of its paper, and a paper without a PubMed ID in the year BRENDA gives`));
     assert.doesNotMatch(element("statsCharts").innerHTML, /NaN|Infinity|undefined/);
     delete runtimeManifest.summary.publication_years;
     api.renderStats();
