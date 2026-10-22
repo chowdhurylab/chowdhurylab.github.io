@@ -1216,8 +1216,10 @@ def check_review_headline(driver, browser, url):
 # two papers most of its wrong values sit in, CatLog's own errors by route, and the papers read or checked with database
 # values in view; overview.human_checked_values and the comparison's checked_from_factor beside them.
 QUALITY_16B_FIXTURE = {
-    "as_of": "2026-10-21", "audit_values": 6651, "audit_wrong": 74, "audit_wrong_ci95": "0.89-1.39",
-    "audit_wrong_papers": 26, "audit_wrong_top2": 50,
+    # (from 2026-10-22 the random audit alone, its follow-ups apart, and no two-papers count while those two do not
+    # hold most of the drops)
+    "as_of": "2026-10-21", "audit_values": 6477, "audit_wrong": 28, "audit_wrong_ci95": "0.30-0.62",
+    "audit_wrong_papers": 22, "audit_targeted_values": 188, "audit_targeted_wrong": 46,
     "review": {"v1": {"entries": 2770, "papers": 431, "entries_without_paper": 166, "value_disputed": 3,
                       "value_correct_pct": 99.9, "value_disputed_checked_as_printed": 3, "value_missing": 27,
                       "value_missing_pct": 1.0, "other_disputed": 177, "other_disputed_pct": 6.4,
@@ -1233,8 +1235,9 @@ QUALITY_16B_FIXTURE = {
                   "differ_catlog_wrong": 0, "differ_not_comparable": 44, "differ_not_adjudicated": 232,
                   "stated_values": 77, "stated_values_catlog_has": 71},
     "catlog_errors": {"audit": {"values": 74, "papers": 26},
-                      "sweep": {"values": 1254, "papers": 97, "reprinted": 1058, "partial_constant": 103},
-                      "unit_fix": {"values": 108, "papers": 13}, "database_check": {"values": 12, "papers": 4},
+                      "sweep": {"values": 1254, "papers": 97, "reprinted": 1058, "partial_constant": 103, "other": 93},
+                      "unit_fix": {"values": 108, "papers": 13},
+                      "database_check": {"values": 12, "papers": 4, "removed": 5, "corrected": 2},
                       "all": {"values": 1435, "papers": 127}},
     "exposed": {"papers": 309, "reader": 173, "checker_only": 136, "first": "2026-10-09", "last": "2026-10-21",
                 "reread_blind": 303, "reread_blind_on": "2026-10-21", "reread_blind_done": 0},
@@ -1256,7 +1259,8 @@ QUALITY_16B_JS = """
 def check_quality_round16b(driver, browser, url):
     """Stats with the CatLog side's 2026-10-21 quality fields (round 16b): the human review's share over the 2,604
     entries a reviewer could check, the 166 without a paper said beside it, and "entries" glossed where Stats first uses
-    it; the audit's share with its 95% interval and the two papers most wrong values sit in; human-checked records with
+    it; the random audit's share with its 95% interval, its follow-up audits apart (from 2026-10-22; the two-papers
+    sentence only with its count, which this fixture leaves out as catlog-v2 now does); human-checked records with
     their values; the papers read or checked with database values in view; Errors found in CatLog by route; the
     differences checked by AI agents, X of Y; the corrections split by how found and called a lower bound. Chrome only:
     the fixture is set before the page starts (the data files are not changed)."""
@@ -1295,8 +1299,11 @@ def check_quality_round16b(driver, browser, url):
             assert "An entry with no PMID or DOI could not be checked against a paper, so the shares leave it out." in method, method
             assert "Their values are the kcat, Km and kcat/Km values a reviewer approved on them" in method, method
             audit = text(driver.find_element(By.CSS_SELECTOR, "[data-check='audit'] .stats-check-result"))
-            assert audit.startswith("6,577 kept, 74 removed as wrong (1.1%; 95% interval 0.89–1.39%)") \
-                and audit.endswith("50 of the 74 are in two papers."), audit
+            assert audit.startswith("6,449 kept, 28 removed as wrong (0.4%; 95% interval 0.30–0.62%)") and "two papers" not in audit \
+                and audit.endswith(". Follow-up audits of whole papers and of values a check had questioned checked 188 more values and "
+                                   "removed 46, counted under Errors found in CatLog."), audit
+            covered = text(driver.find_element(By.CSS_SELECTOR, "[data-check='audit'] .stats-check-covered"))
+            assert covered == "6,477 values drawn at random", covered
             human = text(driver.find_element(By.CSS_SELECTOR, "[data-check='human_checked'] .stats-check-result"))
             assert re.fullmatch(r"[\d,]+ \([\d.]+%\) accepted with every value approved \(3,486 values\)", human), human
             covered = text(driver.find_element(By.CSS_SELECTOR, "[data-check='human_checked'] .stats-check-covered"))
@@ -1310,11 +1317,12 @@ def check_quality_round16b(driver, browser, url):
                 text(driver.find_element(By.CSS_SELECTOR, "[data-note='exposure']"))
             errors = driver.execute_script("""return [...document.querySelectorAll('.stats-errors-table tbody tr')]
                 .map(row => [row.dataset.route, ...[...row.children].map(cell => cell.innerText.trim().split('\\n')[0])])""")
-            assert errors == [["audit", "AI audit", "74", "26"], ["sweep", "Catalog-wide sweep after an audit or check", "1,254", "97"],
+            assert errors == [["audit", "AI audit", "74", "26"], ["sweep", "Searches for an error an audit or check had found", "1,254", "97"],
                               ["unit_fix", "Unit misprinted in the paper, corrected", "108", "13"],
                               ["database_check", "Check of a database difference against the paper", "12", "4"],
                               ["all", "All, each value once", "1,435", "127"]], errors
-            assert "1,058 reprinted from an earlier paper, 103 partial constants" in text(driver.find_element(By.CSS_SELECTOR, ".stats-errors-table [data-route='sweep'] th"))
+            assert "1,058 reprinted from an earlier paper, 103 per-product (partial) rate constants, 93 others" in text(driver.find_element(By.CSS_SELECTOR, ".stats-errors-table [data-route='sweep'] th"))
+            assert "5 removed, 2 corrected, 5 awaiting a further check" in text(driver.find_element(By.CSS_SELECTOR, ".stats-errors-table [data-route='database_check'] th"))
             # Quality's three tables share one measure, and the checks have no meters (fix pass after round 16b); on a
             # phone each check stands stacked, its name over what it covered and what it found.
             widths = driver.execute_script("return [...document.querySelectorAll('#stats-quality table')].map(t => Math.round(t.getBoundingClientRect().width))")
@@ -2524,10 +2532,14 @@ _YEARS_CATLOG = (5746, 5015, 6971, 8404, 10309, 9120, 8618, 10001, 9386, 10167, 
                  6851, 5906, 4541, 3415, 1812, 1076, 791, 447)
 _YEARS_PAPERS = (161, 146, 157, 246, 273, 255, 209, 255, 250, 265, 263, 217, 230, 206, 228, 200, 182, 187, 204, 164, 134, 89, 48,
                  26, 22, 22)
+# BRENDA's papers per year (catlog-v2 from 2026-10-22, sources/brenda_values_by_year_2026_1.tsv's brenda_papers)
+_YEARS_BRENDA_PAPERS = (906, 838, 945, 1085, 1254, 1205, 1218, 1324, 1452, 1317, 1200, 946, 898, 928, 876, 874, 833, 770, 815, 751,
+                        705, 517, 372, 224, 123, 39)
 PUBLICATION_YEARS_FIXTURE = {
     "brenda_release": "BRENDA 2026.1", "as_of": "2026-10-21", "first_year": 2000, "last_year": 2025,
-    "years": [{"year": 2000 + index, "brenda_values": brenda, "catlog_values": catlog, "catlog_papers": papers}
-              for index, (brenda, catlog, papers) in enumerate(zip(_YEARS_BRENDA, _YEARS_CATLOG, _YEARS_PAPERS))],
+    "years": [{"year": 2000 + index, "brenda_values": brenda, "brenda_papers": brenda_papers, "catlog_values": catlog, "catlog_papers": papers}
+              for index, (brenda, brenda_papers, catlog, papers) in enumerate(zip(_YEARS_BRENDA, _YEARS_BRENDA_PAPERS, _YEARS_CATLOG, _YEARS_PAPERS))],
+    "brenda_papers_total": 22415,
     "catlog_values_total": 217969, "catlog_papers_total": 6116, "catlog_values_without_year": 5607,
     "catlog_after_last_year": {"values": 9086, "papers": 349},
     # what catlog-v2's build adds (tools/publication_years.py): the parts then make the totals exactly
@@ -2572,7 +2584,8 @@ labels.forEach((one, index) => {
   if (one.label.classList.contains('stats-years-count')) {
     const dot = lines.brenda[Number(one.label.dataset.index)];
     if (!(dot.x >= one.l && dot.x <= one.r && (dot.y <= one.t || dot.y >= one.b)) || dot.year === undefined) problems.push(`${one.text} stands away from its dot`);
-    if (!section.querySelectorAll('.stats-years-col')[Number(one.label.dataset.index)].dataset.tip.split(';')[0].endsWith(`, ${one.text} values`)) problems.push(`${one.text} is not its year's count`);
+    const tip = section.querySelectorAll('.stats-years-col')[Number(one.label.dataset.index)].dataset.tip.split(';')[0];
+    if (!tip.endsWith(`, ${one.text} values`) && !tip.includes(`, ${one.text} values from `)) problems.push(`${one.text} is not its year's count`);
   }
 });
 const figure = section.querySelector('.stats-fig');
@@ -2635,9 +2648,22 @@ def publication_years_valid(field):
     return True
 
 
+def publication_years_brenda_papers(field):
+    """BRENDA's papers over the years drawn when every year has its count (no more than its values) and they make
+    brenda_papers_total, else None (statsPublicationYears' rule)."""
+    whole = lambda value, top=None: isinstance(value, int) and not isinstance(value, bool) and value >= 0 and (top is None or value <= top)
+    total, years = field.get("brenda_papers_total"), field["years"]
+    if not whole(total) or not total or not all(whole(item.get("brenda_papers"), item["brenda_values"]) for item in years):
+        return None
+    return total if sum(item["brenda_papers"] for item in years) == total else None
+
+
 def publication_years_caption(field):
-    """The figure's caption sentence, from the field: the band, then CatLog's values before the first year (when the build
-    gives them) and after the last year, so the lines and the caption add up to the note above the plot."""
+    """The figure's caption, from the field: the reading order (round 16b), then the band, then CatLog's values before the
+    first year (when the build gives them) and after the last year, so the lines and the caption add up to the note above
+    the plot."""
+    order = ("CatLog reads the papers the databases cite for the most values first, and papers no database cites as well, "
+             "so its line does not show how much of BRENDA it covers. ")
     shade = field.get("shaded_from") if isinstance(field.get("shaded_from"), int) else 2020
     plural = lambda count, word: f"{count:,} {word}{'' if count == 1 else 's'}"
     parts = [(part, when) for part, when in ((field.get("catlog_before_first_year"), f"published before {field['first_year']}"),
@@ -2646,7 +2672,7 @@ def publication_years_caption(field):
                for index, (part, when) in enumerate(parts)]
     words = ([f"BRENDA is still adding papers from the shaded years ({shade} on)"] if field["first_year"] < shade <= field["last_year"] else []) \
         + ([f"CatLog also has {' and '.join(outside)}"] if outside else [])
-    return "; ".join(words) + "." if words else f"Values per publication year of their paper in {field['brenda_release']} and read by CatLog."
+    return order + ("; ".join(words) + "." if words else f"Values per publication year of their paper in {field['brenda_release']} and read by CatLog.")
 
 
 def check_stats_years(driver, browser, url):
@@ -2663,7 +2689,8 @@ def check_stats_years(driver, browser, url):
     fill = "if (!summary.publication_years) summary.publication_years = %s;" % json.dumps(PUBLICATION_YEARS_FIXTURE)
     variants = [("filled", fill), ("missing", "delete summary.publication_years;"), ("short", fill + " summary.publication_years.years.pop();"),
                 ("too many", fill + " summary.publication_years.catlog_values_total = 1;"),
-                ("parts", fill + " summary.publication_years.catlog_before_first_year.values += 1;")] if browser == "chrome" else [("snapshot", "")]
+                ("parts", fill + " summary.publication_years.catlog_before_first_year.values += 1;"),
+                ("no BRENDA papers", fill + " delete summary.publication_years.brenda_papers_total;")] if browser == "chrome" else [("snapshot", "")]
     results = {}
     for name, patch in variants:
         injected = driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {"source": PUBLICATION_YEARS_JS % patch}) if patch else None
@@ -2697,9 +2724,14 @@ def check_stats_years(driver, browser, url):
                 assert not facts["problems"], f"{name} at {width}px: {facts['problems']}"
                 assert facts["order"].index("main-source") < facts["order"].index("publication-years") < facts["order"].index("ec-classes"), facts["order"]
                 assert facts["caption"] == f"Figure {facts['order'].index('publication-years') + 1}. {publication_years_caption(field)}", facts["caption"]
-                assert facts["note"].startswith("CatLog on ") and facts["note"].endswith(f": {field['catlog_values_total']:,} values from {field['catlog_papers_total']:,} papers"), facts["note"]
+                brenda_papers = publication_years_brenda_papers(field)
+                beside = (f" From {field['first_year']} to {last}, CatLog’s values come from {sum(item['catlog_papers'] for item in years):,} papers and "
+                          f"{release}’s from {brenda_papers:,}.") if brenda_papers else ""
+                assert facts["note"].startswith("CatLog on ") and facts["note"].endswith(f": {field['catlog_values_total']:,} values from {field['catlog_papers_total']:,} papers{beside}"), facts["note"]
+                assert (name != "filled" or beside) and (name != "no BRENDA papers" or not beside), (name, facts["note"])
                 assert facts["dots"] == 2 * len(years) and facts["open"] == (2 * (last - shade + 1) if field["first_year"] < shade <= last else 0), facts
-                assert facts["columns"] == [f"{item['year']}: {release}, {item['brenda_values']:,} value{'' if item['brenda_values'] == 1 else 's'}; CatLog, "
+                assert facts["columns"] == [f"{item['year']}: {release}, {item['brenda_values']:,} value{'' if item['brenda_values'] == 1 else 's'}"
+                                            f"{(' from ' + format(item['brenda_papers'], ',') + ' paper' + ('' if item['brenda_papers'] == 1 else 's')) if brenda_papers else ''}; CatLog, "
                                             f"{item['catlog_values']:,} value{'' if item['catlog_values'] == 1 else 's'} from {item['catlog_papers']:,} "
                                             f"paper{'' if item['catlog_papers'] == 1 else 's'}" for item in years], facts["columns"][:2]
                 assert max(facts["columnWidths"]) - min(facts["columnWidths"]) <= 1 and abs(sum(facts["columnWidths"]) - facts["plotWidth"]) <= 2, facts["columnWidths"]

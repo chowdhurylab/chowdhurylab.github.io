@@ -1633,6 +1633,7 @@ a.stats-total-value:focus-visible { outline:0 }
    only while a name has no room (.is-labelled hides it). A column per year gives the year's tooltip line and, pointed
    at, a hairline through its dots, which grow. */
 .stats-years-note { margin:0 0 12px; color:var(--text); font-size:var(--fs-13); line-height:var(--lh-13) }
+.stats-years-papers { display:block; color:var(--text-2) }
 .stats-fig.is-labelled .stats-years-key { display:none }
 .stats-years-key li { align-items:center }
 .stats-years-key-line { display:inline-block; flex:0 0 16px; width:16px; height:0; border-top:2px solid var(--years-line) }

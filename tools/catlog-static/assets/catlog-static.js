@@ -5051,7 +5051,14 @@
         || (before && drawnPapers + after.papers + undatedPapers + before.papers !== papers)) return null;
     }
     const shade = Number.isInteger(field.shaded_from) ? field.shaded_from : STATS_YEARS_SHADED_FROM;
-    return { first, last, years, release, asOf, values, papers, undated, after, before, shadedFrom: shade > first && shade <= last ? shade : null };
+    // BRENDA's papers per year and their total over the years drawn (catlog-v2 from 2026-10-22: every year or none, each
+    // paper once in its year), set beside CatLog's papers over the same years; left out unless every year has its count
+    // (no more than its values) and they make the total.
+    const brendaPapersTotal = statsCount(field.brenda_papers_total);
+    const brendaPapers = brendaPapersTotal && years.every((item) => statsCount(item.brenda_papers, item.brenda_values) !== null)
+      && statsListSum(years.map((item) => item.brenda_papers)) === brendaPapersTotal ? brendaPapersTotal : null;
+    return { first, last, years, release, asOf, values, papers, undated, after, before, brendaPapers, drawnPapers,
+      shadedFrom: shade > first && shade <= last ? shade : null };
   }
 
   function statsPublicationYearsFigure(field) {
@@ -5078,7 +5085,7 @@
     const open = (year) => shadedFrom !== null && year >= shadedFrom;
     const dots = series.map((line) => years.map((item) => `<i class="stats-years-dot is-${line.key}${open(item.year) ? " is-open" : ""}" data-series="${line.key}" data-hl="y${item.year}" style="left:${fixed(x(item.year))}%;bottom:${fixed(y(item[line.count]))}%"></i>`).join("")).join("");
     // A column per year (its tooltip line gives both counts; pointing at it marks the year).
-    const columns = years.map((item) => `<span class="stats-years-col" data-hl="y${item.year}" style="left:${fixed((item.year - first) / span * 100)}%;width:${fixed(100 / span)}%" data-tip="${escapeHtml(`${item.year}: ${release}, ${valuesText(item.brenda_values)}; CatLog, ${valuesText(item.catlog_values)} from ${papersText(item.catlog_papers)}`)}"></span>`).join("");
+    const columns = years.map((item) => `<span class="stats-years-col" data-hl="y${item.year}" style="left:${fixed((item.year - first) / span * 100)}%;width:${fixed(100 / span)}%" data-tip="${escapeHtml(`${item.year}: ${release}, ${valuesText(item.brenda_values)}${data.brendaPapers ? ` from ${papersText(item.brenda_papers)}` : ""}; CatLog, ${valuesText(item.catlog_values)} from ${papersText(item.catlog_papers)}`)}"></span>`).join("");
     const band = shadedFrom !== null ? `<i class="stats-years-band" style="left:${fixed((shadedFrom - first) / span * 100)}%" aria-hidden="true"></i>` : "";
     // BRENDA's highest year and its last year before the band carry their counts, as in the approved figure.
     const peak = (key) => years.reduce((best, item) => (item[key] > best[key] ? item : best), years[0]);
@@ -5096,7 +5103,10 @@
       const middle = beforeBand && beforeBand !== top && beforeBand !== end ? `, ${formatInteger(beforeBand[key])} in ${beforeBand.year}` : "";
       return `${name}: ${formatInteger(years[0][key])} in ${first}, most in ${top.year} (${formatInteger(top[key])})${middle} and ${formatInteger(end[key])} in ${last}`;
     };
-    const description = `kcat, Km and kcat/Km values per publication year of their paper, ${first} to ${last}. ${describe(release, "brenda_values")}. ${describe("CatLog", "catlog_values")}.${shadedFrom !== null ? ` Years from ${shadedFrom} on are shaded.` : ""}`;
+    // BRENDA's papers beside CatLog's over the years drawn: "From 2000 to 2025, CatLog’s values come from 6,308 papers
+    // and BRENDA 2026.1’s from 22,415."
+    const papersBeside = data.brendaPapers ? `From ${first} to ${last}, CatLog’s values come from ${papersText(data.drawnPapers)} and ${release}’s from ${formatInteger(data.brendaPapers)}.` : "";
+    const description = `kcat, Km and kcat/Km values per publication year of their paper, ${first} to ${last}. ${describe(release, "brenda_values")}. ${describe("CatLog", "catlog_values")}.${papersBeside ? ` ${papersBeside}` : ""}${shadedFrom !== null ? ` Years from ${shadedFrom} on are shaded.` : ""}`;
     const key = series.map((line) => `<li><i class="stats-years-key-line is-${line.key}" aria-hidden="true"></i><span>${escapeHtml(line.name)}</span></li>`).join("");
     // CatLog's values from papers outside the years drawn (before first_year, when the build gives them, and after
     // last_year), so the lines and the caption make the total above the plot with the few values that have no year.
@@ -5107,12 +5117,14 @@
       shadedFrom !== null ? `BRENDA is still adding papers from the shaded years (${shadedFrom} on)` : "",
       outside.length ? `CatLog also has ${outside.join(" and ")}` : "",
     ].filter(Boolean);
-    const caption = words.length ? `${words.join("; ")}.` : `Values per publication year of their paper in ${release} and read by CatLog.`;
+    // (round 16b: the reading order, so CatLog's line is not read as its coverage of BRENDA)
+    const order = "CatLog reads the papers the databases cite for the most values first, and papers no database cites as well, so its line does not show how much of BRENDA it covers.";
+    const caption = `${order} ${words.length ? `${words.join("; ").replace(/^./, (letter) => letter.toUpperCase())}.` : `Values per publication year of their paper in ${release} and read by CatLog.`}`;
     // CatLog's values counted in its total only: papers with neither a PubMed year nor one from BRENDA.
     const totalOnly = data.undated ? `${valuesText(data.undated)} from papers with no publication year ${data.undated === 1 ? "counts" : "count"} only in the total` : "";
     return {
       id: "statsYearsTitle", key: "publication-years", title: "CatLog and BRENDA by publication year", wide: true,
-      body: `<p class="stats-years-note">CatLog on ${escapeHtml(formatDate(data.asOf))}: ${valuesText(data.values)} from ${papersText(data.papers)}</p>
+      body: `<p class="stats-years-note">CatLog on ${escapeHtml(formatDate(data.asOf))}: ${valuesText(data.values)} from ${papersText(data.papers)}${papersBeside ? `<span class="stats-years-papers"> ${escapeHtml(papersBeside)}</span>` : ""}</p>
         <ul class="stats-legend stats-years-key">${key}</ul>
         <div class="stats-years">
           <p class="stats-years-y-title" aria-hidden="true"><i>k</i><sub>cat</sub>, <i>K</i><sub>m</sub> and <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> values per year</p>
@@ -5821,8 +5833,11 @@
   // The random audit (overview.quality): values re-checked, the wrong ones removed, the date, and from catlog-v2's
   // 2026-10-21 marks (round 16b, item 7 of its publication review) the 95% Wilson interval of the share wrong
   // (audit_wrong_ci95, "low-high" percentages, kept only when it holds the share) and how many of the wrong values sit in
-  // the two papers with the most (audit_wrong_top2 of them, in audit_wrong_papers papers); null where a snapshot lacks
-  // them.
+  // the two papers with the most (audit_wrong_top2 of them, in audit_wrong_papers papers; catlog-v2 writes it only while
+  // those two hold most of the drops); null where a snapshot lacks them. From catlog-v2's 2026-10-22 marks the audit
+  // counts the random audit only and gives the follow-up audits apart (audit_targeted_values, audit_targeted_wrong:
+  // whole papers and values a check had questioned, their drops counted among CatLog's own errors); `random` says the
+  // counts are the random audit's, which an older snapshot (follow-ups counted in) cannot say.
   function auditFacts(overview) {
     const quality = overview?.quality;
     const values = statsCount(quality?.audit_values);
@@ -5834,7 +5849,10 @@
     const ci = range && Number(range[1]) <= share && share <= Number(range[2]) ? [range[1], range[2]] : null;
     const papers = wrong ? statsCount(quality.audit_wrong_papers, wrong) : null;
     const top2 = papers !== null && papers > 2 ? statsCount(quality.audit_wrong_top2, wrong) : null;
-    return { values, wrong, date: asOf, ci, papers, top2: top2 && top2 < wrong ? top2 : null };
+    const targeted = statsCount(quality.audit_targeted_values);
+    const targetedWrong = targeted !== null ? statsCount(quality.audit_targeted_wrong, targeted) : null;
+    const followUp = targetedWrong !== null ? { values: targeted, wrong: targetedWrong } : null;
+    return { values, wrong, date: asOf, ci, papers, top2: top2 && top2 < wrong ? top2 : null, random: Boolean(followUp), followUp };
   }
 
   function auditOutcomeText(audit) {
@@ -6300,9 +6318,15 @@
     return { values, confirmed, corrected, other };
   }
 
-  function statsChecksHtml({ fromPaper, papersRead, audit, humanChecked, humanValues = null, marked, compared, exposure = "", secondCheck = null }) {
+  // The audit row (round 16b fix pass, catlog-v2 from 2026-10-22): "6,477 values drawn at random" | "6,449 kept, 28
+  // removed as wrong (0.4%; 95% interval 0.30–0.62%), as of Oct 21, 2026. Follow-up audits of whole papers and of values a
+  // check had questioned checked 188 more values and removed 46, counted under Errors found in CatLog." The two-papers
+  // sentence only when catlog-v2 gives audit_wrong_top2; an older snapshot's audit is said as before.
+  function statsChecksHtml({ fromPaper, papersRead, audit, humanChecked, humanValues = null, marked, compared, exposure = "", secondCheck = null, errorsShown = false }) {
     const auditShare = audit?.wrong ? `${qualityShare(audit.wrong, audit.values)}${audit.ci ? `; 95% interval ${audit.ci[0]}–${audit.ci[1]}%` : ""}` : "";
     const auditPapers = audit?.top2 ? ` ${formatInteger(audit.top2)} of the ${formatInteger(audit.wrong)} are in two papers.` : "";
+    const followUp = audit?.followUp?.values
+      ? ` Follow-up audits of whole papers and of values a check had questioned checked ${formatInteger(audit.followUp.values)} more ${audit.followUp.values === 1 ? "value" : "values"} and removed ${audit.followUp.wrong ? formatInteger(audit.followUp.wrong) : "none"}${audit.followUp.wrong && errorsShown ? ", counted under Errors found in CatLog" : ""}.` : "";
     const rows = [
       fromPaper ? { key: "second_check", name: "Second AI check",
         covered: secondCheck
@@ -6311,8 +6335,8 @@
         result: secondCheck
           ? `${formatInteger(secondCheck.confirmed)} values confirmed, ${formatInteger(secondCheck.corrected)} corrected (${qualityShare(secondCheck.corrected, secondCheck.values)})${secondCheck.other ? `, ${formatInteger(secondCheck.other)} with no result recorded` : ""}; values it rejected are left out`
           : "Every value compared with the paper" } : null,
-      audit ? { key: "audit", name: "AI audits", covered: `${formatInteger(audit.values)} values`,
-        result: `${audit.wrong ? `${formatInteger(audit.values - audit.wrong)} kept, ${formatInteger(audit.wrong)} removed as wrong (${auditShare})` : "None was wrong"}${audit.date ? `, as of ${audit.date}` : ""}${audit.wrong && auditPapers ? `.${auditPapers}` : ""}` } : null,
+      audit ? { key: "audit", name: "AI audits", covered: `${formatInteger(audit.values)} values${audit.random ? " drawn at random" : ""}`,
+        result: `${audit.wrong ? `${formatInteger(audit.values - audit.wrong)} kept, ${formatInteger(audit.wrong)} removed as wrong (${auditShare})` : "None was wrong"}${audit.date ? `, as of ${audit.date}` : ""}${(audit.wrong && auditPapers) || followUp ? "." : ""}${audit.wrong ? auditPapers : ""}${followUp}` } : null,
       compared ? { key: "review", name: "Human review", covered: `${formatInteger(compared.values)} values${compared.papers ? ` on ${formatInteger(compared.papers)} ${compared.papers === 1 ? "paper" : "papers"}` : ""}`,
         result: `${formatInteger(compared.wrong)} with a wrong number or unit (${qualityShare(compared.values - compared.wrong, compared.values)} correct), ${formatInteger(compared.labels)} with a wrong label` } : null,
       humanChecked !== null ? { key: "human_checked", name: "Human-checked",
@@ -6393,16 +6417,42 @@
   }
 
   // CatLog's own errors found so far, by every route (overview.quality.catlog_errors, catlog-v2 from 2026-10-21; round
-  // 16b, item 3 of its publication review): values an AI audit found wrong, values removed in sweeps for an error an
-  // audit or check had found (the reprinted values and partial constants among them said), values whose unit the paper
-  // misprints, corrected, and values a check of a database difference against the paper found wrong; All counts each
-  // value once. Rows whose counts are not whole are left out; "" without All, or when a route holds more than All.
+  // 16b, item 3 of its publication review): values an AI audit found wrong, values removed by searches for an error an
+  // audit or check had found (the reprinted values and per-product (partial) rate constants among them said, and from
+  // 2026-10-22 the others, sweep.other), values whose unit the paper misprints, corrected, and values a check of a
+  // database difference against the paper found wrong (from 2026-10-22 what became of them: database_check.removed and
+  // .corrected, the rest awaiting a further check, as catlog-v2's README says); All counts each value once. Rows whose
+  // counts are not whole are left out; "" without All, or when a route holds more than All. A breakdown whose parts do
+  // not fit its route is left out.
   const STATS_ERROR_ROUTES = [
     ["audit", "AI audit"],
-    ["sweep", "Catalog-wide sweep after an audit or check"],
+    ["sweep", "Searches for an error an audit or check had found"],
     ["unit_fix", "Unit misprinted in the paper, corrected"],
     ["database_check", "Check of a database difference against the paper"],
   ];
+
+  function statsErrorKinds(key, route, values) {
+    if (key === "sweep") {
+      const reprinted = statsCount(route.reprinted ?? 0, values);
+      const partial = statsCount(route.partial_constant ?? 0, values);
+      const other = route.other === undefined ? null : statsCount(route.other, values);
+      if (reprinted === null || partial === null || reprinted + partial + (other || 0) > values
+        || (other !== null && reprinted + partial + other !== values)) return "";
+      return [reprinted ? `${formatInteger(reprinted)} reprinted from an earlier paper` : "",
+        partial ? `${formatInteger(partial)} per-product (partial) rate constants` : "",
+        other && (reprinted || partial) ? `${formatInteger(other)} ${other === 1 ? "other" : "others"}` : ""].filter(Boolean).join(", ");
+    }
+    if (key === "database_check" && route.removed !== undefined) {
+      const removed = statsCount(route.removed, values);
+      const corrected = statsCount(route.corrected ?? 0, values);
+      if (removed === null || corrected === null || removed + corrected > values) return "";
+      const rest = values - removed - corrected;
+      const fate = [removed ? `${formatInteger(removed)} removed` : "", corrected ? `${formatInteger(corrected)} corrected` : "",
+        rest ? `${formatInteger(rest)} awaiting a further check` : ""].filter(Boolean);
+      return fate.length === 1 && values > 1 ? `all ${fate[0].replace(/^[\d,]+ /, "")}` : fate.join(", ");
+    }
+    return "";
+  }
   function statsErrorsHtml(quality) {
     const errors = quality?.catlog_errors;
     const all = statsCount(errors?.all?.values);
@@ -6414,11 +6464,7 @@
       const papers = values ? statsCount(errors[key].papers, Math.min(values, allPapers)) : null;
       if (values === null) return "";
       if (!values || papers === null) continue;
-      const reprinted = key === "sweep" ? statsCount(errors.sweep.reprinted, values) : null;
-      const partial = key === "sweep" ? statsCount(errors.sweep.partial_constant, values) : null;
-      const kinds = (reprinted || 0) + (partial || 0) <= values ? [reprinted ? `${formatInteger(reprinted)} reprinted from an earlier paper` : "",
-        partial ? `${formatInteger(partial)} partial constants` : ""].filter(Boolean) : [];
-      rows.push({ key, name, values, papers, note: kinds.join(", ") });
+      rows.push({ key, name, values, papers, note: statsErrorKinds(key, errors[key], values) });
     }
     if (!rows.length) return "";
     const row = (item, total = false) => `<tr data-route="${item.key}"${total ? ' class="stats-errors-all"' : ""}>
@@ -7708,9 +7754,10 @@
     const compared = reviewedValues && comparedWrong !== null && labelErrors !== null
       ? { values: reviewedValues, wrong: comparedWrong, labels: labelErrors, papers: statsCount(quality.compared_papers_v1) } : null;
     const humanValues = humanChecked !== null ? statsCount(overview?.human_checked_values) : null;
+    const errorsTable = statsErrorsHtml(quality);
     const checksHtml = statsChecksHtml({ fromPaper, papersRead, audit, humanChecked, humanValues, marked, compared,
-      exposure: statsExposureText(quality), secondCheck: secondCheckFacts(overview?.from_paper) });
-    const errorsHtml = checksHtml ? statsErrorsHtml(quality) : "";
+      exposure: statsExposureText(quality), secondCheck: secondCheckFacts(overview?.from_paper), errorsShown: Boolean(errorsTable) });
+    const errorsHtml = checksHtml ? errorsTable : "";
     const quality_ = [reviewHtml, checksHtml, errorsHtml].filter(Boolean).map((html) => ({ html }));
     if (checksHtml && !reviewHtml) {
       quality_.push({ html: `<p class="stats-lead-links"><a class="stats-guide-link" href="${escapeHtml(viewUrl("guide-method").href)}">How CatLog reads and checks values <span aria-hidden="true">→</span></a></p>` });
@@ -8373,7 +8420,7 @@
     const records = statsCount(overview?.from_paper?.records, total);
     numbers.reading = [papers !== null ? `${formatInteger(papers)} papers read` : "", records !== null ? `${formatInteger(records)} records` : ""].filter(Boolean);
     const audit = auditFacts(overview);
-    numbers.catlog = audit ? [`${formatInteger(audit.values)} values re-checked`] : [];
+    numbers.catlog = audit ? [`${formatInteger(audit.values + (audit.followUp?.values || 0))} values re-checked`] : [];
     const counts = manifestDistribution("verification_status");
     const humanChecked = statsCount(overview?.human_checked_accepted, (counts.verified || 0) + (counts.corrected || 0));
     // the review first: the records line is the shortest, so on the wide loop it is the one level with Rules updated

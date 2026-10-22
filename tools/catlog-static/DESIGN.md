@@ -1631,3 +1631,26 @@ manifest's database comparison; a field an older snapshot lacks leaves its words
 - Every 100% bar (Values against the databases, by enzyme class, by database, the earlier version's corrections) is one
   length, 560px, wherever it stands (a narrower column shrinks it; on a phone it spans the row), its label, bar and
   value columns starting at the left: at 1440px they had been 900, 916, 580 and 584px.
+
+## Round 16b data follow-ups (2026-10-22: catlog-v2's quality branch)
+
+Each new field is optional; a snapshot without it (Oct 18's) reads as before.
+- Errors found in CatLog: the second route is "Searches for an error an audit or check had found", as catlog-v2's README
+  names it, and its kinds read "reprinted from an earlier paper", "per-product (partial) rate constants" and, when
+  catlog-v2 counts them (sweep.other), "others", shown only when the three make the route's values. The database-check
+  row says what became of the values (database_check.removed and .corrected, the rest "awaiting a further check"; "all
+  removed" when one fate takes them all), shown only when those parts fit (statsErrorKinds).
+- Checks on the values' AI audits row: when catlog-v2 gives the follow-up audits apart (audit_targeted_values and
+  audit_targeted_wrong, which build_overview's QUALITY_FIELDS now copy), its counts are the random audit's, so Covered
+  says "6,477 values drawn at random" and the result ends "Follow-up audits of whole papers and of values a check had
+  questioned checked 188 more values and removed 46, counted under Errors found in CatLog." (the last clause only with
+  that table). The two-papers sentence shows only when catlog-v2 writes audit_wrong_top2, which it now does only while
+  those two papers hold most of the drops. Team's "values re-checked" counts both.
+- CatLog and BRENDA by publication year: when catlog-v2 gives BRENDA's papers (years[].brenda_papers, each no more than
+  its year's values, making brenda_papers_total), the note above the plot adds a second line, "From 2000 to 2025,
+  CatLog’s values come from 6,308 papers and BRENDA 2026.1’s from 22,415.", each year's tooltip line gives BRENDA's
+  papers, and the plot's accessible name says both. The caption opens with the reading order: "CatLog reads the papers
+  the databases cite for the most values first, and papers no database cites as well, so its line does not show how
+  much of BRENDA it covers."
+- The review of records read from the paper (review.v2) says "none of their N values was disputed" when catlog-v2 counts
+  the values (review.v2.values), else "no value was disputed".

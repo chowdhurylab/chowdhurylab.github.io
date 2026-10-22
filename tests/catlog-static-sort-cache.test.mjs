@@ -2108,6 +2108,19 @@ function row(overrides = {}) {
     const checks = plainText(api.statsChecksHtml({ fromPaper: null, papersRead: null, audit, humanChecked: 1721, humanValues: 3486, marked: 2005, compared: null,
       exposure: api.statsExposureText({ exposed: { papers: 309, reader: 173, checker_only: 136, first: "2026-10-09", last: "2026-10-21", reread_blind: 303, reread_blind_on: "2026-10-21", reread_blind_done: 0 } }) }));
     assert.match(checks, /6,577 kept, 74 removed as wrong \(1\.1%; 95% interval 0\.89–1\.39%\), as of Oct 21, 2026\. 50 of the 74 are in two papers\./);
+    assert.doesNotMatch(checks, /drawn at random|Follow-up/, "An audit counted with its follow-ups is said as before");
+    // catlog-v2 from 2026-10-22: the random audit alone, its follow-ups apart (audit_targeted_values, _wrong); the
+    // two-papers sentence only while catlog-v2 gives audit_wrong_top2.
+    const random = api.auditFacts({ quality: { audit_values: 6477, audit_wrong: 28, as_of: "2026-10-22", audit_wrong_ci95: "0.30-0.62", audit_wrong_papers: 22,
+      audit_targeted_values: 188, audit_targeted_wrong: 46 } });
+    assert.equal(JSON.stringify([random.random, random.followUp, random.top2]), JSON.stringify([true, { values: 188, wrong: 46 }, null]));
+    const randomRow = plainText(api.statsChecksHtml({ fromPaper: null, papersRead: null, audit: random, humanChecked: null, marked: null, compared: null, errorsShown: true }));
+    assert.match(randomRow, /AI audits ?6,477 values drawn at random ?6,449 kept, 28 removed as wrong \(0\.4%; 95% interval 0\.30–0\.62%\), as of Oct 22, 2026\. Follow-up audits of whole papers and of values a check had questioned checked 188 more values and removed 46, counted under Errors found in CatLog\.$/);
+    assert.doesNotMatch(plainText(api.statsChecksHtml({ fromPaper: null, papersRead: null, audit: random, humanChecked: null, marked: null, compared: null })), /counted under/,
+      "Without the errors table the row does not point to it");
+    assert.match(plainText(api.statsChecksHtml({ fromPaper: null, papersRead: null, audit: { ...random, top2: 20 }, humanChecked: null, marked: null, compared: null, errorsShown: true })),
+      /as of Oct 22, 2026\. 20 of the 28 are in two papers\. Follow-up audits/);
+    assert.equal(api.auditFacts({ quality: { audit_values: 6477, audit_wrong: 28, audit_targeted_values: 188, audit_targeted_wrong: 189 } }).followUp, null);
     assert.match(checks, /2,005 records with a reviewer’s verdict 1,721 \(85\.8%\) accepted with every value approved \(3,486 values\)/);
     // The second AI check's result from each value's proof line (fix pass after round 16b), not its method.
     const second = api.secondCheckFacts({ records: 75000, papers: 4324, values: 169901, checks: { confirmed: 163908, corrected: 5993, other: 0 } });
@@ -2135,7 +2148,15 @@ function row(overrides = {}) {
       unit_fix: { values: 108, papers: 13 }, database_check: { values: 12, papers: 4 }, all: { values: 1435, papers: 127 } };
     const table = api.statsErrorsHtml({ catlog_errors: errors });
     assert.deepEqual([...table.matchAll(/<tr data-route="([^"]+)"/g)].map((match) => match[1]), ["audit", "sweep", "unit_fix", "database_check", "all"]);
-    assert.match(plainText(table), /Catalog-wide sweep after an audit or check1,058 reprinted from an earlier paper, 103 partial constants\s*1,254\s*97/);
+    assert.match(plainText(table), /Searches for an error an audit or check had found1,058 reprinted from an earlier paper, 103 per-product \(partial\) rate constants\s*1,254\s*97/);
+    // catlog-v2 from 2026-10-22: the sweep's other values, and what became of the values database checks found wrong.
+    const later = { ...errors, sweep: { ...errors.sweep, other: 93 }, database_check: { values: 12, papers: 4, removed: 5, corrected: 2 } };
+    assert.match(plainText(api.statsErrorsHtml({ catlog_errors: later })), /1,058 reprinted from an earlier paper, 103 per-product \(partial\) rate constants, 93 others\s*1,254/);
+    assert.match(plainText(api.statsErrorsHtml({ catlog_errors: later })), /Check of a database difference against the paper5 removed, 2 corrected, 5 awaiting a further check\s*12\s*4/);
+    assert.match(plainText(api.statsErrorsHtml({ catlog_errors: { ...later, database_check: { values: 7, papers: 1, removed: 7, corrected: 0 } } })), /against the paperall removed\s*7\s*1/);
+    assert.match(plainText(api.statsErrorsHtml({ catlog_errors: { ...later, database_check: { values: 7, papers: 1, removed: 0 } } })), /against the paperall awaiting a further check\s*7/);
+    assert.match(plainText(api.statsErrorsHtml({ catlog_errors: { ...later, sweep: { ...later.sweep, other: 94 } } })), /Searches for an error an audit or check had found\s*1,254/, "Parts that miss the route: no breakdown");
+    assert.match(plainText(api.statsErrorsHtml({ catlog_errors: { ...later, database_check: { values: 12, papers: 4, removed: 10, corrected: 3 } } })), /against the paper\s*12\s*4/);
     assert.match(plainText(table), /All, each value once\s*1,435\s*127/);
     assert.equal(api.statsErrorsHtml({ catlog_errors: { ...errors, sweep: { values: 2000, papers: 97 } } }), "", "A route above All says nothing");
     assert.equal(api.statsErrorsHtml({ catlog_errors: { ...errors, all: { values: "1435", papers: 127 } } }), "");
@@ -3203,7 +3224,8 @@ function row(overrides = {}) {
     const years = api.statsPublicationYearsFigure(field);
     assert.equal(years.key, "publication-years");
     // The values from papers before and after the years drawn are in the caption, so the lines and it add up to the note.
-    assert.equal(years.caption, "BRENDA is still adding papers from the shaded years (2004 on); CatLog also has 40 values from 3 papers published before 2000 and 1 from 1 paper published after 2005.");
+    // (round 16b: the reading order first, so CatLog's line is not read as its coverage of BRENDA)
+    assert.equal(years.caption, "CatLog reads the papers the databases cite for the most values first, and papers no database cites as well, so its line does not show how much of BRENDA it covers. BRENDA is still adding papers from the shaded years (2004 on); CatLog also has 40 values from 3 papers published before 2000 and 1 from 1 paper published after 2005.");
     assertPlainCaption(years.caption);
     assert.match(years.body, /<p class="stats-years-note">CatLog on Oct 21, 2026: 258 values from 27 papers<\/p>/);
     assert.match(years.body, /data-tip="2003: BRENDA 2026\.1, 9,419 values; CatLog, 40 values from 4 papers"/);
@@ -3216,7 +3238,7 @@ function row(overrides = {}) {
     delete contract.catlog_before_first_year;
     delete contract.catlog_papers_without_year;
     assert.match(api.statsPublicationYearsFigure(contract).rules, /; 7 values from papers with no publication year count only in the total\./);
-    assert.equal(api.statsPublicationYearsFigure(contract).caption, "BRENDA is still adding papers from the shaded years (2004 on); CatLog also has 1 value from 1 paper published after 2005.");
+    assert.equal(api.statsPublicationYearsFigure(contract).caption, "CatLog reads the papers the databases cite for the most values first, and papers no database cites as well, so its line does not show how much of BRENDA it covers. BRENDA is still adding papers from the shaded years (2004 on); CatLog also has 1 value from 1 paper published after 2005.");
     assert.match(api.statsPublicationYearsFigure({ ...contract, catlog_values_without_year: 1, catlog_values_total: 212 }).rules,
       /; 1 value from papers with no publication year counts only in the total\./);
     assert.doesNotMatch(api.statsPublicationYearsFigure({ ...field, catlog_values_without_year: 0, catlog_papers_without_year: 0, catlog_values_total: 251,
@@ -3229,6 +3251,20 @@ function row(overrides = {}) {
     assert.equal(api.statsPublicationYears({ ...field, years: field.years.slice(1) }), null);
     assert.equal(api.statsPublicationYears({ ...field, as_of: "Oct 21" }), null);
     assert.equal(api.statsPublicationYears(undefined), null);
+    // BRENDA's papers (catlog-v2 from 2026-10-22: brenda_papers per year, brenda_papers_total over the years drawn) beside
+    // CatLog's papers over the same years, in the note and each year's tooltip line; left out unless they make the total.
+    const brendaPapers = [900, 880, 910, 1000, 1100, 1200];
+    const withPapers = { ...field, years: field.years.map((item, index) => ({ ...item, brenda_papers: brendaPapers[index] })), brenda_papers_total: 5990 };
+    const papersFigure = api.statsPublicationYearsFigure(withPapers);
+    assert.match(papersFigure.body, /<p class="stats-years-note">CatLog on Oct 21, 2026: 258 values from 27 papers<span class="stats-years-papers"> From 2000 to 2005, CatLog’s values come from 21 papers and BRENDA 2026\.1’s from 5,990\.<\/span><\/p>/);
+    assert.match(papersFigure.body, /data-tip="2003: BRENDA 2026\.1, 9,419 values from 1,000 papers; CatLog, 40 values from 4 papers"/);
+    assert.match(papersFigure.body, /aria-label="[^"]* From 2000 to 2005, CatLog’s values come from 21 papers and BRENDA 2026\.1’s from 5,990\. Years from 2004 on are shaded\."/);
+    assert.equal(papersFigure.caption, years.caption);
+    for (const broken of [{ ...withPapers, brenda_papers_total: 5991 }, { ...withPapers, years: withPapers.years.map((item, index) => (index ? item : { ...item, brenda_papers: undefined })) },
+      { ...withPapers, years: withPapers.years.map((item, index) => (index ? item : { ...item, brenda_papers: 7000 })) }]) {
+      const figure = api.statsPublicationYearsFigure(broken);
+      assert.ok(figure && !/stats-years-papers|values from [\d,]+ papers;/.test(figure.body), "BRENDA's papers that do not hold are left out, the figure kept");
+    }
     // In the page: in What is in the catalog after Records by main source and before Enzyme classes, numbered in order;
     // without the field nothing else changes.
     const before = headings();
@@ -3240,7 +3276,7 @@ function row(overrides = {}) {
     const figureNumber = (key) => Number(element("statsCharts").innerHTML.match(new RegExp(`data-figure="${key}">[\\s\\S]*?<strong>Figure (\\d+)\\.</strong>`))?.[1]);
     const number = figureNumber("publication-years");
     assert.deepEqual([figureNumber("main-source"), figureNumber("ec-classes")], [number - 1, number + 1], "The figures run in order");
-    assert.match(element("statsCharts").innerHTML, new RegExp(`<strong>Figure ${number}\\.</strong> BRENDA is still adding papers`));
+    assert.match(element("statsCharts").innerHTML, new RegExp(`<strong>Figure ${number}\\.</strong> CatLog reads the papers the databases cite for the most values first`));
     assert.match(methodHtml(), new RegExp(`<dt>Figure ${number}</dt><dd><span class="stats-method-title">CatLog and BRENDA by publication year\\.</span> Each value counts in the PubMed publication year of its paper, and a paper without a PubMed ID in the year BRENDA gives`));
     assert.doesNotMatch(element("statsCharts").innerHTML, /NaN|Infinity|undefined/);
     delete runtimeManifest.summary.publication_years;
