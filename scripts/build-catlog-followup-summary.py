@@ -1237,7 +1237,7 @@ def summarize_overview(rows, marks=None):
     main_sources = defaultdict(Counter)
     values = {metric: [] for metric in METRIC_UNITS}
     class_values = {metric: defaultdict(list) for metric in METRIC_UNITS}
-    v2_records = with_paper = checked_accepted = marked = 0
+    v2_records = with_paper = checked_accepted = checked_values = marked = 0
     earlier = new_earlier_corrections()
     # What the values show: records read from the paper only
     v2_pairs, v2_linked = [], 0
@@ -1268,7 +1268,11 @@ def summarize_overview(rows, marks=None):
         if marks is not None:
             mark = marks.get(str(row.get("measurement_key") or row.get("record_key") or ""))
             marked += mark is not None
-            checked_accepted += bool(accepted and isinstance(mark, dict) and mark.get("checked"))
+            checked = bool(accepted and isinstance(mark, dict) and mark.get("checked"))
+            checked_accepted += checked
+            # the values a reviewer approved on those records (the mark's approved list), said beside them on Stats
+            if checked and isinstance(mark.get("approved"), list):
+                checked_values += sum(1 for metric in set(mark["approved"]) if metric in ("kcat", "km", "kcat_over_km"))
         for field, seen in names.items():
             key = name_key(row.get(field))
             if key:
@@ -1360,6 +1364,7 @@ def summarize_overview(rows, marks=None):
     }
     if marks is not None:
         overview["human_checked_accepted"] = checked_accepted
+        overview["human_checked_values"] = checked_values
         overview["human_marked"] = marked
     overview.update({
         "ec_classes": [{"class": number, "name": EC_CLASS_NAMES[number], **counts} for number, counts in ec_classes.items()],
@@ -1415,7 +1420,17 @@ def summarize_overview(rows, marks=None):
 # first comparison's count on 2026-10-13; v2_found_after_fixes is the same count), of v2_approved_total.
 QUALITY_FIELDS = ("audit_values", "audit_wrong", "compared_values_v1", "compared_papers_v1", "wrong_v1",
                   "label_or_annotation_v1", "v2_found", "v2_found_after_fixes", "v2_approved_total",
-                  "v2_differences_checked", "v2_wrong")
+                  "v2_differences_checked", "v2_wrong", "audit_wrong_papers", "audit_wrong_top2")
+# The random audit's 95% Wilson interval of the share wrong, "low-high" percentages (catlog-v2 human_review.audit_detail,
+# from 2026-10-21); the papers its wrong values sit in and how many sit in the two papers with the most are whole counts
+# above (audit_wrong_papers, audit_wrong_top2).
+QUALITY_RANGES = ("audit_wrong_ci95",)
+# The papers whose reading or checking agent opened database values (catlog-v2 human_review._exposure, from 2026-10-21):
+# whole counts, and the days its log spans and the blind re-reads were sent on.
+EXPOSED_COUNTS = ("papers", "reader", "checker_only", "reread_blind", "reread_blind_read", "reread_blind_verify",
+                  "reread_blind_done")
+EXPOSED_DAYS = ("first", "last", "reread_blind_on")
+DAY = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
 
 AGREEMENT_FIELDS = ("papers_compared", "values_approved", "first_agree", "first_agree_pct", "agree", "agree_pct",
@@ -1440,16 +1455,18 @@ AGREEMENT_RANGE = re.compile(r"^\d+(?:\.\d+)?-\d+(?:\.\d+)?$")
 # counts only (anything else in them is dropped), copied as they are; the page checks how they add up. The comparison
 # with the databases is the manifest's summary.database_comparison (the page reads no db_compare), and the earlier
 # version's corrections are counted from the Full data (overview.earlier_corrections), this copy being the fallback.
-QUALITY_FIGURES = ("earlier_corrections", "replaced")
+QUALITY_FIGURES = ("earlier_corrections", "replaced", "catlog_errors")  # catlog_errors: CatLog's own errors by route (2026-10-21)
 # The human-review headline (the user, 2026-10-13): quality.review, what the reviewers' own files say, one object per
 # catalog reviewed ("v1": CatLog v1 entries; "v2" once reviewers check CatLog v2 entries). Each keeps its numbers
 # (entries, papers, value_correct_pct, value_missing, ...), its short strings and the other_by_kind map (a kind of other
-# disagreement and its count); lists, nested objects and the definitions stay in the marks file.
+# disagreement and its count); lists, nested objects and the definitions stay in the marks file, except "checkable":
+# the same counts over the entries a reviewer could check against a paper (catlog-v2 from 2026-10-21), one level deep.
 REVIEW_NAME = re.compile(r"^v\d+$")
 REVIEW_MAPS = ("other_by_kind",)
+REVIEW_BLOCKS = ("checkable",)
 
 
-def review_counts(value):
+def review_counts(value, depth=0):
     """One reviewed catalog's numbers, strings and by-kind counts (see REVIEW_NAME), or None when nothing is left."""
     if not isinstance(value, dict):
         return None
@@ -1457,7 +1474,11 @@ def review_counts(value):
     for key, item in value.items():
         if not isinstance(key, str) or key == "definitions":
             continue
-        if isinstance(item, (int, float)) and not isinstance(item, bool) and math.isfinite(item) and item >= 0:
+        if key in REVIEW_BLOCKS and not depth:
+            block = review_counts(item, depth + 1)
+            if block:
+                kept[key] = block
+        elif isinstance(item, (int, float)) and not isinstance(item, bool) and math.isfinite(item) and item >= 0:
             kept[key] = item
         elif isinstance(item, str) and item.strip() and len(item) <= 200:
             kept[key] = item
@@ -1502,10 +1523,20 @@ def marks_quality(payload):
                        or (key in AGREEMENT_RANGES and isinstance(value, str) and AGREEMENT_RANGE.match(value)))}
         if isinstance(counts.get("values_approved"), int) and isinstance(counts.get("agree"), int):
             kept["agreement"] = counts
+    for key in QUALITY_RANGES:
+        if isinstance(quality.get(key), str) and AGREEMENT_RANGE.match(quality[key]):
+            kept[key] = quality[key]
     for key in QUALITY_FIGURES:
         figure = whole_counts(quality.get(key)) if isinstance(quality.get(key), dict) else None
         if figure:
             kept[key] = figure
+    exposed = quality.get("exposed")
+    if isinstance(exposed, dict):
+        counts = {key: exposed[key] for key in EXPOSED_COUNTS if isinstance(exposed.get(key), int)
+                  and not isinstance(exposed.get(key), bool) and exposed[key] >= 0}
+        days = {key: exposed[key] for key in EXPOSED_DAYS if isinstance(exposed.get(key), str) and DAY.match(exposed[key])}
+        if counts.get("papers") is not None:
+            kept["exposed"] = {**counts, **days}
     review = quality.get("review")
     if isinstance(review, dict):
         reviews = {name: counts for name, counts in ((name, review_counts(item)) for name, item in review.items()

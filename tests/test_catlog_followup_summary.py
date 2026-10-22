@@ -305,6 +305,7 @@ class OverviewTests(unittest.TestCase):
         quality = {"as_of": "2026-10-11T05:05:00", "audit_values": 742, "audit_wrong": 2, "compared_values_v1": 2431,
                    "compared_papers_v1": 312, "wrong_v1": 9, "label_or_annotation_v1": 114, "v2_found": 2160,
                    "v2_found_after_fixes": 2210, "v2_approved_total": 2380, "v2_differences_checked": 504, "v2_wrong": 0,
+                   "audit_wrong_papers": 2, "audit_wrong_top2": 2,
                    "reviewer": "someone", "audit_wrong_share": 0.27, "v2_wrong_bool": True}
         with tempfile.TemporaryDirectory() as directory:
             manifest, path, marks_path = self.write_fixture(directory, overview_rows(), {"a": {"checked": True}}, quality)
@@ -321,6 +322,54 @@ class OverviewTests(unittest.TestCase):
                                                             {"audit_values": "742", "as_of": "2026-10-11"})
             self.assertNotIn("quality", followup.build_overview(manifest, path, marks_path))
             self.assertIsNone(followup.marks_quality({"quality": [1, 2]}))
+
+    def test_overview_copies_the_round_16b_quality_fields(self):
+        # catlog-v2's 2026-10-21 marks (its publication review, items 1, 3, 4 and 7): the audit's 95% interval as a
+        # "low-high" string, CatLog's own errors by route (whole counts), the papers read or checked with database values
+        # in view (whole counts and days) and the review's counts over the entries with a paper (review.v1.checkable).
+        errors = {"audit": {"values": 74, "papers": 26}, "sweep": {"values": 1254, "papers": 97, "reprinted": 1058,
+                                                                   "partial_constant": 103},
+                  "unit_fix": {"values": 108, "papers": 13}, "database_check": {"values": 12, "papers": 4},
+                  "all": {"values": 1435, "papers": 127}}
+        exposed = {"papers": 309, "reader": 173, "checker_only": 136, "first": "2026-10-09", "last": "2026-10-21",
+                   "reread_blind": 303, "reread_blind_read": 173, "reread_blind_verify": 130, "reread_blind_on": "2026-10-21",
+                   "reread_blind_done": 0}
+        checkable = {"entries": 2604, "papers": 431, "value_disputed": 3, "value_correct_pct": 99.9, "value_missing": 27,
+                     "other_disputed": 24, "other_by_kind": {"organism name": 13, "DOI": 5}, "value_disputed_unchecked": []}
+        v1 = {"entries": 2770, "papers": 431, "entries_without_paper": 166, "value_disputed": 3, "checkable": checkable}
+        quality = {"as_of": "2026-10-21", "audit_values": 6651, "audit_wrong": 74, "audit_wrong_ci95": "0.89-1.39",
+                   "audit_wrong_papers": 26, "audit_wrong_top2": 50, "catlog_errors": errors, "review": {"v1": v1},
+                   "exposed": {**exposed, "note": "text", "flag": True, "last_seen": "yesterday"}}
+        result = followup.marks_quality({"quality": quality})
+        self.assertEqual((result["audit_wrong_ci95"], result["audit_wrong_papers"], result["audit_wrong_top2"]), ("0.89-1.39", 26, 50))
+        self.assertEqual(result["catlog_errors"], errors)
+        self.assertEqual(result["exposed"], exposed)
+        self.assertEqual(result["review"]["v1"]["checkable"], {key: value for key, value in checkable.items()
+                                                               if key != "value_disputed_unchecked"})
+        self.assertEqual(result["review"]["v1"]["entries_without_paper"], 166)
+        # A range in another shape, days in another form and an exposure without its paper count are left out.
+        for bad in ("0.89 to 1.39", "0.89–1.39", 1.0, None):
+            self.assertNotIn("audit_wrong_ci95", followup.marks_quality({"quality": {**quality, "audit_wrong_ci95": bad}}))
+        odd = followup.marks_quality({"quality": {**quality, "exposed": {**exposed, "first": "Oct 9", "papers": "309"}}})
+        self.assertNotIn("exposed", odd)
+        odd = followup.marks_quality({"quality": {**quality, "exposed": {**exposed, "first": "Oct 9"}}})
+        self.assertNotIn("first", odd["exposed"])
+        # A checkable block inside a checkable block is not copied (one level only), nor one without its entry count.
+        nested = {**v1, "checkable": {**checkable, "checkable": {"entries": 1}}}
+        self.assertNotIn("checkable", followup.marks_quality({"quality": {"review": {"v1": nested}}})["review"]["v1"]["checkable"])
+        self.assertNotIn("checkable", followup.marks_quality({"quality": {"review": {"v1": {**v1, "checkable": {"papers": 4}}}}})["review"]["v1"])
+
+    def test_overview_counts_the_values_of_human_checked_records(self):
+        # Beside the human-checked records, the values a reviewer approved on them (the mark's approved list; an unknown
+        # name or a repeat is not a value), counted on accepted records only.
+        with tempfile.TemporaryDirectory() as directory:
+            marks = {"a": {"checked": True, "approved": ["kcat", "km", "km", "Ki"]}, "c": {"checked": True, "approved": ["kcat"]},
+                     "b": {"checked": False, "approved": ["kcat"]}}
+            manifest, path, marks_path = self.write_fixture(directory, overview_rows(), marks)
+            result = followup.build_overview(manifest, path, marks_path)
+            self.assertEqual((result["human_checked_accepted"], result["human_checked_values"]), (1, 2))
+            manifest, path, marks_path = self.write_fixture(directory, overview_rows(), {"a": {"checked": True}})
+            self.assertEqual(followup.build_overview(manifest, path, marks_path)["human_checked_values"], 0)
 
     def test_overview_copies_the_agreement_headline_and_figure_counts(self):
         # The agreement fields the page renders (catlog-v2 human_review.AGREEMENT_DEFINITIONS), the headline percentage
