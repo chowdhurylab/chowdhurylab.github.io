@@ -876,8 +876,10 @@ def spread(values, low=0.25, high=0.75):
 # 1. Between papers: the same protein (its UniProt accession, primary_uniprot_id) and substrate (its SMILES, else its
 # name) as wild type in two papers. Each paper's value is the median of its records for that protein and substrate
 # (whatever their conditions); each pair of papers gives the fold difference between their values, counted in quarter
-# decades from 1-fold (the last bin holds 100-fold and more), with how many pairs are within 2-fold and 10-fold and how
-# many give the very same number. The stricter subset compares two papers only at a temperature (to 1 °C) and pH (to
+# decades from 1-fold (the last bin holds 100-fold and more), with how many pairs are within 2-fold and 10-fold. A pair
+# whose two values are the very same number is left out and counted apart (identical_left_out): most are one lab's
+# wild-type values printed again in its later paper (round 16 review: 12604236 and 15618685 share about 27 such cells),
+# not two measurements that agree. The stricter subset compares two papers only at a temperature (to 1 °C) and pH (to
 # 0.1) both give: per shared condition the difference of the two papers' medians, the pair's fold the median of those.
 PAIR_BIN_WIDTH = 0.25
 PAIR_BINS = 9
@@ -899,9 +901,11 @@ def pair_summary(differences, histogram=True):
         counts = [0] * PAIR_BINS
         for difference in ordered:
             counts[min(int(difference / PAIR_BIN_WIDTH + 1e-9), PAIR_BINS - 1)] += 1
-        summary["identical"] = sum(difference < 1e-9 for difference in ordered)
         summary["counts"] = counts
     return summary
+
+
+IDENTICAL = 1e-9  # |log10 fold| below this: the two papers give the very same number
 
 
 def between_papers(groups):
@@ -909,7 +913,7 @@ def between_papers(groups):
     found = {"all": {}, "same_conditions": {}}
     used = {key: {"records": set(), "papers": set(), "proteins": set()} for key in found}
     for metric in INSIGHT_METRICS:
-        loose, strict, loose_groups, strict_groups = [], [], 0, 0
+        loose, strict, loose_groups, strict_groups, identical = [], [], 0, 0, 0
         for (accession, _substrate), per_paper in groups.items():
             medians, cells, holders = {}, {}, {}
             for paper, records in per_paper.items():
@@ -925,16 +929,16 @@ def between_papers(groups):
                 cells[paper] = {cell: log_median(logs) for cell, logs in by_cell.items()}
             if len(medians) < 2:
                 continue
-            loose_groups += 1
             papers = sorted(medians)
-            used["all"]["proteins"].add(accession)
-            used["all"]["papers"].update(papers)
-            for paper in papers:
-                used["all"]["records"].update(holders[paper])
-            matched = False
+            matched, paired = False, set()
             for first, paper in enumerate(papers):
                 for other in papers[first + 1:]:
-                    loose.append(abs(medians[paper] - medians[other]))
+                    difference = abs(medians[paper] - medians[other])
+                    if difference < IDENTICAL:
+                        identical += 1
+                        continue
+                    loose.append(difference)
+                    paired.update((paper, other))
                     shared = sorted(set(cells[paper]) & set(cells[other]))
                     if not shared:
                         continue
@@ -944,11 +948,17 @@ def between_papers(groups):
                     for index, values, cell in per_paper[paper] + per_paper[other]:
                         if metric in values and cell in shared:
                             used["same_conditions"]["records"].add(index)
+            if paired:
+                loose_groups += 1
+                used["all"]["proteins"].add(accession)
+                used["all"]["papers"].update(paired)
+                for paper in paired:
+                    used["all"]["records"].update(holders[paper])
             if matched:
                 strict_groups += 1
                 used["same_conditions"]["proteins"].add(accession)
         if loose:
-            found["all"][metric] = {**pair_summary(loose), "groups": loose_groups}
+            found["all"][metric] = {**pair_summary(loose), "groups": loose_groups, "identical_left_out": identical}
         if strict:
             found["same_conditions"][metric] = {**pair_summary(strict, histogram=False), "groups": strict_groups}
     if not found["all"]:

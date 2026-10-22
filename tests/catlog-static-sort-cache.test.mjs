@@ -2980,7 +2980,7 @@ function row(overrides = {}) {
   // temperature, Km and substrate size and the typical wild-type enzyme in the supplement. Each only when its counts hold
   // together; each caption one sentence with its records, papers and enzymes and one caveat.
   {
-    const pairs = (counts) => ({ pairs: counts.reduce((sum, count) => sum + count, 0), groups: 2, median: 1.9, within_2: 3, within_10: 4, identical: 1, counts });
+    const pairs = (counts) => ({ pairs: counts.reduce((sum, count) => sum + count, 0), groups: 2, median: 1.9, within_2: 3, within_10: 4, identical_left_out: 1, counts });
     const between = { records: 12, papers: 4, proteins: 2, bin_width: 0.25,
       metrics: { kcat: pairs([2, 1, 0, 1, 0, 0, 0, 0, 1]), km: pairs([3, 1, 0, 0, 0, 0, 0, 0, 1]) },
       same_conditions: { records: 5, papers: 2, proteins: 1, metrics: { kcat: { pairs: 2, groups: 1, median: 1.5, within_2: 2, within_10: 2 } } } };
@@ -2998,7 +2998,9 @@ function row(overrides = {}) {
     assert.match(figure.body, /At the same temperature \(to 1 °C\) and pH \(to 0\.1\): 5 records, 2 papers and 1 enzyme\.<\/p>/);
     assert.equal(figure.caption, "Wild-type values of one enzyme (UniProt entry) and substrate in two papers, from 12 records, 4 papers and 2 enzymes; assays and constructs differ between papers, so a difference is not all error.");
     assertPlainCaption(figure.caption);
-    assert.match(figure.rules, /Pairs giving the very same number: 1 for kcat and 1 for Km\./);
+    // Pairs giving the very same number are left out (often one paper's value printed again in another), and named.
+    assert.match(figure.rules, /Pairs giving the very same number are left out, as often one paper prints the other’s value again: 1 for kcat and 1 for Km\./);
+    assert.equal(api.statsBetweenPapersFigure({ ...between, metrics: { kcat: { ...between.metrics.kcat, identical_left_out: undefined } } }), null);
     // A parameter whose bars do not add up is left out; without one that does, or without the counts, nothing is drawn.
     assert.deepEqual([...api.statsBetweenPapersFigure({ ...between, metrics: { ...between.metrics, km: { ...between.metrics.km, pairs: 6 } } })
       .body.matchAll(/data-panel="([\w-]+)"/g)].map((match) => match[1]), ["pairs-kcat"]);

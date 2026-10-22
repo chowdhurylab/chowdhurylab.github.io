@@ -5476,7 +5476,8 @@
   // Between papers (from_paper_insights.between_papers): one protein (its UniProt entry) and substrate as wild type in two
   // papers, per parameter the fold difference between the two papers' values in quarter decades from 1-fold (the last bar
   // holds 100-fold and more), with the median and the shares within 2-fold and 10-fold; under them, the same at a
-  // temperature and pH both papers give.
+  // temperature and pH both papers give. Pairs giving the very same number are left out by the builder (most are one
+  // lab's value printed again in its later paper) and named in the rules (identical_left_out).
   const STATS_PAIR_BINS = 9;
 
   function statsBetweenPapersFigure(between) {
@@ -5488,7 +5489,7 @@
       return Boolean(pairs && statsCount(summary.groups, pairs) && Number.isFinite(summary.median) && summary.median >= 1
         && statsCount(summary.within_10, pairs) !== null && statsCount(summary.within_2, summary.within_10) !== null
         && (!histogram || (statsWholeList(summary.counts, STATS_PAIR_BINS) && statsListSum(summary.counts) === pairs
-          && statsCount(summary.identical, summary.within_2) !== null)));
+          && statsCount(summary.identical_left_out) !== null)));
     };
     const metrics = STATS_METRICS.filter((metric) => holds(between.metrics?.[metric.key], true));
     if (!metrics.length) return null;
@@ -5518,12 +5519,12 @@
           return `<tr data-count="${summary.pairs}"><th scope="row">${metric.html}</th><td class="stats-num">${formatInteger(summary.pairs)}</td><td class="stats-num">${statsFoldText(summary.median, true)}</td><td class="stats-num">${escapeHtml(statsShare(summary.within_2, summary.pairs))}</td><td class="stats-num">${escapeHtml(statsShare(summary.within_10, summary.pairs))}</td></tr>`;
         }).join("")}</tbody></table>
       <p class="stats-note">At the same temperature (to 1 °C) and pH (to 0.1): ${statsUsedText(...strictCounts)}.</p>` : "";
-    const identical = metrics.map((metric) => `${formatInteger(between.metrics[metric.key].identical)} for ${STATS_METRIC_WORDS[metric.key]}`);
+    const identical = metrics.map((metric) => `${formatInteger(between.metrics[metric.key].identical_left_out)} for ${STATS_METRIC_WORDS[metric.key]}`);
     return {
       id: "statsPairsTitle", key: "between-papers", title: "Between papers", wide: true,
       body: `<div class="stats-ranges stats-pairs">${panels.join("")}</div>${table}`,
       caption: escapeHtml(`Wild-type values of one enzyme (UniProt entry) and substrate in two papers, from ${statsUsedText(records, papers, enzymes)}; assays and constructs differ between papers, so a difference is not all error.`),
-      rules: `Each paper’s value is the median of its records for that enzyme and substrate (matched by structure, else by name), whatever their conditions; a pair of papers counts once per enzyme, substrate and parameter. Pairs giving the very same number: ${statsListText(identical)}. The table compares two papers only at a temperature (to 1 °C) and pH (to 0.1) both give. Each bar is a quarter of a power of ten; the last holds 100-fold and more. Values without a recorded unit, or in another unit, are left out.`,
+      rules: `Each paper’s value is the median of its records for that enzyme and substrate (matched by structure, else by name), whatever their conditions; a pair of papers counts once per enzyme, substrate and parameter. Pairs giving the very same number are left out, as often one paper prints the other’s value again: ${statsListText(identical)}. The table compares two papers only at a temperature (to 1 °C) and pH (to 0.1) both give. Each bar is a quarter of a power of ten; the last holds 100-fold and more. Values without a recorded unit, or in another unit, are left out.`,
     };
   }
 

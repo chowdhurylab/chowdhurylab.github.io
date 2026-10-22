@@ -2080,7 +2080,7 @@ MORE_FIXTURE_JS = """
             // Round 16: the wild-type analyses, small counts that add up.
             between_papers: { records: 30, papers: 9, proteins: 4, bin_width: 0.25,
               metrics: Object.fromEntries(["kcat", "km", "kcat_over_km"].map((key) => [key, { pairs: 12, groups: 5, median: 1.9, within_2: 6, within_10: 11,
-                identical: 1, counts: [5, 3, 2, 1, 0, 0, 0, 0, 1] }])),
+                identical_left_out: 1, counts: [5, 3, 2, 1, 0, 0, 0, 0, 1] }])),
               same_conditions: { records: 8, papers: 4, proteins: 2, metrics: { kcat: { pairs: 3, groups: 2, median: 1.5, within_2: 2, within_10: 3 } } } },
             substrate_range: { panels: 10, records: 40, papers: 6, enzymes: 7, median: 110, p25: 16, p75: 1100, at_least_10: 8, at_least_1000: 3,
               bin_width: 0.5, counts: [1, 1, 2, 2, 1, 0, 1, 1, 0, 0, 0, 0, 1],

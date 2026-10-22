@@ -592,12 +592,14 @@ class OverviewTests(unittest.TestCase):
             manifest, path, _marks = self.write_fixture(directory, rows, {})
             insights = followup.build_overview(manifest, path)["from_paper_insights"]
         pairs = insights["between_papers"]
-        # Papers 1, 2, 3: medians 10, ~28.3 (40 and 20), 10: pairs 2.83x, 1x (identical) and 2.83x.
+        # Papers 1, 2, 3: medians 10, ~28.3 (40 and 20), 10: pairs 2.83x and 2.83x; papers 1 and 3 give the very same
+        # number, so that pair is left out and counted apart (often a value reprinted from the earlier paper).
         kcat = pairs["metrics"]["kcat"]
         self.assertEqual((pairs["records"], pairs["papers"], pairs["proteins"]), (5, 3, 1))
-        self.assertEqual((kcat["pairs"], kcat["groups"], kcat["median"], kcat["within_2"], kcat["within_10"], kcat["identical"]),
-                         (3, 1, 2.8, 1, 3, 1))
-        self.assertEqual(kcat["counts"][:3], [1, 2, 0], "1x in the first quarter decade, 2.8x in the second")
+        self.assertEqual((kcat["pairs"], kcat["groups"], kcat["median"], kcat["within_2"], kcat["within_10"], kcat["identical_left_out"]),
+                         (2, 1, 2.8, 0, 2, 1))
+        self.assertNotIn("identical", kcat)
+        self.assertEqual(kcat["counts"][:3], [0, 2, 0], "2.8x in the second quarter decade")
         self.assertEqual(sum(kcat["counts"]), kcat["pairs"])
         # The same temperature and pH: only papers 1 and 2 share one (25 °C, pH 7): 10 against 40.
         same = pairs["same_conditions"]
