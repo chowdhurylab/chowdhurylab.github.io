@@ -122,6 +122,11 @@
   --src-paper-ring:#2DA1BD;   /* 3.0:1 */
   --src-paper-ink:#207286;    /* 5.5:1; on its 12% tint 5.0:1 */
   --src-paper-tint:#eaf7fa;   /* 12% */
+  /* A line of CatLog's values (CatLog and BRENDA by publication year): the cyan between its ring and its ink (55:45),
+     so the line keeps 3:1 on the grey band too, where the ring's 3.0:1 would fall to 2.6:1. */
+  --src-paper-line:#278CA4;   /* 3.9:1 on white; 3.4:1 on --plot-band */
+  /* A plain grey band behind the years a figure sets apart (CatLog and BRENDA by publication year); no data meaning. */
+  --plot-band:#eef1f0;
   /* Filter chips and the dot beside a sidebar group (tone-* below). A chip whose option has a meaning colour wears it;
      the other filters (search, enzyme, EC number, organism, substrate, measurement, wild type or variant, temperature,
      pH, Not yet re-read, a source database) are choices with no meaning colour, so they wear the accent, the colour of
@@ -1613,6 +1618,40 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-map-key-iso { display:inline-block; flex:0 0 14px; width:14px; height:0; border-top:1px solid color-mix(in srgb, var(--text) 45%, var(--bg)); transform:rotate(-45deg) }
 .stats-map-key-limit { display:inline-block; flex:0 0 10px; width:10px; height:10px; border-radius:2px; background:color-mix(in srgb, var(--caution-line) 42%, var(--bg)); box-shadow:inset 0 0 0 1px var(--caution) }
 .stats-map-key-dot { display:inline-block; flex:0 0 10px; width:10px; height:10px; border-radius:50%; background:conic-gradient(var(--ec-1) 0 14.3%, var(--ec-2) 0 28.6%, var(--ec-3) 0 42.9%, var(--ec-4) 0 57.1%, var(--ec-5) 0 71.4%, var(--ec-6) 0 85.7%, var(--ec-7) 0) }
+/* CatLog and BRENDA by publication year (round 16): a line and a dot per year for each source over light gridlines, BRENDA
+   in the grey of a count with no meaning colour (dot and line 3.7:1, its words --muted), CatLog in Read from the paper's
+   cyan (dots BPG cyan ringed and joined by --src-paper-line, its words the cyan ink); the years BRENDA is still adding
+   papers from on a plain grey band (--plot-band) with open dots. CatLog's total stands above the plot; the names and
+   BRENDA's two counts are placed on the plot by statsPlaceYearLabels (hidden until placed), and the key above it shows
+   only while a name has no room (.is-labelled hides it). A column per year gives the year's tooltip line and, pointed
+   at, a hairline through its dots, which grow. */
+.stats-years-note { margin:0 0 12px; color:var(--text); font-size:var(--fs-13); line-height:var(--lh-13) }
+.stats-fig.is-labelled .stats-years-key { display:none }
+.stats-years-key li { align-items:center }
+.stats-years-key-line { display:inline-block; flex:0 0 16px; width:16px; height:0; border-top:2px solid var(--years-line) }
+.stats-years { display:grid; grid-template-columns:52px minmax(0,1fr) 16px; max-width:840px; color:var(--muted); font-size:var(--fs-12); line-height:var(--lh-12) }
+.stats-years-y-title { grid-column:1 / -1; grid-row:1; margin:0 0 16px; color:var(--text); font-size:var(--fs-14); font-weight:600; line-height:var(--lh-14) }
+.stats-years-y { position:relative; grid-column:1; grid-row:2 }
+.stats-years-y > span { position:absolute; right:8px; transform:translateY(50%); white-space:nowrap }
+.stats-years-plot { position:relative; grid-column:2; grid-row:2; height:320px; border-bottom:1px solid var(--line-strong) }
+.stats-years-x { position:relative; grid-column:2; grid-row:3; height:22px }
+.stats-years-x > span { position:absolute; top:6px; transform:translateX(-50%); white-space:nowrap }
+.stats-years-x > span::before { content:""; position:absolute; left:50%; top:-6px; height:4px; border-left:1px solid var(--line-strong) }
+.stats-years-x-title { grid-column:2; grid-row:4; margin:4px 0 0; color:var(--text); font-size:var(--fs-14); font-weight:600; line-height:var(--lh-14); text-align:center }
+.stats-years-band { position:absolute; top:0; right:0; bottom:0; z-index:0; background:var(--plot-band) }
+.stats-years-col { position:absolute; top:0; bottom:0; z-index:1 }
+.stats-years-col.is-active::after { content:""; position:absolute; top:0; bottom:0; left:50%; border-left:1px solid var(--line-strong) }
+.stats-years-svg { position:absolute; inset:0; z-index:2; display:block; width:100%; height:100%; overflow:visible; pointer-events:none }
+.stats-years-grid { fill:none; stroke:var(--line-soft); stroke-width:1; vector-effect:non-scaling-stroke }
+.stats-years-line { fill:none; stroke:var(--years-line); stroke-width:2; stroke-linejoin:round; stroke-linecap:round; vector-effect:non-scaling-stroke }
+.stats-years-dot { position:absolute; z-index:3; box-sizing:border-box; width:8px; height:8px; border:1.5px solid var(--years-line); border-radius:50%; background:var(--years-fill); transform:translate(-50%, 50%); pointer-events:none }
+.stats-years-dot.is-open { background:var(--bg) }
+.stats-years-dot.is-active { width:11px; height:11px }
+.stats-years-label { position:absolute; z-index:4; visibility:hidden; color:var(--years-ink); white-space:nowrap; pointer-events:none }
+.stats-years-label.is-placed { visibility:visible }
+.stats-years-name { font-size:var(--fs-13); font-weight:600; line-height:var(--lh-13) }
+:is(.stats-years-line, .stats-years-dot, .stats-years-label, .stats-years-key-line).is-brenda { --years-line:var(--bar-neutral); --years-fill:var(--bar-neutral); --years-ink:var(--muted) }
+:is(.stats-years-line, .stats-years-dot, .stats-years-label, .stats-years-key-line).is-catlog { --years-line:var(--src-paper-line); --years-fill:var(--src-paper); --years-ink:var(--src-paper-ink) }
 /* Variants against their wild type: three histograms like Value ranges, a dashed line at the wild type (its name above
    the bars, clear of the peak beside it). */
 /* Their axes' end labels stand centred on the end ticks: the plots keep 16px either side for them. */
@@ -1792,6 +1831,7 @@ a.stats-total-value:focus-visible { outline:0 }
 
 @media (max-width: 1023px) {
   .stats-part-grid > * { grid-column:1 / -1 }
+  .stats-years-plot { height:280px }
   .stats-map { grid-template-columns:minmax(0,560px) }
   .stats-subs { grid-template-columns:minmax(0,440px) }
   .stats-conditions { grid-template-columns:1fr; max-width:560px }
@@ -1846,6 +1886,8 @@ a.stats-total-value:focus-visible { outline:0 }
 
 @media (max-width: 640px) {
   .stats-shell, .team-shell { padding:24px 16px 32px }
+  .stats-years { grid-template-columns:48px minmax(0,1fr) 16px }
+  .stats-years-plot { height:240px }
   .stats-totals .stats-totals-scope dd { font-size:var(--fs-18); line-height:var(--lh-18) }
   .stats-stack { gap:40px }
   .stats-band { padding:var(--sp-3) var(--sp-2) var(--sp-1) }

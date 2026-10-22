@@ -42,6 +42,8 @@ colors:
   change-magnitude: "#E64B35"
   change-precision: "#91D1C2"
   bar-neutral: "#7d8885"
+  src-paper-line: "#278CA4 (CatLog's line in CatLog and BRENDA by publication year: 3.9:1 on white, 3.4:1 on the band)"
+  plot-band: "#eef1f0 (a plain grey band behind years a figure sets apart; no data meaning)"
   filter-groups: "the accent (ink #172120): the filters with no meaning colour"
   enzyme-class-1: "#E64B35"
   enzyme-class-2: "#4DBBD5"
@@ -556,7 +558,7 @@ colour itself goes on the mark beside the words.
 | salmon #F39B7F | Not confirmed | status dot (ringed), chips, Stats bars and donut | ring #c4664a, 3.9:1 (the words are ink) |
 | slate #8491B4 | Not checked (both kinds, Unverified and Not reviewed: one word, one colour; the record names which) | status dot, chips; in Stats' bars, donut and swatches slate hatching on white (135° lines, 1.5px every 4px, a slate outline), never a flat fill: slate at 60% (#B5BDD2) is navy at 60% (#8A98B8) a step lighter in the same hue | the words are ink |
 | deep red #DC0000 | Disputed | status dot, chips, Stats bars | itself, 5.2:1 |
-| cyan #4DBBD5 | CatLog's reading of the paper: Read from the paper; Not in the databases (a value only that reading has); Added, the source had none (an earlier version read it from the paper) | Read from the paper's count and label, its chip and the Source dot while chosen, Stats' from-paper marks (Values per paper, Enzyme classes' stripe, From paper counts, the from-paper tables, variants against wild type, assay temperature and pH, the wild-type analyses of round 16, the Checks meters of the AI checks), Not in the databases' square and bars (a database's own "not listed" kinds as cyan hatching, a light cyan and the full fill), the AI agents on Team | text #207286, 5.5:1; ring #2DA1BD, 3.0:1 |
+| cyan #4DBBD5 | CatLog's reading of the paper: Read from the paper; Not in the databases (a value only that reading has); Added, the source had none (an earlier version read it from the paper) | Read from the paper's count and label, its chip and the Source dot while chosen, Stats' from-paper marks (Values per paper, Enzyme classes' stripe, From paper counts, the from-paper tables, variants against wild type, assay temperature and pH, the wild-type analyses of round 16, the Checks meters of the AI checks, CatLog's dots and line in CatLog and BRENDA by publication year, the line in --src-paper-line #278CA4 so it keeps 3:1 on the grey band), Not in the databases' square and bars (a database's own "not listed" kinds as cyan hatching, a light cyan and the full fill), the AI agents on Team | text #207286, 5.5:1; ring #2DA1BD, 3.0:1 |
 | green #00A087 | Agreement with a second source: Same number (a database lists the paper's number); human-checked (a human reviewer approved the values) | Same number's square, chip and bars; human-checked's tick, word and counts (Browse, record, Stats' Human review, its Checks meter) | text and tick #007664, 5.6:1 (4.7:1 on its 12% tint) |
 | mint #91D1C2 | The same number in another form: Same, other label (database); More digits or rounding (an earlier correction) | their squares, chips and bars | ring #45A48E, 3.0:1 (the words are ink) |
 | brown #7E6148 | Different number (database; an earlier correction's "a different number") | square, chip, bars | itself, 5.7:1 |
@@ -565,7 +567,8 @@ colour itself goes on the mark beside the words.
 
 Not BPG, and carrying no data meaning: the ink and greys (--text, --text-2, --muted, --line; --bar-neutral #7d8885 for a
 count with no meaning colour: the value ranges of all records, the tables of all records, No cautions, Other status,
-Corrected earlier, a chip naming several results), and the accent for what a visitor picks or can act on (links,
+Corrected earlier, a chip naming several results, BRENDA's dots and line in CatLog and BRENDA by publication year, its words
+--muted; --plot-band #eef1f0 for that figure's grey band of years), and the accent for what a visitor picks or can act on (links,
 buttons, the focus ring, the selected row, the current tab) and for the filters with no meaning colour (Not yet re-read,
 a source database, the enzyme fields, the measurement). Round 14 moved the accent from teal #245f58 to ink #172120: the
 teal, Human-checked's green and Read from the paper's dark cyan sat side by side in the counts band as one teal family,
@@ -585,7 +588,10 @@ the category's name or number, so the hue names the category alone there.
   brown; cyan is left out, being CatLog's reading): for a figure whose only series are the databases. None exists yet:
   every view that lists the databases colours its marks by review result or database result (Records by main source,
   Part 7's figures and tables, the record's comparison, the Source database filter), so there the names tell them
-  apart and a hue per database would give a colour a second meaning in the same view.
+  apart and a hue per database would give a colour a second meaning in the same view. CatLog and BRENDA by publication
+  year (round 16) is not one: CatLog's cyan stands beside BRENDA there, and --db-brenda's navy is Accepted's on the same
+  page, so BRENDA's line is --bar-neutral's grey (a count with no meaning colour), as the approved figure's navy could
+  not be.
 Table numbers share regular weight; enzyme names use medium weight. Reserve
 semibold for counts, section headings, and the selected record's main values. Numeric
 headers and values align right. Names wrap to two lines; the full name is on
@@ -1166,8 +1172,8 @@ disputed; 153 (5.5%) not found in the paper"; here no second big number and no d
 sentence over a small table of its verdicts, then Checks on the values as a table of the checks, each row with what it
 covered, what it found and a small bar of the share kept or approved; the review's flags by kind and the reviewers'
 approved values read from the paper again are the supplement's Quality tables), 3 What is in the catalog (the review-result donut and its legend
-table, records by main source with a Records | Share switch, then the enzyme classes with accepted and
-read-from-the-paper records), 4 Values (value ranges on one log axis per parameter; then, from the records read from
+table, records by main source with a Records | Share switch, then CatLog and BRENDA by publication year (round 16, when
+the manifest has summary.publication_years), then the enzyme classes with accepted and read-from-the-paper records), 4 Values (value ranges on one log axis per parameter; then, from the records read from
 the paper, Between papers (round 16) after the ranges, kcat against Km as a density map with lines of equal kcat/Km, the
 diffusion limit and each class's median, Substrate specificity (round 16), and variants against their wild type of the
 same paper, enzyme, substrate, pH and temperature), 5 Against the databases
@@ -1454,3 +1460,38 @@ Generated mockups guide layout only; their text is not a scientific source.
   (paper’s, CatLog’s, BRENDA’s, isn’t) in the page's own sentences and in the data's, as the Guide's text has it; a prime
   in a chemical name (2'-deoxyguanosine, 3',5'-cyclic AMP, N,N'-...) and an address keep theirs (Browse's search reads ’
   as '). The page's own strings use ’ at their source.
+
+## Round 16 CatLog and BRENDA by publication year
+
+- The figure the user approved on 2026-10-21 (catlog-v2 work/brenda_lag_20261021/broad/brenda_catlog.png and its README:
+  "similar, but up to date"), drawn by the page in What is in the catalog, after Records by main source: kcat, Km and
+  kcat/Km values per publication year of their paper, first_year to last_year (2000-2025), in BRENDA's release (BRENDA
+  2026.1) and read by CatLog, from the manifest's summary.publication_years, which catlog-v2's build writes (the data
+  contract: tools/site_patches/20261021-site-round16-brief.md in catlog-v2; an optional shaded_from moves the band, else
+  2020). No field, or counts that do not hold together (a year missing or out of order, a count that is not a whole
+  number, more values or papers in the parts than in CatLog's totals, no release name or date): no figure, nothing else
+  changes.
+- As approved: a line with a dot per year for each source; the years BRENDA is still adding papers from (2020 on) on a
+  plain grey band with open dots, explained in the caption (never "curation incomplete"); direct labels on the lines
+  ("BRENDA 2026.1", "CatLog, read so far"), no legend box; BRENDA's highest year and its last year before the band
+  labelled with their counts; "CatLog on Oct 21, 2026: 217,969 values from 6,116 papers" above the plot; kcat and Km
+  italic with subscripts in the axis title; the comparison ends at last_year, and CatLog's values from papers published
+  after it are in the caption, not drawn. The site's own look: CatLog in Read from the paper's cyan, BRENDA in grey (Type
+  And Color), light gridlines, the counts in full ("15,000", not thousands), ticks every 5 years.
+- One sentence of caption: the band and CatLog's values after last_year ("BRENDA is still adding papers from the shaded
+  years (2020 on); CatLog also has 9,086 values from 349 papers published after 2025."); the counting rules (PubMed year,
+  CatLog's values with no PubMed year counted only in its total, how BRENDA's entries count) are the figure's under its
+  number in How these numbers are counted.
+- Lines in an SVG stretched over the plot (2px, non-scaling); dots, labels and ticks are HTML placed in percent, so they
+  stay round and upright at every width. statsPlaceYearLabels places the labels in the viewer's own font, when Stats is
+  drawn and whenever the plot changes size: each name along the flattest stretch of its line before the band, on the
+  line's outer side (else between the lines), nearer the middle on a tie, then BRENDA's two counts right above or below
+  their dot (centred where either side has room, else shifted along it; never beside it, where a count reads as the next
+  year's; a count with no room is left out, the year's tooltip line has it). The figure is drawn with a key above the
+  plot and the key goes once both names have a place (is-labelled), so a plot with no room for a name keeps the key.
+  With the approved numbers both names fit from 320px and the two counts from 641px (on a phone they give way).
+- A column per year carries the year's tooltip line ("2009: BRENDA 2026.1, 14,970 values; CatLog, 10,167 values from 265
+  papers"); pointing at it draws a hairline through the year and grows its two dots. The plot is an image whose
+  accessible name gives each line's first year, highest year, last year before the band and last year, and the band.
+- Plot 320px tall (280px below 1024px, 240px on phones), at most 840px wide with its axes (a 2.5:1 plot, near the
+  approved figure's proportions), a 16px column after the plot so the last year's label stays inside the figure.

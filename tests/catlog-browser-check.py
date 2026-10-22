@@ -2355,6 +2355,196 @@ def assert_fig5_fits(fig5, width):
     assert not cut, f"Figure 5 cuts class names that fit their {fig5['label']:.0f}px column at {width}px: {cut}"
 
 
+# CatLog and BRENDA by publication year (round 16): the manifest's summary.publication_years as catlog-v2's build writes it
+# (here the approved figure's numbers of 2026-10-21: BRENDA 2026.1's values per publication year, CatLog's values read so
+# far), set before the page starts in Chrome when the snapshot has none, or taken out, or damaged.
+_YEARS_BRENDA = (6561, 6408, 6983, 9419, 10460, 11154, 11031, 11875, 13934, 14970, 14254, 11139, 12116, 11563, 11583, 11222,
+                 9859, 10469, 10163, 9133, 8819, 6641, 3997, 2307, 1292, 500)
+_YEARS_CATLOG = (5746, 5015, 6971, 8404, 10309, 9120, 8618, 10001, 9386, 10167, 9685, 7358, 8599, 7971, 8111, 7133, 5569, 7071,
+                 6851, 5906, 4541, 3415, 1812, 1076, 791, 447)
+_YEARS_PAPERS = (161, 146, 157, 246, 273, 255, 209, 255, 250, 265, 263, 217, 230, 206, 228, 200, 182, 187, 204, 164, 134, 89, 48,
+                 26, 22, 22)
+PUBLICATION_YEARS_FIXTURE = {
+    "brenda_release": "BRENDA 2026.1", "as_of": "2026-10-21", "first_year": 2000, "last_year": 2025,
+    "years": [{"year": 2000 + index, "brenda_values": brenda, "catlog_values": catlog, "catlog_papers": papers}
+              for index, (brenda, catlog, papers) in enumerate(zip(_YEARS_BRENDA, _YEARS_CATLOG, _YEARS_PAPERS))],
+    "catlog_values_total": 217969, "catlog_papers_total": 6116, "catlog_values_without_year": 5607,
+    "catlog_after_last_year": {"values": 9086, "papers": 349},
+}
+PUBLICATION_YEARS_JS = """
+    Object.defineProperty(window, "CATLOG_STATIC_MANIFEST", { configurable: true, get() { return undefined; },
+      set(value) {
+        const summary = value?.summary;
+        if (summary) { %s }
+        Object.defineProperty(window, "CATLOG_STATIC_MANIFEST", { value, writable: true, configurable: true });
+      } });
+"""
+# The layout facts: the placed labels (inside the plot, apart from each other, clear of every dot and of both lines, each
+# count over or under its own dot), the key shown only while a name has no place, the marks per year, the strokes'
+# contrast on white and on the band, and the figure's place in What is in the catalog.
+PUBLICATION_YEARS_LAYOUT_JS = """
+const section = document.querySelector('[data-figure="publication-years"]');
+if (!section) return null;
+const plot = section.querySelector('.stats-years-plot');
+const frame = plot.getBoundingClientRect();
+const box = (e) => { const r = e.getBoundingClientRect(); return {l: r.left - frame.left, t: r.top - frame.top, r: r.right - frame.left, b: r.bottom - frame.top}; };
+const dots = [...section.querySelectorAll('.stats-years-dot')].map((dot) => { const b = box(dot); return {series: dot.dataset.series, x: (b.l + b.r) / 2, y: (b.t + b.b) / 2, open: dot.classList.contains('is-open'), year: dot.dataset.hl}; });
+const lines = {};
+dots.forEach((dot) => (lines[dot.series] = lines[dot.series] || []).push(dot));
+const crosses = (r, a, b) => {
+  let lo = 0, hi = 1; const dx = b.x - a.x, dy = b.y - a.y;
+  for (const [p, q] of [[-dx, a.x - r.l], [dx, r.r - a.x], [-dy, a.y - r.t], [dy, r.b - a.y]]) {
+    if (p === 0) { if (q < 0) return false; continue; }
+    const t = q / p; if (p < 0) { if (t > hi) return false; lo = Math.max(lo, t); } else { if (t < lo) return false; hi = Math.min(hi, t); }
+  }
+  return true;
+};
+const problems = [];
+const labels = [...section.querySelectorAll('.stats-years-label.is-placed')].map((label) => ({label, text: label.textContent, ...box(label)}));
+labels.forEach((one, index) => {
+  if (one.l < -1 || one.t < -1 || one.r > frame.width + 1 || one.b > frame.height + 1) problems.push(`${one.text} leaves the plot`);
+  labels.slice(index + 1).forEach((other) => { if (one.l < other.r && other.l < one.r && one.t < other.b && other.t < one.b) problems.push(`${one.text} covers ${other.text}`); });
+  if (dots.some((dot) => dot.x > one.l && dot.x < one.r && dot.y > one.t && dot.y < one.b)) problems.push(`${one.text} covers a dot`);
+  Object.values(lines).forEach((list) => list.slice(1).forEach((point, i) => { if (crosses({l: one.l + 1, t: one.t + 1, r: one.r - 1, b: one.b - 1}, list[i], point)) problems.push(`${one.text} crosses a line`); }));
+  if (one.label.classList.contains('stats-years-count')) {
+    const dot = lines.brenda[Number(one.label.dataset.index)];
+    if (!(dot.x >= one.l && dot.x <= one.r && (dot.y <= one.t || dot.y >= one.b)) || dot.year === undefined) problems.push(`${one.text} stands away from its dot`);
+    if (!section.querySelectorAll('.stats-years-col')[Number(one.label.dataset.index)].dataset.tip.split(';')[0].endsWith(`, ${one.text} values`)) problems.push(`${one.text} is not its year's count`);
+  }
+});
+const figure = section.querySelector('.stats-fig');
+const key = section.querySelector('.stats-years-key');
+const rgb = (text) => (text.match(/[\\d.]+/g) || []).slice(0, 3).map(Number);
+const lum = (c) => { const [r, g, b] = c.map((v) => { v /= 255; return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
+const contrast = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((m, n) => n - m); return (x + 0.05) / (y + 0.05); };
+const band = section.querySelector('.stats-years-band');
+const bandColour = band ? rgb(getComputedStyle(band).backgroundColor) : [255, 255, 255];
+const strokes = [...section.querySelectorAll('.stats-years-line')].map((line) => rgb(getComputedStyle(line).stroke));
+const order = [...document.querySelectorAll("#statsCharts [data-part='catalog'] .stats-figure-section")].map((e) => e.dataset.figure);
+return {problems, labelled: figure.classList.contains('is-labelled'), keyShown: Boolean(key.getClientRects().length),
+  placed: labels.map((one) => one.text), names: [...section.querySelectorAll('.stats-years-name')].map((e) => e.textContent),
+  dots: dots.length, open: dots.filter((dot) => dot.open).length, columns: [...section.querySelectorAll('.stats-years-col')].map((col) => col.dataset.tip),
+  columnWidths: [...section.querySelectorAll('.stats-years-col')].map((col) => Math.round(col.getBoundingClientRect().width * 10) / 10),
+  plotWidth: frame.width, bandLeft: band ? box(band).l : null,
+  contrast: strokes.map((stroke) => [contrast(stroke, [255, 255, 255]), contrast(stroke, bandColour)]),
+  note: section.querySelector('.stats-years-note').textContent, caption: section.querySelector('.stats-fig-caption').textContent,
+  aria: plot.getAttribute('role') === 'img' ? plot.getAttribute('aria-label') : '', order,
+  overflow: document.documentElement.scrollWidth > innerWidth + 1 || (v => v.scrollWidth > v.clientWidth + 1)(document.getElementById('statsView')),
+  lastTick: (() => { const t = [...section.querySelectorAll('.stats-years-x > span')].pop().getBoundingClientRect(); return t.right <= section.getBoundingClientRect().right + 1; })(),
+  rules: [...document.querySelectorAll('.stats-method-figures > div')].map((row) => row.textContent.replace(/\\s+/g, ' ').trim()).find((text) => /by publication year/.test(text)) || ''};
+"""
+
+
+def publication_years_valid(field):
+    """Whether the page draws CatLog and BRENDA by publication year from this field (statsPublicationYears' rules)."""
+    whole = lambda value, top=None: isinstance(value, int) and not isinstance(value, bool) and value >= 0 and (top is None or value <= top)
+    if not isinstance(field, dict):
+        return False
+    first, last, years = field.get("first_year"), field.get("last_year"), field.get("years")
+    if not (isinstance(first, int) and isinstance(last, int) and last - first >= 4 and isinstance(years, list) and len(years) == last - first + 1):
+        return False
+    if not all(isinstance(item, dict) and item.get("year") == first + index and whole(item.get("brenda_values")) and whole(item.get("catlog_values"))
+               and whole(item.get("catlog_papers"), item.get("catlog_values")) for index, item in enumerate(years)):
+        return False
+    after = field.get("catlog_after_last_year") or {}
+    numbers = [field.get("catlog_values_total"), field.get("catlog_papers_total"), field.get("catlog_values_without_year"), after.get("values"), after.get("papers")]
+    if not str(field.get("brenda_release") or "").strip() or not re.fullmatch(r"\d{4}-\d{2}-\d{2}", str(field.get("as_of") or "")) or not all(map(whole, numbers)):
+        return False
+    values, papers, undated = numbers[:3]
+    return after["papers"] <= after["values"] and sum(item["catlog_values"] for item in years) + after["values"] + undated <= values \
+        and sum(item["catlog_papers"] for item in years) + after["papers"] <= papers and any(item["brenda_values"] for item in years)
+
+
+def publication_years_caption(field):
+    """The figure's caption sentence, from the field: the band, then CatLog's values after the last year."""
+    shade = field.get("shaded_from") if isinstance(field.get("shaded_from"), int) else 2020
+    plural = lambda count, word: f"{count:,} {word}{'' if count == 1 else 's'}"
+    after = field["catlog_after_last_year"]
+    words = ([f"BRENDA is still adding papers from the shaded years ({shade} on)"] if field["first_year"] < shade <= field["last_year"] else []) \
+        + ([f"CatLog also has {plural(after['values'], 'value')} from {plural(after['papers'], 'paper')} published after {field['last_year']}"] if after["values"] else [])
+    return "; ".join(words) + "." if words else f"Values per publication year of their paper in {field['brenda_release']} and read by CatLog."
+
+
+def check_stats_years(driver, browser, url):
+    """CatLog and BRENDA by publication year: drawn from the manifest's summary.publication_years when its counts hold
+    together, else left out with the rest of Stats unchanged (no field, a year missing, more values in the parts than in
+    CatLog's total). In What is in the catalog after Records by main source; the caption, the note above the plot, the
+    tooltip line per year, open dots for the shaded years, the lines' contrast on white and on the band, the counting
+    rules in How these numbers are counted; the labels placed apart and clear of the lines and dots at 1440, 375 and
+    320px, the key shown only when a name finds no room; pointing at a year (Chrome) gives its line and grows its dots.
+    Chrome sets the approved figure's numbers when the snapshot has none and also checks the figure left out; Safari
+    checks the snapshot's own field, at its window size."""
+    wait = WebDriverWait(driver, 60, ignored_exceptions=(StaleElementReferenceException,))
+    stats_url = url.replace("catlog-latest.html", "catlog-stats.html")
+    fill = "if (!summary.publication_years) summary.publication_years = %s;" % json.dumps(PUBLICATION_YEARS_FIXTURE)
+    variants = [("filled", fill), ("missing", "delete summary.publication_years;"), ("short", fill + " summary.publication_years.years.pop();"),
+                ("too many", fill + " summary.publication_years.catlog_values_total = 1;")] if browser == "chrome" else [("snapshot", "")]
+    results = {}
+    for name, patch in variants:
+        injected = driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {"source": PUBLICATION_YEARS_JS % patch}) if patch else None
+        try:
+            sizes = ((1440, 1000), (375, 812), (320, 700)) if name == "filled" else ((1440, 1000),) if browser == "chrome" else ((0, 0),)
+            for width, height in sizes:
+                if browser == "chrome":
+                    driver.execute_cdp_cmd("Emulation.setDeviceMetricsOverride", {"width": width, "height": height, "deviceScaleFactor": 1, "mobile": width < 640})
+                    driver.get_log("browser")
+                driver.get("about:blank")
+                driver.get(stats_url)
+                wait.until(lambda d: d.find_elements(By.CSS_SELECTOR, "#statsCharts [data-figure='status']"))
+                driver.execute_script("return document.fonts ? document.fonts.ready.then(() => true) : true")
+                field = driver.execute_script("return window.CATLOG_STATIC_MANIFEST.summary.publication_years || null")
+                drawn = publication_years_valid(field)
+                if browser == "chrome":
+                    errors = [entry["message"] for entry in driver.get_log("browser") if entry["level"] == "SEVERE" and entry.get("source") != "network"]
+                    assert not errors, f"{name}: {errors}"
+                assert driver.find_elements(By.CSS_SELECTOR, "#statsCharts [data-figure='ec-classes']"), f"{name}: Stats stops short"
+                section = driver.find_elements(By.CSS_SELECTOR, "#statsCharts [data-figure='publication-years']")
+                assert bool(section) == drawn, f"{name}: figure drawn {bool(section)}, field usable {drawn}"
+                if name == "filled":
+                    assert drawn
+                if not section:
+                    results[name] = "left out"
+                    break
+                driver.execute_script("arguments[0].scrollIntoView({block: 'center'})", section[0])
+                facts = wait.until(lambda d: d.execute_script(PUBLICATION_YEARS_LAYOUT_JS))
+                years, release, last = field["years"], field["brenda_release"], field["last_year"]
+                shade = field.get("shaded_from") if isinstance(field.get("shaded_from"), int) else 2020
+                assert not facts["problems"], f"{name} at {width}px: {facts['problems']}"
+                assert facts["order"].index("main-source") < facts["order"].index("publication-years") < facts["order"].index("ec-classes"), facts["order"]
+                assert facts["caption"] == f"Figure {facts['order'].index('publication-years') + 1}. {publication_years_caption(field)}", facts["caption"]
+                assert facts["note"].startswith("CatLog on ") and facts["note"].endswith(f": {field['catlog_values_total']:,} values from {field['catlog_papers_total']:,} papers"), facts["note"]
+                assert facts["dots"] == 2 * len(years) and facts["open"] == (2 * (last - shade + 1) if field["first_year"] < shade <= last else 0), facts
+                assert facts["columns"] == [f"{item['year']}: {release}, {item['brenda_values']:,} value{'' if item['brenda_values'] == 1 else 's'}; CatLog, "
+                                            f"{item['catlog_values']:,} value{'' if item['catlog_values'] == 1 else 's'} from {item['catlog_papers']:,} "
+                                            f"paper{'' if item['catlog_papers'] == 1 else 's'}" for item in years], facts["columns"][:2]
+                assert max(facts["columnWidths"]) - min(facts["columnWidths"]) <= 1 and abs(sum(facts["columnWidths"]) - facts["plotWidth"]) <= 2, facts["columnWidths"]
+                assert all(on_white >= 3 and on_band >= 3 for on_white, on_band in facts["contrast"]), facts["contrast"]
+                assert facts["keyShown"] != facts["labelled"], facts
+                assert not facts["labelled"] or set(facts["names"]) <= set(facts["placed"]), facts
+                assert facts["lastTick"] and not facts["overflow"], f"{name} overflows at {width}px"
+                assert f"{release}: " in facts["aria"] and f"{last}" in facts["aria"], facts["aria"]
+                assert facts["rules"].startswith(f"Figure {facts['order'].index('publication-years') + 1}") and "PubMed publication year" in facts["rules"], facts["rules"]
+                if name == "filled":
+                    # The approved numbers leave room for every label from 641px and for both names on a phone.
+                    assert facts["labelled"], (width, facts["placed"])
+                    if width >= 1024:
+                        assert sorted(facts["placed"]) == sorted(["14,970", "9,133", release, "CatLog, read so far"]), facts["placed"]
+                    if width == 1440 and browser == "chrome":
+                        column = driver.find_elements(By.CSS_SELECTOR, "[data-figure='publication-years'] .stats-years-col")[9]
+                        ActionChains(driver).move_to_element(column).perform()
+                        wait.until(lambda d: d.execute_script("const t = document.getElementById('statsTip'); return !t.hidden && t.textContent === arguments[0]", facts["columns"][9]))
+                        lit = driver.execute_script("return [...document.querySelectorAll('[data-figure=\"publication-years\"] .is-active')].map((e) => e.className)")
+                        assert sum("stats-years-dot" in item for item in lit) == 2 and any("stats-years-col" in item for item in lit), lit
+                driver.save_screenshot(str(OUTPUT / f"{browser}-stats-years-{name.replace(' ', '-')}-{width}.png"))
+                results[name] = "drawn"
+        finally:
+            if injected:
+                driver.execute_cdp_cmd("Page.removeScriptToEvaluateOnNewDocument", {"identifier": injected["identifier"]})
+            if browser == "chrome":
+                driver.execute_cdp_cmd("Emulation.clearDeviceMetricsOverride", {})
+    return {"route": "stats-years", **results}
+
+
 def check_word_breaks(driver, browser, url):
     """Round 8's labels never break inside a word: "re-read" never splits at its hyphen ("re-" at the end of one line,
     "read" on the next) in Stats' figure titles and captions or in the Guide, at a phone, a small phone and a tablet;
@@ -6370,6 +6560,7 @@ def main():
         result["stats_figures"] = check_stats_figures(driver, args.browser, url)
         result["stats_databases"] = check_stats_databases(driver, args.browser, url)
         result["stats_new_figures"] = check_stats_new_figures(driver, args.browser, url)
+        result["stats_years"] = check_stats_years(driver, args.browser, url)
         result["team"] = check_team(driver, args.browser, url)
         result["guide_databases"] = check_guide_databases(driver, args.browser, url)
         result["word_breaks"] = check_word_breaks(driver, args.browser, url)

@@ -80,7 +80,8 @@ each, so the legend table keeps its room beside the donut), one below. Figures a
    checks (Second AI check, AI audits, Human-checked: what each covered, what it found, a small bar of the share kept or
    approved in its meaning colour), each row with its own base, so the counts are never read as one set. The review's
    flags by kind and the reviewers' approved values read from the paper again are the supplement's Quality tables.
-3. What is in the catalog: Review result (the donut) beside Records by main source, then Enzyme classes across the row.
+3. What is in the catalog: Review result (the donut) beside Records by main source, then CatLog and BRENDA by
+   publication year (round 16, when the manifest has `summary.publication_years`) and Enzyme classes, each across the row.
 4. Values: Value ranges, Between papers, kcat against Km, Substrate specificity and Variants against their wild type, each
    full width (round 16 added the second and fourth).
 5. Against the databases (manifest `summary.database_comparison`; round 9 brief section 5): a two-sentence lead
@@ -217,6 +218,17 @@ its accessible description; no figure or table has a data line. The parts' figur
   `main_sources` draws the same groups from the source_db counts, unsplit. A Records | Share switch above the bars
   redraws each source as 100% of itself (the accepted share by source, with its own 0-100% axis), eased unless the
   viewer asks for less motion.
+- CatLog and BRENDA by publication year (round 16, the figure the user approved on 2026-10-21, "similar, but up to
+  date"): from the manifest's `summary.publication_years` (written by catlog-v2's build; BRENDA's side fixed until a new
+  BRENDA release), kcat, Km and kcat/Km values per PubMed publication year of their paper, 2000-2025, in BRENDA 2026.1
+  and read by CatLog (every catalog value, as CatLog's status counts them): a line with a dot per year for each, CatLog
+  in Read from the paper's cyan, BRENDA in the grey of a count with no meaning colour (navy is Accepted's on this page),
+  the years BRENDA is still adding papers from (2020 on) on a plain grey band with open dots, direct labels on the lines
+  and BRENDA's highest year and last year before the band labelled with their counts (placed in the viewer's font where
+  they touch nothing; a key above the plot when a name finds no room), "CatLog on <date>: N values from M papers" above
+  the plot. One caption sentence carries the band and CatLog's values from papers after 2025, which are not drawn; the
+  counting rules are the figure's in How these numbers are counted. A column per year gives its tooltip line. No field,
+  or counts that do not hold together: no figure (tools/catlog-static/DESIGN.md, "Round 16").
 - Read from the paper and not yet re-read: two bars stacked by review result (Read from the paper: the main source
   CatLog's own reading; Not yet re-read: every other record, so the two make all records, as its caption says), its
   number columns named Records and % accepted; both names link into Browse (source=paper, source=databases). What each means is said once,

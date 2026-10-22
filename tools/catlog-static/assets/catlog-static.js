@@ -5034,6 +5034,242 @@
     };
   }
 
+  // CatLog and BRENDA by publication year (round 16; the user approved the figure made on 2026-10-21 in catlog-v2's
+  // work/brenda_lag_20261021/broad and asked for it "similar, but up to date"). Drawn from the manifest's
+  // summary.publication_years, which catlog-v2's build writes: per publication year of the paper (first_year to
+  // last_year), BRENDA's numeric kcat, Km and kcat/Km entries in its release (fixed until the next release) and CatLog's
+  // values read from the paper (every catalog row, as its status counts them), each paper dated by PubMed. A line per
+  // source with a dot per year: CatLog in Read from the paper's cyan, BRENDA in the grey of a count with no meaning colour
+  // (a database's own hue would give a colour a second meaning beside CatLog's cyan: DESIGN.md, "Type And Color"); the
+  // years BRENDA is still adding papers from (shaded_from on, else STATS_YEARS_SHADED_FROM) on a plain grey band with open
+  // dots; direct labels on the lines and BRENDA's highest year and its last year before the band labelled with their
+  // counts (statsPlaceYearLabels); CatLog's total above the plot. CatLog's values from papers after last_year are in the
+  // caption, not drawn: the comparison ends where BRENDA's years end. Nothing is drawn unless the counts hold together.
+  const STATS_YEARS_SHADED_FROM = 2020;
+  const STATS_YEARS_CATLOG = "CatLog, read so far";
+
+  function statsPublicationYears(field) {
+    if (!field || typeof field !== "object" || Array.isArray(field)) return null;
+    const { first_year: first, last_year: last, years } = field;
+    if (!Number.isInteger(first) || !Number.isInteger(last) || last - first < 4 || !Array.isArray(years) || years.length !== last - first + 1
+      || !years.every((item, index) => item?.year === first + index && statsCount(item.brenda_values) !== null
+        && statsCount(item.catlog_values) !== null && statsCount(item.catlog_papers, item.catlog_values) !== null)) return null;
+    const release = typeof field.brenda_release === "string" ? field.brenda_release.trim() : "";
+    const asOf = typeof field.as_of === "string" && /^\d{4}-\d{2}-\d{2}$/.test(field.as_of) ? field.as_of : "";
+    const values = statsCount(field.catlog_values_total);
+    const papers = statsCount(field.catlog_papers_total);
+    const undated = statsCount(field.catlog_values_without_year);
+    const after = { values: statsCount(field.catlog_after_last_year?.values), papers: statsCount(field.catlog_after_last_year?.papers) };
+    if (!release || !asOf || values === null || papers === null || undated === null || after.values === null || after.papers === null
+      || after.papers > after.values) return null;
+    // The years drawn, the values after them and those with no year are parts of CatLog's total (its earlier years too).
+    const drawnValues = statsListSum(years.map((item) => item.catlog_values));
+    const drawnPapers = statsListSum(years.map((item) => item.catlog_papers));
+    if (drawnValues + after.values + undated > values || drawnPapers + after.papers > papers || !years.some((item) => item.brenda_values > 0)) return null;
+    const shade = Number.isInteger(field.shaded_from) ? field.shaded_from : STATS_YEARS_SHADED_FROM;
+    return { first, last, years, release, asOf, values, papers, undated, after, shadedFrom: shade > first && shade <= last ? shade : null };
+  }
+
+  function statsPublicationYearsFigure(field) {
+    const data = statsPublicationYears(field);
+    if (!data) return null;
+    const { first, last, years, release, shadedFrom } = data;
+    const span = last - first + 1;
+    // An axis of 3 to 5 steps ending at least an eighth above the highest dot, so its count fits above it.
+    const { max, step } = statsNiceScale(Math.max(...years.map((item) => Math.max(item.brenda_values, item.catlog_values))) * 1.125);
+    const fixed = (value) => +value.toFixed(3);
+    const x = (year) => (year - first + 0.5) / span * 100;
+    const y = (count) => count / max * 100;
+    const valuesText = (count) => `${formatInteger(count)} ${count === 1 ? "value" : "values"}`;
+    const papersText = (count) => `${formatInteger(count)} ${count === 1 ? "paper" : "papers"}`;
+    const series = [
+      { key: "brenda", name: release, count: "brenda_values" },
+      { key: "catlog", name: STATS_YEARS_CATLOG, count: "catlog_values" },
+    ];
+    // Lines in a 1000 × 1000 box stretched over the plot (a 2px stroke whatever its size); dots, labels and ticks are
+    // HTML placed in percent, so they stay round and upright at every width.
+    const lines = series.map((line) => `<path class="stats-years-line is-${line.key}" d="${years.map((item, index) => `${index ? "L" : "M"}${fixed(x(item.year) * 10)} ${fixed(1000 - y(item[line.count]) * 10)}`).join("")}"/>`).join("");
+    const grid = [];
+    for (let value = step; value <= max + step / 2; value += step) grid.push(`M0 ${fixed(1000 - y(value) * 10)}H1000`);
+    const open = (year) => shadedFrom !== null && year >= shadedFrom;
+    const dots = series.map((line) => years.map((item) => `<i class="stats-years-dot is-${line.key}${open(item.year) ? " is-open" : ""}" data-series="${line.key}" data-hl="y${item.year}" style="left:${fixed(x(item.year))}%;bottom:${fixed(y(item[line.count]))}%"></i>`).join("")).join("");
+    // A column per year (its tooltip line gives both counts; pointing at it marks the year).
+    const columns = years.map((item) => `<span class="stats-years-col" data-hl="y${item.year}" style="left:${fixed((item.year - first) / span * 100)}%;width:${fixed(100 / span)}%" data-tip="${escapeHtml(`${item.year}: ${release}, ${valuesText(item.brenda_values)}; CatLog, ${valuesText(item.catlog_values)} from ${papersText(item.catlog_papers)}`)}"></span>`).join("");
+    const band = shadedFrom !== null ? `<i class="stats-years-band" style="left:${fixed((shadedFrom - first) / span * 100)}%" aria-hidden="true"></i>` : "";
+    // BRENDA's highest year and its last year before the band carry their counts, as in the approved figure.
+    const peak = (key) => years.reduce((best, item) => (item[key] > best[key] ? item : best), years[0]);
+    const beforeBand = shadedFrom !== null ? years[shadedFrom - 1 - first] : null;
+    const counted = [peak("brenda_values"), beforeBand].filter((item, index, list) => item && list.indexOf(item) === index);
+    const counts = counted.map((item) => `<span class="stats-years-label stats-years-count is-brenda" data-series="brenda" data-index="${item.year - first}" aria-hidden="true">${formatInteger(item.brenda_values)}</span>`).join("");
+    const names = series.map((line) => `<span class="stats-years-label stats-years-name is-${line.key}" data-series="${line.key}" aria-hidden="true">${escapeHtml(line.name)}</span>`).join("");
+    const yTicks = [];
+    for (let value = 0; value <= max + step / 2; value += step) yTicks.push(`<span style="bottom:${fixed(y(value))}%">${formatInteger(value)}</span>`);
+    const every = span > 12 ? 5 : 1;
+    const xTicks = years.filter((item) => item.year % every === 0).map((item) => `<span style="left:${fixed(x(item.year))}%">${item.year}</span>`).join("");
+    const describe = (name, key) => {
+      const top = peak(key);
+      const end = years[years.length - 1];
+      const middle = beforeBand && beforeBand !== top && beforeBand !== end ? `, ${formatInteger(beforeBand[key])} in ${beforeBand.year}` : "";
+      return `${name}: ${formatInteger(years[0][key])} in ${first}, most in ${top.year} (${formatInteger(top[key])})${middle} and ${formatInteger(end[key])} in ${last}`;
+    };
+    const description = `kcat, Km and kcat/Km values per publication year of their paper, ${first} to ${last}. ${describe(release, "brenda_values")}. ${describe("CatLog", "catlog_values")}.${shadedFrom !== null ? ` Years from ${shadedFrom} on are shaded.` : ""}`;
+    const key = series.map((line) => `<li><i class="stats-years-key-line is-${line.key}" aria-hidden="true"></i><span>${escapeHtml(line.name)}</span></li>`).join("");
+    const words = [
+      shadedFrom !== null ? `BRENDA is still adding papers from the shaded years (${shadedFrom} on)` : "",
+      data.after.values ? `CatLog also has ${valuesText(data.after.values)} from ${papersText(data.after.papers)} published after ${last}` : "",
+    ].filter(Boolean);
+    const caption = words.length ? `${words.join("; ")}.` : `Values per publication year of their paper in ${release} and read by CatLog.`;
+    return {
+      id: "statsYearsTitle", key: "publication-years", title: "CatLog and BRENDA by publication year", wide: true,
+      body: `<p class="stats-years-note">CatLog on ${escapeHtml(formatDate(data.asOf))}: ${valuesText(data.values)} from ${papersText(data.papers)}</p>
+        <ul class="stats-legend stats-years-key">${key}</ul>
+        <div class="stats-years">
+          <p class="stats-years-y-title" aria-hidden="true"><i>k</i><sub>cat</sub>, <i>K</i><sub>m</sub> and <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> values per year</p>
+          <div class="stats-years-y" aria-hidden="true">${yTicks.join("")}</div>
+          <div class="stats-years-plot" role="img" aria-label="${escapeHtml(description)}">
+            ${band}${columns}<svg class="stats-years-svg" viewBox="0 0 1000 1000" preserveAspectRatio="none" aria-hidden="true" focusable="false"><path class="stats-years-grid" d="${grid.join("")}"/>${lines}</svg>${dots}${counts}${names}
+          </div>
+          <div class="stats-years-x" aria-hidden="true">${xTicks}</div>
+          <p class="stats-years-x-title" aria-hidden="true">Publication year of the paper</p>
+        </div>`,
+      caption: escapeHtml(caption),
+      rules: `Each value counts in the PubMed publication year of its paper. CatLog: every kcat, Km and kcat/Km value read from the paper by ${formatDate(data.asOf)}${data.undated ? `; ${valuesText(data.undated)} from papers with no PubMed year count only in the total` : ""}. ${release}: its numeric kcat, Km and kcat/Km entries; an entry counts under each paper it cites, a paper without a PubMed ID in the year BRENDA gives.`,
+    };
+  }
+
+  // The labels of CatLog and BRENDA by publication year, placed where they touch no line, dot or other label, measured in
+  // the viewer's own font: first each line's name along the flattest stretch of its line before the grey band, on its
+  // outer side (above the upper line, below the lower one; else between the lines), nearer the middle on a tie; then
+  // BRENDA's counts right above or below their dot (a count with no room there is left out: the year's tooltip line
+  // has it). The figure is drawn with a key above the plot; once every name has a place the key
+  // goes (is-labelled), so a plot too small for them keeps the key. Run when Stats is drawn and whenever the plot changes
+  // size, as statsPlaceMapDots; places are kept in percent, so paper keeps them near.
+  function statsSegmentCrosses(box, [a, b]) {
+    let from = 0;
+    let to = 1;
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+    const edges = [[-dx, a.x - box.l], [dx, box.r - a.x], [-dy, a.y - box.t], [dy, box.b - a.y]];
+    for (const [p, q] of edges) {
+      if (p === 0) {
+        if (q < 0) return false;
+        continue;
+      }
+      const t = q / p;
+      if (p < 0) {
+        if (t > to) return false;
+        if (t > from) from = t;
+      } else {
+        if (t < from) return false;
+        if (t < to) to = t;
+      }
+    }
+    return true;
+  }
+
+  function statsLineY(points, at) {
+    if (at <= points[0].x) return points[0].y;
+    for (let index = 1; index < points.length; index += 1) {
+      const a = points[index - 1];
+      const b = points[index];
+      if (at <= b.x) return b.x === a.x ? b.y : a.y + (b.y - a.y) * (at - a.x) / (b.x - a.x);
+    }
+    return points[points.length - 1].y;
+  }
+
+  function statsPlaceYearLabels(root) {
+    root?.querySelectorAll?.(".stats-years-plot").forEach((plot) => {
+      const figure = plot.closest(".stats-fig");
+      const width = plot.clientWidth;
+      const height = plot.clientHeight;
+      plot.querySelectorAll(".stats-years-label").forEach((label) => label.classList.remove("is-placed"));
+      figure?.classList.remove("is-labelled");
+      if (!width || !height) return;
+      const points = {};
+      plot.querySelectorAll(".stats-years-dot").forEach((dot) => {
+        const list = points[dot.dataset.series] || (points[dot.dataset.series] = []);
+        list.push({ x: parseFloat(dot.style.left) / 100 * width, y: height - parseFloat(dot.style.bottom) / 100 * height });
+      });
+      const lines = Object.values(points);
+      const segments = lines.flatMap((list) => list.slice(1).map((point, index) => [list[index], point]));
+      const placed = [];
+      const free = (box) => box.l >= 0 && box.t >= 0 && box.r <= width && box.b <= height - 2
+        && !segments.some((segment) => statsSegmentCrosses({ l: box.l - 3, t: box.t - 3, r: box.r + 3, b: box.b + 3 }, segment))
+        && !placed.some((other) => box.l < other.r + 6 && other.l < box.r + 6 && box.t < other.b + 2 && other.t < box.b + 2);
+      const put = (label, box) => {
+        placed.push(box);
+        label.style.left = `${+(box.l / width * 100).toFixed(3)}%`;
+        label.style.top = `${+(box.t / height * 100).toFixed(3)}%`;
+        label.classList.add("is-placed");
+      };
+      // Is the line `own` above (on screen) every other line at each of `xs`?
+      const above = (own, xs) => lines.every((list) => list === own || xs.every((at) => statsLineY(list, at) > statsLineY(own, at)));
+      const below = (own, xs) => lines.every((list) => list === own || xs.every((at) => statsLineY(list, at) < statsLineY(own, at)));
+      // The names first, each along the flattest stretch of its line before the band (nearer the middle on a tie), on the
+      // line's outer side, else between the lines where they leave room.
+      const band = plot.querySelector(".stats-years-band");
+      const end = band ? parseFloat(band.style.left) / 100 * width : width;
+      const names = [...plot.querySelectorAll(".stats-years-name")];
+      const named = names.filter((label) => {
+        const own = points[label.dataset.series];
+        if (!own) return false;
+        const w = label.offsetWidth;
+        const h = label.offsetHeight;
+        let best = null;
+        for (let left = 4; left + w <= end - 4; left += 4) {
+          const xs = [left, left + w, ...own.filter((point) => point.x > left && point.x < left + w).map((point) => point.x)];
+          const ys = xs.map((at) => statsLineY(own, at));
+          const top = Math.min(...ys);
+          const bottom = Math.max(...ys);
+          const upper = above(own, xs);
+          if (!upper && !below(own, xs)) continue;
+          const over = { l: left, t: top - 8 - h, r: left + w, b: top - 8 };
+          const under = { l: left, t: bottom + 8, r: left + w, b: bottom + 8 + h };
+          const [outer, inner] = upper ? [over, under] : [under, over];
+          const box = free(outer) ? outer : free(inner) ? inner : null;
+          if (!box) continue;
+          const score = bottom - top + Math.abs(left + w / 2 - end / 2) * 0.05 + (box === inner ? 40 : 0);
+          if (!best || score < best.score) best = { box, score };
+        }
+        if (best) put(label, best.box);
+        return Boolean(best);
+      });
+      // A plot with no room for every name keeps the key above it instead (the names give back their places).
+      const labelled = names.length > 0 && named.length === names.length;
+      if (!labelled) {
+        names.forEach((label) => label.classList.remove("is-placed"));
+        placed.length = 0;
+      }
+      // Then BRENDA's counts, each right above or below its own dot (over the upper line, under the lower one first),
+      // centred if either side has room, else shifted along so the number still spans the dot's x; never beside it,
+      // where it would read as the next year's.
+      plot.querySelectorAll(".stats-years-count").forEach((label) => {
+        const own = points[label.dataset.series];
+        const point = own?.[Number(label.dataset.index)];
+        if (!point) return;
+        const w = label.offsetWidth;
+        const h = label.offsetHeight;
+        const sides = below(own, [point.x]) ? [7, -h - 7] : [-h - 7, 7];
+        const tries = [-w / 2, -w * 0.75, -w * 0.25, -w + 2, -2].flatMap((dx) => sides.map((dy) => [dx, dy]));
+        const box = tries.map(([dx, dy]) => ({ l: point.x + dx, t: point.y + dy, r: point.x + dx + w, b: point.y + dy + h })).find(free);
+        if (box) put(label, box);
+      });
+      if (labelled) figure?.classList.add("is-labelled");
+    });
+  }
+
+  let statsYearsObserver = null;
+  function statsWatchYearLabels(root) {
+    statsPlaceYearLabels(root);
+    statsYearsObserver?.disconnect?.();
+    statsYearsObserver = null;
+    if (typeof ResizeObserver !== "function") return;
+    const plots = [...(root?.querySelectorAll?.(".stats-years-plot") || [])];
+    if (!plots.length) return;
+    statsYearsObserver = new ResizeObserver(() => statsPlaceYearLabels(root));
+    plots.forEach((plot) => statsYearsObserver.observe(plot));
+  }
+
   // Single substitutions (from_paper_insights.substitutions, round 14): each variant read from the paper with one
   // substitution (H57A: one paper's mutation of one enzyme, counted once whatever its substrates), by its wild-type residue
   // (rows) and new residue (columns) in the BLOSUM order, as grey cells darker for more variants (the density map's
@@ -7331,6 +7567,10 @@
       content.push({ id: "statsSourcesTitle", key: "main-source", className: "stats-sources-section", title: "Source", body: byDatabase,
         caption: "Records per source, as Browse counts them." });
     }
+    // CatLog and BRENDA by publication year (round 16): the values CatLog has read against BRENDA's, year by year, when
+    // the manifest gives them (summary.publication_years); before the enzyme classes.
+    const yearsFigure = statsPublicationYearsFigure(summary.publication_years);
+    if (yearsFigure) content.push(yearsFigure);
 
     // Records read from the paper and those not yet re-read, by review result (read from the paper: the main source
     // "catlog"; not yet re-read: every other record).
@@ -7661,12 +7901,13 @@
     statsFitValueColumns($("statsCharts"));
     statsFitDatabaseTables($("statsCharts"));
     statsWatchMapDots($("statsCharts"));
+    statsWatchYearLabels($("statsCharts"));
     // A font that finishes loading after Stats is drawn changes these widths: fit them again then (once per page).
     if (!statsRefitOnFonts && document.fonts?.addEventListener) {
       statsRefitOnFonts = true;
       document.fonts.addEventListener("loadingdone", () => {
         const root = $("statsCharts");
-        if (root?.isConnected) { statsFitDonutTotals(root); statsFitValueColumns(root); statsFitDatabaseTables(root); }
+        if (root?.isConnected) { statsFitDonutTotals(root); statsFitValueColumns(root); statsFitDatabaseTables(root); statsPlaceYearLabels(root); }
       });
     }
     // A window that changes width changes the room of Corrections by cause and database's table (once per page).
@@ -7687,7 +7928,10 @@
         window.requestAnimationFrame(() => {
           pending = false;
           const root = $("statsCharts");
-          if (root?.isConnected) { statsFitDatabaseTables(root); if (typeof ResizeObserver !== "function") statsPlaceMapDots(root); }
+          if (root?.isConnected) {
+            statsFitDatabaseTables(root);
+            if (typeof ResizeObserver !== "function") { statsPlaceMapDots(root); statsPlaceYearLabels(root); }
+          }
         });
       });
     }
