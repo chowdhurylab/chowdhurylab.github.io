@@ -2749,8 +2749,9 @@ def check_stats_years(driver, browser, url):
                 undated = field["catlog_values_without_year"]
                 assert (f"{undated:,} value{'' if undated == 1 else 's'} from papers with no publication year" in facts["rules"]) == bool(undated), facts["rules"]
                 if name == "filled":
-                    # The approved numbers leave room for every label from 641px and for both names on a phone.
-                    assert facts["labelled"], (width, facts["placed"])
+                    # The approved numbers leave room for every label from 641px; on a phone both names fit in a narrow
+                    # font, while a wide one (Linux's) may take the key instead (keyShown, checked above).
+                    assert facts["labelled"] or width < 641, (width, facts["placed"])
                     if width >= 1024:
                         assert sorted(facts["placed"]) == sorted(["14,970", "9,133", release, "CatLog, read so far"]), facts["placed"]
                     if width == 1440 and browser == "chrome":
