@@ -7239,6 +7239,23 @@
       text: none.length ? `${statsListText(none.map((source) => source.display))} ${none.length === 1 ? "lists" : "list"} none of these papers.` : "" };
   }
 
+  // The qualifiers of a correction count shown per database (fix pass after round 16b: Results by database, Paired
+  // values by database and Corrections by cause and database gave a share per database with neither, where the part's
+  // lead has both, so a reader could quote them as each database's error rate): the caption's clause, that corrections
+  // are a lower bound when the comparison says only differences of checked_from_factor-fold or more are checked, and the
+  // rule's sentence, how all the corrections were found (by an AI check of the paper, by an exact factor), which the
+  // comparison does not count per database. "" for either when the snapshot does not give it.
+  function statsCorrectionsQualifiers(comparison) {
+    const fold = Number(comparison?.checked_from_factor);
+    const caption = Number.isFinite(fold) && fold > 1 ? ` Corrects is a lower bound, since only differences of ${String(fold)}-fold or more are checked.` : "";
+    const ways = guideDatabaseFoundBy(comparison?.corrections).totals || {};
+    const total = statsCount(comparison?.corrections?.values);
+    const byPaper = statsCount(ways.paper_check), byFactor = statsCount(ways.factor_cross_checked);
+    const rule = total && byPaper !== null && byFactor !== null && byPaper + byFactor === total && byPaper && byFactor
+      ? ` Of all ${formatInteger(total)} corrections, ${formatInteger(byPaper)} were found by an AI check of the paper and ${formatInteger(byFactor)} by an exact factor found automatically; the split is not counted per database.` : "";
+    return { caption, rule };
+  }
+
   // Figure: each database against the values read from the papers it lists (values_by_database), a 100% bar each; the
   // values of papers it does not list are counted beside the bar. Shares only on a base of 1,000 values or more.
   function statsDatabaseSourcesFigure(comparison, sources) {
@@ -7268,8 +7285,8 @@
       body: statsBarChart({ key: "db-sources", rows, legend: statsDatabaseLegend(STATS_DATABASE_KINDS), percent: true,
         axis: statsAxis(100, 25, { percent: true }), valueHeads: ["Values"],
         valueWidth: `calc(${Math.max(6, ...rows.map((row) => formatInteger(row.count).length))}ch + 8px)` }),
-      caption: "Each bar covers the values from papers that database lists.",
-      rules: "A value counts for every database that lists its paper.",
+      caption: `Each bar covers the values from papers that database lists.${statsCorrectionsQualifiers(comparison).caption}`,
+      rules: `A value counts for every database that lists its paper.${statsCorrectionsQualifiers(comparison).rule}`,
       // Why a database has no bar is said under the figure.
       after: none.text ? `<p class="stats-note">${escapeHtml(none.text)}</p>` : "",
     };
@@ -7311,8 +7328,8 @@
         <thead><tr><th scope="col">Database</th><th scope="col" class="stats-num stats-db-paired-col">Paired</th><th scope="col" class="stats-num">Same</th><th scope="col" class="stats-num">Corrects</th><th scope="col" class="stats-num">Differs</th></tr></thead>
         <tbody>${rows.map((row) => `<tr data-stat-key="db_${escapeHtml(row.source.key)}">${line(row, statsDatabaseNameHtml(row.source.display), { dbsrc: row.source.key })}</tr>`).join("")}</tbody>
         ${all.paired ? `<tfoot><tr data-stat-key="db_all">${line(all, "All, each value once", {})}</tr></tfoot>` : ""}</table>`,
-      caption: "Paired: a database lists a number for the same measurement.",
-      rules: `A number copied into several databases counts for each${derived}${all.paired ? ", but once in the All row" : ""}.`,
+      caption: `Paired: a database lists a number for the same measurement.${statsCorrectionsQualifiers(comparison).caption}`,
+      rules: `A number copied into several databases counts for each${derived}${all.paired ? ", but once in the All row" : ""}.${statsCorrectionsQualifiers(comparison).rule}`,
     };
   }
 
@@ -7431,8 +7448,9 @@
     return {
       id: "statsDbCausesTitle", key: "db-causes", title: "Corrections by cause and database", kind: "Table",
       body: table + blocks,
-      caption: "A value corrected in several databases counts for each, but once under All.",
+      caption: `A value corrected in several databases counts for each, but once under All.${statsCorrectionsQualifiers(comparison).caption}`,
       rules: [
+        statsCorrectionsQualifiers(comparison).rule.trim(),
         found.unnamed ? `${formatInteger(found.unnamed)} ${found.unnamed === 1 ? "correction has a cause" : "corrections have causes"} not named here. All causes counts ${found.unnamed === 1 ? "it" : "them"}.` : "",
         found.moved ? `${formatInteger(found.moved)} ${found.moved === 1 ? "value" : "values"} a database lists at an exact factor, not yet checked against the paper, ${found.moved === 1 ? "is" : "are"} Different number, left out of All; the columns per database still hold ${found.moved === 1 ? "it" : "them"}.` : "",
       ].filter(Boolean).join(" "),
@@ -15473,6 +15491,7 @@
       statsExposureText,
       auditFacts,
       reviewGlanceText,
+      statsCorrectionsQualifiers,
       statsNotReproducedHtml,
       secondCheckFacts,
       substrateStarts,

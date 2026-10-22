@@ -1332,6 +1332,10 @@ def check_quality_round16b(driver, browser, url):
             assert "Flags on the 2,604 entries people could check against a paper" in kinds and "Could not find" not in kinds, kinds
             match = text(driver.find_element(By.CSS_SELECTOR, ".stats-supp-item[data-supp='review-match']"))
             assert "AI agents checked 323 of the 555 values that still differ against the paper; 232 are still to check." in match, match
+            # A correction count per database says it is a lower bound, as the part's lead does (fix pass after round 16b).
+            for key in ("db-paired", "db-causes"):
+                found = driver.find_elements(By.CSS_SELECTOR, f".stats-supp-item[data-supp='{key}']")
+                assert not found or "Corrects is a lower bound, since only differences of 1.5-fold or more are checked." in text(found[0]), key
             assert "Left out by CatLog’s rules (reprint, Hill fit)" in match and "Cannot be compared" not in match, match
             assert driver.execute_script("return document.documentElement.scrollWidth <= innerWidth + 1"), f"Stats scrolls sideways at {width}px"
             driver.execute_script("document.querySelector('[data-figure=errors]').scrollIntoView()")

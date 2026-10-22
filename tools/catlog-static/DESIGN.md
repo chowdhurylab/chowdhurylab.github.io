@@ -1603,3 +1603,7 @@ manifest's database comparison; a field an older snapshot lacks leaves its words
   read), then what CatLog has in another form (paired with a CatLog value of another number, a calculated kcat/Km,
   another parameter), the reprints and the possible misses, which are not yet checked (statsNotReproducedText), and links
   the Dataset notes (README_FIRST.txt, datasetNotesHref, as the Download menu names it) for the reasons of the rest.
+- Results by database, Paired values by database and Corrections by cause and database carry the lead's qualifiers
+  (statsCorrectionsQualifiers): the caption says Corrects is a lower bound when the comparison gives checked_from_factor,
+  and the rule says how all the corrections were found (an AI check of the paper, an exact factor), which the comparison
+  does not count per database; so no per-database share reads as a database's error rate.

@@ -7730,6 +7730,16 @@ for (const hash of ["#stats", "#guide", "#guide-units"]) {
   assert.doesNotMatch(aboutStatus, /Tags<\/p>|earlier extraction|no paper linked|from paper<\/strong>/);
   assert.equal((aboutStatus.match(/<p>/g) || []).length, 6);
 }
+// A correction count per database carries the lead's qualifiers (fix pass after round 16b): a lower bound in the
+// caption, how all the corrections were found in the rule.
+{
+  const q = api.statsCorrectionsQualifiers({ checked_from_factor: 1.5, corrections: { values: 3, by_cause_found_by: { power_of_ten: { paper_check: 2, factor_cross_checked: 1 } } } });
+  assert.equal(q.caption, " Corrects is a lower bound, since only differences of 1.5-fold or more are checked.");
+  assert.equal(q.rule, " Of all 3 corrections, 2 were found by an AI check of the paper and 1 by an exact factor found automatically; the split is not counted per database.");
+  const none = api.statsCorrectionsQualifiers({ corrections: { values: 3 } });
+  assert.equal(none.caption + none.rule, "");
+}
+
 // A substrate matches a word only where it starts a part of the name (fix pass after round 16b): "lactose" finds
 // lactose and D-lactose, not D-galactose or UDP-galactose; "ethanol" not methanol; "pyruvate" not phosphoenolpyruvate;
 // locants and prefixes typed apart or together still find their names, and capitals written onto a name start a part.
