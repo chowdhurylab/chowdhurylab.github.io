@@ -305,7 +305,7 @@ class OverviewTests(unittest.TestCase):
         quality = {"as_of": "2026-10-11T05:05:00", "audit_values": 742, "audit_wrong": 2, "compared_values_v1": 2431,
                    "compared_papers_v1": 312, "wrong_v1": 9, "label_or_annotation_v1": 114, "v2_found": 2160,
                    "v2_found_after_fixes": 2210, "v2_approved_total": 2380, "v2_differences_checked": 504, "v2_wrong": 0,
-                   "audit_wrong_papers": 2, "audit_wrong_top2": 2,
+                   "audit_wrong_papers": 2, "audit_wrong_top2": 2, "audit_targeted_values": 188, "audit_targeted_wrong": 46,
                    "reviewer": "someone", "audit_wrong_share": 0.27, "v2_wrong_bool": True}
         with tempfile.TemporaryDirectory() as directory:
             manifest, path, marks_path = self.write_fixture(directory, overview_rows(), {"a": {"checked": True}}, quality)
@@ -358,6 +358,26 @@ class OverviewTests(unittest.TestCase):
         nested = {**v1, "checkable": {**checkable, "checkable": {"entries": 1}}}
         self.assertNotIn("checkable", followup.marks_quality({"quality": {"review": {"v1": nested}}})["review"]["v1"]["checkable"])
         self.assertNotIn("checkable", followup.marks_quality({"quality": {"review": {"v1": {**v1, "checkable": {"papers": 4}}}}})["review"]["v1"])
+
+    def test_overview_copies_the_2026_10_22_quality_fields(self):
+        # catlog-v2's 2026-10-22 marks: the follow-up audits apart from the random one, the sweep's other values, what
+        # became of the values database checks found wrong, and the values of the records read from the paper that
+        # reviewers checked (review.v2.values); each optional, and a marks file without them copies as before.
+        errors = {"audit": {"values": 74, "papers": 26},
+                  "sweep": {"values": 1254, "papers": 97, "reprinted": 1058, "partial_constant": 103, "other": 93},
+                  "unit_fix": {"values": 108, "papers": 13},
+                  "database_check": {"values": 7, "papers": 1, "removed": 5, "corrected": 2},
+                  "all": {"values": 1433, "papers": 125}}
+        quality = {"as_of": "2026-10-22", "audit_values": 6477, "audit_wrong": 28, "audit_wrong_ci95": "0.30-0.62",
+                   "audit_wrong_papers": 22, "audit_targeted_values": 188, "audit_targeted_wrong": 46, "catlog_errors": errors,
+                   "review": {"v2": {"entries": 99, "papers": 40, "values": 220, "value_disputed": 0}}}
+        result = followup.marks_quality({"quality": quality})
+        self.assertEqual((result["audit_targeted_values"], result["audit_targeted_wrong"]), (188, 46))
+        self.assertNotIn("audit_wrong_top2", result)
+        self.assertEqual(result["catlog_errors"], errors)
+        self.assertEqual(result["review"]["v2"]["values"], 220)
+        for bad in (-1, "188", True, 1.5):
+            self.assertNotIn("audit_targeted_values", followup.marks_quality({"quality": {**quality, "audit_targeted_values": bad}}))
 
     def test_overview_counts_the_values_of_human_checked_records(self):
         # Beside the human-checked records, the values a reviewer approved on them (the mark's approved list; an unknown

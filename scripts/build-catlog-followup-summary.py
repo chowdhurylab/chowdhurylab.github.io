@@ -1433,7 +1433,10 @@ def summarize_overview(rows, marks=None):
 # first comparison's count on 2026-10-13; v2_found_after_fixes is the same count), of v2_approved_total.
 QUALITY_FIELDS = ("audit_values", "audit_wrong", "compared_values_v1", "compared_papers_v1", "wrong_v1",
                   "label_or_annotation_v1", "v2_found", "v2_found_after_fixes", "v2_approved_total",
-                  "v2_differences_checked", "v2_wrong", "audit_wrong_papers", "audit_wrong_top2")
+                  "v2_differences_checked", "v2_wrong", "audit_wrong_papers", "audit_wrong_top2",
+                  "audit_targeted_values", "audit_targeted_wrong")
+# audit_targeted_values / _wrong (catlog-v2 human_review.audit_detail from 2026-10-22): the values only follow-up or
+# targeted audits saw and those they found wrong; audit_values and audit_wrong are then the random audit's alone.
 # The random audit's 95% Wilson interval of the share wrong, "low-high" percentages (catlog-v2 human_review.audit_detail,
 # from 2026-10-21); the papers its wrong values sit in and how many sit in the two papers with the most are whole counts
 # above (audit_wrong_papers, audit_wrong_top2).
