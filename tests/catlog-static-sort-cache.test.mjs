@@ -4684,11 +4684,12 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   // A place, enzyme or abbreviation that only looks like a route stays (an ACS row, a substrate-label image, K_m=).
   assert.match(note({ table_label: "ACS Table 1", row_label: "Official substrate-label image", raw_value_unit_evidence: "K_m=2.2 mM; 1,5-AF_NADPH=49.0 mM" }),
     /^\|Where\|ACS Table 1 · Official substrate-label image\|As printed\|K_m=2\.2 mM; 1,5-AF_NADPH=49\.0 mM\|$/);
-  // An accepted record's values were checked: its Evidence line does not say they were not located.
+  // One Evidence label whatever the review result (fix pass after round 16b): the review result says accepted or not.
   api.renderDetail(row({ record_key: "older-cited", has_proof_excerpt: false, evidence_confidence_tier: "literature_linked" }), {});
   assert.match(element("detailContent").innerHTML, /<dt>Evidence<\/dt><dd>Paper cited<\/dd>/);
   api.renderDetail(row({ record_key: "older-cited-unverified", verification_status: "unverified", has_proof_excerpt: false, evidence_confidence_tier: "literature_linked" }), {});
-  assert.match(element("detailContent").innerHTML, /<dt>Evidence<\/dt><dd>Paper cited \(values not located\)<\/dd>/);
+  assert.match(element("detailContent").innerHTML, /<dt>Evidence<\/dt><dd>Paper cited<\/dd>/);
+  assert.doesNotMatch(element("detailContent").innerHTML, /values not located/);
 }
 // Source names: a record CatLog read says so; databases by name, never a raw key; a database note is headed by its
 // source, without an importer's label, and is not shown when it only repeats the temperature and pH.

@@ -1914,8 +1914,10 @@
       return "Several database records";
     }
     if (!row.has_literature_id) return "Database record only";
-    // An accepted record's values were checked; only where the paper prints them was not saved.
-    return (row._recordState || recordStateForRow(row)) === "accepted" ? "Paper cited" : "Paper cited (values not located)";
+    // One label whatever the review result (fix pass after round 16b: "(values not located)" on a record not accepted
+    // read as "the earlier review looked and could not find them", which no field records; the review result beside it
+    // already says accepted or not).
+    return "Paper cited";
   }
 
   function sourceLicense(summary, detail) {

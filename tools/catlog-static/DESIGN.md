@@ -901,8 +901,9 @@ come first, the context after.
   from on an older record ("BRENDA recommended name", "The source database's
   entry", "The EC list's accepted name"; a record read from the paper takes its
   name from the paper); Data origin when it is a plain
-  word other than "experimental"; an Evidence line ("Located in the paper", "Paper cited" on an
-  accepted record or "Paper cited (values not located)" on one that is not,
+  word other than "experimental"; an Evidence line ("Located in the paper", "Paper cited" whatever the
+  review result (fix pass after round 16b: "(values not located)" on a record not accepted said more than any field
+  records; the Guide: "The paper is linked; where it prints the values was not saved."),
   "Several database records" or "Database record only"); the license and the snapshot's data ID are the footnote's
   (a source that names none reads "License: See the source's terms", as the
   Guide's Sources and licenses list says "License: see the source's terms"; a
