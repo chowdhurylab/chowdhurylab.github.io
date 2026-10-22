@@ -2078,10 +2078,10 @@ function row(overrides = {}) {
   // kcat, Km and kcat/Km in the site's italic markup, in the lead, the checks and the Guide's method section.
   const metricPlain = (html) => html.replace(/<i>([kK])<\/i><sub>(cat|m|i)<\/sub>/g, "$1$2");
   // The records with a reviewer's verdict are said as such (not mixed up with the review's entries): covered, the records
-  // judged; the result, those approved (human-checked), with a small bar of that share; the definition is the row's title.
-  assert.match(chart, /<tr data-check="human_checked" title="A human reviewer approved every kcat and Km shown; the kcat\/Km was approved too or agrees with kcat ÷ Km\.">\s*<th scope="row">Human-checked<\/th><td class="stats-check-covered">2 records judged<\/td>\s*<td class="stats-check-result"><a class="stats-link" href="[^"]*#browse\?checked=1">1<\/a> approved \(50\.0%\)<\/td>\s*<td class="stats-col-bar" aria-hidden="true"><span class="stats-minibar"><span class="stats-seg stats-part-same" style="width:50%"><\/span><\/span><\/td>/);
-  // The second AI check covers every value: no bar (round 14: no blank meter kept for alignment, no cards).
-  assert.match(chart, /data-check="second_check">[\s\S]*?<td class="stats-col-bar" aria-hidden="true"><\/td><\/tr>/);
+  // judged; the result, those approved (human-checked); the definition is the row's title. No meters (fix pass after
+  // round 16b: the shares are in the words).
+  assert.match(chart, /<tr data-check="human_checked" title="A human reviewer approved every kcat and Km shown; the kcat\/Km was approved too or agrees with kcat ÷ Km\.">\s*<th scope="row">Human-checked<\/th><td class="stats-check-covered">2 records judged<\/td>\s*<td class="stats-check-result"><a class="stats-link" href="[^"]*#browse\?checked=1">1<\/a> approved \(50\.0%\)<\/td><\/tr>/);
+  assert.doesNotMatch(chart.match(/<table class="stats-table stats-checks-table">[\s\S]*?<\/table>/)[0], /stats-minibar|stats-col-bar/);
   assert.doesNotMatch(chart, /stats-meter|stats-check-number|class="stats-checks"/, "No dashboard cards");
   assert.doesNotMatch(chart, /data-check="audit"|wrong number or unit/, "Without overview.quality there is no audit check and no accuracy");
   // How these numbers are counted: human-checked's rule as one clause after "where".

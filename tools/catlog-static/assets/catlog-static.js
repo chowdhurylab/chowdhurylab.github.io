@@ -6274,8 +6274,9 @@
   }
 
   // Quality's Checks on the values (round 14: a table, not three cards with big numbers): each check, what it covered
-  // and what it found, a small bar for the share kept or approved. Each row says its own base, so the three counts are
-  // never read as one set. Round 16b: the audit's share with its 95% interval and the two papers most of its wrong
+  // and what it found; each row says its own base, so the three counts are never read as one set. No bar (fix pass after
+  // round 16b: the small meters stood 300px from their numbers, said nothing the Result does not, and the audit's 98.9%
+  // drew as a full bar). Round 16b: the audit's share with its 95% interval and the two papers most of its wrong
   // values sit in; human-checked records with their values beside them (one record holds up to three values); the
   // papers read or checked with database values in view, under the table (statsExposureText).
   function statsChecksHtml({ fromPaper, papersRead, audit, humanChecked, humanValues = null, marked, compared, exposure = "" }) {
@@ -6284,28 +6285,24 @@
     const rows = [
       fromPaper ? { key: "second_check", name: "Second AI check",
         covered: `<a class="stats-link" href="${escapeHtml(statsBrowseHref({ source: "paper" }))}">${formatInteger(fromPaper)}</a> records${papersRead !== null ? ` from ${formatInteger(papersRead)} papers` : ""}`,
-        result: "Every value compared with the paper", share: null } : null,
+        result: "Every value compared with the paper" } : null,
       audit ? { key: "audit", name: "AI audits", covered: `${formatInteger(audit.values)} values`,
-        result: `${audit.wrong ? `${formatInteger(audit.values - audit.wrong)} kept, ${formatInteger(audit.wrong)} removed as wrong (${auditShare})` : "None was wrong"}${audit.date ? `, as of ${audit.date}` : ""}${audit.wrong && auditPapers ? `.${auditPapers}` : ""}`,
-        share: (audit.values - audit.wrong) / audit.values, part: "catlog" } : null,
+        result: `${audit.wrong ? `${formatInteger(audit.values - audit.wrong)} kept, ${formatInteger(audit.wrong)} removed as wrong (${auditShare})` : "None was wrong"}${audit.date ? `, as of ${audit.date}` : ""}${audit.wrong && auditPapers ? `.${auditPapers}` : ""}` } : null,
       compared ? { key: "review", name: "Human review", covered: `${formatInteger(compared.values)} values${compared.papers ? ` on ${formatInteger(compared.papers)} ${compared.papers === 1 ? "paper" : "papers"}` : ""}`,
-        result: `${formatInteger(compared.wrong)} with a wrong number or unit (${qualityShare(compared.values - compared.wrong, compared.values)} correct), ${formatInteger(compared.labels)} with a wrong label`,
-        share: (compared.values - compared.wrong) / compared.values, part: "neutral" } : null,
+        result: `${formatInteger(compared.wrong)} with a wrong number or unit (${qualityShare(compared.values - compared.wrong, compared.values)} correct), ${formatInteger(compared.labels)} with a wrong label` } : null,
       humanChecked !== null ? { key: "human_checked", name: "Human-checked",
         covered: marked !== null && marked >= humanChecked ? `${formatInteger(marked)} records judged` : "accepted records",
         result: `<a class="stats-link" href="${escapeHtml(statsBrowseHref({ checked: "1" }))}">${formatInteger(humanChecked)}</a> ${humanValues !== null ? (humanChecked === 1 ? "record " : "records ") : ""}approved${marked ? ` (${escapeHtml(qualityShare(humanChecked, marked))})` : ""}${humanValues !== null ? `, ${formatInteger(humanValues)} ${humanValues === 1 ? "value" : "values"}` : ""}`,
-        resultHtml: true, share: marked ? humanChecked / marked : null, part: "same", title: HUMAN_CHECKED_DESCRIPTION } : null,
+        resultHtml: true, title: HUMAN_CHECKED_DESCRIPTION } : null,
     ].filter(Boolean);
     if (!rows.length) return "";
     return `<section class="stats-section stats-checks-section stats-wide" aria-labelledby="statsChecksTitle" data-figure="checks">
       <h3 id="statsChecksTitle" class="stats-fig-title">Checks on the values</h3>
       <table class="stats-table stats-checks-table">
-        <thead><tr><th scope="col">Check</th><th scope="col">Covered</th><th scope="col">Result</th><th scope="col" class="stats-col-bar"><span class="visually-hidden">Share kept or approved</span></th></tr></thead>
+        <thead><tr><th scope="col">Check</th><th scope="col">Covered</th><th scope="col">Result</th></tr></thead>
         <tbody>${rows.map((row) => `<tr data-check="${row.key}"${row.title ? ` title="${escapeHtml(row.title)}"` : ""}>
           <th scope="row">${escapeHtml(row.name)}</th><td class="stats-check-covered">${row.covered}</td>
-          <td class="stats-check-result">${row.resultHtml ? row.result : metricWordsHtml(escapeHtml(row.result))}</td>
-          <td class="stats-col-bar" aria-hidden="true">${row.share !== null && row.share !== undefined
-            ? `<span class="stats-minibar"><span class="stats-seg stats-part-${row.part}" style="width:${+(Math.max(0, Math.min(1, row.share)) * 100).toFixed(4)}%"></span></span>` : ""}</td></tr>`).join("")}</tbody></table>${exposure
+          <td class="stats-check-result">${row.resultHtml ? row.result : metricWordsHtml(escapeHtml(row.result))}</td></tr>`).join("")}</tbody></table>${exposure
         ? `<p class="stats-note stats-exposure" data-note="exposure">${escapeHtml(exposure)}</p>` : ""}</section>`;
   }
 

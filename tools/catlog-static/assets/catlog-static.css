@@ -1518,8 +1518,8 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-table .stats-row-detail th, .stats-table .stats-row-detail td { border-bottom-color:transparent }
 .stats-table tr:has(+ .stats-row-detail) > * { border-bottom-color:transparent }
 /* Quality (round 14: no cards, no second big number): the human review in one sentence over a small table of its
-   verdicts, then Checks on the values as a table (check, what it covered, what it found, a small bar of the share kept
-   or approved, in its meaning colour: the audits CatLog's cyan, human-checked the agreement green). */
+   verdicts, then Checks on the values as a table (check, what it covered, what it found) and Errors found in CatLog.
+   The three tables share one measure (fix pass after round 16b: they had been 440, 1,152 and 497px wide in one part). */
 .stats-lead { display:grid; gap:12px; align-content:start }
 .stats-lead > .stats-fig-title { margin-bottom:0 }
 .stats-lead > p { margin:0 }
@@ -1527,8 +1527,7 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-lead-note { max-width:80ch; color:var(--text-2); font-size:var(--fs-13); line-height:var(--lh-13) }
 .stats-lead-links { display:flex; flex-wrap:wrap; gap:4px 24px; margin:12px 0 0; font-size:var(--fs-13) }
 .stats-lead .stats-lead-links { margin:0 }
-.stats-table:is(.stats-review-table, .stats-checks-table) { width:auto; max-width:100%; justify-self:start }
-.stats-table.stats-review-table { min-width:min(100%, 440px) }
+.stats-table:is(.stats-review-table, .stats-checks-table) { width:100%; max-width:var(--quality-measure, 640px); justify-self:start }
 .stats-review-table .stats-row-group th { padding-top:12px; color:var(--muted); font-size:var(--fs-13); font-weight:400; line-height:var(--lh-13) }
 .stats-review-table .stats-row-sub th { padding-left:12px; font-weight:400 }
 .stats-review-table .stats-row-sub2 th { padding-left:24px; color:var(--text-2) }
@@ -1537,9 +1536,6 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-checks-table :is(th,td) { padding-right:24px }
 .stats-checks-table .stats-check-covered { white-space:nowrap }
 .stats-checks-table .stats-check-result { color:var(--text-2) }
-.stats-checks-table td.stats-col-bar { width:96px }
-/* A check's bar is a share of all it covered: a hairline track gives its 100% (round 15 polish: the bars had no reference). */
-.stats-checks-table .stats-minibar { box-shadow:inset 0 0 0 1px var(--line) }
 /* Errors found in CatLog (round 16b): one row per way an error was found, values and papers, the All row (each value
    once) set off by a rule and weight; a row's note (the sweep's reprinted values and partial constants) under its name. */
 .stats-errors-table th[scope="row"] { font-weight:400; white-space:normal; max-width:52ch }
@@ -1907,10 +1903,13 @@ a.stats-total-value:focus-visible { outline:0 }
   .stats-part-title { font-size:var(--fs-18); line-height:var(--lh-18) }
   .stats-part-grid { gap:40px 0 }
   .stats-supp-number { flex-basis:5.75em }
-  /* Checks on the values: every cell wraps, the gaps narrow, and the small bars (their shares are in the words) give way,
-     so the table fits a 320px phone. */
+  /* Checks on the values: each check stacked, its name, then what it covered and what it found under it (fix pass after
+     round 16b: three narrow columns wrapped AI audits to five or six lines); the errors table keeps its columns. */
   .stats-checks-table :is(th, td), .stats-checks-table th[scope="row"], .stats-checks-table .stats-check-covered { padding-right:8px; white-space:normal }
-  .stats-checks-table .stats-col-bar { display:none }
+  .stats-checks-table:not(.stats-errors-table) thead { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap }
+  .stats-checks-table:not(.stats-errors-table) tr { display:grid; gap:2px; padding:10px 0; border-bottom:1px solid var(--line-soft) }
+  .stats-checks-table:not(.stats-errors-table) tr > * { display:block; padding:0; border:0 }
+  .stats-checks-table:not(.stats-errors-table) .stats-check-covered { color:var(--muted); font-size:var(--fs-13); line-height:var(--lh-13) }
   /* Phones: the class number only, so the curves keep their width (the names are in the supplement and the tooltip line); the
      same in the class medians beside kcat against Km, so their numbers keep their columns. */
   .stats-ridges { --ridge-label:44px }

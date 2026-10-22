@@ -1175,8 +1175,9 @@ seven-line paragraph of a headline cell; the item's title says it in full, and Q
 snapshot: "no value disputed, 2,767 of 2,770; 153 (5.5%) not found in the paper"); each item's label and number are two
 rows of the band (a subgrid), so the numbers of a row start at one height whatever label wraps); here no second big number and no dashboard cards: Human
 review in one sentence over a small table of its verdicts, then Checks on the values as a table of the checks, each row
-with what it covered, what it found and a small bar of the share kept or approved, then Errors found in CatLog (round
-16b); the review's flags by kind and the reviewers' approved values read from the paper again are the supplement's
+with what it covered and what it found (no meter since the fix pass after round 16b: the shares are in the words; on a
+phone each check is stacked, its name over the two), then Errors found in CatLog (round 16b), the three tables at one
+measure (640px at most); the review's flags by kind and the reviewers' approved values read from the paper again are the supplement's
 Quality tables), 3 What is in the catalog (the review-result donut and its legend
 table, records by main source with a Records | Share switch, then CatLog and BRENDA by publication year (round 16, when
 the manifest has summary.publication_years), then the enzyme classes with accepted and read-from-the-paper records), 4 Values (value ranges on one log axis per parameter; then, from the records read from

@@ -1309,6 +1309,14 @@ def check_quality_round16b(driver, browser, url):
                               ["database_check", "Check of a database difference against the paper", "12", "4"],
                               ["all", "All, each value once", "1,435", "127"]], errors
             assert "1,058 reprinted from an earlier paper, 103 partial constants" in text(driver.find_element(By.CSS_SELECTOR, ".stats-errors-table [data-route='sweep'] th"))
+            # Quality's three tables share one measure, and the checks have no meters (fix pass after round 16b); on a
+            # phone each check stands stacked, its name over what it covered and what it found.
+            widths = driver.execute_script("return [...document.querySelectorAll('#stats-quality table')].map(t => Math.round(t.getBoundingClientRect().width))")
+            assert len(widths) == 3 and len(set(widths)) == 1 and widths[0] <= 640, widths
+            assert not driver.find_elements(By.CSS_SELECTOR, ".stats-checks-table .stats-minibar")
+            if width <= 640:
+                lefts = driver.execute_script("return [...document.querySelector(\"[data-check='audit']\").children].map(c => Math.round(c.getBoundingClientRect().left))")
+                assert len(set(lefts)) == 1, lefts
             databases = driver.find_elements(By.CSS_SELECTOR, "[data-lead='databases']")
             if databases:
                 words = text(databases[0])
