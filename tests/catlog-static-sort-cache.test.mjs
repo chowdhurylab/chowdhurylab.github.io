@@ -3077,6 +3077,8 @@ function row(overrides = {}) {
     assert.match(table.body, /<a class="stats-ref-link" href="https:\/\/doi\.org\/10\.1021\/bi2002289" target="_blank" rel="noreferrer">Bar-Even et al\. 2011<\/a>: the average enzyme’s <i>k<\/i><sub>cat<\/sub>\/<i>K<\/i><sub>m<\/sub><small>in the paper’s abstract<\/small><\/th>\s*<td class="stats-num" colspan="2">about 10⁵ M⁻¹ s⁻¹<\/td>/);
     assertPlainCaption(table.caption);
     assert.match(table.rules, /about 10⁵ M⁻¹ s⁻¹ \(10² mM⁻¹ s⁻¹\)\.$/);
+    // Like Substrate specificity, the table and Between papers say that a calculated kcat/Km counts.
+    assert.match(table.rules, /^Each wild-type record with the parameter in the unit CatLog stores counts once, a kcat\/Km calculated as kcat ÷ Km included;/);
     assert.doesNotMatch(table.body, /class="stats-link"/, "stats-link opens Browse; the paper's DOI is a reference link");
     assert.equal(api.statsTypicalTable({}), null);
 
@@ -3091,7 +3093,7 @@ function row(overrides = {}) {
     const at = (title) => supplement.findIndex((item) => item.endsWith(title));
     assert.ok(at("kcat and assay temperature") >= 0 && at("Km and substrate size") === at("kcat and assay temperature") + 1, supplement.join(" | "));
     assert.ok(/^Table S\d+ The typical wild-type enzyme$/.test(supplement[at("The typical wild-type enzyme")]), supplement.join(" | "));
-    assert.match(methodHtml(), /<span class="stats-method-title">Between papers\.<\/span> Each paper’s value is the median of its records for that enzyme and substrate \(matched by structure, else by name\), whatever their conditions; a pair of papers counts once per enzyme, substrate and parameter\./);
+    assert.match(methodHtml(), /<span class="stats-method-title">Between papers\.<\/span> Each paper’s value is the median of its records for that enzyme and substrate \(matched by structure, else by name\), whatever their conditions, a kcat\/Km calculated as kcat ÷ Km included; a pair of papers counts once per enzyme, substrate and parameter\./);
     assert.match(methodHtml(), /<span class="stats-method-title">The typical wild-type enzyme\.<\/span>/);
     assert.doesNotMatch(element("statsCharts").innerHTML, /NaN|Infinity|undefined/);
     runtimeManifest.summary.overview = overview;

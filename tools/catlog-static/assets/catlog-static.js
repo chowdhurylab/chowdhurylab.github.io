@@ -5528,7 +5528,7 @@
       id: "statsPairsTitle", key: "between-papers", title: "Between papers", wide: true,
       body: `<div class="stats-ranges stats-pairs">${panels.join("")}</div>${table}`,
       caption: escapeHtml(`Wild-type values of one enzyme (UniProt entry) and substrate in two papers, from ${statsUsedText(records, papers, enzymes)}; assays and constructs differ between papers, so a difference is not all error.`),
-      rules: `Each paper’s value is the median of its records for that enzyme and substrate (matched by structure, else by name), whatever their conditions; a pair of papers counts once per enzyme, substrate and parameter. Pairs giving the very same number are left out, as often one paper prints the other’s value again: ${statsListText(identical)}. The table compares two papers only at a temperature (to 1 °C) and pH (to 0.1) both give. Each bar is a quarter of a power of ten; the last holds 100-fold and more. Values without a recorded unit, or in another unit, are left out.`,
+      rules: `Each paper’s value is the median of its records for that enzyme and substrate (matched by structure, else by name), whatever their conditions, a kcat/Km calculated as kcat ÷ Km included; a pair of papers counts once per enzyme, substrate and parameter. Pairs giving the very same number are left out, as often one paper prints the other’s value again: ${statsListText(identical)}. The table compares two papers only at a temperature (to 1 °C) and pH (to 0.1) both give. Each bar is a quarter of a power of ten; the last holds 100-fold and more. Values without a recorded unit, or in another unit, are left out.`,
     };
   }
 
@@ -5714,7 +5714,7 @@
     return {
       id: "statsTypicalTitle", key: "typical", title: "The typical wild-type enzyme", kind: "Table", body,
       caption: escapeHtml(`Medians of the wild-type records read from the paper, each row with its records, papers and enzymes, beside the average enzyme of ${STATS_BAR_EVEN.name}; CatLog counts every substrate and assay a paper reports, not one value per enzyme.`),
-      rules: `Each wild-type record with the parameter in the unit CatLog stores counts once; 10–90% is the range from the 10th to the 90th percentile. ${STATS_BAR_EVEN.name} (Biochemistry 50:4402–4410) give the average enzyme’s kcat/Km as about ${statsPowerOfTen(STATS_BAR_EVEN.log10KcatOverKm)} M⁻¹ s⁻¹ (${statsPowerOfTen(STATS_BAR_EVEN.log10KcatOverKm - 3)} mM⁻¹ s⁻¹).`,
+      rules: `Each wild-type record with the parameter in the unit CatLog stores counts once, a kcat/Km calculated as kcat ÷ Km included; 10–90% is the range from the 10th to the 90th percentile. ${STATS_BAR_EVEN.name} (Biochemistry 50:4402–4410) give the average enzyme’s kcat/Km as about ${statsPowerOfTen(STATS_BAR_EVEN.log10KcatOverKm)} M⁻¹ s⁻¹ (${statsPowerOfTen(STATS_BAR_EVEN.log10KcatOverKm - 3)} mM⁻¹ s⁻¹).`,
     };
   }
 
