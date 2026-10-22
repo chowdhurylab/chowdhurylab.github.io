@@ -1584,3 +1584,9 @@ manifest's database comparison; a field an older snapshot lacks leaves its words
   the upright one, over "1,721 human-checked records"; its label keeps the phrase in full. The people's and agents'
   chips are as wide as their names in the viewer's font plus 14 units a side (teamFitChips, measured once the loop is
   drawn, again when a font loads or the window changes), so "Mohammad" in DejaVu Sans has the room the other names have.
+- The note on papers read or checked with database values in view (statsExposureText) says first why it matters
+  ("CatLog’s reading and checking agents are meant to work without database values, so that agreement with the
+  databases is a fair test."), keeps its subject whole, accounts for every paper (sent back to be read or checked again,
+  with reread_blind_read and _verify when catlog-v2 gives them, and "the other 6 have not been sent back") and says that
+  their values stay in CatLog and in the comparison meanwhile. The Guide's Read step adds "without seeing what the
+  databases list". No Browse filter or record tag marks these papers yet: the data has no per-paper field for it.

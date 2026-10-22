@@ -6377,10 +6377,14 @@
 
   // The papers read or checked with database values in view (overview.quality.exposed, catlog-v2 from 2026-10-21;
   // round 16b, item 1 of its publication review: "reading or checking agent", reader and checker only apart, and the
-  // blind re-reading they were sent back to): "Between Oct 9 and Oct 21, 2026, the reading agent on 173 papers, and only
-  // a checking agent on 136 more, opened database values or files of CatLog’s earlier version. 303 of these papers were
-  // sent back on Oct 21, 2026 to be read again blind; none is done yet." "" without the counts, or when they do not add
-  // up.
+  // blind re-reading they were sent back to). The fix pass after round 16b says first why it matters, keeps the subject
+  // whole, says what became of every paper (the ones not sent back too) and that their values stay meanwhile:
+  // "CatLog’s reading and checking agents are meant to work without database values, so that agreement with the
+  // databases is a fair test. Between Oct 9 and Oct 21, 2026, agents saw such values, or files of CatLog’s earlier
+  // version, on 309 papers: the reading agent on 173 and only a checking agent on 136. 303 of them were sent back on Oct
+  // 21, 2026 to be read or checked again without them (none finished yet); the other 6 have not been sent back. Until
+  // then their values stay in CatLog and in the comparison with the databases." "" without the counts, or when they do
+  // not add up.
   function statsExposureText(quality) {
     const exposed = quality?.exposed;
     const papers = statsCount(exposed?.papers);
@@ -6388,14 +6392,22 @@
     const checker = papers ? statsCount(exposed.checker_only, papers) : null;
     if (!papers || reader === null || checker === null || reader + checker !== papers) return "";
     const span = statsDaySpan(exposed.first, exposed.last);
-    const who = [reader ? `the reading agent on ${formatInteger(reader)} ${reader === 1 ? "paper" : "papers"}` : "",
-      checker ? `${reader ? "and " : ""}only a checking agent on ${formatInteger(checker)} ${reader ? "more" : checker === 1 ? "paper" : "papers"}` : ""].filter(Boolean);
-    const first = `${span ? `Between ${span}, ` : ""}${who.join(", ")}${who.length > 1 ? "," : ""} opened database values or files of CatLog’s earlier version.`;
+    const why = "CatLog’s reading and checking agents are meant to work without database values, so that agreement with the databases is a fair test.";
+    const who = reader && checker ? `the reading agent on ${formatInteger(reader)} and only a checking agent on ${formatInteger(checker)}`
+      : reader ? "the reading agent on each" : "only a checking agent on each";
+    const saw = `${span ? `Between ${span}, agents` : "Agents"} saw such values, or files of CatLog’s earlier version, on ${formatInteger(papers)} ${papers === 1 ? "paper" : "papers"}: ${who}.`;
     const sent = statsCount(exposed.reread_blind, papers);
     const done = sent ? statsCount(exposed.reread_blind_done, sent) : null;
     const on = /^\d{4}-\d{2}-\d{2}$/.test(String(exposed.reread_blind_on || "")) ? formatDate(exposed.reread_blind_on) : "";
-    const again = sent && on ? ` ${formatInteger(sent)} of these papers ${sent === 1 ? "was" : "were"} sent back on ${on} to be read again blind${done === null ? "" : done ? `; ${formatInteger(done)} ${done === 1 ? "is" : "are"} done` : "; none is done yet"}.` : "";
-    return (first.charAt(0).toUpperCase() + first.slice(1)) + again;
+    const reads = sent ? statsCount(exposed.reread_blind_read, sent) : null;
+    const checks = sent ? statsCount(exposed.reread_blind_verify, sent) : null;
+    const how = reads !== null && checks !== null && reads + checks === sent ? `${formatInteger(reads)} to be read and ${formatInteger(checks)} to be checked` : "";
+    const state = done === null ? "" : done ? `${formatInteger(done)} ${done === 1 ? "is" : "are"} done` : "none finished yet";
+    const rest = papers - (sent || 0);
+    const again = sent && on
+      ? ` ${formatInteger(sent)} of them ${sent === 1 ? "was" : "were"} sent back on ${on} to be read or checked again without them${[how, state].filter(Boolean).length ? ` (${[how, state].filter(Boolean).join("; ")})` : ""}${rest ? `; the other ${formatInteger(rest)} ${rest === 1 ? "has" : "have"} not been sent back` : ""}.${done === sent ? "" : " Until then their values stay in CatLog and in the comparison with the databases."}`
+      : " Their values stay in CatLog and in the comparison with the databases.";
+    return `${why} ${saw}${again}`;
   }
 
   // CatLog's own errors found so far, by every route (overview.quality.catlog_errors, catlog-v2 from 2026-10-21; round

@@ -1301,9 +1301,12 @@ def check_quality_round16b(driver, browser, url):
             covered = text(driver.find_element(By.CSS_SELECTOR, "[data-check='human_checked'] .stats-check-covered"))
             assert re.fullmatch(r"[\d,]+ records with a reviewer’s verdict", covered), covered
             assert text(driver.find_element(By.CSS_SELECTOR, "[data-note='exposure']")) == (
-                "Between Oct 9 and Oct 21, 2026, the reading agent on 173 papers, and only a checking agent on 136 more, opened "
-                "database values or files of CatLog’s earlier version. 303 of these papers were sent back on Oct 21, 2026 to "
-                "be read again blind; none is done yet."), text(driver.find_element(By.CSS_SELECTOR, "[data-note='exposure']"))
+                "CatLog’s reading and checking agents are meant to work without database values, so that agreement with the "
+                "databases is a fair test. Between Oct 9 and Oct 21, 2026, agents saw such values, or files of CatLog’s earlier "
+                "version, on 309 papers: the reading agent on 173 and only a checking agent on 136. 303 of them were sent back "
+                "on Oct 21, 2026 to be read or checked again without them (none finished yet); the other 6 have not been sent "
+                "back. Until then their values stay in CatLog and in the comparison with the databases."), \
+                text(driver.find_element(By.CSS_SELECTOR, "[data-note='exposure']"))
             errors = driver.execute_script("""return [...document.querySelectorAll('.stats-errors-table tbody tr')]
                 .map(row => [row.dataset.route, ...[...row.children].map(cell => cell.innerText.trim().split('\\n')[0])])""")
             assert errors == [["audit", "AI audit", "74", "26"], ["sweep", "Catalog-wide sweep after an audit or check", "1,254", "97"],
