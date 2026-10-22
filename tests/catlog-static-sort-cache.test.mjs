@@ -3081,7 +3081,8 @@ function row(overrides = {}) {
     assert.match(table.body, /<small>10 records, 3 papers and 2 enzymes<\/small>/);
     assert.match(table.body, /<small>1 record, 1 paper and 1 enzyme<\/small>/);
     assert.match(table.body, /<td class="stats-num">28<small>28,000 M⁻¹ s⁻¹<\/small><\/td>/);
-    assert.match(table.body, /<a class="stats-ref-link" href="https:\/\/doi\.org\/10\.1021\/bi2002289" target="_blank" rel="noreferrer">Bar-Even et al\. 2011<\/a>: the average enzyme’s <i>k<\/i><sub>cat<\/sub>\/<i>K<\/i><sub>m<\/sub><small>in the paper’s abstract<\/small><\/th>\s*<td class="stats-num" colspan="2">about 10⁵ M⁻¹ s⁻¹<\/td>/);
+    assert.match(table.body, /<a class="stats-ref-link" href="https:\/\/doi\.org\/10\.1021\/bi2002289" target="_blank" rel="noreferrer">Bar-Even et al\. 2011<\/a>: the average enzyme’s <i>k<\/i><sub>cat<\/sub>\/<i>K<\/i><sub>m<\/sub><small>in the paper’s abstract<\/small><\/th>\s*<td class="stats-num">about 10⁵ M⁻¹ s⁻¹<\/td><td class="stats-num stats-muted">—<\/td><\/tr>/);
+    assert.doesNotMatch(table.body, /colspan/, "The reference value stands in the Median column, under CatLog's median");
     assertPlainCaption(table.caption);
     assert.match(table.rules, /about 10⁵ M⁻¹ s⁻¹ \(10² mM⁻¹ s⁻¹\)\.$/);
     // Like Substrate specificity, the table and Between papers say that a calculated kcat/Km counts.

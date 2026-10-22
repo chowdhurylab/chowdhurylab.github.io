@@ -5704,7 +5704,8 @@
     });
     if (!rows.length) return null;
     const cell = (value) => statsRangeNumber(value, { html: true, figures: 2 });
-    // Three columns, so the table fits a phone: each parameter's records, papers and enzymes on a line under its name.
+    // Three columns, so the table fits a phone: each parameter's records, papers and enzymes on a line under its name. The
+    // reference value stands in the Median column, right under CatLog's median kcat/Km in M⁻¹ s⁻¹, with no 10–90%.
     const body = `<table class="stats-table stats-typical-table">
       <thead><tr><th scope="col">Parameter</th><th scope="col" class="stats-num">Median</th><th scope="col" class="stats-num">10–90%</th></tr></thead>
       <tbody>${rows.map((metric) => {
@@ -5715,7 +5716,7 @@
           <td class="stats-num">${cell(item.median)}${molar}</td><td class="stats-num stats-muted">${cell(item.p10)}–${cell(item.p90)}</td></tr>`;
       }).join("")}
         <tr class="stats-row-reference"><th scope="row"><a class="stats-ref-link" href="${escapeHtml(STATS_BAR_EVEN.href)}" target="_blank" rel="noreferrer">${escapeHtml(STATS_BAR_EVEN.name)}</a>: the average enzyme’s <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub><small>in the paper’s abstract</small></th>
-          <td class="stats-num" colspan="2">about ${statsPowerOfTen(STATS_BAR_EVEN.log10KcatOverKm)} M⁻¹ s⁻¹</td></tr></tbody></table>`;
+          <td class="stats-num">about ${statsPowerOfTen(STATS_BAR_EVEN.log10KcatOverKm)} M⁻¹ s⁻¹</td><td class="stats-num stats-muted">${EMPTY_VALUE}</td></tr></tbody></table>`;
     return {
       id: "statsTypicalTitle", key: "typical", title: "The typical wild-type enzyme", kind: "Table", body,
       caption: escapeHtml(`Medians of the wild-type records read from the paper, each row with its records, papers and enzymes, beside the average enzyme of ${STATS_BAR_EVEN.name}; CatLog counts every substrate and assay a paper reports, not one value per enzyme.`),

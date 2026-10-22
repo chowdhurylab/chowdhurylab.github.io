@@ -1763,13 +1763,17 @@ STATS_INSIGHTS_JS = """
         : rows.reduce((sum, count) => sum + count, 0), bars: bars.length };
     }
     const typical = Object.fromEntries([...document.querySelectorAll('[data-figure="typical"] tr[data-stat-key]')].map((row) => [row.dataset.statKey, Number(row.dataset.count)]));
+    // Bar-Even et al.'s kcat/Km stands in the Median column, its right edge under CatLog's median kcat/Km (when shown).
+    const refCell = document.querySelector('[data-figure="typical"] .stats-row-reference td');
+    const ownCell = document.querySelector('[data-figure="typical"] tr[data-stat-key="typical_kcat_over_km"] td');
+    const referenceGap = refCell && ownCell && box(refCell).width && box(ownCell).width ? Math.abs(box(refCell).right - box(ownCell).right) : null;
     const where = Object.fromEntries(['between-papers', 'substrate-range', 'km-size', 'kcat-temperature', 'typical'].map((key) => {
       const section = document.querySelector(`[data-figure="${key}"]`);
       return [key, section ? (section.closest('.stats-supp-item') ? 'supplement' : section.closest('[data-part]')?.dataset.part) : null];
     }));
     return { map: mapFacts, folds: panels('[data-figure="mutations"] .stats-fold'), conditions: panels('[data-figure="conditions"] .stats-condition'),
       zero, classes: [...document.querySelectorAll('[data-figure="db-classes"] .stats-chart-row')].map((row) => [row.dataset.row, Number(row.dataset.count)]),
-      wild, typical, where, out };
+      wild, typical, where, referenceGap, out };
 """
 
 
@@ -1830,6 +1834,7 @@ def check_stats_insights(driver, browser, overview):
                      "kcat-temperature": "supplement" if insights.get("temperature") else None,
                      "typical": "supplement" if insights.get("typical") else None}, where
     assert drawn["typical"] == {f"typical_{metric}": item["n"] for metric, item in (insights.get("typical") or {}).items()}, drawn["typical"]
+    assert drawn["referenceGap"] is None or drawn["referenceGap"] <= 1, f"Bar-Even's kcat/Km is not under CatLog's median: {drawn['referenceGap']}"
     by_class = insights.get("database_by_class") or []
     if driver.find_elements(By.CSS_SELECTOR, "[data-figure='db-classes']"):
         assert drawn["classes"] == [[f"ec_{item['class']}", sum(item[key] for key in ("same", "other_label", "corrects", "differs", "not_listed"))]
