@@ -1572,3 +1572,7 @@ manifest's database comparison; a field an older snapshot lacks leaves its words
 - Stats' tables have no bars (statsTable, Units as printed): in the supplement most had been slivers under 3px that read
   as rendering debris, their column's left edge moved from table to table (476 to 703px at 1440), and the Share column
   beside them says the same.
+- A record open beside the table below 1440px: Organism gives way as EC and the arrow do (the record shows the
+  organism), so kcat, Km and kcat/Km stay in the 536px pane at 1024px and the names get Organism's room at 1280px; the
+  records title takes no row when nothing in it shows (its visually hidden lines kept a 30px row and a 45px empty band
+  above Columns, Export and Sort). The browser check opens a record at 1024 and 1280px and measures both.

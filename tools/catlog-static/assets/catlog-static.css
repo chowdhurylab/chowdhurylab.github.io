@@ -2006,6 +2006,16 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
   body.detail-open :is(.col-ec,.col-open,.c-ec,.c-open) { display:none }
   body.detail-open #recordsBody .state-tag:not(:first-child) { display:none }
   body.detail-open #recordsBody .state-check { display:inline-flex }
+  /* With nothing in it to show (no chip, no count other than the page range), the title row takes no room (fix pass
+     after round 16b: beside a record at 1024px its visually hidden lines kept a 30px row and a 45px empty band above
+     Columns, Export and Sort); its hidden lines stay for screen readers. */
+  .records-title:not(:has(> :not(.visually-hidden, .hidden, [hidden], #openFiltersButton))) { position:absolute; width:1px; height:1px; min-height:0; overflow:hidden; clip-path:inset(50%); padding:0 }
+}
+/* Below 1440px a record open beside the table also takes Organism's column (the record shows the organism), so the
+   names and kcat, Km and kcat/Km stay in view (fix pass after round 16b: at 1024px the 536px pane cut kcat/Km at its
+   edge, and at 1280px in a wide font seven rows read only "rat 17beta-hydroxysteroid…"). */
+@media (min-width: 1024px) and (max-width: 1439px) {
+  body.detail-open :is(.col-organism,.c-organism) { display:none }
 }
 
 @media (max-width: 1180px) {

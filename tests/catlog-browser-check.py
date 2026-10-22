@@ -6706,6 +6706,36 @@ def check(driver, browser, url):
             "release_commit": os.environ.get("GITHUB_SHA"), "viewports": viewports, "passed": True}
 
 
+def check_record_beside_table(driver, browser, url):
+    """Fix pass after round 16b: with a record open below 1440px the toolbar keeps its one row (the title row takes no
+    room when nothing in it shows) and Organism gives way to the record, so kcat, Km and kcat/Km stay in the table's
+    view."""
+    wait = WebDriverWait(driver, 60, ignored_exceptions=(StaleElementReferenceException,))
+    found = []
+    try:
+        for width in (1024, 1280):
+            set_browse_viewport(driver, browser, width, 800)
+            driver.get("about:blank")
+            driver.get(url + "#browse")
+            key = wait.until(lambda d: d.find_element(By.CSS_SELECTOR, "#recordsBody tr[data-key]")).get_attribute("data-key")
+            driver.get("about:blank")
+            driver.get(url + f"#browse?record={key}")
+            wait.until(lambda d: d.execute_script(
+                "return document.body.classList.contains('detail-open') && Boolean(document.querySelector('#detailContent .detail-section'))"))
+            layout = driver.execute_script("""
+                const pane = document.getElementById('recordTableWrap').getBoundingClientRect();
+                const box = (name) => { const th = document.querySelector(`#recordTableWrap thead th.${name}`);
+                  return th && th.getClientRects().length && getComputedStyle(th).display !== 'none' ? th.getBoundingClientRect() : null; };
+                return {header: Math.round(document.querySelector('.records-header').getBoundingClientRect().height), right: pane.right,
+                        organism: Boolean(box('c-organism')), kcat: box('c-kcat') && box('c-kcat').right, eff: box('c-eff') && box('c-eff').right};""")
+            assert layout["header"] <= 50 and not layout["organism"] and layout["eff"] and layout["eff"] <= layout["right"] + 1, (width, layout)
+            found.append(layout)
+    finally:
+        if browser == "chrome":
+            driver.execute_cdp_cmd("Emulation.clearDeviceMetricsOverride", {})
+    return found
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--browser", choices=("chrome", "safari"), required=True)
@@ -6745,6 +6775,7 @@ def main():
         result["guide_databases"] = check_guide_databases(driver, args.browser, url)
         result["word_breaks"] = check_word_breaks(driver, args.browser, url)
         result["phone_scroll"] = check_phone_scroll(driver, args.browser, url)
+        result["record_beside_table"] = check_record_beside_table(driver, args.browser, url)
         browse = []
         bases = [("local", local_base)]
         if os.environ.get("CHECK_LIVE") == "true":
