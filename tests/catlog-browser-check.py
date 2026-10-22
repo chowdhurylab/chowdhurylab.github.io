@@ -6140,8 +6140,8 @@ def check(driver, browser, url):
             for word in DROPPED_WORDING:
                 assert word not in lead.get_attribute("innerText"), f"The lead says {word}"
         assert cautions == {f"caution_{key}": count for key, count in overview["cautions"].items()}
-        # (the value-range figures only: the variant-effect and assay-condition figures reuse .stats-range)
-        ranges = driver.find_elements(By.CSS_SELECTOR, ".stats-range:not(.stats-fold):not(.stats-condition)")
+        # (the value-range figures only: the variant-effect, assay-condition and round 16 wild-type panels reuse .stats-range)
+        ranges = driver.find_elements(By.CSS_SELECTOR, ".stats-range:not(.stats-fold):not(.stats-condition):not(.stats-insight)")
         assert len(ranges) == sum(1 for summary in overview["metrics"].values() if summary.get("n"))
         for figure in ranges:
             summary = overview["metrics"][figure.get_attribute("data-metric")]
