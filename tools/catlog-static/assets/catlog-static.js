@@ -4327,16 +4327,16 @@
   }
 
   // A compact table (Stats tables 1-4): name (a link into Browse when there is one) with an optional one-line meaning,
-  // an 80px bar, the count, and its share of all records (or a second count). Bars are drawn against `scale`.
-  function statsTable(items, total, { scale = total, extra = null, head = "", part = "neutral", countHead = "Records" } = {}) {
+  // the count, and its share of all records (or a second count). No bar (fix pass after round 16b: in the supplement's
+  // tables most were slivers under 3px that read as debris, their column moved from table to table, and the Share column
+  // says the same); `scale` and `part` are kept for the callers.
+  function statsTable(items, total, { extra = null, head = "", countHead = "Records" } = {}) {
     return `<table class="stats-table">
-      <thead><tr><th scope="col">${escapeHtml(head)}</th><th scope="col" class="stats-col-bar"><span class="visually-hidden">Bar</span></th><th scope="col" class="stats-num">${escapeHtml(countHead)}</th><th scope="col" class="stats-num">${escapeHtml(extra ? extra.head : "Share")}</th></tr></thead>
+      <thead><tr><th scope="col">${escapeHtml(head)}</th><th scope="col" class="stats-num">${escapeHtml(countHead)}</th><th scope="col" class="stats-num">${escapeHtml(extra ? extra.head : "Share")}</th></tr></thead>
       <tbody>${items.map((item) => {
-        const width = scale > 0 ? Math.max(0, Math.min(100, item.count / scale * 100)) : 0;
         const last = extra ? formatInteger(item[extra.key]) : escapeHtml(statsShare(item.count, total));
         return `<tr class="${item.sub ? "stats-row-sub" : item.group ? "stats-row-group" : ""}" data-stat-key="${escapeHtml(item.value)}" data-count="${item.count}">
           <th scope="row"><span class="stats-name">${item.keyHtml || ""}<span>${statsNameHtml(item)}${item.note ? `<small>${escapeHtml(item.note)}</small>` : ""}</span></span></th>
-          <td class="stats-col-bar" aria-hidden="true">${item.group ? "" : `<span class="stats-minibar"><span class="stats-seg stats-part-${item.part || part}" style="width:${+width.toFixed(4)}%"></span></span>`}</td>
           <td class="stats-num">${formatInteger(item.count)}</td><td class="stats-num stats-muted">${last}</td></tr>`;
       }).join("")}</tbody></table>`;
   }
@@ -5394,10 +5394,9 @@
     }
     if (!groups.length) return null;
     const body = `<table class="stats-table stats-units-table">
-      <thead><tr><th scope="col">Unit as printed</th><th scope="col" class="stats-col-bar"><span class="visually-hidden">Bar</span></th><th scope="col" class="stats-num">Values</th><th scope="col" class="stats-num">Share</th></tr></thead>
-      ${groups.map((group) => `<tbody><tr class="stats-row-group" data-stat-key="units_${group.metric.key}" data-count="${group.values}"><th scope="row"><span class="stats-name"><span>${group.metric.html} <span class="stats-muted nowrap">(stored in ${escapeHtml(group.metric.unit)})</span></span></span></th><td class="stats-col-bar" aria-hidden="true"></td><td class="stats-num">${formatInteger(group.values)}</td><td class="stats-num stats-muted"></td></tr>
+      <thead><tr><th scope="col">Unit as printed</th><th scope="col" class="stats-num">Values</th><th scope="col" class="stats-num">Share</th></tr></thead>
+      ${groups.map((group) => `<tbody><tr class="stats-row-group" data-stat-key="units_${group.metric.key}" data-count="${group.values}"><th scope="row"><span class="stats-name"><span>${group.metric.html} <span class="stats-muted nowrap">(stored in ${escapeHtml(group.metric.unit)})</span></span></span></th><td class="stats-num">${formatInteger(group.values)}</td><td class="stats-num stats-muted"></td></tr>
         ${group.rows.map((row) => `<tr class="stats-row-sub" data-stat-key="units_${group.metric.key}_${escapeHtml(row.unit)}" data-count="${row.count}"><th scope="row"><span class="stats-name"><span>${escapeHtml(row.unit)}</span></span></th>
-          <td class="stats-col-bar" aria-hidden="true"><span class="stats-minibar"><span class="stats-seg stats-part-neutral" style="width:${+(row.count / group.values * 100).toFixed(4)}%"></span></span></td>
           <td class="stats-num">${formatInteger(row.count)}</td><td class="stats-num stats-muted">${escapeHtml(statsShare(row.count, group.values))}</td></tr>`).join("")}</tbody>`).join("")}</table>`;
     return {
       id: "statsUnitsTitle", key: "printed-units", title: "Units as printed", kind: "Table", body,

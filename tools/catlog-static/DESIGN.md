@@ -1569,3 +1569,6 @@ manifest's database comparison; a field an older snapshot lacks leaves its words
   1,472 (D-galactose, UDP-galactose ...); "ethanol" no longer finds methanol, "pyruvate" phosphoenolpyruvate, "alanine"
   phenylalanine. Enzyme and organism names still match inside a word ("kinase" finds hexokinase). The Substrate field's
   title and the Guide's Search line say it in one sentence.
+- Stats' tables have no bars (statsTable, Units as printed): in the supplement most had been slivers under 3px that read
+  as rendering debris, their column's left edge moved from table to table (476 to 703px at 1440), and the Share column
+  beside them says the same.

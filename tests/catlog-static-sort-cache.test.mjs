@@ -3286,7 +3286,9 @@ function row(overrides = {}) {
     const units = api.statsPrintedUnitsTable({ kcat: { values: 10, units: [["s-1", 8], ["min-1", 1]], other: 1 },
       km: { values: 4, units: [["uM", 3], ["mM", 1]], other: 0 } });
     assert.match(units.body, /<tr class="stats-row-group" data-stat-key="units_kcat" data-count="10"><th scope="row"><span class="stats-name"><span><i>k<\/i><sub>cat<\/sub> <span class="stats-muted nowrap">\(stored in s⁻¹\)<\/span>/);
-    assert.match(units.body, /data-stat-key="units_kcat_s⁻¹" data-count="8"[\s\S]*?width:80%[\s\S]*?80\.0%/);
+    assert.match(units.body, /data-stat-key="units_kcat_s⁻¹" data-count="8"[\s\S]*?80\.0%/);
+    // No bars in the tables (fix pass after round 16b): the Share column says it.
+    assert.doesNotMatch(units.body, /stats-minibar|stats-col-bar/);
     assert.match(units.body, /data-stat-key="units_kcat_Other" data-count="1"/);
     assert.match(units.body, /data-stat-key="units_km_µM" data-count="3"[\s\S]*?75\.0%/);
     assert.doesNotMatch(units.body, /units_km_Other/, "No Other row without other units");
@@ -3398,9 +3400,8 @@ function row(overrides = {}) {
 
   // Tables, bars, shares and links.
   const halfBar = api.statsTable([{ value: "example", label: "Example", count: 3 }], 6);
-  assert.match(halfBar, /width:50%/);
+  assert.doesNotMatch(halfBar, /stats-minibar|width:/, "No bars in the tables: the Share column says it");
   assert.match(halfBar, /50\.0%/);
-  assert.match(api.statsTable([{ value: "test", label: "<unsafe>", count: 0 }], 0), /width:0%/);
   assert.doesNotMatch(api.statsTable([{ value: "test", label: "<unsafe>", count: 0 }], 0), /<unsafe>/);
   // Stacked segments stay inside their bar; an overlay draws each from the left.
   const stacked = api.statsBarChart({ key: "t", scale: 10, rows: [{ key: "a", count: 9, label: "A", value: "9",

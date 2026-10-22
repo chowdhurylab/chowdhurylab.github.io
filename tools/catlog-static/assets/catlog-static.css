@@ -1507,10 +1507,6 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-name { display:flex; align-items:baseline; gap:8px; min-width:0; overflow-wrap:anywhere }
 .stats-name > .stats-swatch { align-self:flex-start; margin-top:4px }
 .stats-name small { display:block; margin-top:2px; color:var(--muted); font-size:var(--fs-12); line-height:var(--lh-12) }
-.stats-col-bar { width:80px }
-.stats-table td.stats-col-bar { padding-top:10px }
-.stats-minibar { position:relative; display:block; width:80px; height:10px; box-shadow:inset 1px 0 0 var(--line-soft) }
-.stats-minibar .stats-seg { position:absolute; top:0; bottom:0; left:0 }
 .stats-row-sub .stats-name { padding-left:18px }
 .stats-row-detail > * { padding-block:3px }
 .stats-row-detail .stats-name { padding-left:18px; color:var(--text-2); font-size:var(--fs-12) }
@@ -1934,7 +1930,6 @@ a.stats-total-value:focus-visible { outline:0 }
   .stats-chart-axis > .stats-axis-ticks { grid-column:1 / -1 }
   /* the axis has no empty column to reach into: its end label ends at its tick */
   .stats-axis-ticks > span:last-child { transform:translateX(-100%) }
-  .stats-col-bar, .stats-minibar { width:48px }
   .stats-explanation dl > div { grid-template-columns:1fr; gap:0 }
   .stats-detail-table th, .stats-detail-table td { padding:6px 5px }
   .team-body { grid-template-columns:1fr }
