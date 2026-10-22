@@ -1336,7 +1336,7 @@ def check_quality_round16b(driver, browser, url):
             databases = driver.find_elements(By.CSS_SELECTOR, "[data-lead='databases']")
             if databases:
                 words = text(databases[0])
-                assert "These corrections are a lower bound on the databases’ errors, since only differences of 1.5-fold or more are checked." in words, words
+                assert "; a lower bound, as only differences of 1.5-fold or more are checked)" in words, words
             open_stats_supplement(driver)
             kinds = text(driver.find_element(By.CSS_SELECTOR, ".stats-supp-item[data-supp='review-kinds']"))
             assert "Flags on the 2,604 entries people could check against a paper" in kinds and "Could not find" not in kinds, kinds

@@ -2672,7 +2672,7 @@ function row(overrides = {}) {
   // bound when it says only larger differences are checked (checked_from_factor).
   withOut((data) => { data.corrections.by_cause_found_by = { power_of_ten: { factor_cross_checked: 557 }, unit_not_converted: { paper_check: 991 } }; data.checked_from_factor = 1.5; });
   assert.match(plain(databaseSection().match(/<p class="stats-part-lead"[\s\S]*?<\/p>/)[0]),
-    /Of the other 2,599, 1,548 correct a database’s number \(991 found by an AI check of the paper, 557 by an exact factor found automatically\); the remaining 1,051 differ for a reason not yet known, and some may be other measurements in the paper rather than database errors\. These corrections are a lower bound on the databases’ errors, since only differences of 1\.5-fold or more are checked\.$/);
+    /Of the other 2,599, 1,548 correct a database’s number \(991 found by an AI check of the paper, 557 by an exact factor found automatically; a lower bound, as only differences of 1\.5-fold or more are checked\); the remaining 1,051 differ for a reason not yet known, and some may be other measurements in the paper rather than database errors\.$/);
   withOut((data) => { data.corrections.by_cause_found_by = { power_of_ten: { factor_cross_checked: 556 }, unit_not_converted: { paper_check: 991 } }; data.checked_from_factor = "x"; });
   assert.doesNotMatch(databaseSection(), /found by an AI check of the paper, 556|lower bound/, "Counts that do not add up and a factor that is not a number say nothing");
   withOut((data) => { data.corrections.by_cause.new_cause = 2; data.corrections.by_cause.time_unit -= 2; });

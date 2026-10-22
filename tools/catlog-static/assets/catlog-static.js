@@ -7081,11 +7081,14 @@
     // (checked_from_factor, catlog-v2 from 2026-10-21).
     const ways = corrects ? guideDatabaseFoundBy(comparison.corrections).totals : {};
     const byPaper = statsCount(ways.paper_check), byFactor = statsCount(ways.factor_cross_checked);
-    const foundBy = byPaper !== null && byFactor !== null && byPaper + byFactor === corrects && byPaper && byFactor
-      ? ` (${formatInteger(byPaper)} found by an AI check of the paper, ${formatInteger(byFactor)} by an exact factor found automatically)` : "";
     const fold = Number(comparison.checked_from_factor);
+    // (in the corrections' brackets, so the lead keeps its two sentences: "...; a lower bound, as only differences of
+    // 1.5-fold or more are checked", the README's words)
     const lowerBound = corrects && Number.isFinite(fold) && fold > 1
-      ? `These corrections are a lower bound on the databases’ errors, since only differences of ${String(fold)}-fold or more are checked.` : "";
+      ? `a lower bound, as only differences of ${String(fold)}-fold or more are checked` : "";
+    const ways2 = byPaper !== null && byFactor !== null && byPaper + byFactor === corrects && byPaper && byFactor
+      ? `${formatInteger(byPaper)} found by an AI check of the paper, ${formatInteger(byFactor)} by an exact factor found automatically` : "";
+    const foundBy = ways2 || lowerBound ? ` (${[ways2, lowerBound].filter(Boolean).join("; ")})` : "";
     // The values whose paired number is not the paper's, in one sentence of two halves (fix pass after round 16b: it had
     // spliced "678 differ, cause not yet known, which can mean ..." into the corrections; the lead keeps its two
     // sentences, round 14): "Of the other 3,359, 2,681 correct a database’s number (1,745 found by an AI check of the
@@ -7104,7 +7107,6 @@
       changedText ? changedText.replace(/^./, (letter) => letter.toUpperCase()) : "",
       changedText && !differs ? escapeHtml(STATS_DATABASE_CAVEAT) : "",
       changedText ? "" : escapeHtml(STATS_DATABASE_CAVEAT),
-      escapeHtml(lowerBound),
     ].filter(Boolean);
     return `<p class="stats-part-lead" data-lead="databases">${sentences.join(" ")}</p>`;
   }
