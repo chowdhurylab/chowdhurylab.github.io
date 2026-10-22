@@ -3191,7 +3191,8 @@ def check_filters(driver, browser, url, route_label):
             targets = driver.execute_script("""
                 const part = document.querySelector("#statsCharts [data-part='databases']");
                 if (!part) return [];
-                return [...part.querySelectorAll('a[href]')].map(a => a.href)
+                // (a reference link, such as the Dataset notes, opens a file, not Browse)
+                return [...part.querySelectorAll('a[href]:not(.stats-ref-link)')].map(a => a.href)
                     .concat([...part.querySelectorAll('[data-href]')].map(e => new URL(e.dataset.href, location.href).href));
             """)
             by_keys = {}
@@ -6607,7 +6608,7 @@ def check(driver, browser, url):
         driver.execute_script("document.querySelector('#statsView').scrollTop=0")
         if width >= 1280:
             layout = driver.execute_script(first_figures)
-            assert layout["paired"] and layout["beside"], f"Figures 1 and 2 stand side by side at {width}px: {layout}"
+            assert layout["paired"] and layout["over"], f"Figures 1 and 2 stand side by side at {width}px: {layout}"
         assert driver.execute_script("""
             return [...document.querySelectorAll('.stats-chart-row')].filter(row => row.getBoundingClientRect().width).every(row => {
                 const label = row.querySelector('.stats-chart-label').getBoundingClientRect();
