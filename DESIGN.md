@@ -422,7 +422,7 @@ its accessible description; no figure or table has a data line. The parts' figur
   rest of its rule is under its number in How these numbers are counted. All in Read from the paper's cyan; each only
   when its counts hold together. The tooltip line of each bar or row gives its range and count.
   - Between papers (main, Values, after Value ranges): one UniProt entry and substrate (SMILES, else name) as wild type
-    in two papers; each paper's value the median of its records, each pair of papers once per parameter; per parameter a
+    in two papers; each paper's value the median of its records, a pair of papers once per enzyme, substrate and parameter; per parameter a
     histogram of the fold difference in quarter decades from 1-fold (the last bar 100-fold and more), Median, Within
     2-fold and Within 10-fold above it; under the three, a table of the same at a temperature (to 1 °C) and pH (to 0.1)
     both papers give, and the records it uses. Caveat: assays and constructs differ between papers, so a difference is
