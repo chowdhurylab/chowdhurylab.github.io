@@ -5043,9 +5043,9 @@
   // (a database's own hue would give a colour a second meaning beside CatLog's cyan: DESIGN.md, "Type And Color"); the
   // years BRENDA is still adding papers from (shaded_from on, else STATS_YEARS_SHADED_FROM) on a plain grey band with open
   // dots; direct labels on the lines and BRENDA's highest year and its last year before the band labelled with their
-  // counts (statsPlaceYearLabels); CatLog's total above the plot. CatLog's values from papers after last_year are in the
-  // caption, not drawn: the comparison ends where BRENDA's years end; its values before first_year (when the build gives
-  // them) and those with no PubMed year are named in the counting rules. Nothing is drawn unless the counts hold together.
+  // counts (statsPlaceYearLabels); CatLog's total above the plot. CatLog's values from papers before first_year (when the
+  // build gives them) and after last_year are in the caption, not drawn, so the lines and the caption add up to the total
+  // above them; those with no year are named in the counting rules. Nothing is drawn unless the counts hold together.
   const STATS_YEARS_SHADED_FROM = 2020;
   const STATS_YEARS_CATLOG = "CatLog, read so far";
 
@@ -5130,15 +5130,18 @@
     };
     const description = `kcat, Km and kcat/Km values per publication year of their paper, ${first} to ${last}. ${describe(release, "brenda_values")}. ${describe("CatLog", "catlog_values")}.${shadedFrom !== null ? ` Years from ${shadedFrom} on are shaded.` : ""}`;
     const key = series.map((line) => `<li><i class="stats-years-key-line is-${line.key}" aria-hidden="true"></i><span>${escapeHtml(line.name)}</span></li>`).join("");
+    // CatLog's values from papers outside the years drawn (before first_year, when the build gives them, and after
+    // last_year), so the lines and the caption make the total above the plot with the few values that have no year.
+    const outside = [data.before?.values ? [data.before, `published before ${first}`] : null,
+      data.after.values ? [data.after, `published after ${last}`] : null].filter(Boolean)
+      .map(([part, when], index) => `${index ? formatInteger(part.values) : valuesText(part.values)} from ${papersText(part.papers)} ${when}`);
     const words = [
       shadedFrom !== null ? `BRENDA is still adding papers from the shaded years (${shadedFrom} on)` : "",
-      data.after.values ? `CatLog also has ${valuesText(data.after.values)} from ${papersText(data.after.papers)} published after ${last}` : "",
+      outside.length ? `CatLog also has ${outside.join(" and ")}` : "",
     ].filter(Boolean);
     const caption = words.length ? `${words.join("; ")}.` : `Values per publication year of their paper in ${release} and read by CatLog.`;
-    // CatLog's values counted in its total only (no PubMed year; before first_year, when the build gives them).
-    const outside = [data.undated ? [data.undated, "from papers with no PubMed year"] : null,
-      data.before?.values ? [data.before.values, `from papers published before ${first}`] : null].filter(Boolean);
-    const totalOnly = outside.length ? `${outside.map(([count, words], index) => `${index ? formatInteger(count) : valuesText(count)} ${words}`).join(" and ")} ${outside.length === 1 && outside[0][0] === 1 ? "counts" : "count"} only in the total` : "";
+    // CatLog's values counted in its total only: papers with no PubMed year.
+    const totalOnly = data.undated ? `${valuesText(data.undated)} from papers with no PubMed year ${data.undated === 1 ? "counts" : "count"} only in the total` : "";
     return {
       id: "statsYearsTitle", key: "publication-years", title: "CatLog and BRENDA by publication year", wide: true,
       body: `<p class="stats-years-note">CatLog on ${escapeHtml(formatDate(data.asOf))}: ${valuesText(data.values)} from ${papersText(data.papers)}</p>

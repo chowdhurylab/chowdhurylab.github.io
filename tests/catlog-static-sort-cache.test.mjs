@@ -3111,19 +3111,24 @@ function row(overrides = {}) {
     assert.equal(api.statsPublicationYears(field).before.values, 40);
     const years = api.statsPublicationYearsFigure(field);
     assert.equal(years.key, "publication-years");
-    assert.equal(years.caption, "BRENDA is still adding papers from the shaded years (2004 on); CatLog also has 1 value from 1 paper published after 2005.");
+    // The values from papers before and after the years drawn are in the caption, so the lines and it add up to the note.
+    assert.equal(years.caption, "BRENDA is still adding papers from the shaded years (2004 on); CatLog also has 40 values from 3 papers published before 2000 and 1 from 1 paper published after 2005.");
     assertPlainCaption(years.caption);
     assert.match(years.body, /<p class="stats-years-note">CatLog on Oct 21, 2026: 258 values from 27 papers<\/p>/);
     assert.match(years.body, /data-tip="2003: BRENDA 2026\.1, 9,419 values; CatLog, 40 values from 4 papers"/);
     assert.equal((years.body.match(/class="stats-years-dot[^"]*is-open/g) || []).length, 4, "2004 and 2005, both lines");
-    assert.match(years.rules, /by Oct 21, 2026; 7 values from papers with no PubMed year and 40 from papers published before 2000 count only in the total\./);
-    // Without the build's two extra counts the brief's contract alone still draws it; the rule then names the undated only.
+    assert.match(years.rules, /by Oct 21, 2026; 7 values from papers with no PubMed year count only in the total\./);
+    // Without the build's two extra counts the brief's contract alone still draws it; the caption then names the later
+    // values only.
     const contract = { ...field };
     delete contract.catlog_before_first_year;
     delete contract.catlog_papers_without_year;
     assert.match(api.statsPublicationYearsFigure(contract).rules, /; 7 values from papers with no PubMed year count only in the total\./);
+    assert.equal(api.statsPublicationYearsFigure(contract).caption, "BRENDA is still adding papers from the shaded years (2004 on); CatLog also has 1 value from 1 paper published after 2005.");
     assert.match(api.statsPublicationYearsFigure({ ...contract, catlog_values_without_year: 1, catlog_values_total: 212 }).rules,
       /; 1 value from papers with no PubMed year counts only in the total\./);
+    assert.doesNotMatch(api.statsPublicationYearsFigure({ ...field, catlog_values_without_year: 0, catlog_papers_without_year: 0, catlog_values_total: 251,
+      catlog_papers_total: 25 }).rules, /only in the total/);
     // Parts that do not make the totals, a damaged extra count or a year missing: no figure.
     assert.equal(api.statsPublicationYears({ ...field, catlog_before_first_year: { values: 39, papers: 3 } }), null);
     assert.equal(api.statsPublicationYears({ ...field, catlog_papers_without_year: 3 }), null);

@@ -2475,12 +2475,16 @@ def publication_years_valid(field):
 
 
 def publication_years_caption(field):
-    """The figure's caption sentence, from the field: the band, then CatLog's values after the last year."""
+    """The figure's caption sentence, from the field: the band, then CatLog's values before the first year (when the build
+    gives them) and after the last year, so the lines and the caption add up to the note above the plot."""
     shade = field.get("shaded_from") if isinstance(field.get("shaded_from"), int) else 2020
     plural = lambda count, word: f"{count:,} {word}{'' if count == 1 else 's'}"
-    after = field["catlog_after_last_year"]
+    parts = [(part, when) for part, when in ((field.get("catlog_before_first_year"), f"published before {field['first_year']}"),
+                                             (field["catlog_after_last_year"], f"published after {field['last_year']}")) if part and part["values"]]
+    outside = [f"{plural(part['values'], 'value') if not index else format(part['values'], ',')} from {plural(part['papers'], 'paper')} {when}"
+               for index, (part, when) in enumerate(parts)]
     words = ([f"BRENDA is still adding papers from the shaded years ({shade} on)"] if field["first_year"] < shade <= field["last_year"] else []) \
-        + ([f"CatLog also has {plural(after['values'], 'value')} from {plural(after['papers'], 'paper')} published after {field['last_year']}"] if after["values"] else [])
+        + ([f"CatLog also has {' and '.join(outside)}"] if outside else [])
     return "; ".join(words) + "." if words else f"Values per publication year of their paper in {field['brenda_release']} and read by CatLog."
 
 
@@ -2544,9 +2548,8 @@ def check_stats_years(driver, browser, url):
                 assert facts["lastTick"] and not facts["overflow"], f"{name} overflows at {width}px"
                 assert f"{release}: " in facts["aria"] and f"{last}" in facts["aria"], facts["aria"]
                 assert facts["rules"].startswith(f"Figure {facts['order'].index('publication-years') + 1}") and "PubMed publication year" in facts["rules"], facts["rules"]
-                before = (field.get("catlog_before_first_year") or {}).get("values")
-                assert not before or f"{before:,} from papers published before {field['first_year']}" in facts["rules"] \
-                    or f"{before:,} values from papers published before {field['first_year']}" in facts["rules"], facts["rules"]
+                undated = field["catlog_values_without_year"]
+                assert (f"{undated:,} value{'' if undated == 1 else 's'} from papers with no PubMed year" in facts["rules"]) == bool(undated), facts["rules"]
                 if name == "filled":
                     # The approved numbers leave room for every label from 641px and for both names on a phone.
                     assert facts["labelled"], (width, facts["placed"])
