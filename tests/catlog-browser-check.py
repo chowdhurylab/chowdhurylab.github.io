@@ -1215,10 +1215,10 @@ def check_review_headline(driver, browser, url):
             text = lead.get_attribute("innerText")
             assert not re.search(r"\bv[12]\b", text + band), "CatLog is the one name: no v1 or v2"
             assert "could not find" not in text and "values correct" not in text, text
-            # The kinds of other disagreement and the match read from the paper again are the supplement's Quality tables.
+            # The kinds of other disagreement and the match read from the paper again are the supplement's Quality figures.
             open_stats_supplement(driver)
             kinds = driver.find_element(By.CSS_SELECTOR, ".stats-supp-item[data-supp='review-kinds']").get_attribute("innerText")
-            assert "Organism name" in kinds and "CatLog has since read 53 of the 58 values the reviewers named" in kinds, kinds
+            assert "Organism name" in kinds and "CatLog has since read 53 of the 58 values named" in kinds, kinds
             match = " ".join(driver.find_element(By.CSS_SELECTOR, ".stats-supp-item[data-supp='review-match']").get_attribute("innerText").split())
             assert "3,625" in match and "4,074 values reviewers approved" in match, match
             for word in (*DROPPED_WORDING, "85.9", "81.6", "87.0%"):
@@ -1373,13 +1373,16 @@ def check_quality_round16b(driver, browser, url):
                 assert words.endswith("; a lower bound, as only differences of 1.5-fold or more are checked."), words
             open_stats_supplement(driver)
             kinds = text(driver.find_element(By.CSS_SELECTOR, ".stats-supp-item[data-supp='review-kinds']"))
-            assert "Flags on the 2,604 entries people could check against a paper" in kinds and "Could not find" not in kinds, kinds
+            assert "Flags on the 2,604 records people could check against a paper" in kinds and "Could not find" not in kinds, kinds
             match = text(driver.find_element(By.CSS_SELECTOR, ".stats-supp-item[data-supp='review-match']"))
-            assert "AI agents checked 323 of the 555 values that still differ against the paper; 232 are still to check." in match, match
-            # A correction count per database says it is a lower bound, as the part's lead does (fix pass after round 16b).
-            for key in ("db-paired", "db-causes"):
-                found = driver.find_elements(By.CSS_SELECTOR, f".stats-supp-item[data-supp='{key}']")
-                assert not found or "Corrects is a lower bound, since only differences of 1.5-fold or more are checked." in text(found[0]), key
+            # (round 17: a supplement caption is one sentence; who checked the values that differ, and that a correction
+            # count per database is a lower bound, stand under the figure's number in How these numbers are counted)
+            method = " ".join(driver.execute_script("return document.querySelector('#statsCharts .stats-method')?.textContent || ''").split())
+            assert "AI agents checked 323 of the 555 values that still differ against the paper; 232 are still to check." in method, method
+            for key, title in (("db-paired", "Paired values by database."), ("db-causes", "Corrections by cause and database.")):
+                if driver.find_elements(By.CSS_SELECTOR, f".stats-supp-item[data-supp='{key}']"):
+                    rule = method.split(title, 1)[1] if title in method else ""
+                    assert "Corrects is a lower bound, since only differences of 1.5-fold or more are checked." in rule.split("Figure S", 1)[0], key
             assert "Left out by CatLog’s rules (reprint, Hill fit)" in match and "Cannot be compared" not in match, match
             assert driver.execute_script("return document.documentElement.scrollWidth <= innerWidth + 1"), f"Stats scrolls sideways at {width}px"
             driver.execute_script("document.querySelector('[data-figure=errors]').scrollIntoView()")
@@ -1458,11 +1461,11 @@ DATABASE_COMPARISON_FIXTURE = {
     "papers": 2650,
 }
 # Compared with databases (round 14): the part keeps the values compared with databases and the corrections by cause; the
-# rest stands in the supplement's group of the same name (SUPPLEMENT_DATABASES), each item's title in its summary.
+# rest stands in the supplement's group of the same name (SUPPLEMENT_DATABASES), each item's title in its heading.
 DATABASE_TITLES = ("Values compared with databases", "Corrections by cause and how found")
-# (the supplement's group lists its figures first, then its tables: round 14's fix pass)
-FIGURE_MORE_TITLES = ("Results by database", "Corrections on records not yet re-read", "Entries replaced by reading the paper",
-                      "Paired values by database", "Corrections by cause and database")
+# (round 17: the supplement's tables are figures, in the order the page shows them)
+FIGURE_MORE_TITLES = ("Results by database", "Paired values by database", "Corrections by cause and database",
+                      "Corrections on records not yet re-read", "Earlier records replaced by reading the paper")
 # The database results by enzyme class open the supplement's group when the overview counts them.
 DATABASE_CLASS_TITLE = "Compared with databases by enzyme class"
 SUPPLEMENT_DATABASES = "#statsCharts .stats-supp-group[aria-labelledby='statsSupplementDatabasesTitle']"
@@ -1570,7 +1573,11 @@ def check_stats_contents(driver, width):
         WebDriverWait(driver, 10).until(lambda d: -2 <= d.execute_script(part_top, last) <= 48)
     except TimeoutException:
         raise AssertionError(f"{last} scrolled to {driver.execute_script(part_top, last)}px from the top of the Stats view")
-    assert driver.execute_script("return document.activeElement && document.activeElement.classList.contains('stats-part-title')")
+    # (the supplement's link opens it, round 17, and focuses its summary, which closes it again with Enter or Space)
+    assert driver.execute_script("""const active = document.activeElement;
+        return Boolean(active && (active.classList.contains('stats-part-title') || active.matches('.stats-supp-all > summary')))""")
+    if last == "stats-supplement":
+        assert driver.execute_script("return document.querySelector('#stats-supplement .stats-supp-all').open"), "On this page opens the supplement"
     assert_document_stays(driver, "stats")
     driver.execute_script("document.getElementById('statsView').scrollTop = 0")
 
@@ -1833,9 +1840,10 @@ def check_stats_databases(driver, browser, url):
             assert titles == list(DATABASE_TITLES), titles
             problems = driver.execute_script(STATS_DATABASES_LAYOUT_JS)
             assert not problems, f"Compared with databases at {width}px: {problems}"
-            # In the supplement each item stands on its own line: each database above the values it pairs.
+            # In the supplement the items stand as the main parts' figures do (round 17): two to a row from 1024px (each
+            # database beside the values it pairs), one under another below.
             tops = driver.execute_script("""return ['db-sources', 'db-paired'].map(key => document.querySelector(`[data-figure='${key}']`).getBoundingClientRect().top)""")
-            assert tops[1] > tops[0] + 1, f"At {width}px Figure and Table rows: {tops}"
+            assert abs(tops[1] - tops[0]) <= 1 if width >= 1024 else tops[1] > tops[0] + 1, f"At {width}px the two figures' tops: {tops}"
             if browser == "chrome" and width == 1440:
                 # Corrections by cause and database gives a line per database wherever its table does not fit (here
                 # its figure is made 300px wide, as more databases or a wider font would make the table too wide).
@@ -1965,10 +1973,11 @@ STATS_INSIGHTS_JS = """
         ? bars.reduce((sum, tip) => { const m = tip.match(/: ([\\d,]+) (?:pairs? of papers|panels?|series) \\(/); return sum + (m ? Number(m[1].replace(/,/g, '')) : 0); }, 0)
         : rows.reduce((sum, count) => sum + count, 0), bars: bars.length };
     }
-    const typical = Object.fromEntries([...document.querySelectorAll('[data-figure="typical"] tr[data-stat-key]')].map((row) => [row.dataset.statKey, Number(row.dataset.count)]));
-    // Bar-Even et al.'s kcat/Km stands in the Median column, its right edge under CatLog's median kcat/Km (when shown).
-    const refCell = document.querySelector('[data-figure="typical"] .stats-row-reference td');
-    const ownCell = document.querySelector('[data-figure="typical"] tr[data-stat-key="typical_kcat_over_km"] td');
+    const typical = Object.fromEntries([...document.querySelectorAll('[data-figure="typical"] [data-stat-key]')].map((row) => [row.dataset.statKey, Number(row.dataset.count)]));
+    // Bar-Even et al.'s kcat/Km stands in the Median column of the kcat/Km panel (round 17: a dot plot), its right edge
+    // under CatLog's median kcat/Km (when shown).
+    const refCell = document.querySelector('[data-figure="typical"] .stats-ridge-reference .stats-ridge-value');
+    const ownCell = document.querySelector('[data-figure="typical"] [data-stat-key="typical_kcat_over_km"] .stats-ridge-value');
     const referenceGap = refCell && ownCell && box(refCell).width && box(ownCell).width ? Math.abs(box(refCell).right - box(ownCell).right) : null;
     const where = Object.fromEntries(['between-papers', 'substrate-range', 'km-size', 'kcat-temperature', 'typical'].map((key) => {
       const section = document.querySelector(`[data-figure="${key}"]`);
@@ -6506,7 +6515,7 @@ def check(driver, browser, url):
         assert [int(number) for number in numbered] == list(range(1, len(numbered) + 1)), parts
         assert labels.count("S") <= 1 and ("S" not in labels or labels[-1] == "S"), parts
         check_stats_more(driver, browser, overview, total)
-        forms = stat_rows(".stats-section[aria-labelledby='statsFormTitle'] tr[data-stat-key]")
+        forms = stat_rows(".stats-section[aria-labelledby='statsFormTitle'] [data-multiple='forms'] [data-stat-key]")
         assert sum(forms.values()) == total and forms == {key: overview["enzyme_form"][key] for key in ("wild", "variant", "not_stated")}
         classes = stat_rows(".stats-section[aria-labelledby='statsClassesTitle'] [data-stat-key]")
         assert classes == {f"ec_{item['class']}": item["count"] for item in overview["ec_classes"]}
@@ -6516,7 +6525,8 @@ def check(driver, browser, url):
         if isinstance(none, int) and isinstance(several, int) and classes:
             extra = sum(classes.values()) - (total - none)
             assert several <= extra <= 6 * several, (sum(classes.values()), none, several, total)
-        cautions = stat_rows(".stats-section[aria-labelledby='statsCautionsTitle'] tr[data-stat-key]")
+        # (round 17: a bar per caution, No cautions a link in the caption)
+        cautions = stat_rows(".stats-section[aria-labelledby='statsCautionsTitle'] [data-stat-key]")
         # Figure 2: each record once under its main source (its bars add up to all records).
         main_rows = {row.get_attribute("data-row"): int(row.get_attribute("data-count"))
                      for row in driver.find_elements(By.CSS_SELECTOR, ".stats-section[aria-labelledby='statsSourcesTitle'] .stats-chart-row")}
@@ -6703,9 +6713,9 @@ def check(driver, browser, url):
     # the earlier paper extractions.
     # (the supplement is opened first: a closed supplement's links cannot be clicked)
     open_stats_supplement(driver)
-    for selector in (".stats-section[aria-labelledby='statsOrganismsTitle'] tr[data-stat-key]",
-                     ".stats-section[aria-labelledby='statsV2OrganismsTitle'] tr[data-stat-key]",
-                     ".stats-section[aria-labelledby='statsV2EcTitle'] tr[data-stat-key]",
+    for selector in (".stats-section[aria-labelledby='statsOrganismsTitle'] [data-multiple='all'] [data-stat-key]",
+                     ".stats-section[aria-labelledby='statsOrganismsTitle'] [data-multiple='paper'] [data-stat-key]",
+                     ".stats-section[aria-labelledby='statsEcTitle'] [data-multiple='paper'] [data-stat-key]",
                      "[data-figure='versions'] .stats-chart-row[data-row='v1']",
                      ".stats-by-database li[data-stat-key='source_brenda']",
                      ".stats-by-database li[data-stat-key='source_catlog']",

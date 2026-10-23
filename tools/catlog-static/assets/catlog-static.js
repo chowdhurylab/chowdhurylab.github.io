@@ -4504,6 +4504,40 @@
       }).join("")}</tbody></table>`;
   }
 
+  // Round 17 (the user, 2026-10-23: "way too many tables there that you can convert to figures"): a list of counts as a
+  // bar chart, the form of the supplement's former tables. Per row its name (a Browse link where one filter opens exactly
+  // those records, with data-stat-key and data-count for the page's own checks), a muted line under it (`note`) or under
+  // its bar (`aside`) when it has one, a bar in one colour (`part`, or the row's own) and its count and share of `total` beside it; a `sub` row stands
+  // indented under the row before it. `percent`: the axis runs from 0 to 100% of `total` (a field most records have),
+  // else to the largest count. A count above 0 is drawn at least 2px wide (the stylesheet), so a small one reads as a mark.
+  function statsListChart({ key, items, total, part = "neutral", percent = false, valueHeads = ["Records", "Share"] }) {
+    const shown = items.filter((item) => Number.isInteger(item?.count) && item.count >= 0);
+    if (!shown.length || !(total > 0)) return "";
+    const rows = shown.map((item) => {
+      const share = statsShare(item.count, total);
+      return {
+        key: item.value, count: item.count,
+        label: `<span class="stats-list-name${item.sub ? " is-sub" : ""}" data-stat-key="${escapeHtml(item.value)}" data-count="${item.count}">${statsNameHtml(item)}</span>`,
+        note: item.noteHtml || (item.note ? escapeHtml(item.note) : ""),
+        // (a muted line under the bar, hidden from screen readers: its words end the row's text)
+        aside: item.asideHtml || (item.aside ? escapeHtml(item.aside) : ""),
+        segments: [{ part: item.part || part, count: item.count, title: `${item.label}: ${formatInteger(item.count)} (${share})` }],
+        parts: [{ text: formatInteger(item.count) }, { text: share, className: "stats-muted" }],
+        text: `${item.label}: ${formatInteger(item.count)} (${share}).${item.aside ? ` ${item.aside}` : ""}`,
+      };
+    });
+    const { max, step } = percent ? { max: total, step: total / 4 } : statsNiceScale(Math.max(1, ...shown.map((item) => item.count)));
+    return statsBarChart({ key, rows, scale: max, step, axis: percent ? statsAxis(100, 25, { percent: true }) : statsAxis(max, step), valueHeads });
+  }
+
+  // Small multiples (round 17): panels side by side where the figure has room (each at least 300px), else one under
+  // another, each with a title line (its name, then a muted count) over its chart.
+  function statsPanelsHtml(panels) {
+    // (data-multiple, not data-panel: the page's checks count the insight figures' data-panel panels)
+    return `<div class="stats-panels">${panels.map((panel) => `<div class="stats-panel" data-multiple="${escapeHtml(panel.key)}">
+      <p class="stats-panel-title"><span>${panel.title}</span>${panel.count ? ` <span class="stats-panel-count">${panel.count}</span>` : ""}</p>${panel.body}</div>`).join("")}</div>`;
+  }
+
   // The hash-bound field counts of one review group (summary.review_details), or null.
   function statsCohortData(cohort, total) {
     const audit = manifest.summary?.review_details;
@@ -5524,7 +5558,9 @@
       `<div><dt>Variants</dt><dd>${formatInteger(variants)}${papers ? `<small>from ${formatInteger(papers)} ${papers === 1 ? "paper" : "papers"}</small>` : ""}</dd></div>`,
       `<div><dt>Commonest new residue</dt><dd>${STATS_RESIDUE_NAMES[commonest.residue]} <span class="stats-muted">(${escapeHtml(statsShare(commonest.count, variants))})</span><small>${variantWord(commonest.count)}</small></dd></div>`,
     ].join("");
-    const topRows = top.map((item) => `<tr><th scope="row">${escapeHtml(`${STATS_RESIDUE_NAMES[item.from]} → ${STATS_RESIDUE_NAMES[item.to]}`)}</th><td class="stats-num">${formatInteger(item.count)}</td><td class="stats-num stats-muted">${escapeHtml(statsShare(item.count, variants))}</td></tr>`).join("");
+    // (round 17: the commonest substitutions as bars, the small table they were)
+    const topChart = statsListChart({ key: "substitutions-top", total: variants, valueHeads: ["Variants", "Share"],
+      items: top.map((item) => ({ value: `substitution_${item.from}${item.to}`, label: `${STATS_RESIDUE_NAMES[item.from]} → ${STATS_RESIDUE_NAMES[item.to]}`, count: item.count })) });
     const description = `Single substitutions of ${variantWord(variants)} read from the paper, by wild-type and new residue; most often to ${STATS_RESIDUE_NAMES[commonest.residue]} (${statsShare(commonest.count, variants)}). Commonest: ${top.map((item) => `${pair(item.from, item.to)} ${formatInteger(item.count)}`).join("; ")}.`;
     return {
       id: "statsSubstitutionsTitle", key: "substitutions", title: "Single substitutions", wide: true,
@@ -5540,11 +5576,77 @@
             </div>
           </div>
           <div class="stats-map-side"><dl class="stats-map-facts">${facts}</dl>
-            <table class="stats-table stats-subs-top"><thead><tr><th scope="col">Substitution</th><th scope="col" class="stats-num">Variants</th><th scope="col" class="stats-num">Share</th></tr></thead><tbody>${topRows}</tbody></table></div>
+            <p class="stats-panel-title stats-subs-top-title">Commonest substitutions</p>${topChart}</div>
         </div>`,
       caption: "Variants read from the paper with one substitution, by wild-type residue (rows) and new residue (columns).",
       rules: "A variant is one paper’s mutation of one enzyme and counts once, whatever its substrates. Only substitutions written as a residue, its position and another residue (H57A) are counted.",
     };
+  }
+
+  // What the records contain (round 17: bars on a 0-100% axis of all records, the table it was): kcat, Km and kcat/Km
+  // (each a Browse filter), the protein sequence with its wild-type and variant kinds under it, the substrate SMILES,
+  // the temperature and pH, and both of them. Null without any count.
+  function statsContentsFigure(coverage, download, conditions, total) {
+    const field = (value, label, count, extra = {}) => ({ value, label, count: statsCount(count, total), ...extra });
+    const items = [
+      field("kcat", "kcat", coverage.with_kcat, { labelHtml: "<i>k</i><sub>cat</sub>", params: { metric: "kcat" } }),
+      field("km", "Km", coverage.with_km, { labelHtml: "<i>K</i><sub>m</sub>", params: { metric: "km" } }),
+      field("kcat_over_km", "kcat/Km", coverage.with_kcat_over_km, { labelHtml: "<i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub>", params: { metric: "kcat_over_km" } }),
+      field("sequence", "Protein sequence", download.sequence),
+      field("wild_type_sequence", "Wild-type sequence", download.wild_type_sequence, { sub: true }),
+      field("variant_sequence", "Variant sequence", download.variant_sequence, { sub: true }),
+      field("smiles", "Substrate SMILES", download.smiles),
+      field("temperature", "Temperature", conditions.temperature),
+      field("ph", "pH", conditions.ph),
+      field("temperature_ph", "Both temperature and pH", conditions.both, { sub: true }),
+    ];
+    // (a kind of sequence or both conditions only under the field it belongs to)
+    const shown = items.filter((item, index) => item.count !== null
+      && (!item.sub || items.slice(0, index).reverse().find((other) => !other.sub)?.count !== null));
+    if (!shown.some((item) => !item.sub)) return null;
+    const calculated = statsCount(coverage.calculated_kcat_over_km, coverage.with_kcat_over_km);
+    const sequenceKinds = shown.some((item) => item.value.endsWith("_sequence"));
+    return {
+      id: "statsContentsTitle", key: "contents", title: "What the records contain",
+      body: statsListChart({ key: "contents", items: shown, total, percent: true }),
+      caption: "Records with each value or field; most records have several.",
+      rules: [
+        calculated ? `${formatInteger(calculated)} kcat/Km values were calculated as kcat ÷ Km (marked calc. in the table).` : "",
+        sequenceKinds ? "A variant record can have both a wild-type and a variant sequence." : "",
+      ].filter(Boolean).join(" "),
+    };
+  }
+
+  // The most common organisms and EC numbers (round 17: one figure each, the two tables of each that it was): a panel of
+  // all records in --bar-neutral and one of the records read from the paper in Read from the paper's cyan, each the ten
+  // commonest with their counts and shares, the name a link to those records in Browse. Strains count with their species;
+  // an EC number stands with the enzyme name its records use most.
+  function statsTopFigures(overview, total, fromPaper) {
+    const top = (list, max, toItem) => (Array.isArray(list) ? list : []).filter((item) => statsCount(item?.count, max) !== null).map(toItem);
+    const organismItem = (extra) => (item, index) => ({ value: `organism_${extra ? "v2_" : ""}${index}`, label: String(item.name || ""),
+      labelHtml: `<i>${escapeHtml(item.name || "")}</i>`, count: item.count, params: { ...(extra || {}), organism: String(item.name || "") } });
+    // An EC number carries no class colour: its bars are neutral or Read from the paper's colour, and a class colour beside
+    // them would mean a second thing in one view.
+    const ecItem = (extra) => (item) => ({ value: `ec_${extra ? "v2_" : ""}${item.ec}`, label: `${item.ec} ${item.name || ""}`.trim(),
+      labelHtml: `<span class="stats-ec-number">${escapeHtml(item.ec)}</span> ${escapeHtml(item.name || "")}`, count: item.count, params: { ...(extra || {}), ec: String(item.ec || "") } });
+    const figure = ({ id, key, title, all, paper, caption }) => {
+      if (!all.length && !paper.length) return null;
+      const panels = [
+        all.length ? { key: "all", title: "All records", count: formatInteger(total), body: statsListChart({ key: `${key}-all`, items: all, total }) } : null,
+        paper.length ? { key: "paper", title: escapeHtml(SOURCE_CATLOG_LABEL), count: formatInteger(fromPaper), body: statsListChart({ key: `${key}-paper`, items: paper, total: fromPaper, part: "catlog" }) } : null,
+      ].filter(Boolean);
+      return { id, key, title, wide: true, body: statsPanelsHtml(panels), caption };
+    };
+    return [
+      figure({ id: "statsOrganismsTitle", key: "organisms", title: "Most common organisms",
+        all: top(overview?.top_organisms, total, organismItem(null)),
+        paper: fromPaper ? top(overview?.top_organisms_from_paper, fromPaper, organismItem({ source: "paper" })) : [],
+        caption: "The organisms with the most records, among all records and among those read from the paper; strains count with their species." }),
+      figure({ id: "statsEcTitle", key: "ec-numbers", title: "Most common EC numbers",
+        all: top(overview?.top_ec, total, ecItem(null)),
+        paper: fromPaper ? top(overview?.top_ec_from_paper, fromPaper, ecItem({ source: "paper" })) : [],
+        caption: "The EC numbers with the most records, among all records and among those read from the paper, each named as its records most often name it." }),
+    ].filter(Boolean);
   }
 
   // Kinds of variant (from_paper_insights.variant_kinds, round 14): the variant records read from the paper by their kind
@@ -5552,16 +5654,31 @@
   const STATS_VARIANT_KINDS = [["substitution", "One substitution"], ["multi_substitution", "Several substitutions"], ["deletion", "Deletion"],
     ["insertion", "Insertion"], ["truncation", "Truncation"], ["other", "Other or not specified"]];
 
-  function statsVariantKindsTable(kinds) {
+  // Wild type and variants (round 17: one figure, the two tables it was): a panel of all records by enzyme form, as
+  // Browse tags it, and one of the variant records read from the paper by their kind of change. Each panel only when
+  // its counts add up to its records.
+  function statsFormsFigure(form, total, kinds) {
+    const forms = [
+      { value: "wild", label: "Wild type", count: statsCount(form?.wild, total), params: { variant: "wild" } },
+      { value: "variant", label: "Variant", count: statsCount(form?.variant, total), params: { variant: "variant" }, note: "A mutation is named, or the source marks the enzyme as not wild type." },
+      { value: "not_stated", label: "Not stated", count: statsCount(form?.not_stated, total) },
+    ];
+    const formOk = total > 0 && forms.every((item) => item.count !== null) && forms.reduce((sum, item) => sum + item.count, 0) === total;
     const records = statsCount(kinds?.records);
-    if (!records || !kinds.kinds || typeof kinds.kinds !== "object") return null;
-    const items = STATS_VARIANT_KINDS.map(([key, label]) => ({ value: `variant_${key}`, label, count: statsCount(kinds.kinds[key], records) }));
-    if (items.some((item) => item.count === null) || items.reduce((sum, item) => sum + item.count, 0) !== records) return null;
-    const recordsLink = `<a class="stats-link" href="${escapeHtml(statsBrowseHref({ source: "paper", variant: "variant" }))}">${formatInteger(records)} variant ${records === 1 ? "record" : "records"}</a>`;
+    const changes = records && kinds.kinds && typeof kinds.kinds === "object"
+      ? STATS_VARIANT_KINDS.map(([key, label]) => ({ value: `variant_${key}`, label, count: statsCount(kinds.kinds[key], records) })) : [];
+    const changesOk = changes.length && changes.every((item) => item.count !== null) && changes.reduce((sum, item) => sum + item.count, 0) === records;
+    if (!formOk && !changesOk) return null;
+    const recordsLink = changesOk ? `<a class="stats-link" href="${escapeHtml(statsBrowseHref({ source: "paper", variant: "variant" }))}">${formatInteger(records)}</a>` : "";
+    const panels = [
+      formOk ? { key: "forms", title: "All records by enzyme form", count: formatInteger(total), body: statsListChart({ key: "forms", items: forms, total, percent: true }) } : null,
+      changesOk ? { key: "variant-kinds", title: "Variant records read from the paper, by change", count: recordsLink,
+        body: statsListChart({ key: "variant-kinds", items: changes.filter((item) => item.count), total: records, part: "catlog", percent: true }) } : null,
+    ].filter(Boolean);
     return {
-      id: "statsVariantKindsTitle", key: "variant-kinds", title: "Kinds of variant", kind: "Table",
-      body: statsTable(items.filter((item) => item.count), records, { head: "Change" }),
-      caption: `The ${recordsLink} read from the paper, by the kind of change.`,
+      id: "statsFormTitle", key: "forms", title: "Wild type and variants", wide: panels.length > 1, body: statsPanelsHtml(panels),
+      caption: panels.length > 1 ? "All records by enzyme form, and the variant records read from the paper by the kind of change."
+        : formOk ? "All records by enzyme form, as Browse tags it." : "The variant records read from the paper by the kind of change.",
     };
   }
 
@@ -5573,7 +5690,7 @@
     return String(unit).replace(/(^| )u/g, "$1µ").replace(/-1/g, "⁻¹");
   }
 
-  function statsPrintedUnitsTable(units) {
+  function statsPrintedUnitsFigure(units) {
     const groups = [];
     for (const metric of STATS_METRICS) {
       const entry = units?.[metric.key];
@@ -5587,15 +5704,32 @@
       groups.push({ metric, values, rows: [...list.map(([unit, count]) => ({ unit: statsUnitWords(unit), count })), ...(other ? [{ unit: "Other", count: other }] : [])] });
     }
     if (!groups.length) return null;
-    const body = `<table class="stats-table stats-units-table">
-      <thead><tr><th scope="col">Unit as printed</th><th scope="col" class="stats-num">Values</th><th scope="col" class="stats-num">Share</th></tr></thead>
-      ${groups.map((group) => `<tbody><tr class="stats-row-group" data-stat-key="units_${group.metric.key}" data-count="${group.values}"><th scope="row"><span class="stats-name"><span>${group.metric.html} <span class="stats-muted nowrap">(stored in ${escapeHtml(group.metric.unit)})</span></span></span></th><td class="stats-num">${formatInteger(group.values)}</td><td class="stats-num stats-muted"></td></tr>
-        ${group.rows.map((row) => `<tr class="stats-row-sub" data-stat-key="units_${group.metric.key}_${escapeHtml(row.unit)}" data-count="${row.count}"><th scope="row"><span class="stats-name"><span>${escapeHtml(row.unit)}</span></span></th>
-          <td class="stats-num">${formatInteger(row.count)}</td><td class="stats-num stats-muted">${escapeHtml(statsShare(row.count, group.values))}</td></tr>`).join("")}</tbody>`).join("")}</table>`;
+    // (round 17: small multiples, a panel per parameter, where it was one table of three blocks)
+    const panels = groups.map((group) => ({ key: `units-${group.metric.key}`,
+      title: `${group.metric.html} <span class="stats-muted nowrap">stored in ${escapeHtml(group.metric.unit)}</span>`, count: `${formatInteger(group.values)} values`,
+      body: statsListChart({ key: `units-${group.metric.key}`, total: group.values, part: "catlog", percent: true, valueHeads: ["Values", "Share"],
+        items: group.rows.map((row) => ({ value: `units_${group.metric.key}_${row.unit}`, label: row.unit, count: row.count })) }) }));
     return {
-      id: "statsUnitsTitle", key: "printed-units", title: "Units as printed", kind: "Table", body,
+      id: "statsUnitsTitle", key: "printed-units", title: "Units as printed", wide: true, body: statsPanelsHtml(panels),
       caption: "Values read from the paper by the unit printed with them; code converts each to the unit stored.",
       rules: "A power of ten in the unit (× 10³ s⁻¹) is set aside, and a lower-case m printed alone is read as molar. Other is a unit not read as one of these. Shares are of each parameter’s values.",
+    };
+  }
+
+  // Cautions on values (round 17: bars, the table it was): the records with each caution, named as the Cautions filter
+  // names it (each a link to those records); No cautions, most records, is said in the caption, so its bar does not
+  // make the others slivers. Null when a count is missing.
+  function statsCautionsFigure(caution, total) {
+    const items = cautionFilters.map((item) => ({ value: `caution_${item.value}`, label: item.label, labelHtml: item.labelHtml,
+      count: statsCount(caution?.[item.value], total), params: { caution: item.value } }));
+    if (!total || items.some((item) => item.count === null)) return null;
+    const none = items.find((item) => item.value === "caution_none");
+    const noneHtml = none ? `<a class="stats-link" href="${escapeHtml(statsBrowseHref(none.params))}" data-stat-key="${none.value}" data-count="${none.count}">${formatInteger(none.count)} ${none.count === 1 ? "record" : "records"}</a> (${escapeHtml(statsShare(none.count, total))})` : "";
+    return {
+      id: "statsCautionsTitle", key: "cautions", title: "Cautions on values",
+      body: statsListChart({ key: "cautions", items: items.filter((item) => item !== none), total, part: "caution" }),
+      caption: `Records with each caution, a mark on a value that may be wrong${noneHtml ? `; ${noneHtml} carry none` : ""}.`,
+      rules: "One record can carry several cautions.",
     };
   }
 
@@ -5911,31 +6045,51 @@
   // (the name's hyphen is a non-breaking one, U+2011, so a line never ends at "Bar-")
   const STATS_BAR_EVEN = { href: "https://doi.org/10.1021/bi2002289", name: "Bar\u2011Even et al. 2011", log10KcatOverKm: 5 };
 
-  function statsTypicalTable(typical) {
-    const rows = STATS_METRICS.filter((metric) => {
+  // (round 17, the user: tables to figures) a dot plot, a panel per parameter on its own log axis of whole decades: the
+  // median (dot) and middle 80% (line, the 10th to the 90th percentile) of the wild-type records read from the paper, as
+  // Values by enzyme class draws them, and on the kcat/Km panel the average enzyme of Bar-Even et al. 2011 as an open
+  // diamond at about 10⁵ M⁻¹ s⁻¹ (10² mM⁻¹ s⁻¹), its source a link. Each panel names its records' papers and enzymes.
+  function statsTypicalFigure(typical) {
+    const metrics = STATS_METRICS.filter((metric) => {
       const item = typical?.[metric.key];
       const n = statsCount(item?.n);
       return n && statsCount(item.papers, n) && statsCount(item.enzymes, n) && statsSpreadHolds(item, "p10", "p90");
     });
-    if (!rows.length) return null;
-    const cell = (value) => statsRangeNumber(value, { html: true, figures: 2 });
-    // Three columns, so the table fits a phone: each parameter's records, papers and enzymes on a line under its name. The
-    // reference value stands in the Median column, right under CatLog's median kcat/Km in M⁻¹ s⁻¹, with no 10–90%.
-    const body = `<table class="stats-table stats-typical-table">
-      <thead><tr><th scope="col">Parameter</th><th scope="col" class="stats-num">Median</th><th scope="col" class="stats-num">10–90%</th></tr></thead>
-      <tbody>${rows.map((metric) => {
-        const item = typical[metric.key];
-        const molar = metric.key === "kcat_over_km" ? `<small>${cell(item.median * 1000)}\u00a0M⁻¹\u00a0s⁻¹</small>` : "";
-        const counts = statsUsedText(item.n, item.papers, item.enzymes);
-        return `<tr data-stat-key="typical_${metric.key}" data-count="${item.n}"><th scope="row">${metric.html} <span class="stats-muted nowrap">(${escapeHtml(metric.unit)})</span><small>${counts}</small></th>
-          <td class="stats-num">${cell(item.median)}${molar}</td><td class="stats-num stats-muted">${cell(item.p10)}–${cell(item.p90)}</td></tr>`;
-      }).join("")}
-        <tr class="stats-row-reference"><th scope="row"><a class="stats-ref-link" href="${escapeHtml(STATS_BAR_EVEN.href)}" target="_blank" rel="noreferrer">${escapeHtml(STATS_BAR_EVEN.name)}</a>, average enzyme<small>its abstract’s <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub></small></th>
-          <td class="stats-num">about ${statsPowerOfTen(STATS_BAR_EVEN.log10KcatOverKm)}\u00a0M⁻¹\u00a0s⁻¹</td><td class="stats-num stats-muted">${EMPTY_VALUE}</td></tr></tbody></table>`;
+    if (!metrics.length) return null;
+    const reference = 10 ** (STATS_BAR_EVEN.log10KcatOverKm - 3);
+    const referenceText = `${STATS_BAR_EVEN.name}, average enzyme: about ${statsPowerOfTen(STATS_BAR_EVEN.log10KcatOverKm)} M⁻¹ s⁻¹ (${statsPowerOfTen(STATS_BAR_EVEN.log10KcatOverKm - 3)} mM⁻¹ s⁻¹)`;
+    const panels = metrics.map((metric) => {
+      const item = typical[metric.key];
+      const ref = metric.key === "kcat_over_km" ? reference : null;
+      const from = Math.floor(Math.log10(Math.min(item.p10, ref ?? Infinity)) + 1e-9);
+      const to = Math.max(Math.ceil(Math.log10(Math.max(item.p90, ref ?? 0)) - 1e-9), from + 2);
+      const position = (value) => +Math.max(0, Math.min(100, (Math.log10(value) - from) / (to - from) * 100)).toFixed(3);
+      const words = STATS_METRIC_WORDS[metric.key];
+      const tip = `${words}, wild type: median ${statsRangeNumber(item.median, { figures: 2 })} ${metric.unit}, middle 80% ${statsRangeNumber(item.p10, { figures: 2 })} to ${statsRangeNumber(item.p90, { figures: 2 })}; ${statsUsedText(item.n, item.papers, item.enzymes)}`;
+      const rows = [`<li class="stats-ridge-row" data-stat-key="typical_${metric.key}" data-count="${item.n}" data-tip="${escapeHtml(tip)}">
+          <span class="stats-ridge-label">CatLog</span>
+          <span class="stats-ridge-plot" role="img" aria-label="${escapeHtml(tip)}"><span class="stats-ridge-range" style="left:${position(item.p10)}%;width:${+Math.max(position(item.p90) - position(item.p10), 0.5).toFixed(3)}%"></span><i class="stats-ridge-median" style="left:${position(item.median)}%"></i></span>
+          <span class="stats-ridge-value">${statsRangeNumber(item.median, { html: true, figures: 2 })}</span>
+          <span class="stats-ridge-n">${formatInteger(item.n)}</span></li>`];
+      if (ref) {
+        rows.push(`<li class="stats-ridge-row stats-ridge-reference" data-tip="${escapeHtml(referenceText)}">
+          <span class="stats-ridge-label"><a class="stats-ref-link" href="${escapeHtml(STATS_BAR_EVEN.href)}" target="_blank" rel="noreferrer">${escapeHtml(STATS_BAR_EVEN.name)}</a></span>
+          <span class="stats-ridge-plot" role="img" aria-label="${escapeHtml(referenceText)}"><i class="stats-ridge-diamond" style="left:${position(ref)}%"></i></span>
+          <span class="stats-ridge-value">≈ ${statsPowerOfTen(STATS_BAR_EVEN.log10KcatOverKm - 3)}</span>
+          <span class="stats-ridge-n" aria-hidden="true"></span></li>`);
+      }
+      return `<div class="stats-ridges stats-medians stats-typical" data-typical="${metric.key}" data-count="${item.n}" style="--ridge-label:${ref ? "max-content" : "minmax(0,5em)"};--ridge-n:calc(${formatInteger(item.n).length}ch + 4px)">
+        <p class="stats-ridges-title"><span>${metric.html} <span class="stats-muted nowrap">(${escapeHtml(metric.unit)})</span></span><span class="stats-ridges-head">Median</span><span class="stats-ridges-head">n</span></p>
+        <ol class="stats-ridge-rows">${rows.join("")}</ol>
+        <div class="stats-ridge-axis" aria-hidden="true"><span></span><span class="stats-ridge-ticks">${statsDecadeTicks(from, to)}</span><span></span><span></span></div>
+        <p class="stats-range-count">${escapeHtml(`${statsNoun(item.papers, "paper")}, ${statsNoun(item.enzymes, "enzyme")}`)}</p>
+      </div>`;
+    });
     return {
-      id: "statsTypicalTitle", key: "typical", title: "The typical wild-type enzyme", kind: "Table", body,
-      caption: escapeHtml(`Medians of the wild-type records read from the paper, each row with its records, papers and enzymes, beside the average enzyme of ${STATS_BAR_EVEN.name}; CatLog counts every substrate and assay a paper reports, not one value per enzyme.`),
-      rules: `Each wild-type record with the parameter in the unit CatLog stores counts once, a kcat/Km calculated as kcat ÷ Km included; 10–90% is the range from the 10th to the 90th percentile. ${STATS_BAR_EVEN.name} (Biochemistry 50:4402–4410) give the average enzyme’s kcat/Km as about ${statsPowerOfTen(STATS_BAR_EVEN.log10KcatOverKm)} M⁻¹ s⁻¹ (${statsPowerOfTen(STATS_BAR_EVEN.log10KcatOverKm - 3)} mM⁻¹ s⁻¹).`,
+      id: "statsTypicalTitle", key: "typical", title: "The typical wild-type enzyme", wide: true,
+      body: `<div class="stats-ridge-panels stats-typical-panels">${panels.join("")}</div>`,
+      caption: escapeHtml(`Median and middle 80% of each parameter over the wild-type records read from the paper, beside the average enzyme of ${STATS_BAR_EVEN.name}.`),
+      rules: `Each wild-type record with the parameter in the unit CatLog stores counts once, a kcat/Km calculated as kcat ÷ Km included; CatLog counts every substrate and assay a paper reports, not one value per enzyme. The middle 80% runs from the 10th to the 90th percentile. ${STATS_BAR_EVEN.name} (Biochemistry 50:4402–4410) give the average enzyme’s kcat/Km as about ${statsPowerOfTen(STATS_BAR_EVEN.log10KcatOverKm)} M⁻¹ s⁻¹ (${statsPowerOfTen(STATS_BAR_EVEN.log10KcatOverKm - 3)} mM⁻¹ s⁻¹), the open diamond.`,
     };
   }
 
@@ -6566,9 +6720,10 @@
     return text ? `<p class="stats-part-lead" data-lead="review">${metricWordsHtml(escapeHtml(text))}</p>` : "";
   }
 
-  // Supplement, Quality: the review's flags by kind (values missing, and the other disagreements, most first), with what
-  // CatLog has read since of the values reviewers named. Null without kinds or missing values.
-  function statsReviewKindsTable(overview) {
+  // Supplement, Quality: the review's flags by kind (values missing, and the other disagreements, most first, under their
+  // total), with what CatLog has read since of the values reviewers named, as bars (round 17). Null without kinds or
+  // missing values.
+  function statsReviewKindsFigure(overview) {
     const quality = overview?.quality || {};
     const review = reviewFacts(quality.review?.v1);
     if (!review || (review.missing === null && !review.kinds.length)) return null;
@@ -6576,45 +6731,54 @@
     const has = stated ? statsCount(quality.agreement.stated_values_catlog_has, stated) : null;
     const items = [
       ...(review.missing !== null ? [{ value: "missing", label: "Value missing", count: review.missing,
-        note: `The paper prints a value the entry lacked, most often the kcat${has !== null ? `; CatLog has since read ${formatInteger(has)} of the ${formatInteger(stated)} values the reviewers named` : ""}.` }] : []),
-      ...(review.kinds.length ? [{ value: "other", label: "Other disagreement", count: review.other, group: true },
+        // (round 17: a short line under the bar; the flag's meaning is its name, the paper printing a value the record
+        // lacked)
+        aside: `Mostly the kcat${has !== null ? `; CatLog has since read ${formatInteger(has)} of the ${formatInteger(stated)} values named` : ""}.` }] : []),
+      ...(review.kinds.length ? [{ value: "other", label: "Other disagreement", count: review.other },
         ...review.kinds.map(([kind, count]) => ({ value: `kind_${String(kind).trim()}`, label: String(kind).trim().replace(/^./, (letter) => letter.toUpperCase()), count, sub: true }))] : []),
     ];
-    return { id: "statsReviewKindsTitle", key: "review-kinds", title: "Human review by kind", kind: "Table",
-      body: metricWordsHtml(statsTable(items, review.entries, { scale: Math.max(...items.map((item) => item.count)), head: "Flag", countHead: "Entries" })),
+    for (const item of items) if (item.aside) item.asideHtml = metricWordsHtml(escapeHtml(item.aside));
+    return { id: "statsReviewKindsTitle", key: "review-kinds", title: "Human review by kind",
+      body: statsListChart({ key: "review-kinds", items, total: review.entries }),
       caption: review.unchecked
-        ? `Flags on the ${formatInteger(review.entries)} entries people could check against a paper; an entry can have several.`
-        : `Flags on the ${formatInteger(review.entries)} entries people checked; an entry can have several.` };
+        ? `Flags on the ${formatInteger(review.entries)} records people could check against a paper; a record can have several.`
+        : `Flags on the ${formatInteger(review.entries)} records people checked; a record can have several.` };
   }
 
-  // Supplement, Quality: the values reviewers approved, against CatLog's reading of the same papers (the match, by
-  // kind when the kinds add up). Null without the match.
-  function statsReviewMatchTable(overview) {
+  // Supplement, Quality: the values reviewers approved, against CatLog's reading of the same papers (the match, by kind
+  // when the kinds add up), as bars (round 17) in the colours those words mean on the page: the same value green
+  // (agreement with a second source), the same number in another form mint, the paper's own number CatLog read cyan, a
+  // CatLog error Disputed's red, still to check Not checked's slate hatching, left out neutral. Null without the match.
+  function statsReviewMatchFigure(overview) {
     const match = v2MatchFacts(overview?.quality || {});
     if (!match) return null;
     const checks = v2DifferChecks(match);
-    const kinds = [["differ_same_value_other_name", "Same value, another name"], ["differ_catlog_right", "The paper supports CatLog’s value"],
-      ["differ_rounding", "Rounding"]];
-    const items = [{ value: "same", label: "Same value", count: match.same },
-      ...(checks ? [...kinds.filter(([key]) => match.breakdown[key]).map(([key, label]) => ({ value: key, label, count: match.breakdown[key] })),
-        ...(match.wrong !== null ? [{ value: "catlog_wrong", label: "CatLog error", count: match.wrong }] : []),
+    const kinds = [["differ_same_value_other_name", "Same value, another name", "other-label"], ["differ_catlog_right", "The paper supports CatLog’s value", "catlog"],
+      ["differ_rounding", "Rounding", "rounding"]];
+    const items = [{ value: "same", label: "Same value", count: match.same, part: "same" },
+      ...(checks ? [...kinds.filter(([key]) => match.breakdown[key]).map(([key, label, part]) => ({ value: key, label, count: match.breakdown[key], part })),
+        ...(match.wrong !== null ? [{ value: "catlog_wrong", label: "CatLog error", count: match.wrong, part: "disputed" }] : []),
         ...(checks.notComparable ? [{ value: "not_comparable", label: "Left out by CatLog’s rules (reprint, Hill fit)", count: checks.notComparable }] : []),
-        ...(checks.toCheck ? [{ value: "to_check", label: "Still to check", count: checks.toCheck }] : [])]
+        ...(checks.toCheck ? [{ value: "to_check", label: "Still to check", count: checks.toCheck, part: "not-checked" }] : [])]
         : [{ value: "other", label: "Not the same", count: match.differ },
-          ...(match.wrong !== null ? [{ value: "catlog_wrong", label: "CatLog error", note: "Among those not the same.", count: match.wrong, sub: true }] : [])]),
+          ...(match.wrong !== null ? [{ value: "catlog_wrong", label: "CatLog error", note: "Among those not the same.", count: match.wrong, sub: true, part: "disputed" }] : [])]),
     ];
     // who checked the values that differ, and how many of how many (round 16b): "AI agents checked 323 of the 555 values
-    // that still differ against the paper; 232 are still to check."
+    // that still differ against the paper; 232 are still to check." (round 17: under the figure's number in How these
+    // numbers are counted, so the caption keeps one sentence)
     const checked = checks && match.differ
-      ? ` AI agents checked ${formatInteger(checks.checked)} of the ${formatInteger(match.differ)} values that still differ against the paper${checks.toCheck ? `; ${formatInteger(checks.toCheck)} ${checks.toCheck === 1 ? "is" : "are"} still to check` : ""}.` : "";
+      ? `AI agents checked ${formatInteger(checks.checked)} of the ${formatInteger(match.differ)} values that still differ against the paper${checks.toCheck ? `; ${formatInteger(checks.toCheck)} ${checks.toCheck === 1 ? "is" : "are"} still to check` : ""}.` : "";
     // The errors this comparison found in CatLog and fixed (fix pass after round 16b: "CatLog error 0" alone hid them):
     // "Comparing them found 68 wrong labels and 1 missed value in CatLog, all fixed since." (agreement.first_catlog_errors
-    // and its parts, fixed_after_comparison); "" when the parts do not add up.
+    // and its parts, fixed_after_comparison); "" when the parts do not add up. It stays in the caption: the figure's
+    // CatLog error bar would read 0 without it.
     const found = statsReviewErrorsFound(overview?.quality?.agreement);
-    return { id: "statsReviewMatchTitle", key: "review-match", title: "Approved values read from the paper again", kind: "Table",
-      body: statsTable(items, match.approved, { scale: match.approved, head: "CatLog’s value", countHead: "Values" }),
+    return { id: "statsReviewMatchTitle", key: "review-match", title: "Approved values read from the paper again",
+      body: statsListChart({ key: "review-match", items, total: match.approved, valueHeads: ["Values", "Share"] }),
       // (re-read is kept whole by the page's own pass over Stats, keepReRead)
-      caption: escapeHtml(`The ${formatInteger(match.approved)} values reviewers approved on ${match.papers !== null ? `${formatInteger(match.papers)} ${match.papers === 1 ? "paper" : "papers"}` : "papers"} CatLog has since read, as CatLog has them now.${found ? ` ${found}` : ""}${checked}`) };
+      // (one sentence, round 17: "Comparing them found ..." joins it after a semicolon)
+      caption: escapeHtml(`The ${formatInteger(match.approved)} values reviewers approved on ${match.papers !== null ? `${formatInteger(match.papers)} ${match.papers === 1 ? "paper" : "papers"}` : "papers"} CatLog has since read, as CatLog has them now${found ? `; ${found.charAt(0).toLowerCase()}${found.slice(1)}` : "."}`),
+      rules: checked };
   }
 
   function statsReviewErrorsFound(agreement) {
@@ -7397,7 +7561,9 @@
   // The figures and tables (by key) whose shares are of all records; every other share is of its own bar's, row's or
   // card's total, or of the total its caption names. The share columns of Figures 2-4 say their base in their heading
   // (a no-break space keeps "% accepted" on one line where a heading of several words wraps).
-  const STATS_SHARES_OF_ALL = new Set(["status", "contents", "forms", "organisms", "ec-numbers", "cautions"]);
+  // (round 17: the most common organisms and EC numbers and Wild type and variants are figures of two panels, each panel
+  // naming its own records, so they are not in this list)
+  const STATS_SHARES_OF_ALL = new Set(["status", "contents", "cautions"]);
   const STATS_HEAD_ACCEPTED = "%\u00a0accepted";
 
   // "Tables 1–4 and 7", "Tables S1–S4 and S9": numbers in order (a supplement's as "S3"), a run of three or more of one
@@ -7690,51 +7856,86 @@
       body: statsBarChart({ key: "db-sources", rows, legend: statsDatabaseLegend(STATS_DATABASE_KINDS), percent: true,
         axis: statsAxis(100, 25, { percent: true }), valueHeads: ["Values"],
         valueWidth: `calc(${Math.max(6, ...rows.map((row) => formatInteger(row.count).length))}ch + 8px)` }),
-      caption: `Each bar covers the values from papers that database lists.${statsCorrectionsQualifiers(comparison).caption}`,
-      rules: `A value counts for every database that lists its paper.${statsCorrectionsQualifiers(comparison).rule}`,
+      // (one sentence, round 17: the lower bound is said under the figure's number in How these numbers are counted)
+      caption: "Each bar covers the values from papers that database lists.",
+      rules: `A value counts for every database that lists its paper.${statsCorrectionsQualifiers(comparison).caption}${statsCorrectionsQualifiers(comparison).rule}`,
       // Why a database has no bar is said under the figure.
       after: none.text ? `<p class="stats-note">${escapeHtml(none.text)}</p>` : "",
     };
   }
 
-  // Table: per database, the values for which it lists a number for the same measurement (paired: same, corrects,
-  // differs), with the share the paper's number; then all values, each once (values.all, when its counts hold together).
-  // Shares on a base of 1,000 values.
-  function statsDatabasePairedTable(comparison, sources, values) {
+  // A percent axis for small shares (round 17's dot plot): the end and step of the first of these ends at or above the
+  // largest share, with its tick labels ("0.5%", "1%").
+  const STATS_PERCENT_ENDS = [[0.5, 0.1], [1, 0.25], [2, 0.5], [2.5, 0.5], [3, 1], [4, 1], [5, 1], [10, 2.5], [15, 5], [20, 5], [25, 5], [50, 10], [100, 25]];
+
+  function statsPercentAxis(largest) {
+    const [end, step] = STATS_PERCENT_ENDS.find(([value]) => value >= largest) || [100, 25];
+    const ticks = [];
+    for (let value = 0; value <= end + step / 2; value += step) ticks.push(+value.toFixed(4));
+    const label = (value) => `${value === 0 ? 0 : String(+value.toFixed(2))}%`;
+    return { end, step, html: `<div class="stats-chart-axis" aria-hidden="true"><span></span><span class="stats-axis-ticks">${ticks.map((value) => `<span style="left:${+(value / end * 100).toFixed(4)}%">${label(value)}</span>`).join("")}</span><span></span></div>` };
+  }
+
+  // Paired values by database (round 17: a dot plot, the table it was): per database, of the values for which it lists a
+  // number for the same value of the same record (paired: same, corrects, differs), the share CatLog's number corrects
+  // (a red dot) and the share that differs (a brown square) on one axis, with their counts beside them (a database's
+  // Corrects a link to those values in Browse when Browse can filter them); under the name its paired values and the
+  // share the same. Last, all values, each once (values.all, when its counts hold together), whose Differs links too.
+  // Shares, and so marks, only on 1,000 paired values or more.
+  function statsDatabasePairedFigure(comparison, sources, values) {
     const byDatabase = (comparison && statsFactorOnlyMoved(comparison)?.valuesByDatabase) || comparison?.values_by_database;
     if (!byDatabase || typeof byDatabase !== "object") return null;
     const kinds = { same: STATS_DATABASE_KINDS[0].kinds, corrects: STATS_DATABASE_KINDS[2].kinds, differs: STATS_DATABASE_KINDS[3].kinds };
-    const rows = [];
+    const lines = [];
     for (const source of sources) {
       const counts = statsCountMap(statsDatabaseEntry(byDatabase, source));
       if (!counts) continue;
-      const row = { source, same: statsSum(counts, kinds.same), corrects: statsSum(counts, kinds.corrects), differs: statsSum(counts, kinds.differs) };
-      row.paired = row.same + row.corrects + row.differs;
-      if (row.paired) rows.push(row);
+      const line = { key: `db_${source.key}`, name: source.display, nameHtml: statsDatabaseNameHtml(source.display), params: { dbsrc: source.key },
+        same: statsSum(counts, kinds.same), corrects: statsSum(counts, kinds.corrects), differs: statsSum(counts, kinds.differs) };
+      line.paired = line.same + line.corrects + line.differs;
+      if (line.paired) lines.push(line);
     }
-    if (!rows.length) return null;
+    if (!lines.length) return null;
     const [same, , corrects, differs] = values ? values.all : [0, 0, 0, 0];
-    const all = { same, corrects, differs, paired: same + corrects + differs };
-    const cell = (count, paired, params, label) => {
-      const href = count && params ? statsDatabaseHref(params) : "";
-      const number = href
-        ? `<a class="stats-link" href="${escapeHtml(href)}" aria-label="${escapeHtml(`${label}: ${formatInteger(count)}`)}">${formatInteger(count)}</a>`
-        : formatInteger(count);
-      return `<td class="stats-num" data-count="${count}">${number}${paired >= STATS_RATE_BASE ? `<small>${escapeHtml(statsShare(count, paired))}</small>` : ""}</td>`;
+    if (same + corrects + differs) lines.push({ key: "db_all", name: "All, each value once", nameHtml: "All, each value once", params: {}, same, corrects, differs, paired: same + corrects + differs });
+    const share = (count, paired) => (paired >= STATS_RATE_BASE ? count / paired * 100 : null);
+    const axis = statsPercentAxis(Math.max(0, ...lines.flatMap((line) => [share(line.corrects, line.paired) ?? 0, share(line.differs, line.paired) ?? 0])));
+    const count = (number, params, label) => {
+      const href = number && params ? statsDatabaseHref(params) : "";
+      return href ? `<a class="stats-link" href="${escapeHtml(href)}" aria-label="${escapeHtml(`${label}: ${formatInteger(number)}`)}">${formatInteger(number)}</a>` : formatInteger(number);
     };
-    // A database's Differs is not one Browse result (STATS_DATABASE_KINDS): only the All row's links.
-    const line = (row, name, params) => `<th scope="row">${name}<small class="stats-db-paired-note">${formatInteger(row.paired)} paired</small></th><td class="stats-num stats-db-paired-col" data-count="${row.paired}">${formatInteger(row.paired)}</td>
-      ${cell(row.same, row.paired, null, "")}${cell(row.corrects, row.paired, { db: "corrects", ...params }, `${params.dbsrc ? row.source.display : "All"}, corrects a value`)}${cell(row.differs, row.paired, params.dbsrc ? null : { db: "differs" }, "All, different number")}`;
+    const rows = lines.map((line) => {
+      const shares = line.paired >= STATS_RATE_BASE;
+      const sameText = shares ? ` · ${statsShare(line.same, line.paired)} same` : "";
+      return { key: line.key, count: line.paired, line,
+        label: `<span data-stat-key="${line.key}" data-count="${line.paired}">${line.nameHtml}</span>`,
+        note: escapeHtml(`${formatInteger(line.paired)} paired${sameText}`), segments: [],
+        // A database's Different number is not one Browse result (STATS_DATABASE_KINDS): only the All row's links.
+        parts: [{ text: formatInteger(line.corrects), html: count(line.corrects, { db: "corrects", ...line.params }, `${line.params.dbsrc ? line.name : "All"}, corrects a value`) },
+          { text: formatInteger(line.differs), html: count(line.differs, line.params.dbsrc ? null : { db: "differs" }, "All, different number") }],
+        text: `${line.name}: ${formatInteger(line.paired)} paired values; ${formatInteger(line.same)} the same, ${formatInteger(line.corrects)} corrected, ${formatInteger(line.differs)} different${shares ? ` (${statsShare(line.corrects, line.paired)} corrected, ${statsShare(line.differs, line.paired)} different)` : ""}.` };
+    });
+    let chart = statsBarChart({ key: "db-paired", rows, scale: axis.end, step: axis.step, axis: axis.html, valueHeads: ["Corrects", "Differs"],
+      legend: [] });
+    // the marks, in each row's track (statsBarChart draws the rows, their gridlines and value columns)
+    const track = '<span class="stats-track" aria-hidden="true">';
+    let index = 0;
+    chart = chart.split(track).map((piece, at) => {
+      if (!at) return piece;
+      const line = rows[index++].line;
+      const marks = line.paired >= STATS_RATE_BASE ? [["corrects", line.corrects, "Corrects a value"], ["differs", line.differs, "Different number"]]
+        .map(([part, number, name]) => `<i class="stats-dot stats-part-${part}" style="left:${+Math.min(100, number / line.paired * 100 / axis.end * 100).toFixed(4)}%" data-tip="${escapeHtml(`${line.name}, ${name}: ${formatInteger(number)} of ${formatInteger(line.paired)} paired (${statsShare(number, line.paired)})`)}"></i>`).join("") : "";
+      return `${track}${marks}${piece}`;
+    }).join("");
     const names = new Set(sources.map((source) => source.key));
     const derived = names.has("skid") && names.has("brenda") ? " (SKiD derives from BRENDA)" : "";
+    const legend = `<ul class="stats-legend stats-dot-legend"><li><i class="stats-dot-key stats-part-corrects" aria-hidden="true"></i><span>Corrects a value</span></li><li><i class="stats-dot-key stats-part-differs" aria-hidden="true"></i><span>Different number</span></li></ul>`;
     return {
-      id: "statsDbPairedTitle", key: "db-paired", title: "Paired values by database", kind: "Table",
-      body: `<table class="stats-table stats-db-table">
-        <thead><tr><th scope="col">Database</th><th scope="col" class="stats-num stats-db-paired-col">Paired</th><th scope="col" class="stats-num">Same</th><th scope="col" class="stats-num">Corrects</th><th scope="col" class="stats-num">Differs</th></tr></thead>
-        <tbody>${rows.map((row) => `<tr data-stat-key="db_${escapeHtml(row.source.key)}">${line(row, statsDatabaseNameHtml(row.source.display), { dbsrc: row.source.key })}</tr>`).join("")}</tbody>
-        ${all.paired ? `<tfoot><tr data-stat-key="db_all">${line(all, "All, each value once", {})}</tr></tfoot>` : ""}</table>`,
-      caption: `Paired: a database lists a number for the same measurement.${statsCorrectionsQualifiers(comparison).caption}`,
-      rules: `A number copied into several databases counts for each${derived}${all.paired ? ", but once in the All row" : ""}.${statsCorrectionsQualifiers(comparison).rule}`,
+      id: "statsDbPairedTitle", key: "db-paired", title: "Paired values by database",
+      body: legend + chart,
+      // (one sentence, round 17: the lower bound is said under the figure's number in How these numbers are counted)
+      caption: "Values a database lists a number for, by the share CatLog’s number corrects and the share that differs.",
+      rules: `Paired: a database lists a number for the same value of the same record. A number copied into several databases counts for each${derived}${same + corrects + differs ? ", but once in the All row" : ""}. Shares and their marks only on ${formatInteger(STATS_RATE_BASE)} paired values or more.${statsCorrectionsQualifiers(comparison).caption}${statsCorrectionsQualifiers(comparison).rule}`,
     };
   }
 
@@ -7826,7 +8027,13 @@
 
   // Table: the corrections by cause family and database (by_cause_database), with All counting each value once
   // (by_cause); non-zero cells open Browse at those values. On phones, a line per database.
-  function statsCauseDatabaseTable(comparison, sources) {
+  // Corrections by cause and database (round 17: a heat map, the table it was): a row per database that lists any of
+  // the papers, a column per cause family, each cell's count shaded grey on a log scale of the database cells (no meaning
+  // colour: a correction's red at a light tint is Not confirmed's salmon), then each database's total and the row All
+  // (each value once) as plain margins. Each count links to those values in Browse where Browse can filter them. Where
+  // the table is wider than its figure (a phone, a wide font) it gives a line per database instead
+  // (statsFitDatabaseTables, the stylesheet on phones).
+  function statsCauseDatabaseFigure(comparison, sources) {
     const corrections = comparison?.corrections;
     const found = statsCorrectionFamilies(corrections, comparison);
     const byCauseDatabase = corrections?.by_cause_database;
@@ -7835,37 +8042,44 @@
     if (!causes.every(([, map]) => statsCountMap(map))) return null;
     const byDatabase = statsCountMap(corrections.by_database) || {};
     const none = statsDatabasesListingNone(comparison, sources);
-    const columns = sources.filter((source) => !none.keys.has(source.key)).map((source) => {
+    const lines = sources.filter((source) => !none.keys.has(source.key)).map((source) => {
       const families = Object.fromEntries(DATABASE_CAUSE_FAMILIES.map((family) => [family.key,
         causes.reduce((sum, [cause, map]) => sum + (STATS_CAUSE_FAMILY[cause] === family.key ? statsDatabaseEntry(map, source) || 0 : 0), 0)]));
       const total = statsDatabaseEntry(byDatabase, source);
       return { source, families, total: statsCount(total) ?? Object.values(families).reduce((sum, count) => sum + count, 0) };
     });
-    if (!columns.some((column) => column.total)) return null;
+    if (!lines.some((line) => line.total)) return null;
     const all = { source: null, families: found.families, total: found.total };
     const link = (count, params, label) => {
       if (!count) return `<span class="stats-muted">0</span>`;
       const href = statsDatabaseHref({ db: "corrects", ...params });
       return href ? `<a class="stats-link" href="${escapeHtml(href)}" aria-label="${escapeHtml(`${label}: ${formatInteger(count)}`)}">${formatInteger(count)}</a>` : formatInteger(count);
     };
-    const name = (column) => (column.source ? column.source.display : "All");
-    const params = (column, family) => ({ ...(column.source ? { dbsrc: column.source.key } : {}), ...(family ? { dbwhy: family.key } : {}) });
-    const table = `<table class="stats-table stats-db-table stats-db-cause-table">
-      <thead><tr><th scope="col">Cause</th>${[...columns, all].map((column) => `<th scope="col" class="stats-num">${statsDatabaseNameHtml(name(column))}</th>`).join("")}</tr></thead>
-      <tbody>${DATABASE_CAUSE_FAMILIES.map((family) => `<tr data-stat-key="cause_${family.key}"><th scope="row"><span title="${escapeHtml(family.title)}">${escapeHtml(family.label)}</span></th>${[...columns, all]
-        .map((column) => `<td class="stats-num" data-count="${column.families[family.key]}">${link(column.families[family.key], params(column, family), `${name(column)}, ${family.label.toLowerCase()}`)}</td>`).join("")}</tr>`).join("")}</tbody>
-      <tfoot><tr data-stat-key="cause_all"><th scope="row">All causes</th>${[...columns, all]
-        .map((column) => `<td class="stats-num" data-count="${column.total}">${link(column.total, params(column, null), `${name(column)}, all causes`)}</td>`).join("")}</tr></tfoot></table>`;
-    const blocks = `<ul class="stats-db-blocks">${[...columns, all].filter((column) => column.total).map((column) => `<li><strong>${statsDatabaseNameHtml(name(column))}:</strong> ${DATABASE_CAUSE_FAMILIES
-      .filter((family) => column.families[family.key]).map((family) => `<span class="nowrap">${escapeHtml(family.label.toLowerCase())} ${link(column.families[family.key], params(column, family), `${name(column)}, ${family.label.toLowerCase()}`)}</span>`).join(" · ")}</li>`).join("")}</ul>`;
+    const name = (line) => (line.source ? line.source.display : "All");
+    const params = (line, family) => ({ ...(line.source ? { dbsrc: line.source.key } : {}), ...(family ? { dbwhy: family.key } : {}) });
+    const highest = Math.max(1, ...lines.flatMap((line) => DATABASE_CAUSE_FAMILIES.map((family) => line.families[family.key])));
+    // the cell's grey: from 8% to 60% of the map's ink, by the log of its count (ink text keeps 5:1 on the darkest)
+    const heat = (count) => (count ? +(8 + 52 * (highest > 1 ? Math.log(count) / Math.log(highest) : 1)).toFixed(1) : 0);
+    const cell = (line, family) => {
+      const count = line.families[family.key];
+      return `<td class="stats-num stats-heat-cell" data-count="${count}"${count ? ` style="--heat:${heat(count)}%"` : ""}>${link(count, params(line, family), `${name(line)}, ${family.label.toLowerCase()}`)}</td>`;
+    };
+    const table = `<table class="stats-table stats-db-table stats-db-cause-table stats-heat-table">
+      <thead><tr><th scope="col">Database</th>${DATABASE_CAUSE_FAMILIES.map((family) => `<th scope="col" class="stats-num"><span title="${escapeHtml(family.title)}">${escapeHtml(family.label)}</span></th>`).join("")}<th scope="col" class="stats-num">All causes</th></tr></thead>
+      <tbody>${lines.map((line) => `<tr data-stat-key="db_${escapeHtml(line.source.key)}"><th scope="row">${statsDatabaseNameHtml(name(line))}</th>${DATABASE_CAUSE_FAMILIES.map((family) => cell(line, family)).join("")}<td class="stats-num stats-heat-total" data-count="${line.total}">${link(line.total, params(line, null), `${name(line)}, all causes`)}</td></tr>`).join("")}</tbody>
+      <tfoot><tr data-stat-key="cause_all"><th scope="row">All, each value once</th>${DATABASE_CAUSE_FAMILIES.map((family) => `<td class="stats-num" data-count="${all.families[family.key]}">${link(all.families[family.key], params(all, family), `All, ${family.label.toLowerCase()}`)}</td>`).join("")}<td class="stats-num" data-count="${all.total}">${link(all.total, params(all, null), "All, all causes")}</td></tr></tfoot></table>`;
+    const blocks = `<ul class="stats-db-blocks">${[...lines, all].filter((line) => line.total).map((line) => `<li><strong>${statsDatabaseNameHtml(name(line))}:</strong> ${DATABASE_CAUSE_FAMILIES
+      .filter((family) => line.families[family.key]).map((family) => `<span class="nowrap">${escapeHtml(family.label.toLowerCase())} ${link(line.families[family.key], params(line, family), `${name(line)}, ${family.label.toLowerCase()}`)}</span>`).join(" · ")}</li>`).join("")}</ul>`;
+    const legend = `<ul class="stats-legend stats-map-legend"><li><i class="stats-map-key-cells" aria-hidden="true"></i><span>Corrections per cell, 1 to ${formatInteger(highest)}</span></li></ul>`;
     return {
-      id: "statsDbCausesTitle", key: "db-causes", title: "Corrections by cause and database", kind: "Table",
-      body: table + blocks,
-      caption: `A value corrected in several databases counts for each, but once under All.${statsCorrectionsQualifiers(comparison).caption}`,
+      id: "statsDbCausesTitle", key: "db-causes", title: "Corrections by cause and database",
+      body: legend + table + blocks,
+      caption: "Values CatLog’s number corrects, by database and cause; a value corrected in several databases counts for each, but once under All.",
       rules: [
+        statsCorrectionsQualifiers(comparison).caption.trim(),
         statsCorrectionsQualifiers(comparison).rule.trim(),
         found.unnamed ? `${formatInteger(found.unnamed)} ${found.unnamed === 1 ? "correction has a cause" : "corrections have causes"} not named here. All causes counts ${found.unnamed === 1 ? "it" : "them"}.` : "",
-        found.moved ? `${formatInteger(found.moved)} ${found.moved === 1 ? "value" : "values"} a database lists at an exact factor, not yet checked against the paper, ${found.moved === 1 ? "is" : "are"} Different number, left out of All; the columns per database still hold ${found.moved === 1 ? "it" : "them"}.` : "",
+        found.moved ? `${formatInteger(found.moved)} ${found.moved === 1 ? "value" : "values"} a database lists at an exact factor, not yet checked against the paper, ${found.moved === 1 ? "is" : "are"} Different number, left out of All; the rows per database still hold ${found.moved === 1 ? "it" : "them"}.` : "",
       ].filter(Boolean).join(" "),
       after: none.text ? `<p class="stats-note">${escapeHtml(none.text)}</p>` : "",
     };
@@ -7937,11 +8151,12 @@
     const accepted = statsCount(data.accepted, records);
     const papers = statsCount(data.papers);
     return {
-      id: "statsReplacedTitle", key: "replaced", title: "Entries replaced by reading the paper",
+      // (round 17's words: the earlier version's records, never its "entries")
+      id: "statsReplacedTitle", key: "replaced", title: "Earlier records replaced by reading the paper",
       body: statsBarChart({ key: "replaced", rows, legend: names.map(([part, label]) => ({ part, label })), percent: true, axis: statsAxis(100, 25, { percent: true }) }) + statsShareLines(rows),
       // papers: the papers CatLog has read that the earlier version also had (fewer than the papers CatLog has read).
-      caption: `The ${formatInteger(records)} ${records === 1 ? "entry" : "entries"} from the earlier version${accepted !== null ? ` (${formatInteger(accepted)} accepted)` : ""} on ${papers !== null ? `the ${formatInteger(papers)} ${papers === 1 ? "paper" : "papers"}` : "the papers"} CatLog has since read, by whether CatLog found the same number.`,
-      rules: "When CatLog reads a paper, its records replace these entries. Numbers are compared for the same paper and parameter; a calculated kcat/Km is left out.",
+      caption: `The ${formatInteger(records)} ${records === 1 ? "record" : "records"} from the earlier version${accepted !== null ? ` (${formatInteger(accepted)} accepted)` : ""} on ${papers !== null ? `the ${formatInteger(papers)} ${papers === 1 ? "paper" : "papers"}` : "the papers"} CatLog has since read, by whether CatLog found the same number.`,
+      rules: "When CatLog reads a paper, its records replace these. Numbers are compared for the same paper and parameter; a calculated kcat/Km is left out.",
     };
   }
 
@@ -8177,7 +8392,7 @@
     // in reading order; drawn at the end of the page, after the main parts.
     const supplement = [];
     const toSupplement = (group, ...items) => supplement.push(...items.filter(Boolean).map((item) => ({ ...item, group })));
-    toSupplement("quality", statsReviewKindsTable(overview), statsReviewMatchTable(overview));
+    toSupplement("quality", statsReviewKindsFigure(overview), statsReviewMatchFigure(overview));
 
     // 3. What is in the catalog: the review result, the main sources and the enzyme classes.
     const content = [];
@@ -8398,51 +8613,11 @@
       };
     }
 
-    // What the records contain, and wild type and variants.
-    const coverage = summary.coverage || {};
-    const download = manifest.enriched_download?.coverage || {};
-    const conditions = overview?.conditions || {};
-    const contents = [
-      { value: "kcat", label: "kcat", labelHtml: "<i>k</i><sub>cat</sub>", count: statsCount(coverage.with_kcat, total), params: { metric: "kcat" } },
-      { value: "km", label: "Km", labelHtml: "<i>K</i><sub>m</sub>", count: statsCount(coverage.with_km, total), params: { metric: "km" } },
-      { value: "kcat_over_km", label: "kcat/Km", labelHtml: "<i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub>", count: statsCount(coverage.with_kcat_over_km, total), params: { metric: "kcat_over_km" } },
-      { value: "sequence", label: "Protein sequence", count: statsCount(download.sequence, total) },
-      { value: "smiles", label: "Substrate SMILES", count: statsCount(download.smiles, total) },
-      { value: "temperature", label: "Temperature", count: statsCount(conditions.temperature, total) },
-      { value: "ph", label: "pH", count: statsCount(conditions.ph, total) },
-    ].filter((item) => item.count !== null);
-    const calculated = statsCount(coverage.calculated_kcat_over_km, coverage.with_kcat_over_km);
-    const both = statsCount(conditions.both, total);
-    const sequences = [["Wild-type sequence", download.wild_type_sequence], ["Variant sequence", download.variant_sequence]]
-      .filter(([, count]) => statsCount(count, total) !== null);
-    let contentsTable = null;
-    if (contents.length) {
-      const notes = [
-        calculated ? `${formatInteger(calculated)} kcat/Km values were calculated as kcat ÷ Km (marked calc. in the table).` : "",
-        both !== null ? `${formatInteger(both)} records give both temperature and pH.` : "",
-      ].filter(Boolean).join(" ");
-      contentsTable = {
-        id: "statsContentsTitle", key: "contents", title: "What the records contain", kind: "Table",
-        body: statsTable(contents, total, { head: "Value or field" }),
-        caption: "Records with each value or field; most records have several.",
-        rules: notes,
-        after: sequences.length ? `<details class="stats-explanation"><summary>Sequence fields</summary><table class="stats-detail-table"><tbody>
-          ${sequences.map(([label, count]) => `<tr><th scope="row">${escapeHtml(label)}</th><td>${formatInteger(count)}</td><td>${escapeHtml(statsShare(count, total))}</td></tr>`).join("")}
-        </tbody></table><p>These overlap: a variant record can have both a wild-type and a variant sequence.</p></details>` : "",
-      };
-    }
-    const form = overview?.enzyme_form || {};
-    const forms = [
-      { value: "wild", label: "Wild type", count: statsCount(form.wild, total), params: { variant: "wild" } },
-      { value: "variant", label: "Variant", count: statsCount(form.variant, total), params: { variant: "variant" }, note: "A mutation is named, or the source marks the enzyme as not wild type." },
-      { value: "not_stated", label: "Not stated", count: statsCount(form.not_stated, total) },
-    ];
-    const formOk = forms.every((item) => item.count !== null) && forms.reduce((sum, item) => sum + item.count, 0) === total;
-    const formsTable = formOk ? { id: "statsFormTitle", key: "forms", title: "Wild type and variants", kind: "Table",
-      body: statsTable(forms, total, { head: "Enzyme form" }), caption: "Each record’s enzyme form, as Browse tags it." } : null;
-    // In the supplement: the two figures of records read from the paper, the papers by parameter and the fields; the
-    // forms (wild type and variants) stand with the variants, under Organisms, enzymes and variants.
-    toSupplement("catalog", versions, valuesPerPaper, statsPapersByParameterFigure(overview?.from_paper_parameters, papersRead), contentsTable);
+    // What the records contain (round 17: a figure, statsContentsFigure). In the supplement: the two figures of records
+    // read from the paper, the papers by parameter and the fields; wild type and variants stand under Organisms, enzymes
+    // and variants (statsFormsFigure).
+    const contentsFigure = statsContentsFigure(summary.coverage || {}, manifest.enriched_download?.coverage || {}, overview?.conditions || {}, total);
+    toSupplement("catalog", versions, valuesPerPaper, statsPapersByParameterFigure(overview?.from_paper_parameters, papersRead), contentsFigure);
 
     // Enzyme classes (records, accepted over them, the records read from the paper marked) close What is in the catalog;
     // the most common organisms and EC numbers, overall and among records read from the paper, are the supplement's
@@ -8484,41 +8659,14 @@
         rules: notes,
       });
     }
-    const topItems = (list, toItem, max = total) => (Array.isArray(list) ? list : []).filter((item) => statsCount(item?.count, max) !== null).map(toItem);
-    const organismItem = (extra) => (item, index) => ({ value: `organism_${extra ? "v2_" : ""}${index}`, label: String(item.name || ""),
-      labelHtml: `<i>${escapeHtml(item.name || "")}</i>`, count: item.count, params: { ...(extra || {}), organism: String(item.name || "") } });
-    // An EC number carries no class colour: its table's bars are neutral or Read from the paper's colour, and a class
-    // colour beside them would mean a second thing in one view.
-    const ecItem = (extra) => (item) => ({ value: `ec_${extra ? "v2_" : ""}${item.ec}`, label: `${item.ec} ${item.name || ""}`.trim(),
-      labelHtml: `<span class="stats-ec-number">${escapeHtml(item.ec)}</span> ${escapeHtml(item.name || "")}`, count: item.count, params: { ...(extra || {}), ec: String(item.ec || "") } });
-    const organisms = topItems(overview?.top_organisms, organismItem(null));
-    const ecNumbers = topItems(overview?.top_ec, ecItem(null));
-    const v2Organisms = fromPaper ? topItems(overview?.top_organisms_from_paper, organismItem({ source: "paper" }), fromPaper) : [];
-    const v2EcNumbers = fromPaper ? topItems(overview?.top_ec_from_paper, ecItem({ source: "paper" }), fromPaper) : [];
-    if (organisms.length) {
-      biology.push({ id: "statsOrganismsTitle", key: "organisms", title: "Most common organisms", kind: "Table",
-        body: statsTable(organisms, total, { scale: organisms[0].count, head: "Organism" }),
-        caption: "Strains count with their species." });
-    }
-    if (ecNumbers.length) {
-      biology.push({ id: "statsEcTitle", key: "ec-numbers", title: "Most common EC numbers", kind: "Table",
-        body: statsTable(ecNumbers, total, { scale: ecNumbers[0].count, head: "EC number" }),
-        caption: "Each EC number with the enzyme name its records use most." });
-    }
-    if (v2Organisms.length) {
-      biology.push({ id: "statsV2OrganismsTitle", key: "organisms-v2", title: "Most common organisms among records read from the paper", kind: "Table",
-        body: statsTable(v2Organisms, fromPaper, { scale: v2Organisms[0].count, head: "Organism", part: "catlog" }),
-        caption: `Shares are of the ${formatInteger(fromPaper)} records read from the paper.`, rules: "Strains count with their species." });
-    }
-    if (v2EcNumbers.length) {
-      biology.push({ id: "statsV2EcTitle", key: "ec-numbers-v2", title: "Most common EC numbers among records read from the paper", kind: "Table",
-        body: statsTable(v2EcNumbers, fromPaper, { scale: v2EcNumbers[0].count, head: "EC number", part: "catlog" }),
-        caption: `Shares are of the ${formatInteger(fromPaper)} records read from the paper.`, rules: "Each EC number with the enzyme name its records use most." });
-    }
+    // The most common organisms and EC numbers, among all records and among those read from the paper (round 17: one
+    // figure each, two panels).
+    biology.push(...statsTopFigures(overview, total, fromPaper));
     parts.push({ key: "catalog", title: "What is in the catalog", items: content });
-    // Biology in the supplement: the tables, then the single substitutions and the kinds of variant read from the paper.
+    // Organisms, enzymes and variants in the supplement: the most common organisms and EC numbers, wild type and variants
+    // (the kinds of variant read from the paper beside them), then the single substitutions.
     const insights = statsInsights(overview);
-    toSupplement("biology", ...biology, statsSubstitutionsFigure(insights.substitutions), formsTable, statsVariantKindsTable(insights.variant_kinds));
+    toSupplement("biology", ...biology, statsFormsFigure(overview?.enzyme_form, total, insights.variant_kinds), statsSubstitutionsFigure(insights.substitutions));
 
     // 4. Values: the overall ranges, the same protein and substrate between papers, kcat against Km, substrate
     // specificity and the variants against their wild type; the ranges per enzyme class, the assay temperature and pH,
@@ -8546,16 +8694,10 @@
       statsSubstrateRangeFigure(insights.substrate_range), statsMutationsFigure(insights.mutations)].filter(Boolean));
     if (values.length) parts.push({ key: "values", title: "Values", items: values });
 
-    // Cautions, with the same names as the Cautions filter (the supplement's last Values table).
-    const caution = overview?.cautions || {};
-    const cautions = cautionFilters.map((item) => ({ value: `caution_${item.value}`, label: item.label, labelHtml: item.labelHtml,
-      count: statsCount(caution[item.value], total), params: { caution: item.value }, part: item.value === "none" ? "neutral" : "caution" }));
-    const cautionsTable = cautions.every((item) => item.count !== null) ? { id: "statsCautionsTitle", key: "cautions", title: "Cautions on values",
-      kind: "Table", body: statsTable(cautions, total, { head: "Caution" }),
-      caption: "A caution marks a value that may be wrong; one record can carry several." } : null;
-    toSupplement("values", statsRidgeFigure(overview), statsConditionsFigure(insights.conditions, fromPaper),
-      statsTemperatureFigure(insights.temperature), statsKmSizeFigure(insights.km_by_size), statsTypicalTable(insights.typical),
-      statsPrintedUnitsTable(insights.printed_units), cautionsTable);
+    // Cautions, with the same names as the Cautions filter (the supplement's last Values figure).
+    toSupplement("values", statsRidgeFigure(overview), statsTypicalFigure(insights.typical), statsConditionsFigure(insights.conditions, fromPaper),
+      statsTemperatureFigure(insights.temperature), statsKmSizeFigure(insights.km_by_size),
+      statsPrintedUnitsFigure(insights.printed_units), statsCautionsFigure(overview?.cautions, total));
 
     // 5. Compared with databases (summary.database_comparison): a short lead, each value compared with databases and the
     // corrections by cause and how found; in the supplement the same by enzyme class, each database against the values
@@ -8568,8 +8710,8 @@
     const databases = [comparedValues ? statsDatabaseValuesFigure(comparison, comparedValues, comparedSources) : null, statsCorrectionsFoundFigure(comparison)]
       .filter(Boolean).map((item) => ({ ...item, wide: true, className: item.key === "db-found" ? "stats-narrow" : item.className }));
     const databasesMore = [comparison ? statsDatabaseClassFigure(insights.database_by_class, classNames) : null,
-      statsDatabaseSourcesFigure(comparison, comparedSources), statsDatabasePairedTable(comparison, comparedSources, comparedValues),
-      statsCauseDatabaseTable(comparison, comparedSources),
+      statsDatabaseSourcesFigure(comparison, comparedSources), statsDatabasePairedFigure(comparison, comparedSources, comparedValues),
+      statsCauseDatabaseFigure(comparison, comparedSources),
       statsCorrectionsFigure(overview?.quality, { corrected: counts.corrected }, overview?.earlier_corrections), statsReplacedFigure(overview?.quality)].filter(Boolean);
     toSupplement("databases", ...databasesMore);
     // Without the counts for a lead, a figure that compares values with the databases still gets the caveat once: at the
@@ -15948,8 +16090,13 @@
       statsDatabaseClassFigure,
       statsPapersByParameterFigure,
       statsSubstitutionsFigure,
-      statsVariantKindsTable,
-      statsPrintedUnitsTable,
+      statsFormsFigure,
+      statsContentsFigure,
+      statsTopFigures,
+      statsCautionsFigure,
+      statsListChart,
+      statsPanelsHtml,
+      statsPrintedUnitsFigure,
       statsUnitWords,
       statsBetweenPapersFigure,
       statsPublicationYears,
@@ -15957,7 +16104,7 @@
       statsSubstrateRangeFigure,
       statsKmSizeFigure,
       statsTemperatureFigure,
-      statsTypicalTable,
+      statsTypicalFigure,
       statsMediansPanel,
       statsUsedText,
       statsSupplementItemHtml,
