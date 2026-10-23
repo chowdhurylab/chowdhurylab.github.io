@@ -3,7 +3,7 @@
 Browse is the working table. Keep its header, search, compact counts, filters,
 record drawer and downloads intact. Stats is a separate page, not a drawer or
 expanding summary that takes space from the table. The filter sidebar shows in view only
-the filters most visitors use (Enzyme, organism, substrate; Measurement type; Review result
+the filters most visitors use (Enzyme, organism, substrate; Parameter; Review result
 with human-checked), each option one short line with its count, and folds the
 specialist groups (Source, first since round 14; Wild type or variant, Assay conditions, Compared with databases,
 Cautions, Source database) under one "More filters", which opens by itself when one of them is set
@@ -16,30 +16,10 @@ first in the bar (it keeps its place, dimmed with nothing to undo), restores the
 Clear all too
 (tools/catlog-static/DESIGN.md, Filters).
 
-## Words
-
-Round 17 (the user, 2026-10-23: "how are they going to know the values and records and entries and measurements? It's
-confusing"). Two counting words only, everywhere a visitor or reviewer reads: Browse, the record, Stats, the Guide, the
-README, the downloads and the help texts, and the sentences catlog-v2 writes into the site bundle and the README
-(tools/site_release.py, tools/human_review.py). Code names stay as they are (measurement_key, measurement_id, the
-manifest's entries, entries_without_paper, v2_measurements ...); only visible words follow this table.
-
-| Word | What it means | Defined for a visitor | Never on the site for it |
-| --- | --- | --- | --- |
-| value | One number: a kcat, a Km or a kcat/Km. | Guide, Records and values (#guide-words) | measurement, data point, item |
-| record | One row of Browse: one enzyme (wild type or a variant) with one substrate under one set of assay conditions in one paper, and its values (up to three). Inside the code this is a "measurement". | Browse's counts band "?", the Guide's first section, Stats' first box | measurement(s), entry/entries, row(s) as a count, slot, item |
-| paper | One publication. | Guide, Records and values | article, reference (as a count) |
-| parameter | kcat, Km or kcat/Km as a kind of value; the filter group is "Parameter". | Guide, Records and values (the Value line) | measurement type |
-| records people checked (reviewed records) | The human review's "entries": records of CatLog's earlier version as the reviewers saw them. | Stats, Quality | entries, entries reviewed |
-| the enzyme databases, database listings | What BRENDA, SABIO-RK, OED, SKiD, STRENDA DB and UniProt list. | Guide, Compared with databases | database entries |
-
-Labels that keep their words: the review results Accepted, Not confirmed, Not checked and Disputed; the sources Read from
-the paper and Not yet re-read (tags "from paper" and "not re-read"); the tag human-checked; Compared with databases' five
-results. A UniProt entry is UniProt's own word and stays. Where two counts differ (records people checked and records with
-the human-checked tag; values and records), the page says why in a few words, from data only. Each counting word is
-defined once where a visitor first meets it, not again and again. A file's lines may be called lines ("one line per value
-and database"); a count of records is never "rows". Visible spelling is American: license (the user's word, the field
-source_license and the README), color.
+Every column header sorts the table (round 17, the user: "like Excel"): a first click its natural way (names A to Z, EC
+1 to 7, values high to low, Review result accepted first), a second click the other way, records without the value last
+both ways; the sorted column alone shows a quiet arrow and aria-sort. No Sort menu from 641px; phone cards, which have
+no headers, keep a compact "Sort ↑" toggle and a column menu (tools/catlog-static/DESIGN.md, Layout).
 
 ## Stats
 
@@ -721,8 +701,9 @@ words for all entries"). Each section says only what is specific to this record:
 and where it is printed ("In the paper:" before a quoted line), how they compare with the databases, how far they were
 checked (Checks: the second AI check, an AI audit, a human review), then conditions, protein and substrate, and the
 paper. What is the same on every record (how CatLog reads, checks and converts a value) is the Guide's, linked once
-under Checks ("How CatLog reads a value →", #guide-how-read); the license and the snapshot are one footnote under the
-record's buttons; nothing the header says (form, "from paper") is repeated in a section
+under Checks ("How CatLog reads a value →", #guide-how-read); the license and the snapshot are said once for every
+record (round 17: the table's footer "CC BY 4.0 · How to cite" and the counts band's date), and a record says its
+license only when it is not CC BY 4.0; nothing the header says (form, "from paper") is repeated in a section
 (tools/catlog-static/DESIGN.md, Record Details). Its name wraps between its parts only (at a space or after a hyphen or
 slash), a short locant ("4-", "1,2-") kept with the part after it, and on a phone it takes the panel's width under
 ‹ › × after its first lines (round 14).

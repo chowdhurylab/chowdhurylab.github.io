@@ -277,7 +277,7 @@ enough to keep the group's options in view, never taking its title under the sti
 point and what the user might want"): in view, the filters most visitors use, each with a short label and its count:
 Enzyme, organism, substrate (labelled fields, Enzyme first, then EC number, Organism and Substrate; the EC field's
 example "e.g. 3 or 1.1.1" and its title say that a class, a subclass or a full number lists every enzyme under it; the
-only group without a "?": its fields are labelled and a "?" would wrap its long title at 256px), Measurement type (Has kcat, Has Km, Has kcat/Km; its "?" says that ticking several shows records with all of them), Review result (Accepted, Not
+only group without a "?": its fields are labelled and a "?" would wrap its long title at 256px), Parameter (round 17; Measurement type until then: Has kcat, Has Km, Has kcat/Km; its "?" says that ticking several shows records with all of them), Review result (Accepted, Not
 confirmed, Not checked and Disputed, each after its status dot, the boxes neutral as everywhere in the sidebar (round 15
 polish: one pattern, the option's own mark between box and words, the dot, square or "!" in the square's 10px slot, so
 the words of Review result, Compared with databases and Cautions start at one edge); "Only
@@ -350,7 +350,7 @@ chips of source (Read from the paper, Not yet re-read or a database), variant, t
 MORE_FILTER_PREFIXES), read out "More filters, 2 active", shown open or closed; its title's tooltip names the groups, and while it is closed a muted 12px line under its title says what is inside, "Source, variant, assay and more" (round 14's fix pass: a newcomer could not see that Source had moved in; aria-hidden, as the groups follow it). A group or More filters opened by its title near
 the sidebar's foot (or the phone sheet's) scrolls just enough to show its options, as a "?" does, never taking its title
 under the sticky heading; one opened by an address leaves the sidebar where it is. No help text is in view: every
-group but the enzyme fields has a "?", and each note (Measurement type's, the records stating no form) is behind it.
+group but the enzyme fields has a "?", and each note (Parameter's, the records stating no form) is behind it.
 At 1440 x 1000 the three groups and More filters' title show without scrolling the sidebar (measured on the Oct 15
 snapshot: before round 13 eight groups, "By database" and 28 controls took 1,445px, 19 controls in view; round 13's four
 groups and More filters' title, 15 controls, took 792px, all in view; in the 375 x 812 phone sheet 1,513px became 792px,
@@ -360,7 +360,7 @@ chip, sidebar dot and Undo is as before: an address or link with source= (the co
 Stats, a record) opens More filters with Source in it. Every option shows how many of the current
 results it covers, counted with its own group set aside (so ticking it shows, or
 adds, that many); an option at 0 is grey and stays clickable. Before the record
-index arrives, Review result, Measurement type and the three Source choices show
+index arrives, Review result, Parameter and the three Source choices show
 the snapshot's own counts (Read from the paper is the counts band's figure,
 Not yet re-read the rest), the other options a dash. The counts are
 worked out after each change in idle moments, in slices (never while typing),
@@ -385,7 +385,7 @@ chip naming several results names each after its dot, as the table does), Only h
 the paper its cyan square (Read from the paper's mark), a database result the sidebar's square (Corrects a value red,
 Different number brown, Same, other label mint, Not in the databases cyan, All values the same green), a caution the
 table's tan "!" disc at 12px. The filters with no meaning colour (Not yet re-read and a source database; the enzyme,
-organism, substrate, EC number and search; the measurement: Measurement type, Wild type or variant, Assay conditions;
+organism, substrate, EC number and search; the measurement: Parameter, Wild type or variant, Assay conditions;
 No cautions; Corrected earlier) have no mark: their words are enough. A group's title in the sidebar has a mark (8px,
 aria-hidden, hung in the 16px gutter so the titles keep their width) only where its filter has a meaning colour:
 Cautions' tan dot, and Source's cyan square while Read from the paper is chosen; none beside the enzyme fields, the
@@ -488,16 +488,18 @@ and Download share the first line (below 360px the header's gaps are 8px, so the
 only a wide system font puts them on two lines at the right, never over the brand), the four tabs share the second
 across the
 width, then search. The table's toolbar (48px) holds the active filters as chips
-with Clear all at the left and Columns, Export and Sort at the right (when the
+with Clear all at the left and Columns and Export at the right (when the
 records are 721 to 1000px wide, beside the open sidebar or a record on a laptop,
-Export and Sort drop "results" and "by" and the chips stay on that one 48px row
+Export drops "results" and the chips stay on that one 48px row
 while they fit beside them; when they do not, they take the full width under it,
 Clear all after the last, instead of a narrow column beside it, so none is cut;
 a chip's tooltip names its whole filter); on phones a
 Filters button opens the sheet and the chips go under the toolbar (Filters,
-Export and Sort stay on one row; below 360px "Sort" is read out but not shown
-and the buttons are narrower, and to 389px the buttons are narrower while a
-filter is on (the Filters count), so the menu shows "Review result" whole). A selected
+Export and Sort stay on one row: phones show cards without column headers, so a "Sort ↑" toggle, a tap reversing the
+order, and a menu of the columns stand in for them; below 360px "Sort" is read out but not shown (its arrow stays, a
+20px target), Export drops its chevron and the buttons and gaps are narrower, and to 389px with a filter on (the
+Filters count) the buttons are narrower and "Sort" gives way to its arrow too, so the menu shows "Review result"
+whole). A selected
 record is a column right of the table from 1024px (440px, 480px from 1440px) and
 a full-height dialog below. Never put details below the table or cover desktop
 measurement columns. Keep 25 rows per page,
@@ -526,10 +528,17 @@ from the first rows of the index, which arrives in the default order, and
 stays in place when the rest arrives; sorting waits for all records (an address
 with a value sort keeps the placeholder rows and says "then sorting" until
 then, never a provisional top 25). Stats and
-Guide never download the record index. kcat, Km and kcat/Km sort both
-ways, from the Sort menu or by clicking the column header (high to low first,
-then low to high); the header's arrow shows the direction, and records without
-the value stay last. Review result stays the default order: accepted first (read
+Guide never download the record index. Every column header sorts (round 17, the user: "like Excel"): a first click
+sorts the column its natural way (Enzyme, Organism and Substrate A to Z, EC 1 to 7, kcat, Km and kcat/Km high to low,
+Review result accepted first), a second click the other way, and records without the value stay last both ways (no
+name, an organism or substrate the table shows as a dash, an EC number with no digit, no value). The sorted column
+alone has aria-sort and a quiet ink arrow (up: ascending, A to Z or low to high; down: descending); hovering another
+heading shows a faint arrow for the way a click would sort it; the whole cell is the target and the heading a button
+(Enter sorts). The address names every order but the default (sort=enzyme, enzyme_desc, organism_desc,
+substrate_desc, ec_number_desc, evidence_desc for Review result reversed; kcat, kcat_asc, km_asc, kcat_over_km_asc as
+before); an unknown key, an older sort=temperature or ph included, opens the default. There is no Sort menu from
+641px. Review result reversed puts Not checked and Disputed first and accepted records read from the paper last, the
+names A to Z within each result. Review result stays the default order: accepted first (read
 from the paper leading them, then by tier; Disputed sorts with Not checked), then
 the enzyme's name A to Z (A-Z folded to a-z, the rest by code unit, a nameless record
 last) with a paper's records of one enzyme together (by its first PMID, a record
@@ -540,9 +549,7 @@ this order (an index in an older order is sorted once it has arrived), so the
 first page shows the first enzymes A to Z, not 25 records of one paper's EC
 1.1.1.1 (2026-10-15). Enzyme, organism and substrate sort A to Z
 skipping a name's leading quotes and brackets ('"Chelatobacter" strain ...' under
-C, "[Bacillus] caldolyticus" under B). On a desktop the Sort menu is 180px, or as wide
-as its longest option when a wider font needs more, so the chosen order always
-reads whole ("kcat/Km, high to low" was cut in Verdana).
+C, "[Bacillus] caldolyticus" under B).
 
 ## Type And Color
 
@@ -780,13 +787,16 @@ ring shows after a key press (Enter on a row), not after a click or a link that
 opens the record. Round 13 (the user, 2026-10-18: the record "reads a lot of AI inside jargon and repetitive words
 for all entries"): a record is a curated entry, not a log. Each section says only what is specific to this record;
 what is the same on every record (how CatLog reads and checks a value, that code converts units, the license and the
-snapshot) is the Guide's, linked once under Checks ("How CatLog reads a value →", #guide-how-read), or the footnote's.
+snapshot) is the Guide's, linked once under Checks ("How CatLog reads a value →", #guide-how-read), or the table footer's.
 A field the header gives (form, the source of a record read from the paper, where the values are printed) is not
 repeated in a section. The order: A (header), B (Values), G (Compared with databases, or Corrected earlier), H (Checks),
 C (Source: an older record's database only), D (Conditions), E (Protein and substrate), F (Paper), then the footer
-(Download record and Report a problem, then a 12px muted footnote: "License: ..." and "Snapshot Oct 15, 2026 · Data ID
-8a39252508" on lines of their own). So the values, how they compare with the databases and how far they were checked
-come first, the context after.
+(Download record and Report a problem). Round 17 (the user: "every entry doesn't need the license, CC, snapshot
+line"): the license and the snapshot are said once, the license in the table's footer ("CC BY 4.0 · How to cite",
+linking to the Guide's #guide-licence) and the snapshot date (its title the Data ID) in the counts band; only a record
+whose terms differ from CC BY 4.0 (SABIO-RK's terms, SKiD's CC BY-NC-ND 4.0, several licenses on a merged record, a
+source that names none) has a 12px muted line under the buttons, "License for this record: ...". So the values, how
+they compare with the databases and how far they were checked come first, the context after.
 
 - A. Header (stays in view; on phones and on screens up to 900px tall, where
   the whole header would take a third of the record or more, only the name and
@@ -924,15 +934,15 @@ come first, the context after.
   databases a merged record combines when they are not those Values from names
   (compared as a set, named in its order); Name
   from on an older record ("BRENDA recommended name", "The source database's
-  entry", "The EC list's accepted name"; a record read from the paper takes its
+  listing", "The EC list's accepted name"; a record read from the paper takes its
   name from the paper); Data origin when it is a plain
   word other than "experimental"; an Evidence line ("Located in the paper", "Paper cited" whatever the
   review result (fix pass after round 16b: "(values not located)" on a record not accepted said more than any field
   records; the Guide: "The paper is linked; where it prints the values was not saved."),
-  "Several database records" or "Database record only"); the license and the snapshot's data ID are the footnote's
-  (a source that names none reads "License: See the source's terms"; the
-  Guide's Sources and their licenses list says "See the source's terms" after the source's name since round 17; a
-  record with no recorded source reads "License: Not recorded");
+  "Several database records" or "Database record only"); a license other than CC BY 4.0 is the footnote's
+  (a source that names none reads "License for this record: See the source's terms", as the
+  Guide's Sources and licenses list says "License: see the source's terms"; a
+  record with no recorded source reads "License for this record: Not recorded");
   a database note on request, headed by
   its source ("Note from BRENDA", "Notes from SKiD"; "Database note" on a
   record merged from several databases, which do not say whose note it is),
@@ -1153,8 +1163,8 @@ come first, the context after.
   evidence; or the earlier review's changes, Before, After and the kind of
   change; never an empty list or a local path); the license as the record
   shows it, once. The earlier pipeline's internal fields stay in the
-  Full data. Under the buttons, the footnote (12px muted, a line each): "License: CC BY 4.0 (CatLog compilation)" (or
-  the source's terms) and "Snapshot Oct 15, 2026 · Data ID 8a39252508".
+  Full data. Under the buttons, only for a record under other terms than CC BY 4.0, the footnote (12px muted):
+  "License for this record: CC BY-NC-ND 4.0" (or the source's terms); never the snapshot or its Data ID.
 
 A flagged value carries a small "!" button that moves to its note; nothing is
 readable only on hover. A value whose printed concentration unit is not the one
