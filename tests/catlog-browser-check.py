@@ -3156,9 +3156,9 @@ def check_filters(driver, browser, url, route_label):
                         const at = node.data.search(/\\S/); range.setStart(node, at); range.setEnd(node, at + 1); return range.getBoundingClientRect().left; } } return null; };
             const rows = [...document.querySelectorAll('#databaseChecklist .check-row:not(.nested), #cautionChecklist .check-row')];
             const results = [...document.querySelectorAll('#statusChecklist .check-row:not(.nested)')];
-            const probe = document.createElement('span'); document.body.appendChild(probe);
-            const ink = name => { probe.style.color = `var(${name})`; return getComputedStyle(probe).color; };
-            const want = ['--st-accepted-ink', '--st-pending-ink', '--st-unverified-ink', '--st-disputed-ink'].map(ink); probe.remove();
+            const swatch = document.createElement('span'); document.body.appendChild(swatch);
+            const ink = name => { swatch.style.color = `var(${name})`; return getComputedStyle(swatch).color; };
+            const want = ['--st-accepted-ink', '--st-pending-ink', '--st-unverified-ink', '--st-disputed-ink'].map(ink); swatch.remove();
             return {edges: rows.map(words), marks: rows.map(row => Boolean(row.querySelector(':scope > span > :is(.option-mark, .db-mark)'))),
                     resultEdges: results.map(words), resultMarks: results.filter(row => row.querySelector('.option-mark, .db-mark, .state-mark')).length,
                     resultColours: results.map(row => getComputedStyle(row.querySelector('.state-word')).color), want,
