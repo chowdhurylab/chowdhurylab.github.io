@@ -250,19 +250,16 @@ JSON</span>
                   </div>
                 </details>
                 <span class="sort-control">
-                  <label for="sortSelect">Sort<span class="sort-label-detail"> by</span></label>
-                  <select id="sortSelect">
+                  <button id="sortDirectionButton" class="text-button sort-direction" type="button" aria-controls="recordTableWrap"><span class="sort-direction-word">Sort</span><svg class="sort-icon" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M6 2v8M2.8 7 6 10.2 9.2 7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+                  <select id="sortSelect" aria-label="Sort by">
                     <option value="evidence">Review result</option>
-                    <option value="ec_number">EC number</option>
                     <option value="enzyme">Enzyme</option>
+                    <option value="ec_number">EC number</option>
                     <option value="organism">Organism</option>
                     <option value="substrate">Substrate</option>
-                    <option value="kcat">kcat, high to low</option>
-                    <option value="kcat_asc">kcat, low to high</option>
-                    <option value="km">Km, high to low</option>
-                    <option value="km_asc">Km, low to high</option>
-                    <option value="kcat_over_km">kcat/Km, high to low</option>
-                    <option value="kcat_over_km_asc">kcat/Km, low to high</option>
+                    <option value="kcat">kcat</option>
+                    <option value="km">Km</option>
+                    <option value="kcat_over_km">kcat/Km</option>
                   </select>
                 </span>
               </div>
@@ -283,14 +280,14 @@ JSON</span>
                 </colgroup>
                 <thead>
                   <tr>
-                    <th scope="col" class="c-enzyme">Enzyme</th>
-                    <th scope="col" class="c-ec">EC</th>
-                    <th scope="col" class="c-organism">Organism</th>
-                    <th scope="col" class="c-substrate">Substrate</th>
+                    <th scope="col" class="c-enzyme sortable"><button class="sort-button" type="button" data-sort="enzyme"><span class="sort-label">Enzyme</span><svg class="sort-icon" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M6 2v8M2.8 7 6 10.2 9.2 7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></th>
+                    <th scope="col" class="c-ec sortable"><button class="sort-button" type="button" data-sort="ec_number"><span class="sort-label">EC</span><svg class="sort-icon" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M6 2v8M2.8 7 6 10.2 9.2 7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></th>
+                    <th scope="col" class="c-organism sortable"><button class="sort-button" type="button" data-sort="organism"><span class="sort-label">Organism</span><svg class="sort-icon" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M6 2v8M2.8 7 6 10.2 9.2 7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></th>
+                    <th scope="col" class="c-substrate sortable"><button class="sort-button" type="button" data-sort="substrate"><span class="sort-label">Substrate</span><svg class="sort-icon" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M6 2v8M2.8 7 6 10.2 9.2 7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></th>
                     <th scope="col" class="c-kcat num sortable"><button class="sort-button" type="button" data-sort="kcat"><svg class="sort-icon" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M6 2v8M2.8 7 6 10.2 9.2 7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="sort-label"><i>k</i><sub>cat</sub><span class="header-unit">s<sup>&minus;1</sup></span></span></button></th>
                     <th scope="col" class="c-km num sortable"><button class="sort-button" type="button" data-sort="km"><svg class="sort-icon" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M6 2v8M2.8 7 6 10.2 9.2 7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="sort-label"><i>K</i><sub>m</sub><span class="header-unit">mM</span></span></button></th>
                     <th scope="col" class="c-eff num sortable"><button class="sort-button" type="button" data-sort="kcat_over_km"><svg class="sort-icon" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M6 2v8M2.8 7 6 10.2 9.2 7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="sort-label"><i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub><span class="header-unit">mM<sup>&minus;1</sup> s<sup>&minus;1</sup></span></span></button></th>
-                    <th scope="col" class="c-status">Review result</th>
+                    <th scope="col" class="c-status sortable"><button class="sort-button" type="button" data-sort="evidence"><span class="sort-label">Review result</span><svg class="sort-icon" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M6 2v8M2.8 7 6 10.2 9.2 7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></button></th>
                     <th scope="col" class="c-open"><span class="visually-hidden">Open record</span></th>
                   </tr>
                 </thead>

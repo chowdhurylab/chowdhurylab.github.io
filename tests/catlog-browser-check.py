@@ -4434,24 +4434,55 @@ def check_layout(driver, browser, url, route_label):
             """)
             assert fit["need"] <= fit["room"], f"At {width}px the search placeholder fits: {fit}"
         results["search-placeholder"] = True
-        # The Sort menu reads its longest option whole ("kcat/Km, high to low" was cut in a wider font): it is 180px or as
-        # wide as that option needs.
+        # Round 17: every column header sorts, like a spreadsheet: a first click its natural way (names A to Z, values
+        # high to low, Review result accepted first), a second click the other way; aria-sort and the arrow sit on the
+        # sorted column only, the address names every order but the default, and the Sort menu shows only on phones.
         set_browse_viewport(driver, browser, 1280, 900)
-        open_page("#browse?sort=kcat_over_km")
-        sort = driver.execute_script("""
-            const select = document.getElementById('sortSelect');
-            const style = getComputedStyle(select);
-            const probe = document.createElement('span');
-            probe.textContent = select.options[select.selectedIndex].text;
-            probe.style.cssText = `position:absolute;visibility:hidden;white-space:pre;font:${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
-            document.body.appendChild(probe);
-            const text = probe.getBoundingClientRect().width;
-            probe.remove();
-            return {text: select.options[select.selectedIndex].text, width: select.getBoundingClientRect().width,
-                    need: text + parseFloat(style.paddingLeft) + parseFloat(style.paddingRight) + 2 + 20};
-        """)
-        assert sort["text"] == "kcat/Km, high to low" and sort["width"] >= max(180, sort["need"]) - 2, f"The Sort menu reads whole: {sort}"
-        results["sort-menu-whole"] = True
+        open_page()
+        wait.until(lambda d: not d.find_element(By.ID, "sortSelect").get_attribute("disabled"))
+
+        def header_state():
+            return driver.execute_script("""
+                return {sorted: [...document.querySelectorAll('#recordTableWrap thead th[aria-sort]')]
+                          .map(th => [th.className.split(' ')[0], th.getAttribute('aria-sort')]),
+                        buttons: document.querySelectorAll('#recordTableWrap thead th.sortable > .sort-button').length,
+                        menu: getComputedStyle(document.querySelector('.sort-control')).display,
+                        arrow: [...document.querySelectorAll('#recordTableWrap thead .sort-icon')]
+                          .filter(icon => getComputedStyle(icon).visibility === 'visible').length,
+                        hash: location.hash};
+            """)
+
+        def click_header(cell, sort):
+            button = driver.find_element(By.CSS_SELECTOR, f"#recordTableWrap thead th.{cell} > .sort-button")
+            driver.execute_script("arguments[0].scrollIntoView({block: 'center', inline: 'center'})", button)
+            # Away from the headers first, so no hover arrow is left on another heading.
+            ActionChains(driver).move_to_element(driver.find_element(By.ID, "pageLabel")).perform()
+            button.click()
+            wait.until(lambda d: header_state()["hash"] in ((f"#browse?sort={sort}",) if sort else ("", "#browse"))
+                       and not d.find_elements(By.CSS_SELECTOR, "#recordsBody tr.skeleton-row"))
+            ActionChains(driver).move_to_element(driver.find_element(By.ID, "pageLabel")).perform()
+            return header_state()
+
+        start = header_state()
+        assert (start["buttons"] == 8 and start["sorted"] == [["c-status", "ascending"]] and start["menu"] == "none"
+                and start["arrow"] == 1), f"Every header sorts, Review result is the default order: {start}"
+        walk = [("c-enzyme", "enzyme", "ascending"), ("c-enzyme", "enzyme_desc", "descending"),
+                ("c-km", "km", "descending"), ("c-km", "km_asc", "ascending"),
+                ("c-status", "", "ascending"), ("c-status", "evidence_desc", "descending")]
+        for cell, sort, direction in walk:
+            now = click_header(cell, sort)
+            assert now["sorted"] == [[cell, direction]] and now["arrow"] == 1, f"{cell} sorts {sort or 'the default way'}: {now}"
+        statuses = [text.strip() for text in driver.execute_script(
+            "return [...document.querySelectorAll('#recordsBody tr[data-key] .c-status .state-label')].map(e => e.textContent)")]
+        assert statuses and all(text == "Not checked" for text in statuses), f"Review result reversed puts Not checked first: {statuses[:5]}"
+        enzymes = [text.strip() for text in driver.execute_script(
+            "return [...document.querySelectorAll('#recordsBody tr[data-key] .c-enzyme strong')].map(e => e.textContent)")]
+        # The keyboard: a header is a button (Enter sorts).
+        organism = driver.find_element(By.CSS_SELECTOR, "#recordTableWrap thead th.c-organism > .sort-button")
+        driver.execute_script("arguments[0].focus()", organism)
+        organism.send_keys(Keys.ENTER)
+        wait.until(lambda d: header_state()["hash"] == "#browse?sort=organism")
+        results["header-sort"] = {"steps": len(walk) + 1, "first_enzymes": enzymes[:2]}
         # 1280: the sidebar is 256px; a record takes its place (the rail) and closing it brings it back.
         set_browse_viewport(driver, browser, 1280, 900)
         open_page()
@@ -4919,13 +4950,17 @@ def check_layout(driver, browser, url, route_label):
             toolbar = driver.execute_script("""
                 const top = selector => Math.round(document.querySelector(selector).getBoundingClientRect().top);
                 const select = document.getElementById('sortSelect');
+                const toggle = document.getElementById('sortDirectionButton');
                 return {filters: top('#openFiltersButton'), export: top('#exportMenu > summary'), sort: top('#sortSelect'),
-                        width: Math.round(select.getBoundingClientRect().width), name: select.labels[0]?.textContent.trim(),
+                        toggle: top('#sortDirectionButton'), toggleWidth: Math.round(toggle.getBoundingClientRect().width),
+                        width: Math.round(select.getBoundingClientRect().width), name: select.getAttribute('aria-label'),
+                        toggleName: toggle.getAttribute('aria-label'),
                         scroll: document.documentElement.scrollWidth > innerWidth + 1};
             """)
-            tops = [toolbar["filters"], toolbar["export"], toolbar["sort"]]
-            assert (max(tops) - min(tops) <= 2 and toolbar["width"] >= 108
-                    and toolbar["name"].startswith("Sort") and not toolbar["scroll"]), f"At 320px the toolbar is one row: {toolbar}"
+            tops = [toolbar["filters"], toolbar["export"], toolbar["sort"], toolbar["toggle"]]
+            assert (max(tops) - min(tops) <= 2 and toolbar["width"] >= 108 and toolbar["toggleWidth"] >= 20
+                    and toolbar["name"] == "Sort by" and toolbar["toggleName"].startswith("Reverse the order")
+                    and not toolbar["scroll"]), f"At 320px the toolbar is one row: {toolbar}"
             # The links out never run into the brand (a wide font puts them on two lines instead).
             brand, links = box(".brand-lockup strong"), box(".external-nav")
             assert brand["left"] + brand["width"] <= links["left"] + 1, f"At 320px the links out overlap the brand: {brand} {links}"
@@ -5103,7 +5138,7 @@ def check_layout(driver, browser, url, route_label):
                                      for mark in marks), f"At 320px each card shows human-checked whole or as a check: {marks}"
                 results["phone-320-card-tags"] = True
             # 360-389px with a filter on (the Filters count): the buttons narrow so the menu still shows "Review result"
-            # whole (its text, padding and arrow), with "Sort" shown beside it.
+            # whole (its text, padding and arrow), with Sort's arrow beside it (the word "Sort" from 390px, or with no filter).
             for width in (360, 372, 389):
                 set_browse_viewport(driver, browser, width, 800)
                 open_page("#browse?metric=kcat")
@@ -5119,8 +5154,8 @@ def check_layout(driver, browser, url, route_label):
                     probe.remove();
                     return {text: select.options[select.selectedIndex].text, width: select.getBoundingClientRect().width,
                             need: text + parseFloat(style.paddingLeft) + parseFloat(style.paddingRight) + 2 + 20,
-                            label: document.querySelector('.sort-control label').getBoundingClientRect().width > 2,
-                            tops: [top('#openFiltersButton'), top('#exportMenu > summary'), top('#sortSelect')],
+                            label: document.querySelector('#sortDirectionButton .sort-icon').getBoundingClientRect().width > 2,
+                            tops: [top('#openFiltersButton'), top('#exportMenu > summary'), top('#sortSelect'), top('#sortDirectionButton')],
                             scroll: document.documentElement.scrollWidth > innerWidth + 1};
                 """)
                 assert (sort["text"] == "Review result" and sort["width"] >= sort["need"] and sort["label"]

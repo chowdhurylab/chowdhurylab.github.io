@@ -6290,7 +6290,7 @@ assert.doesNotMatch(detailFalseKiHtml, /<i>K<\/i><sub>i<\/sub>/);
     api.clearFilters();
     await api.ensureCurrentFilters();
     assert.equal(api.browseHash(), "");
-    assert.equal(element("sortSelect").value, "evidence");
+    assert.equal(api.currentSort(), "evidence");
     assert.equal(bar(), '<button class="text-button filter-chips-undo" type="button" data-filter-undo="" title="Undo the last filter change, back to Source: Read from the paper; EC 1.1.1" aria-label="Undo the last filter change, back to Source: Read from the paper; EC 1.1.1">Undo</button>');
     assert.equal(element("activeFilters").hidden, false);
     api.undoFilterChange();
@@ -7315,7 +7315,10 @@ function referencePaper(row) {
 }
 
 function referenceComparator(sort) {
-  const textKey = (field) => (a, b) => a[field].localeCompare(b[field]);
+  // Names A to Z (or Z to A), records without one last both ways.
+  const textKey = (field, reversed = false) => (a, b) => (!a[field] - !b[field])
+    || (reversed ? b[field].localeCompare(a[field]) : a[field].localeCompare(b[field]));
+  const ecMissing = (row) => !/\d/.test(String(row.ec_number || ""));
   const numericDesc = (field) => (a, b) => {
     const left = a[field] == null ? Number.NEGATIVE_INFINITY : Number(a[field]);
     const right = b[field] == null ? Number.NEGATIVE_INFINITY : Number(b[field]);
@@ -7336,10 +7339,21 @@ function referenceComparator(sort) {
       || referenceNameSort(a._sortEnzyme, b._sortEnzyme)
       || (referencePaper(a) - referencePaper(b))
     ),
+    // Review result the other way: Not checked first, accepted read from the paper last; names A to Z within each.
+    evidence_desc: (a, b) => (
+      (b._stateRank - a._stateRank)
+      || (b._tierRank - a._tierRank)
+      || referenceNameSort(a._sortEnzyme, b._sortEnzyme)
+      || (referencePaper(a) - referencePaper(b))
+    ),
     ec_number: referenceEcSort,
+    ec_number_desc: (a, b) => (ecMissing(a) - ecMissing(b)) || referenceEcSort(b, a),
     enzyme: textKey("_sortEnzyme"),
+    enzyme_desc: textKey("_sortEnzyme", true),
     organism: textKey("_sortOrganism"),
+    organism_desc: textKey("_sortOrganism", true),
     substrate: textKey("_sortSubstrate"),
+    substrate_desc: textKey("_sortSubstrate", true),
     kcat: numericDesc("kcat"),
     kcat_asc: numericAsc("kcat"),
     km: numericDesc("km"),
@@ -7352,10 +7366,15 @@ function referenceComparator(sort) {
 
 const modes = [
   "evidence",
+  "evidence_desc",
   "ec_number",
+  "ec_number_desc",
   "enzyme",
+  "enzyme_desc",
   "organism",
+  "organism_desc",
   "substrate",
+  "substrate_desc",
   "kcat",
   "kcat_asc",
   "km",
@@ -7393,6 +7412,57 @@ for (const mode of modes) {
 for (const older of ["temperature", "temperature_asc", "ph", "ph_asc"]) {
   assert.deepEqual(Array.from(await api.orderedRecordsFor(older), (item) => item.record_key),
     Array.from(await api.orderedRecordsFor("evidence"), (item) => item.record_key), `${older} opens the default order`);
+}
+
+// Every column sorts both ways (round 17: a header click sorts its natural way, a second click the other way), and a
+// record without the value stays last both ways: no name, an "Unknown" organism or substrate (the table's dash), an EC
+// number with no digit, no kcat.
+api.indexLoadedRecords([
+  row({ record_key: "full", ec_number: "2.7.1.1", enzyme_display_name: "Beta", organism: "Mouse", substrate_name: "ATP", kcat: 4 }),
+  row({ record_key: "none", ec_number: "Unknown", enzyme_display_name: "", organism: "Unknown", substrate_name: "", kcat: null }),
+  row({ record_key: "other", ec_number: "1.1.1.1", enzyme_display_name: "Alpha", organism: "Yeast", substrate_name: "NADH", kcat: 9 }),
+]);
+for (const [natural, reverse, firstWay] of [
+  ["enzyme", "enzyme_desc", ["other", "full", "none"]],
+  ["organism", "organism_desc", ["full", "other", "none"]],
+  ["substrate", "substrate_desc", ["full", "other", "none"]],
+  ["ec_number", "ec_number_desc", ["other", "full", "none"]],
+  ["kcat", "kcat_asc", ["other", "full", "none"]],
+]) {
+  const keys = async (sort) => Array.from(await api.orderedRecordsFor(sort), (item) => item.record_key);
+  assert.deepEqual(await keys(natural), firstWay, `${natural}: the natural order, the record without the value last`);
+  assert.deepEqual(await keys(reverse), [firstWay[1], firstWay[0], "none"], `${reverse}: the other way, still last`);
+}
+
+// A header click sorts its column the natural way, a second click the other way, a third back; another column starts
+// its natural way. The address names every order but the default, and an older or unknown key opens the default.
+{
+  api.setSort("evidence");
+  const steps = [];
+  for (const key of ["evidence", "evidence", "enzyme", "enzyme", "enzyme", "kcat", "kcat", "ec_number"]) {
+    api.sortByColumn(key);
+    steps.push(api.currentSort());
+  }
+  assert.deepEqual(steps, ["evidence_desc", "evidence", "enzyme", "enzyme_desc", "enzyme", "kcat", "kcat_asc", "ec_number"]);
+  assert.equal(element("tableStatus").textContent, "Sorted by EC number, 1 to 7");
+  api.reverseSort();
+  assert.equal(api.currentSort(), "ec_number_desc", "the phone toggle reverses the order");
+  assert.equal(element("sortSelect").value, "ec_number", "the phone menu shows the column");
+  assert.equal(api.sortWords("kcat_over_km_asc"), "kcat/Km, low to high");
+  for (const [given, opened] of [["kcat_asc", "kcat_asc"], ["substrate_desc", "substrate_desc"], ["evidence_desc", "evidence_desc"],
+    ["temperature", "evidence"], ["ph_asc", "evidence"], ["nonsense", "evidence"], ["", "evidence"]]) {
+    api.applyBrowseParams(new Map(given ? [["sort", given]] : []));
+    assert.equal(api.currentSort(), opened, `sort=${given} opens ${opened}`);
+  }
+  api.applyBrowseParams(new Map([["sort", "organism_desc"]]));
+  assert.ok(api.browseHash().includes("sort=organism_desc"), api.browseHash());
+  api.setSort("evidence");
+  assert.ok(!api.browseHash().includes("sort="), "the default order needs no key in the address");
+  // While the records load, sorting waits: a click does nothing.
+  api.state.sortAvailable = false;
+  api.sortByColumn("km");
+  assert.equal(api.currentSort(), "evidence");
+  api.state.sortAvailable = true;
 }
 
 // The A to Z sorts skip a name's leading quotes and brackets; a name of marks only keeps them.
@@ -7531,7 +7601,7 @@ assert.deepEqual(Array.from(newGenerationSort, (item) => item.record_key), ["new
 const longYieldFailure = `synthetic yield failure ${"x".repeat(300)}`;
 api.indexLoadedRecords([row({ record_key: "background-failure" })]);
 api.state.recordsReady = true;
-element("sortSelect").value = "evidence";
+api.setSort("evidence");
 element("globalSearchInput").value = "";
 window.scheduler.yield = () => {
   yieldCount += 1;
@@ -7556,7 +7626,7 @@ assert.match(
 
 api.indexLoadedRecords(largeRows.map((item) => ({ ...item })));
 api.state.recordsReady = true;
-element("sortSelect").value = "evidence";
+api.setSort("evidence");
 element("globalSearchInput").value = "alpha";
 window.scheduler.yield = () => {
   yieldCount += 1;
@@ -7640,7 +7710,7 @@ api.state.loadedScripts.add(detailShard);
 api.indexLoadedRecords(raceRows);
 api.state.recordsReady = true;
 api.state.selectedKey = "";
-element("sortSelect").value = "evidence";
+api.setSort("evidence");
 element("globalSearchInput").value = "alpha";
 embeddedDetailPanel = true;
 let releaseLoadRace;
@@ -7661,7 +7731,7 @@ window.scheduler.yield = () => {
 const loadTimeFiltering = api.ensureCurrentFilters();
 await loadRaceEnteredYield;
 element("globalSearchInput").value = "beta";
-element("sortSelect").value = "enzyme";
+api.setSort("enzyme");
 const racingUserFilter = api.applyFiltersInBackground();
 releaseLoadRace();
 await Promise.all([loadTimeFiltering, racingUserFilter]);
