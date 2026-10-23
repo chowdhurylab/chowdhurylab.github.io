@@ -2592,6 +2592,7 @@
     state.sortCache.clear();
     // Disputed sorts with Not checked, as the index's Review-status order has it.
     const stateRanks = { accepted: 0, curation_pending: 1, not_verified: 2, disputed: 2 };
+    const unitKeys = new Map();
     state.records.forEach((row, index) => {
       row._loadIndex = index;
       row._recordState = recordStateForRow(row);
@@ -2607,8 +2608,29 @@
       row._sortSubstrate = sortText(recordedName(row.substrate_name));
       row._sortTemperature = temperatureValue(row);
       row._sortPh = phValue(row);
+      row._offUnit = offUnitBits(row, unitKeys);
       // _ecSort and _search are filled on first use (ecParts, searchText): most rows never need them.
     });
+  }
+
+  // The value sorts put values in the column's unit (s⁻¹, mM, mM⁻¹ s⁻¹) first and then those with no unit or another
+  // unit (min⁻¹, mg/mL, µM, an M⁻¹ s⁻¹ in the kcat field), in both directions, so a number in another unit never ranks
+  // among the column's own (Stats leaves such values out too). One bit per parameter (OFF_UNIT_BITS); each distinct unit
+  // is looked up once per load (unitKeys).
+  const OFF_UNIT_BITS = { kcat: 1, km: 2, kcat_over_km: 4 };
+  function offUnitBits(row, unitKeys = new Map()) {
+    let bits = 0;
+    for (const [field, bit] of Object.entries(OFF_UNIT_BITS)) {
+      const unit = metricUnit(row, field);
+      const key = `${field}|${unit}`;
+      let off = unitKeys.get(key);
+      if (off === undefined) {
+        off = !canonicalMetricUnitKeys[field].has(normalizedUnitKey(unit));
+        unitKeys.set(key, off);
+      }
+      if (off) bits |= bit;
+    }
+    return bits;
   }
 
   // The A to Z sorts (enzyme, organism, substrate) skip leading quotes, brackets and other marks, so '"Chelatobacter"
@@ -3205,6 +3227,7 @@
       this._sortSubstrate = "";
       this._sortTemperature = null;
       this._sortPh = null;
+      this._offUnit = 0;
       this._search = null;
       this._variantBits = null;
       this._cautionBits = null;
@@ -3647,6 +3670,7 @@
       _sortSubstrate,
       _sortTemperature,
       _sortPh,
+      _offUnit,
       _search,
       _search_text,
       _variantBits,
@@ -10845,17 +10869,20 @@
     // Names A to Z or Z to A; records without one last both ways.
     const textKey = (field, reversed = false) => (a, b) => (!a[field] - !b[field])
       || (reversed ? b[field].localeCompare(a[field]) : a[field].localeCompare(b[field]));
-    const numericDesc = (field) => (a, b) => {
-      const av = a[field] == null ? Number.NEGATIVE_INFINITY : Number(a[field]);
-      const bv = b[field] == null ? Number.NEGATIVE_INFINITY : Number(b[field]);
-      return bv - av;
+    // High to low (or low to high): records without the value last, then values with no unit or another unit after
+    // those in the column's unit (offUnitBits), then the number.
+    const numeric = (field, ascending) => {
+      const bit = OFF_UNIT_BITS[field];
+      return (a, b) => {
+        const aMissing = a[field] == null;
+        const bMissing = b[field] == null;
+        if (aMissing || bMissing) return aMissing - bMissing;
+        return ((a._offUnit & bit) - (b._offUnit & bit))
+          || (ascending ? Number(a[field]) - Number(b[field]) : Number(b[field]) - Number(a[field]));
+      };
     };
-    // Low to high; rows without the value stay last.
-    const numericAsc = (field) => (a, b) => {
-      const av = a[field] == null ? Number.POSITIVE_INFINITY : Number(a[field]);
-      const bv = b[field] == null ? Number.POSITIVE_INFINITY : Number(b[field]);
-      return av - bv;
-    };
+    const numericDesc = (field) => numeric(field, false);
+    const numericAsc = (field) => numeric(field, true);
     // The default order, the one the index is built in (build-catlog-viewer-index.py default_order_key): accepted
     // first, read from the paper leading them, then tier; then the enzyme's name A to Z, so page 1 is not one paper's
     // 25 records of EC 1.1.1.1 (2026-10-15), with a paper's records of one enzyme together, then the load order.

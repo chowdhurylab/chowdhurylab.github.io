@@ -533,7 +533,9 @@ then, never a provisional top 25). Stats and
 Guide never download the record index. Every column header sorts (round 17, the user: "like Excel"): a first click
 sorts the column its natural way (Enzyme, Organism and Substrate A to Z, EC 1 to 7, kcat, Km and kcat/Km high to low,
 Review result accepted first), a second click the other way, and records without the value stay last both ways (no
-name, an organism or substrate the table shows as a dash, an EC number with no digit, no value). The sorted column
+name, an organism or substrate the table shows as a dash, an EC number with no digit, no value); in kcat, Km and
+kcat/Km a value with no unit or another unit (min⁻¹, mg/mL, µM, M⁻¹ s⁻¹) follows those in the column's unit both ways
+(offUnitBits), before the records without the value. The sorted column
 alone has aria-sort and a quiet ink arrow (up: ascending, A to Z or low to high; down: descending); hovering another
 heading shows a faint arrow for the way a click would sort it; the whole cell is the target and the heading a button
 (Enter sorts). The address names every order but the default (sort=enzyme, enzyme_desc, organism_desc,

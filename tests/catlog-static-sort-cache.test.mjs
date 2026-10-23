@@ -7520,16 +7520,16 @@ function referenceComparator(sort) {
   const textKey = (field, reversed = false) => (a, b) => (!a[field] - !b[field])
     || (reversed ? b[field].localeCompare(a[field]) : a[field].localeCompare(b[field]));
   const ecMissing = (row) => !/\d/.test(String(row.ec_number || ""));
+  // High to low (low to high): rows without the value last, then values in another unit or none after the column's unit.
+  const columnUnit = { kcat: ["s-1"], km: ["mM"], kcat_over_km: ["mM-1 s-1", "s^(-1)*mM^(-1)"] };
+  const offUnit = (row, field) => (columnUnit[field].includes(String(row[`${field}_unit`] || "")) ? 0 : 1);
   const numericDesc = (field) => (a, b) => {
-    const left = a[field] == null ? Number.NEGATIVE_INFINITY : Number(a[field]);
-    const right = b[field] == null ? Number.NEGATIVE_INFINITY : Number(b[field]);
-    return right - left;
+    if (a[field] == null || b[field] == null) return (a[field] == null) - (b[field] == null);
+    return (offUnit(a, field) - offUnit(b, field)) || (Number(b[field]) - Number(a[field]));
   };
-  // Low to high, rows without the value last.
   const numericAsc = (field) => (a, b) => {
-    const left = a[field] == null ? Number.POSITIVE_INFINITY : Number(a[field]);
-    const right = b[field] == null ? Number.POSITIVE_INFINITY : Number(b[field]);
-    return left - right;
+    if (a[field] == null || b[field] == null) return (a[field] == null) - (b[field] == null);
+    return (offUnit(a, field) - offUnit(b, field)) || (Number(a[field]) - Number(b[field]));
   };
   const comparators = {
     // The default order: review result, tier, then the enzyme's name (A-Z folded to a-z, then by code unit, unnamed
@@ -7633,6 +7633,25 @@ for (const [natural, reverse, firstWay] of [
   const keys = async (sort) => Array.from(await api.orderedRecordsFor(sort), (item) => item.record_key);
   assert.deepEqual(await keys(natural), firstWay, `${natural}: the natural order, the record without the value last`);
   assert.deepEqual(await keys(reverse), [firstWay[1], firstWay[0], "none"], `${reverse}: the other way, still last`);
+}
+
+// The value sorts put values with no unit or another unit after those in the column's unit, both ways (a unitless Km of
+// 5e-10 is not the lowest Km; an M^-1 s^-1 number in the kcat field is not the highest kcat); records without the value
+// stay last.
+api.indexLoadedRecords([
+  row({ record_key: "mM-low", km: 0.01, km_display: "0.01", kcat: 2, kcat_display: "2" }),
+  row({ record_key: "mM-high", km: 50, km_display: "50", kcat: 30, kcat_display: "30", kcat_unit: "s^-1" }),
+  row({ record_key: "no-unit", km: 5e-10, km_display: "5e-10", km_unit: "", kcat: 1.4e7, kcat_display: "1.4e7", kcat_unit: "" }),
+  row({ record_key: "uM", km: 0.67, km_display: "0.67", km_unit: "µM", kcat: 4.5e6, kcat_display: "4.5e6", kcat_unit: "M^(-1)*s^(-1)" }),
+  row({ record_key: "none", km: null, km_display: "", kcat: null, kcat_display: "" }),
+]);
+{
+  const keys = async (sort) => Array.from(await api.orderedRecordsFor(sort), (item) => item.record_key);
+  assert.deepEqual(await keys("km_asc"), ["mM-low", "mM-high", "no-unit", "uM", "none"], "Km low to high: the column's unit first");
+  assert.deepEqual(await keys("km"), ["mM-high", "mM-low", "uM", "no-unit", "none"], "Km high to low: the column's unit first");
+  assert.deepEqual(await keys("kcat"), ["mM-high", "mM-low", "no-unit", "uM", "none"], "kcat high to low: s^-1 counts as the column's unit");
+  assert.deepEqual(await keys("kcat_asc"), ["mM-low", "mM-high", "uM", "no-unit", "none"], "kcat low to high");
+  assert.ok(!("_offUnit" in api.publicSummaryRecord(api.state.records[0])), "the sort's unit bits stay out of the downloads");
 }
 
 // A header click sorts its column the natural way, a second click the other way, a third back; another column starts
