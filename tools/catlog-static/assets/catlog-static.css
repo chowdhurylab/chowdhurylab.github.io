@@ -825,6 +825,13 @@ table.status-compact #recordsBody .state-tag.human-checked { display:none }
 .pagination { display:flex; min-height:48px; flex-shrink:0; align-items:center; justify-content:flex-end; gap:12px; border-top:1px solid var(--line); background:var(--surface-3); padding:6px 12px; color:var(--text-2); font-size:var(--fs-13) }
 .pagination select { width:64px }
 #pageLabel { margin-left:auto; min-width:116px; text-align:center }
+/* The license and how to cite, said once for every record (round 17; the record panel no longer repeats them): one quiet
+   line centred between Records per page and the page range. Phones and a table beside an open record on a laptop have
+   no room for it in the bar: there it is not shown (the Guide and the downloads say it). */
+.table-licence { flex:1 1 auto; min-width:0; margin:0; overflow:hidden; color:var(--muted); font-size:var(--fs-12); line-height:var(--lh-12); text-align:center; text-overflow:ellipsis; white-space:nowrap }
+.table-licence + #pageLabel { margin-left:0 }
+.table-licence a { color:inherit; text-decoration:underline; text-decoration-color:var(--line-strong); text-decoration-thickness:1px; text-underline-offset:2px }
+.table-licence a:hover { color:var(--text); text-decoration-color:currentColor }
 
 /* The open record (DESIGN.md "Record Details"): a column on desktop, a dialog on smaller screens. A sticky header (A),
    then sections B-H, each after a soft rule with a 14px heading and a definition list (112px terms in 12px muted,
@@ -2087,6 +2094,10 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
     body.detail-open .download-page-detail { display:none }
   }
 }
+/* A table beside an open record (536px at 1024px) keeps its page controls on one line without the license line. */
+@container records (max-width: 599px) {
+  .table-licence { display:none }
+}
 @container records (max-width: 1100px) {
   table { --cell-x:6px }
   th.c-enzyme, td.c-enzyme { padding-left:10px }
@@ -2118,6 +2129,7 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
   .detail-panel { width:100vw; border-left:0 }
   .table-scroll-controls > span { display:none }
   .pagination { display:grid; grid-template-columns:max-content 64px minmax(0,1fr) 32px 32px; gap:6px; padding:8px 12px }
+  .table-licence { display:none }
   .pagination-label-detail { display:none }
   #pageLabel { margin-left:0; min-width:0; font-size:var(--fs-12) }
   .kv-line { grid-template-columns:96px minmax(0,1fr) }

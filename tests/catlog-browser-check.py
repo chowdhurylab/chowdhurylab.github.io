@@ -4483,6 +4483,21 @@ def check_layout(driver, browser, url, route_label):
         organism.send_keys(Keys.ENTER)
         wait.until(lambda d: header_state()["hash"] == "#browse?sort=organism")
         results["header-sort"] = {"steps": len(walk) + 1, "first_enzymes": enzymes[:2]}
+        # The license and how to cite, said once: one quiet line in the footer bar between Records per page and the page
+        # range, linking to the Guide's Licence and citation; not shown where the bar has no room for it (phones, a table
+        # beside an open record at 1024px).
+        footer = driver.execute_script("""
+            const note = document.querySelector('.pagination .table-licence');
+            const r = (e) => e.getBoundingClientRect();
+            return {text: note.innerText.replace(/\\s+/g, ' ').trim(), href: note.querySelector('a')?.getAttribute('href'),
+                    shown: getComputedStyle(note).display !== 'none',
+                    between: r(document.getElementById('pageSizeSelect')).right < r(note).left
+                      && r(note).right < r(document.getElementById('pageLabel')).left,
+                    whole: note.scrollWidth <= note.clientWidth + 1, bar: Math.round(r(document.querySelector('.pagination')).height)};
+        """)
+        assert (footer["shown"] and footer["text"] == "CC BY 4.0 · How to cite" and footer["href"] == "#guide-licence"
+                and footer["between"] and footer["whole"] and footer["bar"] == 48), f"The footer's license line: {footer}"
+        results["footer-license"] = True
         # 1280: the sidebar is 256px; a record takes its place (the rail) and closing it brings it back.
         set_browse_viewport(driver, browser, 1280, 900)
         open_page()
@@ -5291,9 +5306,11 @@ def check_record_panel(driver, browser, url, route_label):
                 if kind != "from-paper":
                     assert "Source" in sections, panel["sections"]
                 assert not RECORD_BOILERPLATE.search(panel["text"]), RECORD_BOILERPLATE.search(panel["text"]).group(0)
-                # The actions and the footnote close the record: the license and the snapshot, said once.
+                # The actions close the record. The license and the snapshot hold for every record and are said once (the
+                # table's footer, the counts band, the Guide); only a record under other terms than CC BY 4.0 says its own.
                 assert panel["lastPart"] == "detail-footer", panel["lastPart"]
-                assert panel["footnote"] and panel["footnote"].startswith("License: ") and re.search(r"Data ID [0-9a-f]{10}$", panel["footnote"]), panel["footnote"]
+                assert panel["footnote"] is None or panel["footnote"].startswith("License for this record: "), panel["footnote"]
+                assert not re.search(r"Data ID|Snapshot [A-Z]", panel["text"]), "The record repeats no snapshot line"
                 assert all(quote.startswith("In the paper") for quote in panel["quotes"]), panel["quotes"]
                 assert panel["headingSize"] == "14px", panel["headingSize"]
                 assert panel["subtitle"].startswith("EC "), panel["subtitle"]
