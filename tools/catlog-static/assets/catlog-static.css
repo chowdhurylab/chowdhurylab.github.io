@@ -77,7 +77,7 @@
   --st-disputed:var(--bpg-deep-red);
   --st-accepted-ink:var(--bpg-navy);  /* 7.5 / 6.8 / 6.6:1 */
   --st-pending-ink:#975B4C;   /* 5.4 / 4.9 / 4.7:1, salmon's darker, quieter shade (terracotta; CIEDE2000 16.9 from Disputed) */
-  --st-unverified-ink:#60687F;  /* 5.6 / 5.1 / 4.9:1, slate's darker, greyer shade */
+  --st-unverified-ink:#60687F;  /* 5.5 / 5.1 / 4.9:1, slate's darker, greyer shade */
   --st-disputed-ink:var(--bpg-deep-red);  /* 5.2 / 4.8 / 4.6:1 */
   /* Filter ticks: the status colour, or a darker form where it is light (3:1 or more on white). */
   /* Agreement with a second source (BPG green): human-checked's tick and word in the darker green (a human reviewer

@@ -737,13 +737,26 @@ slash), a short locant ("4-", "1,2-") kept with the part after it, and on a phon
 
 ## Round 17: words, not shapes (Browse's review result and variant line)
 The user (2026-10-23): the dots and squares for Accepted and from paper looked AI-made, not eye-soothing; the boxed
-mutation code was hard to understand. A review result is now its word in its colour's text shade (Accepted navy
-#3C5488, Not confirmed terracotta #975B4C, Not checked slate grey #60687F, Disputed deep red #DC0000; AA on white, the
-hovered and the selected row), with human-checked's green check right after it in every width ("Accepted ✓"); the
-source line under it says "from paper" in Read from the paper's dark cyan #207286 or "not re-read · BRENDA" in muted
-grey. The sidebar's options, the chips, the record's status line ("Accepted ✓ human-checked · from paper"), the Guide's
-legend and the counts band follow: no dot, square or pill anywhere a result or the source is named. A variant reads
-"variant E124Q" in muted text under the enzyme (no box; a long list cut with "…"), its title the substitutions in words
-where every part parses ("Variant E124Q: Glu124 → Gln"), the record's header the same for up to three
-(tools/catlog-static/DESIGN.md, Type And Color).
+mutation code was hard to understand. A review result is now its word in its colour's text shade, with human-checked's
+green check right after it in every width ("Accepted ✓"); the source line under it says "from paper" in Read from the
+paper's dark cyan or "not re-read · BRENDA" in muted grey. The sidebar's options, the chips, the record's status line
+("Accepted ✓ human-checked · from paper"), the Guide's legend, Browse's counts band and Stats' headline band follow: no
+dot, square or pill anywhere a result or the source is named. The badge's accessible name says each source in full
+("Accepted, Read from the paper"). Words and marks (contrast on white / the hovered row / the selected row):
 
+| Meaning | Word or mark | Colour | Contrast |
+|---|---|---|---|
+| Accepted | the word, 13px/500 (record 600) | navy #3C5488 (BPG) | 7.5 / 6.8 / 6.6:1 |
+| Not confirmed | the word | terracotta #975B4C (salmon's darker shade; ΔE2000 16.9 from Disputed, 11.2 from brown, whose words stay ink) | 5.4 / 4.9 / 4.7:1 |
+| Not checked (Unverified and Not reviewed) | the word | slate grey #60687F (slate's darker, greyer shade; ΔE2000 11.2 from navy; no tan) | 5.5 / 5.1 / 4.9:1 |
+| Disputed | the word | deep red #DC0000 (BPG) | 5.2 / 4.8 / 4.6:1 |
+| Read from the paper | "from paper" 12px/400, its option, chip and count | dark cyan #207286 (BPG cyan's text shade) | 5.5 / 5.0 / 4.8:1 |
+| Not yet re-read, its source, corrected, no paper linked | the tag words | muted #5c6865 | 5.8 / 5.3 / 5.1:1 |
+| human-checked | a 12px check after the word (the Guide and the record add the word) | green #007664 | 5.6 / 5.1 / 4.9:1 |
+| database results, cautions | their square or "!" before the words (unchanged) | their BPG colours | (tools/catlog-static/DESIGN.md) |
+
+A variant reads "variant E124Q" under the enzyme (12/16px, "variant" muted, the mutation in --text-2 with tabular
+figures, no box; a long list cut with "…"; "variant, not specified" muted whole; a signature that describes itself,
+"deletion mutant", stands alone unless it starts with a substitution), its title the substitutions in words where every
+part parses ("Variant E124Q: Glu124 → Gln"), and the record's header "Variant E124Q (Glu124 → Gln)" in the same plain
+type for up to three (tools/catlog-static/DESIGN.md, Type And Color).
