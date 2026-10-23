@@ -7683,6 +7683,16 @@ api.indexLoadedRecords([
   api.sortByColumn("km");
   assert.equal(api.currentSort(), "evidence");
   api.state.sortAvailable = true;
+  // A sort starts on page 1, even with an address's page still waiting (Back, Forward or an edited address run
+  // applyLocationFilters twice: popstate and hashchange).
+  api.state.pendingPage = 3;
+  api.sortByColumn("organism");
+  assert.equal(api.state.pendingPage, 0, "a sort drops the address's waiting page");
+  await api.ensureCurrentFilters();
+  assert.equal(api.state.page, 1);
+  assert.ok(!api.browseHash().includes("page="), api.browseHash());
+  api.setSort("evidence");
+  await api.ensureCurrentFilters();
 }
 
 // The A to Z sorts skip a name's leading quotes and brackets; a name of marks only keeps them.

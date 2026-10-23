@@ -2998,9 +2998,12 @@
     changeSort(sortKeyFor(column, !reversed));
   }
 
+  // A new order starts on page 1: a page an address named (page=, still waiting after Back, Forward or an edited
+  // address ran applyLocationFilters twice) does not carry over to it (filter changes clear it in noteFilterChange).
   function changeSort(sort) {
     setSort(sort);
     announceSort();
+    state.pendingPage = 0;
     applyFiltersInBackground();
   }
 
@@ -10226,7 +10229,11 @@
     applyBrowseParams(params);
     if (browseHash() === before) {
       // Nothing to change, but the address may still say what the table does not show (rows=37 keeps the page size
-      // shown): it is rewritten to the table's. An address naming a record is left to open it.
+      // shown): it is rewritten to the table's. An address naming a record is left to open it. Once the records are in
+      // and the page the address names is the one shown (popstate and hashchange both run this; the first pass put it
+      // there), it no longer waits, so the next sort or filter does not put it back. (While the first pass is still
+      // running, the page shown is the old one and the address's page waits for it.)
+      if (state.recordsReady && state.pendingPage === state.page) state.pendingPage = 0;
       if (!state.selectedKey && !recordKeyFromLocation()) syncBrowseUrl();
       return false;
     }
