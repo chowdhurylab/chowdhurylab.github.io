@@ -1270,6 +1270,7 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-part-neutral { --part:var(--bar-neutral) }
 .stats-part-caution { --part:var(--caution-mark); --part-line:var(--caution-ring) }
 .stats-part-records { --part:var(--line-strong) }
+.stats-part-human { --part:var(--bpg-green); --part-line:var(--checked) }
 /* Enzyme classes: the class's colour (--ec-N), and a short bar of it before the class's number (deepened a little, so
    the light classes still show on white). */
 .stats-ec-1 { --part:var(--ec-1) }
@@ -1546,31 +1547,69 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-row-detail td { color:var(--text-2); font-size:var(--fs-12) }
 .stats-table .stats-row-detail th, .stats-table .stats-row-detail td { border-bottom-color:transparent }
 .stats-table tr:has(+ .stats-row-detail) > * { border-bottom-color:transparent }
-/* Quality (round 14: no cards, no second big number): the human review in one sentence over a small table of its
-   verdicts, then Checks on the values as a table (check, what it covered, what it found) and Errors found in CatLog.
-   The three tables share one measure (fix pass after round 16b: they had been 440, 1,152 and 497px wide in one part). */
-.stats-lead { display:grid; gap:12px; align-content:start }
-.stats-lead > .stats-fig-title { margin-bottom:0 }
-.stats-lead > p { margin:0 }
-.stats-lead-sentence { max-width:80ch; color:var(--text); font-size:var(--fs-16); line-height:var(--lh-16) }
-.stats-lead-note { max-width:80ch; color:var(--text-2); font-size:var(--fs-13); line-height:var(--lh-13) }
-.stats-lead-links { display:flex; flex-wrap:wrap; gap:4px 24px; margin:12px 0 0; font-size:var(--fs-13) }
-.stats-lead .stats-lead-links { margin:0 }
-.stats-table:is(.stats-review-table, .stats-checks-table) { width:100%; max-width:var(--quality-measure, 640px); justify-self:start }
-.stats-review-table .stats-row-group th { padding-top:12px; color:var(--muted); font-size:var(--fs-13); font-weight:400; line-height:var(--lh-13) }
-.stats-review-table .stats-row-sub th { padding-left:12px; font-weight:400 }
-.stats-review-table .stats-row-sub2 th { padding-left:24px; color:var(--text-2) }
-.stats-review-table td.stats-num { padding-left:24px }
-.stats-checks-table th[scope="row"] { font-weight:600; white-space:nowrap }
-.stats-checks-table :is(th,td) { padding-right:24px }
-.stats-checks-table .stats-check-covered { white-space:nowrap }
-.stats-checks-table .stats-check-result { color:var(--text-2) }
-/* Errors found in CatLog (round 16b): one row per way an error was found, values and papers, the All row (each value
-   once) set off by a rule and weight; a row's note (the sweep's reprinted values and partial constants) under its name. */
-.stats-errors-table th[scope="row"] { font-weight:400; white-space:normal; max-width:52ch }
-.stats-errors-table th[scope="row"] small { display:block; margin-top:2px; color:var(--text-2); font-size:var(--fs-12); line-height:var(--lh-12) }
-.stats-errors-table td.stats-num { padding-left:24px }
-.stats-errors-table .stats-errors-all > * { border-top:1px solid var(--line); font-weight:600 }
+/* Quality (round 17: figures, no tables). Human review is a unit chart: one 5px square per record people checked on a
+   6px pitch, 100 to a row (50 on phones, its narrow drawing), filled at 60% in its meaning colour (no value disputed in
+   human-checked's green, a value disputed in Disputed's deep red, opaque as its dot is), a record with no PMID or DOI an
+   open square in Not checked's slate. Its key, the counts in words, stands beside the squares from 1024px and under them
+   below. The records with the human-checked tag are said under the panels. */
+.stats-lead-links { display:flex; flex-wrap:wrap; gap:4px 24px; margin:0; font-size:var(--fs-13) }
+.stats-units { display:grid; gap:24px }
+.stats-units-panel { display:grid; gap:8px; min-width:0 }
+.stats-units-title { margin:0; color:var(--text-2); font-size:var(--fs-13); line-height:var(--lh-13) }
+.stats-units-title strong { margin-right:6px; color:var(--text); font-size:var(--fs-14); font-weight:600; line-height:var(--lh-14) }
+.stats-units-body { display:grid; grid-template-columns:minmax(0,599px) minmax(200px,1fr); gap:12px 32px; align-items:start }
+.stats-units-chart { min-width:0 }
+.stats-units-svg { display:block; width:100%; height:auto; shape-rendering:crispEdges }
+.stats-units-svg.is-wide { max-width:599px }
+.stats-units-svg.is-narrow { display:none; max-width:299px }
+.stats-unit { fill:color-mix(in srgb, var(--part) 60%, var(--bg)) }
+.stats-unit.stats-part-disputed { fill:var(--part) }
+.stats-unit.is-open { fill:var(--bg); stroke:var(--part); stroke-width:1 }
+.stats-fig.has-active .stats-unit[data-hl]:not(.is-active) { opacity:0.35 }
+.stats-units-key { display:grid; gap:6px; margin:0; padding:0; list-style:none; color:var(--text-2); font-size:var(--fs-13); line-height:var(--lh-13) }
+.stats-units-key li { display:flex; align-items:flex-start; gap:8px }
+.stats-units-key b, .stats-check-labels b { color:var(--text); font-weight:600 }
+.stats-unit-swatch { flex:0 0 10px; width:10px; height:10px; margin-top:4px; background:var(--part); background:color-mix(in srgb, var(--part) 60%, var(--bg)) }
+.stats-unit-swatch.stats-part-disputed { background:var(--part) }
+.stats-unit-swatch.is-open { background:var(--bg); box-shadow:inset 0 0 0 1px var(--part) }
+.stats-units-foot { margin:20px 0 0; max-width:80ch; color:var(--text-2); font-size:var(--fs-13); line-height:var(--lh-13) }
+/* Checks on the values: two panels, the second AI check's 100% bar (confirmed in Read from the paper's cyan, corrected
+   in a correction's opaque red) with each part's count under its end, and the random audit's share removed as wrong on
+   a small axis: an ink ring at the share over its 95% interval, a 2px line with end ticks (no meaning colour: a
+   statistic, not a kind of value). Side by side from 1024px. */
+.stats-checks { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:32px 48px; align-items:start }
+.stats-check-panel { display:flex; flex-direction:column; gap:6px; min-width:0 }
+.stats-check-name { margin:0; font-size:var(--fs-14); font-weight:600; line-height:var(--lh-14) }
+.stats-check-covered { margin:0 0 8px; color:var(--text-2); font-size:var(--fs-13); line-height:var(--lh-13) }
+.stats-check-bar { height:20px }
+.stats-check-bar .stats-seg.is-active { box-shadow:inset 0 0 0 2px var(--part-line, var(--part)) }
+.stats-fig.has-active .stats-check-bar .stats-seg[data-hl]:not(.is-active) { opacity:0.42 }
+.stats-check-labels { display:flex; flex-wrap:wrap; justify-content:space-between; gap:4px 16px; color:var(--text-2); font-size:var(--fs-13); line-height:var(--lh-13) }
+.stats-check-label .stats-muted { margin-left:2px }
+.stats-check-result { margin:0; color:var(--text-2); font-size:var(--fs-13); line-height:var(--lh-13) }
+.stats-ci { padding-top:22px }
+.stats-ci-plot { position:relative; height:20px; margin:0 12px; border-bottom:1px solid var(--line-strong) }
+.stats-ci-line { position:absolute; top:9px; height:2px; background:var(--text-2) }
+.stats-ci-line::before, .stats-ci-line::after { content:""; position:absolute; top:-4px; height:10px; border-left:2px solid var(--text-2) }
+.stats-ci-line::before { left:-1px }
+.stats-ci-line::after { right:-1px }
+.stats-ci-dot { position:absolute; top:4px; width:12px; height:12px; margin-left:-6px; border-radius:50%; background:var(--bg); box-shadow:inset 0 0 0 3px var(--text) }
+.stats-ci-value { position:absolute; top:-22px; color:var(--text); font-size:var(--fs-13); font-weight:600; line-height:var(--lh-13); white-space:nowrap; transform:translateX(-50%) }
+.stats-ci-axis { position:relative; height:20px; margin:0 12px; color:var(--muted); font-size:var(--fs-12); line-height:var(--lh-12) }
+.stats-ci-axis > span { position:absolute; top:6px; white-space:nowrap; transform:translateX(-50%) }
+.stats-ci-axis > span::before { content:""; position:absolute; left:50%; top:-6px; height:4px; border-left:1px solid var(--line-strong) }
+.stats-ci-title { margin:6px 0 0; color:var(--text-2); font-size:var(--fs-12); line-height:var(--lh-12); text-align:center }
+/* Errors found in CatLog: neutral bars (the counts carry no meaning colour), a route's kinds as parts of its bar, All
+   (each value once) set off by a hairline and weight. */
+.stats-chart[data-chart="errors"] .stats-chart-row[data-row="all"] { margin-top:4px; border-top:1px solid var(--line); padding-top:12px }
+.stats-chart[data-chart="errors"] .stats-chart-row[data-row="all"] :is(.stats-chart-label, .stats-chart-value) { font-weight:600 }
+@media (max-width: 1023px) {
+  .stats-units-body, .stats-checks { grid-template-columns:minmax(0,1fr) }
+}
+@media (max-width: 640px) {
+  .stats-units-svg.is-wide { display:none }
+  .stats-units-svg.is-narrow { display:block }
+}
 
 /* Value ranges: three small log-scale histograms. */
 .stats-ranges { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:24px 32px }
@@ -1942,13 +1981,6 @@ a.stats-total-value:focus-visible { outline:0 }
   .stats-part-title { font-size:var(--fs-18); line-height:var(--lh-18) }
   .stats-part-grid { gap:40px 0 }
   .stats-supp-number { flex-basis:5.75em }
-  /* Checks on the values: each check stacked, its name, then what it covered and what it found under it (fix pass after
-     round 16b: three narrow columns wrapped AI audits to five or six lines); the errors table keeps its columns. */
-  .stats-checks-table :is(th, td), .stats-checks-table th[scope="row"], .stats-checks-table .stats-check-covered { padding-right:8px; white-space:normal }
-  .stats-checks-table:not(.stats-errors-table) thead { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap }
-  .stats-checks-table:not(.stats-errors-table) tr { display:grid; gap:2px; padding:10px 0; border-bottom:1px solid var(--line-soft) }
-  .stats-checks-table:not(.stats-errors-table) tr > * { display:block; padding:0; border:0 }
-  .stats-checks-table:not(.stats-errors-table) .stats-check-covered { color:var(--muted); font-size:var(--fs-13); line-height:var(--lh-13) }
   /* Phones: the class number only, so the curves keep their width (the names are in the supplement and the tooltip line); the
      same in the class medians beside kcat against Km, so their numbers keep their columns. */
   .stats-ridges { --ridge-label:44px }
@@ -1983,7 +2015,7 @@ a.stats-total-value:focus-visible { outline:0 }
   /* The bars, swatches and columns are painted backgrounds: print them in colour even with background graphics off. */
   .stats-view, .team-view { -webkit-print-color-adjust:exact; print-color-adjust:exact }
   .stats-charts, .stats-part-grid { display:block }
-  .stats-section, .stats-lead { break-inside:avoid; margin-bottom:24px }
+  .stats-section { break-inside:avoid; margin-bottom:24px }
   /* Paper: no tooltip or switch. */
   .stats-tip, .stats-switch, .stats-contents { display:none !important }
   /* How these numbers are counted prints open (the Data ID and the counting rules); the script opens it before printing,
@@ -1996,15 +2028,12 @@ a.stats-total-value:focus-visible { outline:0 }
   .stats-ridges { --ridge-label:44px }
   .stats-ridge-name { display:none }
   .stats-totals { break-inside:avoid }
-  /* Paper uses its full width (a landscape page is narrower than 1024px, where the screen keeps a 760px column); the
-     human review may continue on the next page between its parts, so page 1 is not the title alone. */
+  /* Paper uses its full width (a landscape page is narrower than 1024px, where the screen keeps a 760px column). */
   .stats-shell { max-width:none; padding:0; zoom:0.8 }
-  .stats-section.stats-lead { break-inside:auto }
   /* The headline counts keep one line each, also where the browser sizes the page as a phone (A4 measured upright). */
   .stats-totals dl { grid-template-columns:repeat(var(--stats-columns,4),minmax(0,1fr)); gap:0 }
   .stats-total:nth-child(n)::before { display:block }
   .stats-total:first-child::before { display:none }
-  .stats-lead-sentence, .stats-lead-note, .stats-review-table { break-inside:avoid }
   /* The three value-range histograms side by side on any paper size, so the figure and its caption share a page. */
   .stats-ranges { grid-template-columns:repeat(3,minmax(0,1fr)); max-width:none }
   .stats-fig > figcaption { break-before:avoid }
