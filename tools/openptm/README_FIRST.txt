@@ -7,7 +7,7 @@ Browse measurements, statistics, PTM families, sites, disease studies and the gu
 styles and scripts; it does not need external fonts or JavaScript libraries.
 Open index.html locally, or keep it beside the Excel file when publishing.
 
-Current interface update, 21 October 2026
+Interface update, 21 October 2026
 - Uses the current CatLog Browse and Stats as the visual reference, with
   concise comparison rows, aligned values and a quiet white/teal palette.
 - PTM and exact measurement filters lead Browse. Conditions and binding
@@ -16,11 +16,11 @@ Current interface update, 21 October 2026
   gaps, with exact metric links and compact coverage, paper and source tables.
 - Phone controls are shorter; paging stays at the bottom. Detail drawers keep
   keyboard focus and preserve full measurements, limits and source fields.
-- No scientific data changed: 253 comparisons, 307 measurement entries,
+- At that interface release, no scientific data changed: 253 comparisons, 307 measurement entries,
   92 papers and 87 of 111 numerical families; 24 families remain without a
   numerical comparison in this selection. Source records are not deduplicated
   biological sites; these counts do not establish evidence strength.
-- The embedded data block is byte-for-byte identical to the prior release.
+- At that interface release, the embedded data block was byte-for-byte identical to the prior release.
   SHA-256: 6589f726c6044768b860951b70d2f984436ceee3048f9b649e7a7ea0368776d1
 - The original August audit workbook is unchanged and remains the Excel download.
 
@@ -52,10 +52,10 @@ Design update, 20 October
 
 Included in this release
 - 111 operational PTM families in the original audit.
-- 27,165 site records and 14,428 function/regulation records.
+- 27,165 site records and 14,429 function/regulation records.
 - 63 source summaries: six original comparisons and 57 later additions.
-- 253 selected paper comparisons, containing 307 measurement entries from
-  92 primary papers across 87 families with numeric measurements.
+- 254 selected paper comparisons, containing 314 measurement entries from
+  93 primary papers across 88 families with numeric measurements; 23 gaps.
 - 69 selected disease-study connections.
 - All nine original audit worksheets, with source records and methods.
 
@@ -64,6 +64,30 @@ overlap and must not be summed as unique biological sites. The 111 families
 are a defined working set, not a universal count of all PTMs. Paper comparisons
 are selected examples, not a systematic review. Upper bounds, uncertainty,
 study conditions and source links are retained in the record details.
+
+Paper reading, round 44
+- Added one EF-P comparison with seven source-printed wild-type/K32A
+  translation-reporter ratios, means and SD from three biological replicates.
+  This recovers numerical evidence from a previously read 2016 paper;
+  it is not counted as a newly read original.
+- The K32A substitution removes the modification site and changes the amino
+  acid. This is a cellular site-substitution proxy, not an isolated PTM effect.
+  Wild-type modification and comparable EF-P expression are source-supported;
+  modification occupancy in each reporter sample is unquantified.
+- The two newly screened Urm1 papers remain on hold. One received a limited
+  indexed Results/Discussion read: its numerical gene-expression effects
+  follow pathway deletions without identifying the conjugated target.
+  Its linked correction remains unread. The other paper has insufficient
+  accessible target-function evidence. A previous Urm1 source recovery failed.
+- No complete new or recovered original body is claimed. A second previously
+  read EF-P paper received a limited reassessment and contributes no values.
+  This round focused outside round 43's primary-paper families.
+- Totals: 254 comparisons, 314 entries, 93 numerical papers, 88 numerical
+  families and 23 remaining gaps. Existing records, interface and original
+  August audit workbook are preserved. Counts do not imply isolated causality.
+- Numerical source: https://doi.org/10.1074/jbc.M115.712091
+  New screened sources: https://doi.org/10.1016/j.febslet.2015.02.024
+  and https://doi.org/10.1016/j.febslet.2007.01.019
 
 Paper reading, round 43
 - Three previously unread papers received selected reads for S-guanylation,
@@ -665,7 +689,7 @@ exports, not the current website dataset. They are retained for old links.
 
 Release checksums (SHA-256)
 index.html
-0f15098d726d10ea000122890d74eb83bc4010a100d393d7c33f01d0c559a3d2
+9ed7b7a8a1d3e444623b39f9a614f511a26b22bd3e999b88793906a3c73952cd
 PTM_family_database_audit_final_2026-08-14.xlsx
 ddaa9ec6227fcfdaa12bb1a4a99ffaf7d28adb7c701f4ce8a7815038bbe81a8a
 
