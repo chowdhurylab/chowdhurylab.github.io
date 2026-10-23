@@ -1392,13 +1392,15 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-seg.is-start { border-top-left-radius:2px; border-bottom-left-radius:2px }
 .stats-seg.is-end { border-top-right-radius:2px; border-bottom-right-radius:2px }
 .stats-swatch { border-radius:2px }
-/* The read-from-the-paper stripe (Figure 5) is Read from the paper's colour inside the accepted bar, set off from the accepted
-   fill by a 1px white gap above and below, so it parts from that fill by more than lightness, in grey print too; it
-   never glows. A nonzero accepted or read-from-the-paper count is drawn at least 2px wide, so EC 7's 44 entries show and the
-   stripe stays within its accepted bar. The legend's swatch is an accepted swatch with the stripe through it. */
-.stats-track .stats-seg.stats-part-catlog-mark { top:5px; bottom:5px; background:var(--src-paper); box-shadow:0 -1px 0 var(--bg), 0 1px 0 var(--bg) }
+/* The read-from-the-paper stripe (Review result, Enzyme classes) is Read from the paper's colour inside the accepted bar:
+   a 4px band through its middle, set off from the accepted fill by a 1px white gap above and below, so it parts from that
+   fill by more than lightness, in grey print too, and never glows. Thin, so the accepted bar keeps Accepted's navy (round
+   17 fix pass: a 10px stripe through a 20px bar had made Accepted read cyan). A nonzero accepted or read-from-the-paper
+   count is drawn at least 2px wide, so EC 7's 44 records show and the stripe stays within its accepted bar. Its swatch,
+   in the legend and under the bar, is an accepted swatch with the band through it. */
+.stats-track .stats-seg.stats-part-catlog-mark { top:50%; bottom:auto; height:4px; margin-top:-2px; background:var(--src-paper); box-shadow:0 -1px 0 var(--bg), 0 1px 0 var(--bg) }
 .stats-chart[data-chart="ec-classes"] .stats-seg:is(.stats-part-accepted, .stats-part-catlog-mark) { min-width:2px }
-.stats-legend .stats-swatch.stats-part-catlog-mark { --part:var(--st-accepted); background:var(--src-paper); background:linear-gradient(180deg, transparent 2px, var(--bg) 2px 3px, var(--src-paper) 3px 7px, var(--bg) 7px 8px, transparent 8px), color-mix(in srgb, var(--part) 60%, var(--bg)); box-shadow:inset 0 0 0 1px var(--st-accepted) }
+.stats-swatch.stats-part-catlog-mark { --part:var(--st-accepted); background:var(--src-paper); background:linear-gradient(180deg, transparent 3px, var(--bg) 3px 4px, var(--src-paper) 4px 6px, var(--bg) 6px 7px, transparent 7px), color-mix(in srgb, var(--part) 60%, var(--bg)); box-shadow:inset 0 0 0 1px var(--st-accepted) }
 .stats-v2-count { color:var(--src-paper-ink); font-weight:600 }
 .stats-accepted-count { color:var(--st-accepted); font-weight:600 }
 /* No glow anywhere. Pointing at a mark (or focusing the link in its row) dims the other marks of its figure (data-hl:
