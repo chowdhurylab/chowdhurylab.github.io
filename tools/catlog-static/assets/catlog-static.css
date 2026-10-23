@@ -1224,7 +1224,9 @@ a.stats-total-value:focus-visible { outline:0 }
    part's heading line (its number S, its title, then a muted + and "Show all 22 figures" at the line's end, "Hide" with
    a − when open); inside, groups named as the main parts, each a grid of open items as the main parts lay theirs out, an
    item's heading its number (a muted link to its own address) and its title over its figure. */
-.stats-supp-all > summary { display:flex; flex-wrap:wrap; align-items:baseline; justify-content:space-between; gap:4px 16px; margin:0 0 var(--sp-5); border-bottom:1px solid var(--line); padding-bottom:var(--sp-3); cursor:pointer; list-style:none }
+.stats-supp-all > summary { display:flex; flex-wrap:wrap; align-items:baseline; justify-content:space-between; gap:4px 16px; margin:0; border-bottom:1px solid var(--line); padding-bottom:var(--sp-3); cursor:pointer; list-style:none }
+/* (closed, the line ends the part: no space under its hairline but the gap to How these numbers are counted) */
+.stats-supp-all[open] > summary { margin-bottom:var(--sp-5) }
 .stats-supp-all > summary::-webkit-details-marker { display:none }
 .stats-supp-all > summary > .stats-part-title { margin:0; border:0; padding:0 }
 .stats-supp-all > summary:focus-visible { outline:2px solid var(--accent); outline-offset:4px; border-radius:2px }
