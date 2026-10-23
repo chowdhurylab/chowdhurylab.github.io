@@ -1735,8 +1735,8 @@ manifest's database comparison; a field an older snapshot lacks leaves its words
 ## Round 16b data follow-ups (2026-10-22: catlog-v2's quality branch)
 
 Each new field is optional; a snapshot without it (Oct 18's) reads as before.
-- Errors found in CatLog: the second route is "Searches for an error an audit or check had found", as catlog-v2's README
-  names it, and its kinds read "reprinted from an earlier paper", "per-product (partial) rate constants" and, when
+- Errors found in CatLog: the second route is "Wider searches after an audit or check found an error" (round 17 fix pass;
+  "Searches for an error an audit or check had found" before, as catlog-v2's README named it), and its kinds read "reprinted from an earlier paper", "per-product (partial) rate constants" and, when
   catlog-v2 counts them (sweep.other), "others", shown only when the three make the route's values. The database-check
   row says what became of the values (database_check.removed and .corrected, the rest "awaiting a further check"; "all
   removed" when one fate takes them all), shown only when those parts fit (statsErrorKinds).
@@ -1804,11 +1804,14 @@ tools/site_patches/20261023-site-round17-brief.md, section 5.
   method in words. The audit (auditFacts) as its share removed on a small axis (statsShareAxis), the dot (an ink ring)
   at the share given to its interval's precision (statsShareDigits), its 95% Wilson interval a 2px --text-2 line with
   end ticks, the axis title naming the interval; no meaning colour (a statistic). Under it statsExposureText, two
-  sentences: "CatLog’s agents should work without database values but saw them, or the earlier version’s files, on 309
-  papers (Oct 9 to Oct 21, 2026)." then the re-read's state from reread_blind and reread_blind_done ("303 were sent
-  back to be read or checked again without them; none is done yet." / "120 are done so far." / "303 have since been
-  read or checked again without them."). Which agent saw them, the date sent back and the papers not sent back are
-  statsExposureRule, in the figure's rule with the audit's date, interval and follow-ups.
+  sentences: "CatLog reads without database values; on 309 papers (Oct 9 to Oct 21, 2026) its agents saw them or the
+  earlier version’s files." then the re-read's state from reread_blind and reread_blind_done ("303 were sent back to be
+  read or checked again without them; none is done yet." / "...; 120 are done so far." / "303 have since been read or
+  checked again without them."). A done count that is missing or not whole says only "303 were sent back to be read or
+  checked again without them." (never "none is done yet"); a reread_blind that is given but not a whole number up to
+  the papers drops the second sentence (round 17 fix pass: it had read as nothing sent back); none given, or 0, says
+  their values stay. Which agent saw them, the date sent back and the papers not sent back are statsExposureRule, in the
+  figure's rule with the audit's date, interval and follow-ups.
 - Errors found in CatLog (statsErrorsFigure): statsBarChart, neutral, one axis to All; a route's kinds as parts of its
   bar only when they make it (statsErrorParts: the sweep's reprinted, partial and other values; a database check's
   corrected, removed and awaiting), in words under its name (statsErrorKinds; the audit's "28 in the random audit, 46 in

@@ -2305,11 +2305,23 @@ function row(overrides = {}) {
     // data: none, some or all of them done; the split between agents and the papers not sent back are the rule).
     const exposed = { papers: 309, reader: 173, checker_only: 136, first: "2026-10-09", last: "2026-10-21", reread_blind: 303,
       reread_blind_read: 173, reread_blind_verify: 130, reread_blind_on: "2026-10-21", reread_blind_done: 0 };
-    assert.equal(api.statsExposureText({ exposed }), "CatLog’s agents should work without database values but saw them, or the earlier version’s files, on 309 papers (Oct 9 to Oct 21, 2026). 303 were sent back to be read or checked again without them; none is done yet.");
+    assert.equal(api.statsExposureText({ exposed }), "CatLog reads without database values; on 309 papers (Oct 9 to Oct 21, 2026) its agents saw them or the earlier version’s files. 303 were sent back to be read or checked again without them; none is done yet.");
+    // (round 17 fix pass) A done count that is missing or not whole says only that they were sent back, never "none is
+    // done yet"; a re-read count above the papers, or not whole, is no count: neither sent back nor staying is said.
+    for (const missing of [undefined, null, "303", 304, -1, 1.5]) {
+      assert.equal(api.statsExposureText({ exposed: { ...exposed, reread_blind_done: missing } }),
+        "CatLog reads without database values; on 309 papers (Oct 9 to Oct 21, 2026) its agents saw them or the earlier version’s files. 303 were sent back to be read or checked again without them.", String(missing));
+    }
+    for (const invalid of [310, "303", 1.5, -2]) {
+      assert.equal(api.statsExposureText({ exposed: { ...exposed, reread_blind: invalid } }),
+        "CatLog reads without database values; on 309 papers (Oct 9 to Oct 21, 2026) its agents saw them or the earlier version’s files.", String(invalid));
+      assert.equal(api.statsExposureRule({ exposed: { ...exposed, reread_blind: invalid } }), "Papers with database values in view: the reading agent saw them on 173 and only a checking agent on 136.", String(invalid));
+    }
     assert.match(api.statsExposureText({ exposed: { ...exposed, reread_blind_done: 120 } }), / 303 were sent back to be read or checked again without them; 120 are done so far\.$/);
-    assert.match(api.statsExposureText({ exposed: { ...exposed, reread_blind_done: 303 } }), /\(Oct 9 to Oct 21, 2026\)\. 303 have since been read or checked again without them\.$/);
+    assert.match(api.statsExposureText({ exposed: { ...exposed, reread_blind_done: 303 } }), /\(Oct 9 to Oct 21, 2026\) its agents saw them or the earlier version’s files\. 303 have since been read or checked again without them\.$/);
     assert.match(api.statsExposureText({ exposed: { ...exposed, reread_blind: 309, reread_blind_done: 309 } }), / All 309 have since been read or checked again without them\.$/);
-    assert.match(api.statsExposureText({ exposed: { papers: 309, reader: 173, checker_only: 136 } }), /on 309 papers\. Their values stay in CatLog and in the comparison with the databases\.$/);
+    assert.match(api.statsExposureText({ exposed: { papers: 309, reader: 173, checker_only: 136 } }), /on 309 papers its agents saw them or the earlier version’s files\. Their values stay in CatLog and in the comparison with the databases\.$/);
+    assert.match(api.statsExposureText({ exposed: { papers: 309, reader: 173, checker_only: 136, reread_blind: 0 } }), /files\. Their values stay in CatLog and in the comparison with the databases\.$/);
     assert.equal(api.statsExposureText({ exposed: { papers: 309, reader: 173, checker_only: 135 } }), "", "Counts that do not add up say nothing");
     assert.equal(api.statsExposureRule({ exposed }), "Papers with database values in view: the reading agent saw them on 173 and only a checking agent on 136. 303 were sent back on Oct 21, 2026, 173 to be read and 130 to be checked again; the other 6 were not sent back.");
     // Errors found in CatLog as bars (round 17): a bar per route, its kinds as parts, All with each value once.
@@ -2317,7 +2329,7 @@ function row(overrides = {}) {
       unit_fix: { values: 108, papers: 13 }, difference_check: { values: 12, papers: 4 }, all: { values: 1435, papers: 127 } };
     const errorsFigure = api.statsErrorsFigure({ catlog_errors: errors });
     assert.deepEqual([...errorsFigure.body.matchAll(/data-row="([^"]+)"/g)].map((match) => match[1]), ["audit", "sweep", "unit_fix", "difference_check", "all"]);
-    assert.match(plainText(errorsFigure.body), /Searches for an error an audit or check had found1,058 reprinted from an earlier paper, 103 per-product \(partial\) rate constants\s*1,254\s*97/);
+    assert.match(plainText(errorsFigure.body), /Wider searches after an audit or check found an error1,058 reprinted from an earlier paper, 103 per-product \(partial\) rate constants\s*1,254\s*97/);
     assert.match(plainText(errorsFigure.body), /All, each value once\s*1,435\s*127/);
     assert.equal(errorsFigure.caption, "Values CatLog held that a later check found wrong, by how they were found.");
     // (the sweep's kinds as parts of its bar only when they make it exactly)
@@ -2328,14 +2340,14 @@ function row(overrides = {}) {
     const laterFigure = api.statsErrorsFigure({ catlog_errors: later }, random);
     assert.match(plainText(laterFigure.body), /1,058 reprinted from an earlier paper, 103 per-product \(partial\) rate constants, 93 others\s*1,254/);
     assert.equal((sweepRow(laterFigure).match(/class="stats-seg /g) || []).length, 3);
-    assert.match(sweepRow(laterFigure), /data-tip="Searches for an error an audit or check had found, reprinted from an earlier paper: 1,058 values"/);
+    assert.match(sweepRow(laterFigure), /data-tip="Wider searches after an audit or check found an error, reprinted from an earlier paper: 1,058 values"/);
     assert.match(plainText(laterFigure.body), /Check of a database difference against the paper5 removed, 2 corrected, 5 awaiting a further check\s*12\s*4/);
     // (the audit route's values split as the random audit and its follow-ups found them, when the two make it)
     assert.match(plainText(laterFigure.body), /AI audit28 in the random audit, 46 in follow-up audits\s*74\s*26/);
     assert.doesNotMatch(plainText(errorsFigure.body), /in follow-up audits/);
     assert.match(plainText(api.statsErrorsFigure({ catlog_errors: { ...later, difference_check: { values: 7, papers: 1, removed: 7, corrected: 0 } } }).body), /against the paperall removed\s*7\s*1/);
     assert.match(plainText(api.statsErrorsFigure({ catlog_errors: { ...later, difference_check: { values: 7, papers: 1, removed: 0 } } }).body), /against the paperall awaiting a further check\s*7/);
-    assert.match(plainText(api.statsErrorsFigure({ catlog_errors: { ...later, sweep: { ...later.sweep, other: 94 } } }).body), /Searches for an error an audit or check had found\s*1,254/, "Parts that miss the route: no breakdown");
+    assert.match(plainText(api.statsErrorsFigure({ catlog_errors: { ...later, sweep: { ...later.sweep, other: 94 } } }).body), /Wider searches after an audit or check found an error\s*1,254/, "Parts that miss the route: no breakdown");
     assert.equal(api.statsErrorsFigure({ catlog_errors: { ...errors, sweep: { values: 2000, papers: 97 } } }), null, "A route above All draws nothing");
     assert.equal(api.statsErrorsFigure({ catlog_errors: { ...errors, all: { values: "1435", papers: 127 } } }), null);
     assert.doesNotMatch(api.statsErrorsFigure({ catlog_errors: { ...errors, database_check: { values: 0, papers: 0 } } }).body, /data-row="database_check"/);

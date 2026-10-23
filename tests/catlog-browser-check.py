@@ -1349,8 +1349,8 @@ def check_quality_round16b(driver, browser, url):
             assert all(abs(got - want) < 0.015 for got, want in zip(places, (0.30, 0.62, 28 / 6477 * 100))), places
             assert "Follow-up audits of whole papers and of values a check had questioned checked 188 more values and removed 46; Errors found in CatLog counts them under AI audit." in method, method
             assert text(driver.find_element(By.CSS_SELECTOR, "[data-note='exposure']")) == (
-                "CatLog’s agents should work without database values but saw them, or the earlier version’s files, on 309 papers "
-                "(Oct 9 to Oct 21, 2026). 303 were sent back to be read or checked again without them; none is done yet."), \
+                "CatLog reads without database values; on 309 papers (Oct 9 to Oct 21, 2026) its agents saw them or the earlier "
+                "version’s files. 303 were sent back to be read or checked again without them; none is done yet."), \
                 text(driver.find_element(By.CSS_SELECTOR, "[data-note='exposure']"))
             assert "Papers with database values in view: the reading agent saw them on 173 and only a checking agent on 136. 303 were sent back on Oct 21, 2026; the other 6 were not sent back." in method, method
             # Errors found in CatLog as bars: a row per route with its values and papers, the sweep's kinds and the audit's
@@ -1359,7 +1359,7 @@ def check_quality_round16b(driver, browser, url):
                 row.querySelector('.stats-chart-label').firstChild.textContent.trim(), ...[...row.querySelectorAll('.stats-value-part')].map(part => part.innerText.trim()),
                 (row.querySelector('.stats-chart-label small')?.innerText || '').trim(), row.querySelectorAll('.stats-seg').length])""")
             assert errors == [["audit", "AI audit", "74", "26", "28 in the random audit, 46 in follow-up audits", 1],
-                              ["sweep", "Searches for an error an audit or check had found", "1,254", "97", "1,058 reprinted from an earlier paper, 103 per-product (partial) rate constants, 93 others", 3],
+                              ["sweep", "Wider searches after an audit or check found an error", "1,254", "97", "1,058 reprinted from an earlier paper, 103 per-product (partial) rate constants, 93 others", 3],
                               ["unit_fix", "Unit misprinted in the paper, corrected", "108", "13", "", 1],
                               ["difference_check", "Check of a database difference against the paper", "12", "4", "5 removed, 2 corrected, 5 awaiting a further check", 3],
                               ["all", "All, each value once", "1,435", "127", "", 1]], errors
