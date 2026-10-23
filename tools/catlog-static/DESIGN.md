@@ -940,8 +940,8 @@ they compare with the databases and how far they were checked come first, the co
   review result (fix pass after round 16b: "(values not located)" on a record not accepted said more than any field
   records; the Guide: "The paper is linked; where it prints the values was not saved."),
   "Several database records" or "Database record only"); a license other than CC BY 4.0 is the footnote's
-  (a source that names none reads "License for this record: See the source's terms", as the
-  Guide's Sources and licenses list says "License: see the source's terms"; a
+  (a source that names none reads "License for this record: See the source's terms"; the
+  Guide's Sources and their licenses list says "See the source's terms" after the source's name since round 17; a
   record with no recorded source reads "License for this record: Not recorded");
   a database note on request, headed by
   its source ("Note from BRENDA", "Notes from SKiD"; "Database note" on a

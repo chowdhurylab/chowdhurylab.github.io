@@ -1215,7 +1215,7 @@
     if ($("comparisonDataDescription")) {
       const rows = statsCount(comparison?.rows);
       // One line of the file per value and database (round 17's words: "rows" never counts on the site).
-      $("comparisonDataDescription").textContent = describe("Each value read from the paper, beside each database that lists the paper",
+      $("comparisonDataDescription").textContent = describe("Values read from the paper, one line per value and database",
         rows ? `${formatInteger(rows)} lines` : "", comparisonPath ? formatFileSize(comparison.size_bytes) : "", "CSV (gzip)");
     }
     const snapshotDate = manifest.generated_at ? formatDate(manifest.generated_at) : EMPTY_VALUE;
