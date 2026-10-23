@@ -14599,20 +14599,21 @@
     ]) + guideLinkHtml(v2Record ? HOW_READ_LINK : HOW_EARLIER_LINK));
   }
 
-  // The record's last part: Download record (the primary button) and Report a problem side by side, then one small line
-  // with what holds for the whole snapshot: the license and the snapshot's date and data ID (said once, not as rows of a
-  // section on every record).
+  // The record's last part: Download record (the primary button) and Report a problem side by side. The license, the
+  // snapshot and its data ID hold for every record, so they are said once (round 17, the user: "every entry doesn't need
+  // the license, CC, snapshot line"): the table's footer (CC BY 4.0 · How to cite), the counts band's date and the
+  // Guide. Only a record whose terms differ (a database's own: SABIO-RK's, SKiD's CC BY-NC-ND 4.0, none recorded) says
+  // its license here.
+  const SHARED_LICENSES = new Set(["CC BY 4.0", "CC BY 4.0 (CatLog compilation)"]);
   function detailFooterHtml(summary, detail, { v2Record, reportHref }) {
-    const dataId = snapshotDataId();
-    const snapshot = manifest.generated_at ? formatDate(manifest.generated_at) : "";
-    const snapshotText = [snapshot ? `Snapshot ${snapshot}` : "", dataId ? `Data ID ${dataId}` : ""].filter(Boolean).join(" · ");
+    const license = detailLicense(summary, detail, v2Record);
     return `
       <footer class="detail-footer">
         <div class="detail-actions">
           <button id="downloadSelectedJson" class="button primary" type="button">Download record</button>
           <a id="reportRecordProblem" class="button secondary" href="${escapeHtml(reportHref)}">Report a problem</a>
         </div>
-        <p class="detail-footnote"><span class="detail-license">License: ${escapePublic(detailLicense(summary, detail, v2Record))}</span>${snapshotText ? `<span class="detail-snapshot">${escapeHtml(snapshotText)}</span>` : ""}</p>
+        ${SHARED_LICENSES.has(license) ? "" : `<p class="detail-footnote"><span class="detail-license">License for this record: ${escapePublic(license)}</span></p>`}
       </footer>`;
   }
 

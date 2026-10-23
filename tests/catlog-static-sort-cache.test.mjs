@@ -4275,7 +4275,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.match(html, /<span class="detail-status-word">Accepted<\/span><span><span class="src-mark" aria-hidden="true"><\/span>from paper<\/span>/);
   assert.match(html, /<p class="detail-key"><span class="visually-hidden">Record ID <\/span><code id="detailRecordKey">v2-structure<\/code>.*data-copy-text="[^"]*#record=v2-structure" data-copy-label="Copy link">Copy link<\/button><\/p>/);
   const order = ['class="detail-top"', ">Values</h3>", ">Checks</h3>", ">Conditions</h3>", ">Protein and substrate</h3>", ">Paper</h3>",
-    'id="downloadSelectedJson"', 'class="detail-footnote"'];
+    'id="downloadSelectedJson"'];
   const positions = order.map((part) => html.indexOf(part));
   assert.ok(positions.every((position) => position >= 0), `every part is drawn: ${positions}`);
   assert.deepEqual([...positions].sort((a, b) => a - b), positions, "the parts come in the record's order");
@@ -4286,7 +4286,15 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.doesNotMatch(html, /Compared with databases/, "no database comparison in the snapshot: no section");
   assert.doesNotMatch(html, /<dt>Review result<\/dt>|Accepted: read from the paper by CatLog/, "the header says Accepted · from paper");
   assert.match(html, /<p class="section-link"><a class="method-link" href="#guide-how-read">How CatLog reads a value<span aria-hidden="true"> →<\/span><\/a><\/p><\/section>/);
-  assert.match(html, /<p class="detail-footnote"><span class="detail-license">License: CC BY 4\.0 \(CatLog compilation\)<\/span>/);
+  // The license and the snapshot are said once (the table's footer, the counts band, the Guide), not on every record.
+  assert.doesNotMatch(html, /detail-footnote|License|Snapshot|Data ID/, "a record read from the paper repeats no license or snapshot line");
+  // A record whose terms differ from CC BY 4.0 (a database's own) says its license; one under CC BY 4.0 does not.
+  for (const [source_db, source_license, shown] of [["skid", "CC BY-NC-ND 4.0", "License for this record: CC BY-NC-ND 4.0"],
+    ["brenda", "CC BY 4.0", null]]) {
+    api.renderDetail(row({ record_key: `license-${source_db}`, source_db, source_license }), {});
+    const footnote = element("detailContent").innerHTML.match(/<p class="detail-footnote">(.*?)<\/p>/);
+    assert.equal(footnote ? footnote[1].replace(/<[^>]+>/g, "") : null, shown, `${source_db}: ${footnote?.[1]}`);
+  }
   // Organism names: the binomial in italics; a strain or "sp." stays roman; a virus stays roman.
   assert.equal(api.organismHtml("Escherichia coli K-12"), "<i>Escherichia coli</i> K-12");
   assert.equal(api.organismHtml("Bacillus sp. A1"), "<i>Bacillus</i> sp. A1");
