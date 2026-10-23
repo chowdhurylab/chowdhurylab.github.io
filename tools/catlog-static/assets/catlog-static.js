@@ -3958,9 +3958,10 @@
       ["accepted", "Accepted", accepted, notes.accepted, ""],
     ];
     // Records carries the one "?" of the band: what a record and its values are (round 17's words, said where a visitor
-    // first meets them; the Guide's first part says it too).
-    const countHtml = ([key, label, value, note, title]) => `<div class="summary-card summary-${key}"><span>${escapeHtml(label)}${key === "records" ? recordsAboutHtml() : ""}</span>`
-      + `<strong>${formatCount(value)}</strong><small class="snapshot-note" aria-live="off"${title ? ` title="${escapeHtml(title)}"` : ""}>${escapeHtml(note)}</small></div>`;
+    // first meets them; the Guide's first part says it too). The label's words have an element of their own, the "?"
+    // follows them, and its note sits outside the label (still in the card, over the band), so the label reads as words.
+    const countHtml = ([key, label, value, note, title]) => `<div class="summary-card summary-${key}"><span><span class="summary-label">${escapeHtml(label)}</span>${key === "records" ? recordsAboutButtonHtml() : ""}</span>`
+      + `${key === "records" ? recordsAboutNoteHtml() : ""}<strong>${formatCount(value)}</strong><small class="snapshot-note" aria-live="off"${title ? ` title="${escapeHtml(title)}"` : ""}>${escapeHtml(note)}</small></div>`;
     const aboutHadFocus = document.activeElement?.id === "recordsAboutButton";
     $("summaryGrid").innerHTML = cards.map(countHtml).join("");
     if (aboutHadFocus) $("recordsAboutButton")?.focus({ preventScroll: true });
@@ -3993,11 +3994,15 @@
     "A record is one row of the table: one enzyme (wild type or a variant) with one substrate under one set of assay conditions in one paper.",
     "It has one to three values: its kcat, Km and kcat/Km.",
   ];
-  function recordsAboutHtml() {
+  function recordsAboutButtonHtml() {
     const open = Boolean(state.recordsAboutOpen);
     return `<button id="recordsAboutButton" class="band-about" type="button" aria-expanded="${open}" aria-controls="recordsAbout" title="What a record is">`
-      + '<span aria-hidden="true">?</span><span class="visually-hidden">What a record is</span></button>'
-      + `<span id="recordsAbout" class="band-about-text" role="note"${open ? "" : " hidden"}>${RECORDS_ABOUT_TEXT.map((text) => `<span>${kineticWordsHtml(escapeHtml(text))}</span>`).join(" ")}</span>`;
+      + '<span aria-hidden="true">?</span><span class="visually-hidden">What a record is</span></button>';
+  }
+
+  function recordsAboutNoteHtml() {
+    const open = Boolean(state.recordsAboutOpen);
+    return `<div id="recordsAbout" class="band-about-text" role="note"${open ? "" : " hidden"}>${RECORDS_ABOUT_TEXT.map((text) => `<span>${kineticWordsHtml(escapeHtml(text))}</span>`).join(" ")}</div>`;
   }
 
   function setRecordsAboutOpen(open) {

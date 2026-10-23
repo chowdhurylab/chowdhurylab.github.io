@@ -4999,7 +4999,7 @@ def check_layout(driver, browser, url, route_label):
                 open_page(address)
                 if address:
                     wait.until(lambda d: d.execute_script(
-                        "return document.querySelector('.summary-records > span')?.textContent.trim() === 'Matching records'"
+                        "return document.querySelector('.summary-records .summary-label')?.textContent.trim() === 'Matching records'"
                         " && /\\d/.test(document.getElementById('fromPaperNote')?.textContent || '')"))
                 spots[address] = driver.execute_script(BAND_SPOTS_JS)
             plain, filtered = spots[""], spots["#browse?source=paper"]
