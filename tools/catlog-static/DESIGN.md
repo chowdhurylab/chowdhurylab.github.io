@@ -1235,7 +1235,7 @@ the databases with each share on its bar, corrections by cause and how found), 6
 (round 17: the last main part), then S Supplementary figures (round 14; round 17: one click opens all of it, and its
 tables are figures, "Stats supplement (round 17)" below): every other figure, numbered apart (Figure S1), in five groups
 (Quality; What is in the catalog; Organisms, enzymes and variants, called Biology until round 14's polish; Values;
-Compared with databases), each item open inside the one closed supplement, with its own address (#stats-s3) that opens
+Compared with databases), each item open inside the one closed supplement, with its own address (#stats-supp-printed-units) that opens
 the supplement at it; new there in round 14: papers by parameter, single substitutions by residue, kinds of variant and
 units as printed, counted by build_overview from the records read from the paper; round 16 added kcat and assay
 temperature, Km and substrate size (Values' figures, after Assay temperature and pH) and The typical wild-type enzyme
@@ -1298,10 +1298,12 @@ The user, 2026-10-23: "they should click on Supplementary figures and tables and
 figure. Way too many tables there that you can convert to figures." The supplement is one closed disclosure whose summary
 is its heading line (S, the title, then "+ Show all 22 figures" at the line's end; "− Hide" when open); one click shows
 every item, open, in its group's grid (two to a row from 1024px, as the main parts lay theirs out), with no disclosure
-inside. An item's heading is its number (a muted link to its own address, #stats-s3) and its title. The title says what
-it holds: "Supplementary figures" while it has no table. #stats-supplement, every item's address and every address of the
-live round 16b supplement (STATS_SUPPLEMENT_OLD_ADDRESSES: #stats-table-s4 opens the most common organisms, now a
-figure) open it and scroll there. The repository's DESIGN.md (its Stats part S) describes each figure; in short:
+inside. An item's heading is its number (a muted link to its own address, by its key: #stats-supp-printed-units, never
+its number, which follows the items the snapshot has) and its title. The title says what it holds: "Supplementary
+figures" while it has no table. #stats-supplement, every item's address and every numbered address of the live round 16b
+supplement (STATS_SUPPLEMENT_OLD_ADDRESSES, resolved before anything else: #stats-s3 opens papers by parameter, Figure S5
+today; #stats-table-s4 the most common organisms, now a figure; a number that page never had, or an item the snapshot
+lacks, opens the supplement) open it and scroll there. The repository's DESIGN.md (its Stats part S) describes each figure; in short:
 
 | Was (live round 16b) | Now | Form |
 |---|---|---|

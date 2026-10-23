@@ -6788,15 +6788,15 @@ def check(driver, browser, url):
         for series in ("", "S"):
             numbers = [int(match) for match in re.findall(kind + " " + series + r"(\d+)\.", captions_text)]
             assert numbers == list(range(1, len(numbers) + 1)), f"{kind} {series} numbers: {numbers}"
-    # The supplement: each item's number in its heading is its caption's and links to its own address, which names it
-    # (#stats-s3 for Figure S3, #stats-table-s2 for Table S2); no item has a disclosure of its own (round 17).
+    # The supplement: each item's number in its heading is its caption's and links to its own address, which names it by
+    # its key, never by its number (#stats-supp-printed-units; round 17 fix pass: the numbers follow which items the
+    # snapshot has); no item has a disclosure of its own (round 17).
     items = driver.execute_script("""return [...document.querySelectorAll('#statsCharts .stats-supp-item')].map((item) => [item.id,
         item.querySelector('.stats-supp-title .stats-supp-number').textContent, item.querySelector('figcaption strong').textContent,
-        item.querySelector('.stats-supp-title .stats-supp-number').getAttribute('href')])""")
-    for identifier, number, caption_number, href in items:
-        kind, _space, label = number.partition(" ")
-        assert caption_number == f"{number}." and identifier == ("stats-table-" if kind == "Table" else "stats-") + label.lower() \
-            and href == f"#{identifier}", (identifier, number, caption_number, href)
+        item.querySelector('.stats-supp-title .stats-supp-number').getAttribute('href'), item.dataset.supp])""")
+    for identifier, number, caption_number, href, key in items:
+        assert re.fullmatch(r"(Figure|Table) S\d+", number) and caption_number == f"{number}." and identifier == f"stats-supp-{key}" \
+            and href == f"#{identifier}", (identifier, number, caption_number, href, key)
     assert not driver.find_elements(By.CSS_SELECTOR, "#statsCharts .stats-supp-all details.stats-supp-item, #statsCharts .stats-supp-item details")
     # One click on the supplement's title opens all of it and puts its address in the address bar (#stats-supplement);
     # a second click closes it and gives back the address from before. (Its summary is centred before the click, for
@@ -6816,8 +6816,22 @@ def check(driver, browser, url):
             "One click shows every supplement item"
         summary.click()
         WebDriverWait(driver, 10).until(lambda d: d.execute_script("return location.hash") == before)
-        if was_open:
-            driver.execute_script("arguments[0].parentElement.open = true", summary)
+        # An address of the live round 16b supplement opens the item it named then, whatever its number now: #stats-s3
+        # Papers by parameter (Figure S5 today), #stats-s1 Read from the paper and not yet re-read (S3 today). The item
+        # scrolls to the top of the Stats view, the supplement opened.
+        for old, key in (("stats-s3", "papers-per-parameter"), ("stats-s1", "versions")):
+            if not driver.find_elements(By.CSS_SELECTOR, f".stats-supp-item[data-supp='{key}']"):
+                continue
+            driver.execute_script("""arguments[0].parentElement.open = false;
+                history.replaceState(history.state, '', arguments[1]); window.dispatchEvent(new Event('hashchange'));""", summary, f"#{old}")
+            WebDriverWait(driver, 10).until(lambda d: d.execute_script("""
+                const view = document.getElementById('statsView').getBoundingClientRect();
+                const items = [...document.querySelectorAll('#statsCharts .stats-supp-item')];
+                if (!arguments[0].parentElement.open || !items.length) return false;
+                const off = (item) => Math.abs(item.getBoundingClientRect().top - view.top);
+                return items.reduce((best, item) => (off(item) < off(best) ? item : best)).dataset.supp === arguments[1];
+            """, summary, key)), f"#{old} opens {key}"
+        driver.execute_script("arguments[0].parentElement.open = arguments[1]", summary, was_open)
         driver.execute_script("history.replaceState(history.state, '', arguments[0])", address)
     # Captions in plain words: no filler about where the numbers stand, never "in all", no stacked semicolons.
     for caption in driver.execute_script("return [...document.querySelectorAll('.stats-fig > figcaption .stats-fig-caption')].map(e => e.textContent)"):
