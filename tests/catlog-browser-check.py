@@ -1974,11 +1974,11 @@ STATS_INSIGHTS_JS = """
         : rows.reduce((sum, count) => sum + count, 0), bars: bars.length };
     }
     const typical = Object.fromEntries([...document.querySelectorAll('[data-figure="typical"] [data-stat-key]')].map((row) => [row.dataset.statKey, Number(row.dataset.count)]));
-    // Bar-Even et al.'s kcat/Km stands in the Median column of the kcat/Km panel (round 17: a dot plot), its right edge
-    // under CatLog's median kcat/Km (when shown).
-    const refCell = document.querySelector('[data-figure="typical"] .stats-ridge-reference .stats-ridge-value');
-    const ownCell = document.querySelector('[data-figure="typical"] [data-stat-key="typical_kcat_over_km"] .stats-ridge-value');
-    const referenceGap = refCell && ownCell && box(refCell).width && box(ownCell).width ? Math.abs(box(refCell).right - box(ownCell).right) : null;
+    // Bar-Even et al.'s kcat/Km (round 17: a dot plot) is an open diamond inside the kcat/Km line's plot (when shown).
+    const diamond = document.querySelector('[data-figure="typical"] .stats-ridge-diamond');
+    const ownPlot = document.querySelector('[data-figure="typical"] [data-stat-key="typical_kcat_over_km"] .stats-ridge-plot');
+    const referenceGap = diamond && ownPlot && box(diamond).width && box(ownPlot).width
+      ? Math.max(0, box(ownPlot).left - (box(diamond).left + box(diamond).right) / 2, (box(diamond).left + box(diamond).right) / 2 - box(ownPlot).right) : null;
     const where = Object.fromEntries(['between-papers', 'substrate-range', 'km-size', 'kcat-temperature', 'typical'].map((key) => {
       const section = document.querySelector(`[data-figure="${key}"]`);
       return [key, section ? (section.closest('.stats-supp-item') ? 'supplement' : section.closest('[data-part]')?.dataset.part) : null];
@@ -2046,7 +2046,7 @@ def check_stats_insights(driver, browser, overview):
                      "kcat-temperature": "supplement" if insights.get("temperature") else None,
                      "typical": "supplement" if insights.get("typical") else None}, where
     assert drawn["typical"] == {f"typical_{metric}": item["n"] for metric, item in (insights.get("typical") or {}).items()}, drawn["typical"]
-    assert drawn["referenceGap"] is None or drawn["referenceGap"] <= 1, f"Bar-Even's kcat/Km is not under CatLog's median: {drawn['referenceGap']}"
+    assert drawn["referenceGap"] is None or drawn["referenceGap"] <= 1, f"Bar-Even's kcat/Km is not on the kcat/Km line: {drawn['referenceGap']}"
     by_class = insights.get("database_by_class") or []
     if driver.find_elements(By.CSS_SELECTOR, "[data-figure='db-classes']"):
         assert drawn["classes"] == [[f"ec_{item['class']}", sum(item[key] for key in ("same", "other_label", "corrects", "differs", "not_listed"))]
@@ -2410,15 +2410,16 @@ def check_stats_new_figures(driver, browser, url):
             overview = stats_overview(manifest)
             check_stats_more(driver, browser, overview, manifest["total_rows"])
             titles = stats_figure_titles(driver)
-            for title in ("Values per paper", "Most common organisms among records read from the paper", "Values by enzyme class",
+            for title in ("Values per paper", "Most common organisms", "Values by enzyme class",
                           "kcat against Km", "Variants against their wild type", "Assay temperature and pH", "Between papers",
                           "Substrate specificity", "kcat and assay temperature", "Km and substrate size", "The typical wild-type enzyme"):
                 assert title in titles, titles
-            # The main parts' figures first, then the supplement's in its groups' order (its figures before its tables).
+            # The main parts' figures first, then the supplement's in its groups' order (round 17: all figures, the typical
+            # wild-type enzyme right after the values by enzyme class).
             assert titles.index("Value ranges") < titles.index("Between papers") < titles.index("kcat against Km") \
                 < titles.index("Substrate specificity") < titles.index("Variants against their wild type") \
-                < titles.index("Values by enzyme class") < titles.index("Assay temperature and pH") < titles.index("kcat and assay temperature") \
-                < titles.index("Km and substrate size") < titles.index("The typical wild-type enzyme") < titles.index("Cautions on values"), titles
+                < titles.index("Values by enzyme class") < titles.index("The typical wild-type enzyme") < titles.index("Assay temperature and pH") \
+                < titles.index("kcat and assay temperature") < titles.index("Km and substrate size") < titles.index("Cautions on values"), titles
             if driver.find_elements(By.CSS_SELECTOR, "#statsCharts [data-part='databases']"):
                 assert titles.index("Cautions on values") < titles.index(DATABASE_CLASS_TITLE) < titles.index("Results by database"), titles
             # Each enzyme class wears its own colour in Values by enzyme class (a ridge line per class, none alike).

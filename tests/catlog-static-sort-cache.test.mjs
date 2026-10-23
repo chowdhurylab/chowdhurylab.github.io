@@ -3316,7 +3316,8 @@ function row(overrides = {}) {
     const typical = { kcat: { n: 10, papers: 3, enzymes: 2, median: 4.7, p10: 0.042, p90: 190 },
       kcat_over_km: { n: 1, papers: 1, enzymes: 1, median: 28, p10: 28, p90: 28 }, km: { n: 2, papers: 3, enzymes: 1, median: 0.16, p10: 0.003, p90: 7.7 } };
     // (round 17: a dot plot, the table it was) a panel per parameter on its own log axis: the median dot and middle 80%
-    // line of the wild-type records, and on the kcat/Km axis the average enzyme of Bar-Even et al. as an open diamond.
+    // line of the wild-type records, and on the kcat/Km line the average enzyme of Bar-Even et al. as an open diamond,
+    // named with its link in the legend.
     const table = api.statsTypicalFigure(typical);
     assert.equal(table.kind, undefined);
     // Km's papers outnumber its records: that panel is left out.
@@ -3326,9 +3327,13 @@ function row(overrides = {}) {
     assert.match(table.body, /<p class="stats-range-count">3 papers, 2 enzymes<\/p>/);
     assert.match(table.body, /<p class="stats-range-count">1 paper, 1 enzyme<\/p>/);
     assert.match(table.body, /data-tip="kcat, wild type: median 4\.7 s⁻¹, middle 80% 0\.042 to 190; 10 records, 3 papers and 2 enzymes"/);
-    assert.match(table.body, /<i class="stats-ridge-median" style="left:22\.\d+%"><\/i><\/span>\s*<span class="stats-ridge-value">28<\/span>/);
-    assert.match(table.body, /<li class="stats-ridge-row stats-ridge-reference" data-tip="Bar‑Even et al\. 2011, average enzyme: about 10⁵ M⁻¹ s⁻¹ \(10² mM⁻¹ s⁻¹\)">\s*<span class="stats-ridge-label"><a class="stats-ref-link" href="https:\/\/doi\.org\/10\.1021\/bi2002289" target="_blank" rel="noreferrer">Bar‑Even et al\. 2011<\/a><\/span>\s*<span class="stats-ridge-plot" role="img" aria-label="[^"]+"><i class="stats-ridge-diamond" style="left:50%"><\/i><\/span>\s*<span class="stats-ridge-value">≈ 10²<\/span>/);
-    assert.equal((table.body.match(/stats-ridge-reference/g) || []).length, 1, "The reference stands on the kcat/Km panel only");
+    // kcat/Km 28 on an axis from 10¹ to 10³: its median at 22%, Bar-Even's 10² mM⁻¹ s⁻¹ (10⁵ M⁻¹ s⁻¹) at 50%.
+    assert.match(table.body, /<i class="stats-ridge-median" style="left:22\.\d+%"><\/i><i class="stats-ridge-diamond" style="left:50%"><\/i><\/span>\s*<span class="stats-ridge-value">28<\/span>/);
+    assert.equal((table.body.match(/stats-ridge-diamond/g) || []).length, 1, "The reference stands on the kcat/Km line only");
+    assert.match(table.body, /<li><i class="stats-typical-key-diamond" aria-hidden="true"><\/i><span>Average enzyme of <a class="stats-ref-link" href="https:\/\/doi\.org\/10\.1021\/bi2002289" target="_blank" rel="noreferrer">Bar‑Even et al\. 2011<\/a>, about\u00a010⁵\u00a0M⁻¹\u00a0s⁻¹<\/span><\/li>/);
+    assert.match(table.body, /data-tip="kcat\/Km, wild type: median 28 mM⁻¹ s⁻¹, middle 80% 28 to 28; 1 record, 1 paper and 1 enzyme; Bar‑Even et al\. 2011, average enzyme: about\u00a010⁵\u00a0M⁻¹\u00a0s⁻¹"/);
+    // Without kcat/Km no reference is named.
+    assert.doesNotMatch(api.statsTypicalFigure({ kcat: typical.kcat }).body, /Bar|diamond/);
     assertPlainCaption(table.caption);
     assert.match(table.rules, /about 10⁵ M⁻¹ s⁻¹ \(10² mM⁻¹ s⁻¹\), the open diamond\.$/);
     // Like Substrate specificity, the figure and Between papers say that a calculated kcat/Km counts.
