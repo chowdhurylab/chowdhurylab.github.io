@@ -13579,7 +13579,8 @@
     value_not_in_paper: "a value the paper does not print",
     paper_unit_misprint: "a unit the paper misprints",
     recomputed_ratio: "kcat/Km worked out from the database’s own kcat and Km",
-    different_measurement: "a different measurement",
+    // (round 17: the site's words; catlog-v2's lines say "for another record of this paper" since then)
+    different_measurement: "another record of the paper",
     // Found by code (an exact factor between the two numbers).
     power_of_ten: "off by an exact power of ten",
     printed_number_unit_not_applied: "the printed number taken in another unit",
@@ -13738,7 +13739,7 @@
     if (facts.factorOnly) return facts.factor ? `${facts.factor}${facts.cause ? ` (${facts.cause})` : ""}` : "";
     const cause = facts.cause;
     if (!cause || line.toLowerCase().includes(cause.toLowerCase())) return "";
-    return facts.causeCode === "different_measurement" && /\banother measurement\b/i.test(line) ? "" : cause;
+    return facts.causeCode === "different_measurement" && /\banother (?:measurement|record)\b/i.test(line) ? "" : cause;
   }
 
   // The side file's comparison of one parameter (["same", "BRENDA,SABIO-RK"], ["differs", "BRENDA", 3]) in the spec's
