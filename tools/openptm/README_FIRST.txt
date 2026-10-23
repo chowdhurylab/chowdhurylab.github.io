@@ -52,10 +52,10 @@ Design update, 20 October
 
 Included in this release
 - 111 operational PTM families in the original audit.
-- 27,165 site records and 14,431 function/regulation records.
+- 27,165 site records and 14,433 function/regulation records.
 - 63 source summaries: six original comparisons and 57 later additions.
-- 256 selected paper comparisons, containing 316 measurement entries from
-  94 primary papers across 89 families with numeric measurements; 22 gaps.
+- 258 selected paper comparisons, containing 319 measurement entries from
+  95 primary papers across 90 families with numeric measurements; 21 gaps.
 - 69 selected disease-study connections.
 - All nine original audit worksheets, with source records and methods.
 
@@ -64,6 +64,27 @@ overlap and must not be summed as unique biological sites. The 111 families
 are a defined working set, not a universal count of all PTMs. Paper comparisons
 are selected examples, not a systematic review. Upper bounds, uncertainty,
 study conditions and source links are retained in the record details.
+
+Paper reading, round 46
+- Added two cellular comparisons with three measurements from a previously
+  unread yeast Atg8-PE recycling paper, outside round 45's main subjects.
+  A second paper remains access-held and receives no original-body credit.
+- When Atg8-PE deconjugation was blocked, the source reports approximately
+  30% of WT autophagy-marker activity. The approximation is retained; WT 100%
+  is a normalization reference, with no absolute activity or SD reconstructed.
+- A separate microscopy comparison reports 2±0.04 versus 9±0.13 autophagic
+  bodies per vacuole and cross-section diameters of 226±1.8 versus 394±3.5 nm
+  (mean±SEM). Cell/profile and body counts remain distinct from independent
+  experiments; both microscopy groups share the pep4Δ vps4Δ background.
+- These are qualified cellular deconjugation-cycle comparisons. Atg4 loss,
+  processed Atg8 variants and sample context prevent an isolated PE-effect
+  interpretation. State characterization and functional endpoints differ;
+  occupancy and exclusive lipid composition in functional samples are unmeasured.
+- Totals: 258 comparisons, 319 entries, 95 numerical papers, 90 numerical
+  families and 21 remaining gaps. Phosphatidylethanolamine amidation gains
+  coverage. Prior records, interface and August audit workbook are preserved.
+- Numerical source: https://doi.org/10.4161/auto.19385
+  Access-held: https://doi.org/10.4161/auto.8.2.18373
 
 Paper reading, round 45
 - Three previously unread papers received selected reads for diphthamide,
@@ -717,7 +738,7 @@ exports, not the current website dataset. They are retained for old links.
 
 Release checksums (SHA-256)
 index.html
-e18459d3a33ac6938c3291877b91c864bf45f4565415538c059b74a8e9c13819
+1ff179ba83ca299e18bf4748193c0840a19f7c86ebe68acfb005e72ecc2c8ed8
 PTM_family_database_audit_final_2026-08-14.xlsx
 ddaa9ec6227fcfdaa12bb1a4a99ffaf7d28adb7c701f4ce8a7815038bbe81a8a
 
