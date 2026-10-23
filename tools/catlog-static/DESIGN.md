@@ -1719,6 +1719,26 @@ Each new field is optional; a snapshot without it (Oct 18's) reads as before.
 - The review of records read from the paper (review.v2) says "none of their N values was disputed" when catlog-v2 counts
   the values (review.v2.values), else "no value was disputed".
 
+## Round 17: words, not shapes (2026-10-23)
+The user: "The colour and shapes for Accepted and from paper: make them more eye-soothing and better, not AI-ish or low
+quality"; "the mutation in the enzyme entries is hard to understand". Browse's review result, its source, the sidebar's
+options, the chips, the counts band's labels, the record's status line and the Guide's legend name a result and the
+source in words only: the result in its colour's text shade (--st-accepted-ink navy, --st-pending-ink #975B4C,
+--st-unverified-ink #60687F, --st-disputed-ink deep red), "from paper" and Read from the paper in --src-paper-ink, the
+other tags muted. human-checked is the green check right after the result everywhere (the table, cards, the record
+"Accepted ✓ human-checked · from paper"); the Guide's legend keeps the "✓ human-checked" tag and says where it shows. The
+dot (state-label::before, state-mark, chip-state::before, detail-status::before, summary-accepted's) and Read from the
+paper's square (src-mark, Source's group dot while chosen) are gone, and with the check always shown the table's
+status-compact step and the cards' tags-compact (fitCardTags) went too. Classes kept: state-badge, state-label,
+state-tags, state-tag, state-check, detail-status, detail-status-word, detail-status-checked, chip-state, enzyme-form,
+card-form; added: state-tag.source-paper, state-word, source-word, detail-status-source, form-word, mutation-words.
+The variant line (Type And Color) reads "variant E124Q" with its substitutions in words in its title (mutationWords), and
+the record's header "Variant E124Q (Glu124 → Gln)" in the same plain type. The badge's accessible name says each source
+in full ("Accepted, Read from the paper", "Accepted, Not yet re-read, BRENDA, human-checked"). Stats' headline band lost
+Accepted's dot and Read from the paper's square too, so no page draws them. Colour on words can look like a link: none
+of these words is underlined or changes the pointer on its own (the row's pointer and the record's are the only ones),
+and "from paper" stays at 400.
+
 ## Round 17 Stats: figures first, less writing (2026-10-23)
 
 The user: "After the first box it should be the quality thing, with figures to understand it, not all those tables ...
@@ -1781,8 +1801,8 @@ tools/site_patches/20261023-site-round17-brief.md, section 5.
   are Values compared with databases' rule; Corrections by cause and how found's caption names the lower bound
   (statsLowerBoundText).
 - Words: no "entries", "measurement(s)", "row(s)" as a count on the main page (records people checked, database
-  listings, "another assay’s"); SOURCE_DATABASES_HELP's "database entries" (shared with Browse and the Guide) is the
-  Guide lane's.
+  listings, "another assay’s"); SOURCE_DATABASES_HELP (shared with Browse and the Guide) reads "built from the enzyme
+  databases" since the Browse lane.
 - Prose: captions one sentence (records, papers and enzymes in the rules), part leads one sentence or none. Visible prose
   on the main page at 1440px (captions, leads, notes and paragraphs outside the figures' labels): 719 words before, 354
   after; tables on the main page: 9 (378 words) before, none after.
