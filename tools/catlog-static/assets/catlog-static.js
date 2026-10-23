@@ -5083,9 +5083,9 @@
       id: "statsMutationsTitle", key: "mutations", title: "Variants against their wild type", wide: true,
       body: `<div class="stats-ranges stats-folds">${panels.join("")}</div>`,
       // (no claim about which residues: no field marks a residue as catalytic)
-      caption: "Each variant read from the paper against its paper’s wild type; papers choose which residues to change.",
+      // (round 17: the Browse link is the caption's own words, not a line of its own)
+      caption: `Each <a class="stats-link" href="${escapeHtml(statsBrowseHref({ source: "paper", variant: "variant" }))}">variant read from the paper</a> against its paper’s wild type; papers choose which residues to change.`,
       rules: `${formatInteger(variants)} ${variants === 1 ? "variant record" : "variant records"}${distinct ? ` (${formatInteger(distinct)} ${distinct === 1 ? "variant" : "variants"})` : ""}${papers ? ` from ${formatInteger(papers)} ${papers === 1 ? "paper" : "papers"}` : ""}. A variant record is paired only when its paper gives exactly one wild-type record for ${same}${left.length ? ` (${statsListText(left)} are left out)` : ""}. Each bar is a quarter of a power of ten; the bar at the line holds changes under 1.33-fold either way and the end bars hold the rest. Values without a recorded unit, or in another unit, are left out. They are not a random sample of mutations.`,
-      after: `<p class="stats-note"><a class="stats-link" href="${escapeHtml(statsBrowseHref({ source: "paper", variant: "variant" }))}">Variants read from the paper</a> in Browse</p>`,
     };
   }
 
@@ -5324,7 +5324,7 @@
           <p class="stats-years-x-title" aria-hidden="true">Publication year of the paper</p>
         </div>`,
       caption: escapeHtml(caption),
-      rules: `${order}${outside.length ? ` CatLog also has ${outside.join(" and ")}.` : ""} Each value counts in the PubMed publication year of its paper, and a paper without a PubMed ID in the year BRENDA gives, for CatLog and BRENDA alike. CatLog: every kcat, Km and kcat/Km value read from the paper by ${formatDate(data.asOf)} in the units the site shows (a Km or kcat/Km per mg/mL is left out)${totalOnly ? `; ${totalOnly}` : ""}. ${release}: its numeric kcat, Km and kcat/Km entries; an entry counts under each paper it cites.`,
+      rules: `${order}${outside.length ? ` CatLog also has ${outside.join(" and ")}.` : ""} Each value counts in the PubMed publication year of its paper, and a paper without a PubMed ID in the year BRENDA gives, for CatLog and BRENDA alike. CatLog: every kcat, Km and kcat/Km value read from the paper by ${formatDate(data.asOf)} in the units the site shows (a Km or kcat/Km per mg/mL is left out)${totalOnly ? `; ${totalOnly}` : ""}. ${release}: its numeric kcat, Km and kcat/Km listings; a listing counts under each paper it cites.`,
     };
   }
 
@@ -5708,7 +5708,7 @@
       id: "statsPairsTitle", key: "between-papers", title: "Between papers", wide: true,
       body: `<div class="stats-ranges stats-pairs">${panels.join("")}</div><div class="stats-fold-bars">${foldChart}</div>`,
       caption: "Wild-type values of one enzyme and substrate in two papers; assays differ, so part of each difference is real.",
-      rules: `${statsUsedText(records, papers, enzymes)}. An enzyme is a UniProt entry; constructs differ between papers too. Each paper’s value is the median of its records for that enzyme and substrate (matched by structure, else by name), whatever their conditions, a kcat/Km calculated as kcat ÷ Km included; a pair of papers counts once per enzyme, substrate and parameter. Pairs giving the very same number are left out, as often one paper prints the other’s value again: ${statsListText(identical)}. The bars marked same temperature and pH compare two papers only at a temperature (to 1\u00a0°C) and pH (to 0.1) both give${strictMetrics.length ? `: ${statsUsedText(...strictCounts)}` : ""}. Each histogram bar is a quarter of a power of ten; the last holds 100-fold and more. Values without a recorded unit, or in another unit, are left out.`,
+      rules: `${statsUsedText(records, papers, enzymes)}. An enzyme is one UniProt accession; constructs differ between papers too. Each paper’s value is the median of its records for that enzyme and substrate (matched by structure, else by name), whatever their conditions, a kcat/Km calculated as kcat ÷ Km included; a pair of papers counts once per enzyme, substrate and parameter. Pairs giving the very same number are left out, as often one paper prints the other’s value again: ${statsListText(identical)}. The bars marked same temperature and pH compare two papers only at a temperature (to 1\u00a0°C) and pH (to 0.1) both give${strictMetrics.length ? `: ${statsUsedText(...strictCounts)}` : ""}. Each histogram bar is a quarter of a power of ten; the last holds 100-fold and more. Values without a recorded unit, or in another unit, are left out.`,
     };
   }
 
@@ -7442,7 +7442,7 @@
   // Browse.
   // Compared with databases' lead (round 17: one short sentence; the corrections, how they were found and that they are a
   // lower bound are Corrections by cause and how found's, the caveat is Values compared with databases' caption, the
-  // values that differ for a reason not yet known its rule): "Where a database lists a number for the same measurement
+  // values that differ for a reason not yet known its rule; round 17's words): "Where a database lists a number for a value read from the paper
   // (142,515 of 197,799 values from 5,805 papers), it is the paper’s for 97.4%." A comparison with too few paired values
   // for a share gives counts; one with none gives the caveat.
   function statsDatabaseLeadHtml(comparison, values) {
@@ -7456,13 +7456,13 @@
     const from = "";
     const sentence = !paired ? STATS_DATABASE_CAVEAT
       : paired >= STATS_RATE_BASE
-        ? `Where a database lists the same measurement (${formatInteger(paired)} of ${formatInteger(compared)} values${from}), its number is the paper’s for ${qualityShare(same, paired)}.`
-        : `Where a database lists the same measurement (${formatInteger(paired)} of ${formatInteger(compared)} values${from}), its number is the paper’s for ${formatInteger(same)}.`;
+        ? `Where a database lists a number for a value read from the paper (${formatInteger(paired)} of ${formatInteger(compared)}${from}), it is the paper’s for ${qualityShare(same, paired)}.`
+        : `Where a database lists a number for a value read from the paper (${formatInteger(paired)} of ${formatInteger(compared)}${from}), it is the paper’s for ${formatInteger(same)}.`;
     return `<p class="stats-part-lead" data-lead="databases">${escapeHtml(sentence)}</p>`;
   }
 
   // What the lead no longer says, in Values compared with databases' rule: the corrections and how they were found, and
-  // the values that differ for a reason not yet known (some may be other measurements in the paper). "" without them.
+  // the values that differ for a reason not yet known (some may be other assays in the paper). "" without them.
   function statsDatabaseDifferRule(comparison, values) {
     const [, , figureCorrects, figureDiffers] = values.all;
     const words = comparisonWordCounts(comparison.values?.all, comparison);
@@ -7474,7 +7474,7 @@
       ? ` (${formatInteger(byPaper)} found by an AI check of the paper, ${formatInteger(byFactor)} by an exact factor found automatically)` : "";
     return [
       corrects ? `Corrects a value: ${formatInteger(corrects)} ${corrects === 1 ? "value corrects" : "values correct"} a database’s number${split}${statsLowerBoundText(comparison) ? `; ${statsLowerBoundText(comparison)}` : ""}.` : "",
-      differs ? `Different number: ${formatInteger(differs)} ${differs === 1 ? "differs" : "differ"} for a reason not yet known${words.factorOnly ? ` (${formatInteger(words.factorOnly)} by an exact factor, not yet checked)` : ""}; some may be other measurements in the paper rather than database errors.` : "",
+      differs ? `Different number: ${formatInteger(differs)} ${differs === 1 ? "differs" : "differ"} for a reason not yet known${words.factorOnly ? ` (${formatInteger(words.factorOnly)} by an exact factor, not yet checked)` : ""}; some may be other assays in the paper rather than database errors.` : "",
     ].filter(Boolean).join(" ");
   }
 
@@ -7597,7 +7597,7 @@
       body: statsBarChart({ key: "db-values", rows, legend: statsDatabaseLegend(STATS_DATABASE_RESULTS), percent: true,
         axis: statsAxis(100, 25, { percent: true }), valueWidth: `calc(${chars}ch + 40px)`,
         valueHead: `<span class="stats-db-thin">${thin.map((result, index) => column(index, `<span class="stats-db-head">${result.head.map((line) => `<span class="nowrap">${escapeHtml(line)}</span>`).join("<br>")}</span>`)).join("")}</span>` }),
-      caption: "Values read from the paper against the databases; a different number can mean another measurement.",
+      caption: "Values read from the paper against the databases; a different number may be another assay’s.",
       rules: [`Compared with ${statsListText(sources.map((source) => source.display)) || "the databases"}.`, notes, statsDatabaseDifferRule(comparison, values)].filter(Boolean).join(" "),
       rulesHtml: notReproduced ? ` ${notReproduced}` : "",
     };

@@ -2538,9 +2538,9 @@ function row(overrides = {}) {
   // corrections, how they were found and the values that differ are the figures' and their rules, the caveat the
   // caption of Values compared with databases.
   const dbLead = figures.match(/<p class="stats-part-lead" data-lead="databases">[\s\S]*?<\/p>/)?.[0] || "";
-  assert.equal(plain(dbLead), "Where a database lists the same measurement (100,390 of 126,951 values), its number is the paper’s for 97.4%.");
+  assert.equal(plain(dbLead), "Where a database lists a number for a value read from the paper (100,390 of 126,951), it is the paper’s for 97.4%.");
   // The caveat is said once in part 5, never under each figure.
-  assert.equal((databaseSection().match(/can mean another measurement|does not by itself mean a database is wrong|rather than (?:a )?database errors?/g) || []).length, 1);
+  assert.equal((databaseSection().match(/may be another assay’s|does not by itself mean a database is wrong|rather than (?:a )?database errors?/g) || []).length, 1);
   assert.equal((dbLead.match(/<a /g) || []).length, 0);
   // The lead stands right under the part's heading, before its figures.
   assert.match(figures, /<span>Compared with databases<\/span><\/h2>\s*<p class="stats-part-lead"/);
@@ -2567,7 +2567,7 @@ function row(overrides = {}) {
   assert.match(values, /<span class="visually-hidden">printed kcat\/Km: Same number 23,488 \(62\.9%\), Same, other label 1,449 \(3\.9%\), Corrects a value 839 \(2\.2%\), Different number 561 \(1\.5%\), Not in the databases 11,007 \(29\.5%\)\.<\/span>/);
   // The legend names link into Browse (Same number has no filter), each with its definition.
   assert.match(values, /<ul class="stats-legend">[\s\S]*?<span title="A database lists this number for this value\.">Same number<\/span>[\s\S]*?#browse\?db=other_label" title="A database lists this number for the paper under another substrate, variant or organism\.">Same, other label<\/a>/);
-  assert.match(plain(values), /Figure \d+\. Values read from the paper against the databases; a different number can mean another measurement\./);
+  assert.match(plain(values), /Figure \d+\. Values read from the paper against the databases; a different number may be another assay’s\./);
   // The numbers the databases list that match no value CatLog read: those CatLog has as a kcat/Km it calculated or
   // under another parameter are named apart (14,633 = 12,483 + 1,687 + 463). The README is named for the reasons only
   // when the snapshot has its comparison download (the README's section on the comparison comes with it).
@@ -2577,7 +2577,7 @@ function row(overrides = {}) {
   // reprints and the possible misses, which are not yet checked)
   // (round 17: under the figure's number in How these numbers are counted, with the databases compared, the corrections
   // and the values that differ, which the lead no longer says)
-  assert.match(metricPlain(methodHtml()), /<dt>Figure \d+<\/dt><dd><span class="stats-method-title">Values compared with databases\.<\/span> Compared with BRENDA, SABIO-RK, OED, SKiD and STRENDA DB\. 5,946 kcat\/Km calculated by CatLog are not compared\. Corrects a value: 1,548 values correct a database’s number\. Different number: 1,051 differ for a reason not yet known; some may be other measurements in the paper rather than database errors\. The databases also list 14,633 numbers for these papers that match no value CatLog read from them: 5,635 are paired with a CatLog value of another number, 1,687 equal a kcat\/Km CatLog calculated, 463 are in CatLog under another parameter, 2,372 are reprinted in the paper from earlier work and 1,566 may/);
+  assert.match(metricPlain(methodHtml()), /<dt>Figure \d+<\/dt><dd><span class="stats-method-title">Values compared with databases\.<\/span> Compared with BRENDA, SABIO-RK, OED, SKiD and STRENDA DB\. 5,946 kcat\/Km calculated by CatLog are not compared\. Corrects a value: 1,548 values correct a database’s number\. Different number: 1,051 differ for a reason not yet known; some may be other assays in the paper rather than database errors\. The databases also list 14,633 numbers for these papers that match no value CatLog read from them: 5,635 are paired with a CatLog value of another number, 1,687 equal a kcat\/Km CatLog calculated, 463 are in CatLog under another parameter, 2,372 are reprinted in the paper from earlier work and 1,566 may/);
   assert.doesNotMatch(values, /not compared|README|databases also list/);
   // Part 7's own rules, once.
   assert.match(methodHtml(), /<dt>Compared with databases<\/dt><dd>Numbers are compared within the same paper and parameter\. Papers count when at least one of their values was compared\. Shares are given only for 1,000 values or more\.<\/dd>/);
@@ -2784,7 +2784,7 @@ function row(overrides = {}) {
   // it says only larger differences are checked (checked_from_factor); round 17: in the corrections' caption and the
   // rule of Values compared with databases, the lead being one sentence.
   withOut((data) => { data.corrections.by_cause_found_by = { power_of_ten: { factor_cross_checked: 557 }, unit_not_converted: { paper_check: 991 } }; data.checked_from_factor = 1.5; });
-  assert.match(methodHtml(), /Corrects a value: 1,548 values correct a database’s number \(991 found by an AI check of the paper, 557 by an exact factor found automatically\); a lower bound, as only differences of 1\.5-fold or more are checked\. Different number: 1,051 differ for a reason not yet known; some may be other measurements in the paper rather than database errors\./);
+  assert.match(methodHtml(), /Corrects a value: 1,548 values correct a database’s number \(991 found by an AI check of the paper, 557 by an exact factor found automatically\); a lower bound, as only differences of 1\.5-fold or more are checked\. Different number: 1,051 differ for a reason not yet known; some may be other assays in the paper rather than database errors\./);
   assert.match(plain(figureHtml("db-found")), /Figure \d+\. Values that correct a database’s number; a lower bound, as only differences of 1\.5-fold or more are checked\./);
   withOut((data) => { data.corrections.by_cause_found_by = { power_of_ten: { factor_cross_checked: 556 }, unit_not_converted: { paper_check: 991 } }; data.checked_from_factor = "x"; });
   assert.doesNotMatch(databaseSection() + methodHtml(), /found by an AI check of the paper, 556|lower bound/, "Counts that do not add up and a factor that is not a number say nothing");
@@ -2795,7 +2795,7 @@ function row(overrides = {}) {
   // the lead counts them under Different number, a note after it says the figures still hold them under Corrects,
   // Figure 10 and the All column take them out of their causes (the per-database columns keep them, said in the rule).
   withOut((data) => { data.corrections.by_cause_found_by = { power_of_ten: { factor_cross_checked: 300, factor_only: 257 }, unit_not_converted: { paper_check: 126 } }; });
-  assert.match(methodHtml(), /Corrects a value: 1,291 values correct a database’s number\. Different number: 1,308 differ for a reason not yet known \(257 by an exact factor, not yet checked\); some may be other measurements in the paper rather than database errors\./);
+  assert.match(methodHtml(), /Corrects a value: 1,291 values correct a database’s number\. Different number: 1,308 differ for a reason not yet known \(257 by an exact factor, not yet checked\); some may be other assays in the paper rather than database errors\./);
   assert.match(plain(databaseSection().match(/<p class="stats-note stats-part-note">[\s\S]*?<\/p>/)[0]),
     /^The figures below still count 257 exact-factor values not yet checked against the paper under Corrects\.$/);
   assert.deepEqual([...figureHtml("db-found").matchAll(/data-row="([^"]+)" data-count="(\d+)"/g)].map((match) => [match[1], Number(match[2])]),
@@ -2832,7 +2832,7 @@ function row(overrides = {}) {
   runtimeManifest.summary.database_comparison = { values: { kcat: { confirmed: 1, corrected: 1, new: 2 }, Km: { confirmed: 3, differs: 1 } }, papers: 1 };
   api.renderStats();
   assert.equal(plain(databaseSection().match(/<p class="stats-part-lead"[\s\S]*?<\/p>/)[0]),
-    "Where a database lists the same measurement (6 of 8 values), its number is the paper’s for 4.");
+    "Where a database lists a number for a value read from the paper (6 of 8), it is the paper’s for 4.");
   assert.match(methodHtml(), /Corrects a value: 1 value corrects a database’s number\. Different number: 1 differs for a reason not yet known; some may be/);
   // (no shares on a base under 1,000 values: neither on the bars nor in their lines)
   assert.doesNotMatch(figureHtml("db-values"), /\(\d+\.\d%\)|stats-seg-label/);
@@ -3145,14 +3145,14 @@ function row(overrides = {}) {
     assert.match(folds.body, /data-tip="kcat 1\.3 times the wild type or more: 1 variant record \(25\.0%\)"/);
     assert.match(folds.body, /<p class="stats-range-count">4 variant records; /);
     assert.match(folds.rules, /^5 variant records from 2 papers\. A variant record is paired only when its paper gives exactly one wild-type record for the same enzyme, organism, substrate, pH and temperature \(3 with several and 4 with none are left out\)\./);
-    assert.match(folds.caption, /^Each variant read from the paper against its paper’s wild type; papers choose which residues to change\.$/);
+    assert.match(folds.caption, /^Each <a class="stats-link" href="[^"]*#browse\?source=paper&amp;variant=variant">variant read from the paper<\/a> against its paper’s wild type; papers choose which residues to change\.$/);
     assert.doesNotMatch(sourceCode, /catalytic residues/, "No field marks a residue as catalytic: the caption claims nothing about it");
     assert.doesNotMatch(folds.body + folds.rules, /\d variants?\b(?! record)/, "never a variant record counted as a variant");
     // An overview that counts the variants among the records (variant_count) pairs by the cosubstrate too, and says both.
     const counted = api.statsMutationsFigure({ ...mutations, variant_count: 2 });
     assert.match(counted.rules, /^5 variant records \(2 variants\) from 2 papers\. A variant record is paired only when its paper gives exactly one wild-type record for the same enzyme, organism, substrate, cosubstrate, pH and temperature \(/);
     assert.equal(counted.caption, folds.caption, "The pairing rule is said under How these numbers are counted");
-    assert.match(folds.after, /#browse\?source=paper&amp;variant=variant">Variants read from the paper<\/a> in Browse/);
+    assert.equal(folds.after, undefined, "The Browse link is the caption's own (round 17)");
     assert.equal(api.statsMutationsFigure({ ...mutations, metrics: { kcat: { ...fold(4, 3, 1), n: 5 } } }), null);
 
     // Temperature: a bar per 1 °C, each bar with records a Browse range exact to the values' decimals (25 to 25.9 °C).
@@ -3218,7 +3218,7 @@ function row(overrides = {}) {
     assert.match(figure.body, /data-row="kcat-same"[\s\S]*?<span class="stats-chart-label"><i>k<\/i><sub>cat<\/sub><span class="stats-fold-scope"> same temperature and pH<\/span><small>2 pairs of papers<\/small><\/span>[\s\S]*?<span>1\.5×<\/span>/);
     assert.match(figure.body, /<span class="visually-hidden">kcat, same temperature and pH: 2 pairs of papers, median 1\.5×; 100\.0% within 2-fold, 0\.0% 2- to 10-fold apart, 0\.0% more than 10-fold apart\.<\/span>/);
     assert.doesNotMatch(figure.body, /<table|stats-range-numbers/);
-    assert.match(figure.rules, /^12 records, 4 papers and 2 enzymes\. An enzyme is a UniProt entry; [\s\S]* The bars marked same temperature and pH compare two papers only at a temperature \(to 1\u00a0°C\) and pH \(to 0\.1\) both give: 5 records, 2 papers and 1 enzyme\./);
+    assert.match(figure.rules, /^12 records, 4 papers and 2 enzymes\. An enzyme is one UniProt accession; [\s\S]* The bars marked same temperature and pH compare two papers only at a temperature \(to 1\u00a0°C\) and pH \(to 0\.1\) both give: 5 records, 2 papers and 1 enzyme\./);
     assert.equal(figure.caption, "Wild-type values of one enzyme and substrate in two papers; assays differ, so part of each difference is real.");
     assertPlainCaption(figure.caption);
     // Pairs giving the very same number are left out (often one paper's value printed again in another), and named.
@@ -3333,7 +3333,7 @@ function row(overrides = {}) {
     const at = (title) => supplement.findIndex((item) => item.endsWith(title));
     assert.ok(at("kcat and assay temperature") >= 0 && at("Km and substrate size") === at("kcat and assay temperature") + 1, supplement.join(" | "));
     assert.ok(/^Table S\d+ The typical wild-type enzyme$/.test(supplement[at("The typical wild-type enzyme")]), supplement.join(" | "));
-    assert.match(methodHtml(), /<span class="stats-method-title">Between papers\.<\/span> 12 records, 4 papers and 2 enzymes\. An enzyme is a UniProt entry; constructs differ between papers too\. Each paper’s value is the median of its records for that enzyme and substrate \(matched by structure, else by name\), whatever their conditions, a kcat\/Km calculated as kcat ÷ Km included; a pair of papers counts once per enzyme, substrate and parameter\./);
+    assert.match(methodHtml(), /<span class="stats-method-title">Between papers\.<\/span> 12 records, 4 papers and 2 enzymes\. An enzyme is one UniProt accession; constructs differ between papers too\. Each paper’s value is the median of its records for that enzyme and substrate \(matched by structure, else by name\), whatever their conditions, a kcat\/Km calculated as kcat ÷ Km included; a pair of papers counts once per enzyme, substrate and parameter\./);
     assert.match(methodHtml(), /<span class="stats-method-title">The typical wild-type enzyme\.<\/span>/);
     assert.doesNotMatch(element("statsCharts").innerHTML, /NaN|Infinity|undefined/);
     runtimeManifest.summary.overview = overview;
@@ -3362,7 +3362,7 @@ function row(overrides = {}) {
     assert.match(years.body, /data-tip="2003: BRENDA 2026\.1, 9,419 values; CatLog, 40 values from 4 papers"/);
     assert.equal((years.body.match(/class="stats-years-dot[^"]*is-open/g) || []).length, 4, "2004 and 2005, both lines");
     // Both sources date a paper without a PubMed ID by BRENDA's year; CatLog counts the values the site shows.
-    assert.match(years.rules, /^CatLog reads the papers the databases cite for the most values first, and papers no database cites as well, so its line does not show how much of BRENDA it covers\. CatLog also has 40 values from 3 papers published before 2000 and 1 from 1 paper published after 2005\. Each value counts in the PubMed publication year of its paper, and a paper without a PubMed ID in the year BRENDA gives, for CatLog and BRENDA alike\. CatLog: every kcat, Km and kcat\/Km value read from the paper by Oct 21, 2026 in the units the site shows \(a Km or kcat\/Km per mg\/mL is left out\); 7 values from papers with no publication year count only in the total\. BRENDA 2026\.1: its numeric kcat, Km and kcat\/Km entries; an entry counts under each paper it cites\.$/);
+    assert.match(years.rules, /^CatLog reads the papers the databases cite for the most values first, and papers no database cites as well, so its line does not show how much of BRENDA it covers\. CatLog also has 40 values from 3 papers published before 2000 and 1 from 1 paper published after 2005\. Each value counts in the PubMed publication year of its paper, and a paper without a PubMed ID in the year BRENDA gives, for CatLog and BRENDA alike\. CatLog: every kcat, Km and kcat\/Km value read from the paper by Oct 21, 2026 in the units the site shows \(a Km or kcat\/Km per mg\/mL is left out\); 7 values from papers with no publication year count only in the total\. BRENDA 2026\.1: its numeric kcat, Km and kcat\/Km listings; a listing counts under each paper it cites\.$/);
     // Without the build's two extra counts the brief's contract alone still draws it; the caption then names the later
     // values only.
     const contract = { ...field };
