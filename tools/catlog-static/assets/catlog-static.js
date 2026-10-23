@@ -13587,7 +13587,7 @@
   };
   // The second sentence of the caption every comparison figure carries (and the record's "?" box; a record with a
   // Different number says it under its notes too).
-  const DATABASE_COMPARED_CAPTION = "A different number can mean a different measurement; it does not by itself mean a database is wrong.";
+  const DATABASE_COMPARED_CAPTION = "A different number can belong to another record of the paper; it does not by itself mean a database is wrong.";
   // (The header's "not re-read" says that CatLog has not read the paper again yet.)
   // A label that claims nothing about the new values (round 14: a kcat/Km "changed to what the paper prints" was often
   // kcat ÷ Km, not the printed cell).
@@ -14744,9 +14744,16 @@
       return [
         { ...item, row_count: fromPaper, licenseText: PRIMARY_LITERATURE_LICENSE },
         ...(total > fromPaper ? [{ ...item, name: EARLIER_EXTRACTIONS_LABEL, row_count: total - fromPaper,
-          licenseText: `License: ${EARLIER_EXTRACTIONS_LICENSE}` }] : []),
+          licenseText: sentenceCase(EARLIER_EXTRACTIONS_LICENSE) }] : []),
       ];
     });
+  }
+
+  // A license as the Guide's list gives it, after the source's name under "Sources and their licenses" (round 17: no
+  // "License:" before each one; the section says it): its first letter in capitals ("See the source's terms").
+  function sentenceCase(text) {
+    const value = String(text ?? "");
+    return value.charAt(0).toUpperCase() + value.slice(1);
   }
 
   function renderSourceAttribution() {
@@ -14759,7 +14766,7 @@
           ? escapeHtml(item.licenseText)
           : (item.key === "primary_paper_direct"
               ? escapeHtml(PRIMARY_LITERATURE_LICENSE)
-              : `License: ${escapeHtml(item.license && !/^see source$/i.test(item.license) ? item.license : SOURCE_TERMS_TEXT)}`);
+              : escapeHtml(sentenceCase(item.license && !/^see source$/i.test(item.license) ? item.license : SOURCE_TERMS_TEXT)));
         return `
           <div>
             <dt>${sourceNameHtml(item)}</dt>

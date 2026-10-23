@@ -118,11 +118,14 @@ def set_browse_viewport(driver, browser, width, height):
     assert driver.execute_script("return [innerWidth, innerHeight]") == [width, height], "Requested viewport is not the actual viewport"
 
 
-# (round 13: how CatLog works, a record's parts, the labels and colours and what to mind first; the Reference's folded
-# parts after)
-GUIDE_SECTIONS = ("guide-method", "guide-record", "guide-status", "guide-caveats", "guide-find", "guide-units", "guide-downloads",
-                  "guide-cite", "guide-sources", "guide-questions")
-GUIDE_REFERENCE = ("guide-find", "guide-units", "guide-downloads", "guide-cite", "guide-sources")
+# (round 17, the user: the words first: Records and values, with the labels; then how CatLog works, a record's parts, the
+# other marks and the cautions and what to mind; the Reference's folded parts; License and citation, said once, which
+# Browse's footer line links to)
+GUIDE_SECTIONS = ("guide-words", "guide-method", "guide-record", "guide-marks", "guide-caveats", "guide-find", "guide-units",
+                  "guide-downloads", "guide-licence", "guide-questions")
+# (the folded parts: the Reference's three, the cautions and evidence labels under Marks and cautions, and More on citing and
+# the sources' licenses under License and citation)
+GUIDE_REFERENCE = ("guide-find", "guide-units", "guide-downloads", "guide-cautions", "guide-evidence", "guide-cite", "guide-sources")
 
 
 # The Guide's pictures (round 13, the user: "visuals help more"; round 14: no icons): the four steps side by side on a
@@ -147,10 +150,19 @@ GUIDE_PICTURES_JS = """
     const card = document.querySelector('.guide-anatomy-card').getBoundingClientRect();
     const key = document.querySelector('.guide-anatomy-key').getBoundingClientRect();
     if (wide ? key.left < card.right : key.top < card.bottom) bad.push('the key overlaps the record');
-    for (const element of document.querySelectorAll('.guide-anatomy-card, .guide-anatomy-key, .guide-legend-group, .guide-unit-cards li, .guide-db-table, .guide-caution-table')) {
+    for (const element of document.querySelectorAll('.guide-anatomy-card, .guide-anatomy-key, .guide-legend-group, .guide-unit-cards li, .guide-db-table, .guide-caution-table, .guide-row, .guide-row > *')) {
       const box = element.getBoundingClientRect();
       if (box.width && (box.left < view.left - 1 || box.right > view.right + 1)) bad.push(`${element.className} outside`);
     }
+    // Records and values (round 17): the bracket "3 values" spans exactly the three value cells and "1 record" the whole
+    // row, under its cells; on a desktop the row is one line of cells, under 900px a card with the three values side by side.
+    const at = (selector) => document.querySelector(`.guide-row ${selector}`).getBoundingClientRect();
+    const [kcat, km, eff, values, record, enzyme, result] = ['.gr-kcat', '.gr-km', '.gr-eff', '.gr-values-span', '.gr-record-span', '.gr-enzyme', '.gr-result'].map(at);
+    if (Math.abs(values.left - kcat.left) > 1 || Math.abs(values.right - eff.right) > 1 || values.bottom > kcat.top) bad.push('3 values does not span the values');
+    if (Math.abs(km.top - kcat.top) > 1 || Math.abs(eff.top - kcat.top) > 1) bad.push('the values are not side by side');
+    if (record.top < Math.max(kcat.bottom, enzyme.bottom, result.bottom) - 1) bad.push('1 record is not under the row');
+    if (Math.abs(record.left - document.querySelector('.guide-row').getBoundingClientRect().left) > 1) bad.push('1 record does not span the row');
+    if (wide && (Math.abs(enzyme.top - kcat.top) > 1 || Math.abs(result.top - kcat.top) > 1)) bad.push('the row is not one line');
     return bad;
 """
 
@@ -185,7 +197,7 @@ def check_guide(driver, wait):
     sections = list(GUIDE_SECTIONS)
     if driver.execute_script("""const m = window.CATLOG_STATIC_MANIFEST;
         return Boolean(m?.summary?.database_comparison) || (m?.viewer_index?.optional_fields || []).includes('database_summary')"""):
-        sections.insert(sections.index("guide-status") + 1, "guide-databases")
+        sections.insert(sections.index("guide-marks") + 1, "guide-databases")
     links = [link for link in driver.find_elements(By.CSS_SELECTOR, ".guide-contents a") if link.is_displayed()]
     assert [urlsplit(link.get_attribute("href")).fragment for link in links] == sections
     for section in sections:
@@ -199,6 +211,12 @@ def check_guide(driver, wait):
     assert driver.find_elements(By.CSS_SELECTOR, '#guide-method a[href="#team"], #guide-method a[href$="catlog-latest.html#team"]'), \
         "The method section links to the Team page"
     assert driver.find_elements(By.CSS_SELECTOR, '#guide-status a[href="#guide-method"]'), "The from-paper tag links to the method"
+    # (round 17) The words come first: record, value and paper beside one record whose three values are bracketed, and the
+    # labels it carries (#guide-status) inside the same section.
+    words = driver.find_element(By.ID, "guide-words")
+    assert [term.text for term in words.find_elements(By.CSS_SELECTOR, ".guide-words-list dt")] == ["Record", "Value", "Paper"]
+    assert driver.execute_script("return document.getElementById('guide-words').contains(document.getElementById('guide-status'))")
+    assert driver.execute_script("return document.querySelector('.guide-section').id") == "guide-words"
     # Compared with databases (Browse's group and the record's section) is described only when the snapshot carries the
     # comparison, as Browse shows the group.
     comparison = driver.execute_script(
@@ -213,7 +231,7 @@ def check_guide(driver, wait):
     # The earlier version and its automated review, which a record not yet re-read links (#guide-earlier, round 14),
     # under the four steps, with its own heading.
     earlier = driver.find_element(By.ID, "guide-earlier")
-    assert earlier.is_displayed() and "earlier version, built from enzyme database entries" in earlier.text, earlier.text
+    assert earlier.is_displayed() and "earlier version built them from the enzyme databases" in earlier.text, earlier.text
     assert driver.execute_script("return document.getElementById('guide-method').contains(document.getElementById('guide-earlier'))")
     # (fix pass after round 16b: CatLog also reads papers no database cites, found by a literature search)
     assert "CatLog reads enzyme kinetics" in guide_heading_text(driver) and "from the original papers, mostly those the enzyme databases cite" in guide_heading_text(driver)
@@ -246,6 +264,9 @@ def check_guide(driver, wait):
     guide_text = driver.find_element(By.ID, "guideView").text
     for word in ("independent", "AI run", "Checks pending", "Exporter", "exporter", *DROPPED_WORDING):
         assert word not in guide_text, f"The Guide still says {word}"
+    # (round 17: the site's counting words are value, record and paper; a UniProt entry is UniProt's own word)
+    assert not re.search(r"\b(?:entry|entries|measurements?|slots?)\b", guide_text.replace("UniProt entry", ""), re.I), \
+        re.findall(r".{0,40}\b(?:entry|entries|measurements?|slots?)\b.{0,40}", guide_text.replace("UniProt entry", ""), re.I)
     # Cite: the downloads save under the snapshot's date, and the Data ID check names that file.
     day = driver.execute_script("return new Date(window.CATLOG_STATIC_MANIFEST.generated_at).toISOString().slice(0, 10)")
     for identifier, part in (("guideFullDataLink", "full"), ("enrichedDataButton", "full"), ("exportSnapshotButton", "table")):
@@ -276,11 +297,11 @@ def check_guide(driver, wait):
         assert "CC BY 4.0" in source_rows["Read from the paper"]
         if "Earlier paper extractions" in source_rows:
             assert "as published (see paper)" in source_rows["Earlier paper extractions"]
-    # Every database's licence is said one way, "License: ...", a database without one "License: see the source's terms"
-    # (as a record from it reads).
+    # Every database's license is said one way under "Sources and their licenses" (round 17: the section names it, so no
+    # "License:" before each), a database without one "See the source's terms".
     for name, text in source_rows.items():
         if name != "Read from the paper":
-            assert text.startswith("License: "), (name, text)
+            assert text and not text.startswith("License") and text[0].isupper(), (name, text)
     tag = driver.find_element(By.CSS_SELECTOR, "#guide-status .state-tag.human-checked")
     assert tag.find_elements(By.CSS_SELECTOR, "svg.check-icon") and tag.text.strip() == "human-checked"
     assert driver.execute_script("""
@@ -5598,7 +5619,7 @@ EARLIER_CORRECTIONS_RECORD = "a6b6214047f31410"
 EXACT_FACTOR_RECORD = "4719b1575bee89df"
 DATABASE_RESULT_WORDS = ("Corrects a value", "Different number", "Different number (exact factor, not yet checked)", "Same, other label",
                          "Not in the databases")
-DATABASE_CAPTION_END = "A different number can mean a different measurement; it does not by itself mean a database is wrong."
+DATABASE_CAPTION_END = "A different number can belong to another record of the paper; it does not by itself mean a database is wrong."
 # (A record whose every value the earlier version added says so instead: "... added these values from the paper; ...".)
 EARLIER_CORRECTIONS_INTRO = ("Changed by CatLog’s earlier version:",
                              "CatLog’s earlier version added these values from the paper; the source had none.")

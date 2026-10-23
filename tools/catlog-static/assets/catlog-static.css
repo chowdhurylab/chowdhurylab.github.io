@@ -2497,6 +2497,48 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
 .guide-view .guide-anatomy-key li::before { content:counter(key); position:absolute; top:2px; left:0 }
 .guide-view .guide-anatomy-key strong { display:block; color:var(--text) }
 .guide-view .guide-shell .guide-tip { margin:16px 0 0; color:var(--text-2); font-size:var(--fs-14); line-height:var(--lh-14) }
+/* Records and values (#guide-words, round 17, the user: "how are they going to know the values and records and
+   entries?"): one Browse row drawn with the table's own cells and review badge, a bracket over its three values and one
+   under the whole row (plain hairline brackets in --line-strong, muted 13px labels: a journal figure's annotation, no
+   colour of their own); under 900px the row stacks as Browse's phone card does. Then the three words and the labels. */
+.guide-view .guide-row-example { max-width:1000px; margin:16px 0 20px }
+.guide-view .guide-row { display:grid; grid-template-columns:minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1.2fr) max-content max-content max-content minmax(9.5em, max-content);
+  grid-template-areas:". . . vb vb vb ." "h1 h2 h3 h4 h5 h6 h7" "c1 c2 c3 c4 c5 c6 c7" "rb rb rb rb rb rb rb"; column-gap:20px; align-items:start }
+.guide-view .guide-row-head { align-self:end; border-bottom:1px solid var(--line); padding:0 0 6px; color:var(--muted); font-size:var(--fs-13); font-weight:500; line-height:var(--lh-13) }
+.guide-view .guide-row-head .header-unit { display:block; font-weight:400 }
+.guide-view .guide-row-cell { padding:9px 0 10px; color:var(--text); font-size:var(--fs-14); line-height:var(--lh-14); overflow-wrap:anywhere }
+.guide-view .guide-row-cell strong { font-weight:600 }
+.guide-view .guide-row :is(.guide-row-head, .guide-row-cell).num { text-align:right; font-variant-numeric:tabular-nums lining-nums; white-space:nowrap; overflow-wrap:normal }
+.guide-view .guide-row .state-badge { height:auto; row-gap:2px }
+.guide-view .guide-row-span { position:relative; display:block; color:var(--muted); font-size:var(--fs-13); font-weight:500; line-height:var(--lh-13); text-align:center }
+.guide-view .guide-row-span::after { content:""; position:absolute; left:0; right:0; height:6px; border:1px solid var(--line-strong) }
+.guide-view .gr-values-span { grid-area:vb; margin:0 0 6px; padding:0 0 9px }
+.guide-view .gr-values-span::after { bottom:0; border-bottom:0 }
+.guide-view .gr-record-span { grid-area:rb; padding:11px 0 0 }
+.guide-view .gr-record-span::after { top:0; border-top:0 }
+.guide-view .gr-h-enzyme { grid-area:h1 } .guide-view .gr-h-organism { grid-area:h2 } .guide-view .gr-h-substrate { grid-area:h3 }
+.guide-view .gr-h-kcat { grid-area:h4 } .guide-view .gr-h-km { grid-area:h5 } .guide-view .gr-h-eff { grid-area:h6 } .guide-view .gr-h-result { grid-area:h7 }
+.guide-view .gr-enzyme { grid-area:c1 } .guide-view .gr-organism { grid-area:c2 } .guide-view .gr-substrate { grid-area:c3 }
+.guide-view .gr-kcat { grid-area:c4 } .guide-view .gr-km { grid-area:c5 } .guide-view .gr-eff { grid-area:c6 } .guide-view .gr-result { grid-area:c7 }
+.guide-view .guide-shell .guide-row-example figcaption { margin:10px 0 0; color:var(--text-2); font-size:var(--fs-14); line-height:var(--lh-14) }
+.guide-view .guide-words-list dt { font-weight:600 }
+.guide-view .guide-labels { margin-top:24px }
+/* License and citation (#guide-licence, round 17): said once here; Browse's footer line links to it. */
+.guide-view .guide-shell .guide-citation-meta dd > p { max-width:68ch; margin:0 0 6px }
+.guide-view .guide-shell .guide-citation-meta dd > p:last-child { margin:0 }
+.guide-view .guide-licence .guide-citation-meta { margin-bottom:16px }
+.guide-view .guide-licence .guide-ref:first-of-type { margin-top:0 }
+@media (max-width: 899px) {
+  .guide-view .guide-row { grid-template-columns:repeat(3, minmax(0, 1fr)); max-width:480px; column-gap:16px;
+    grid-template-areas:"c1 c1 c1" "c2 c2 c2" "c3 c3 c3" "vb vb vb" "h4 h5 h6" "c4 c5 c6" "c7 c7 c7" "rb rb rb" }
+  .guide-view :is(.gr-h-enzyme, .gr-h-organism, .gr-h-substrate, .gr-h-result) { display:none }
+  .guide-view .guide-row-cell { padding:2px 0 }
+  .guide-view .gr-enzyme { font-size:var(--fs-16); line-height:var(--lh-16) }
+  .guide-view :is(.gr-organism, .gr-substrate) { color:var(--text-2) }
+  .guide-view .gr-values-span { margin-top:12px }
+  .guide-view .guide-row :is(.guide-row-head, .guide-row-cell).num { text-align:left }
+  .guide-view .gr-result { padding-top:10px }
+}
 
 /* Labels and colours: small legends in a grid (review result, tags, marks beside a value, against the databases, filters
    in use), each under a hairline, drawn with the table's own dot, tags, marks, squares and chips. */
