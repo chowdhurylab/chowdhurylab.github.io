@@ -14,8 +14,8 @@ colors:
   accent-tint: "#eef1f0"
   accent-line: "#aebdb7 (link underlines, control outlines)"
   bpg-navy: "#3C5488 (Accepted)"
-  bpg-salmon: "#F39B7F (Not confirmed; ring #c4664a)"
-  bpg-slate: "#8491B4 (Not checked)"
+  bpg-salmon: "#F39B7F (Not confirmed; ring #c4664a, word #975B4C)"
+  bpg-slate: "#8491B4 (Not checked; word #60687F)"
   bpg-deep-red: "#DC0000 (Disputed)"
   bpg-cyan: "#4DBBD5 (CatLog's reading of the paper; ring #2DA1BD, text #207286)"
   bpg-green: "#00A087 (agreement: Same number; human-checked text #007664)"
@@ -29,6 +29,7 @@ colors:
   status-unverified: "#8491B4"
   status-not-reviewed: "#8491B4 (Not checked is one colour)"
   status-disputed: "#DC0000"
+  status-words: "Accepted #3C5488, Not confirmed #975B4C, Not checked #60687F, Disputed #DC0000 (--st-*-ink: the result's word on Browse, the record, chips, sidebar and Guide; round 17, no dot)"
   source-paper: "#4DBBD5 (Read from the paper; its text #207286, its 12% tint #eaf7fa)"
   human-checked: "#007664"
   caution: "#79654F (text); caution-mark #B09C85, caution-ring #8c7a64"
@@ -177,11 +178,12 @@ record, and in the page for alcohol dehydrogenase, EC 3, BRENDA, UniProt, Homo s
 line. The parameters' cell gives kcat, Km and kcat/Km each as a label over its count (16px, 500, --text-2, on a 20px line
 so on the key numbers' baseline it keeps their 28px row) and "records with each parameter" under them. Each key number wears
 the colour its meaning has across the site (Type And Color, "Colour meanings") and the colour is otherwise only on
-the mark before its label (round 14: the teal accent, a cyan label and a green label had read as one teal family):
-Records the page's ink (--text), Accepted the status navy (--st-accepted) with the status dot, Read from the paper the
-darker BPG cyan (--src-paper-ink) with Read from the paper's mark, a BPG cyan square ringed #2DA1BD (the same mark goes
-before the table's "from paper" tag, the record's, its chip and the Guide's legend; Source's title wears it while it is chosen, its option none, so the label keeps one line), Human-checked
-the darker BPG green (--checked) with the green tick; no text-shadow. Stats' band does the same for Accepted and Read
+Human-checked's green tick before its label (round 14: the teal accent, a cyan label and a green label had read as one
+teal family; round 17, "words, not shapes": Accepted's dot and Read from the paper's square came off the labels):
+Records the page's ink (--text), Accepted the status navy (--st-accepted-ink), Read from the paper the darker BPG cyan
+(--src-paper-ink, the colour of its words wherever the source is named: the table's "from paper" tag, the record's, its
+chip, its Source option and the Guide's legend), Human-checked the darker BPG green (--checked) with the green tick; no
+text-shadow. Stats' band does the same for Accepted and Read
 from the paper. From 1024px up this is one row that never wraps or moves as the window widens or the filters change.
 Tablets (641-1023px): two rows, the key numbers with their lines of context, then the parameters on one line ("With
 kcat 104,525 Km 166,603 kcat/Km 71,218", 12/16px) and the snapshot date at its end (the line's last item, pushed right),
@@ -277,10 +279,10 @@ enough to keep the group's options in view, never taking its title under the sti
 point and what the user might want"): in view, the filters most visitors use, each with a short label and its count:
 Enzyme, organism, substrate (labelled fields, Enzyme first, then EC number, Organism and Substrate; the EC field's
 example "e.g. 3 or 1.1.1" and its title say that a class, a subclass or a full number lists every enzyme under it; the
-only group without a "?": its fields are labelled and a "?" would wrap its long title at 256px), Parameter (round 17; Measurement type until then: Has kcat, Has Km, Has kcat/Km; its "?" says that ticking several shows records with all of them), Review result (Accepted, Not
-confirmed, Not checked and Disputed, each after its status dot, the boxes neutral as everywhere in the sidebar (round 15
-polish: one pattern, the option's own mark between box and words, the dot, square or "!" in the square's 10px slot, so
-the words of Review result, Compared with databases and Cautions start at one edge); "Only
+only group without a "?": its fields are labelled and a "?" would wrap its long title at 256px), Measurement type (Has kcat, Has Km, Has kcat/Km; its "?" says that ticking several shows records with all of them), Review result (Accepted, Not
+confirmed, Not checked and Disputed, each its word in its colour's text shade (round 17: no dot), the boxes neutral as
+everywhere in the sidebar (round 15 polish: the ticks had worn the status colours; Compared with databases and Cautions
+keep their square or "!" between box and words, in the square's 10px slot, so those groups' words start at one edge); "Only
 human-checked" sits under Accepted (shown as the green "✓ human-checked" tag, read
 out "Only human-checked"; a wide font in the 256px sidebar breaks it after the
 hyphen, never into its count), and ticking it ticks Accepted;
@@ -380,17 +382,17 @@ least); the count beside Filters is the number of chips. Chips are plain (round 
 line showed one colour three times, the rounded-box-with-a-stripe template look): a 1px --line-strong hairline on
 white, the words, and the option's own mark before its name in its meaning colour, which is where the colour coding the
 user asked for lives (2026-10-15: "can the filters be different color or sth so that its user friendly to keep track to
-undo"): a review result its status dot (Accepted navy, Not confirmed salmon, Not checked slate, Disputed deep red; a
-chip naming several results names each after its dot, as the table does), Only human-checked its green tick, Read from
-the paper its cyan square (Read from the paper's mark), a database result the sidebar's square (Corrects a value red,
+undo"): a review result its word in its colour's text shade (Accepted navy, Not confirmed terracotta, Not checked
+slate grey, Disputed deep red; a chip naming several results colours each, as the table does; round 17: no dot), Only
+human-checked its green tick, Read from the paper its words in the darker cyan, a database result the sidebar's square (Corrects a value red,
 Different number brown, Same, other label mint, Not in the databases cyan, All values the same green), a caution the
 table's tan "!" disc at 12px. The filters with no meaning colour (Not yet re-read and a source database; the enzyme,
 organism, substrate, EC number and search; the measurement: Parameter, Wild type or variant, Assay conditions;
 No cautions; Corrected earlier) have no mark: their words are enough. A group's title in the sidebar has a mark (8px,
-aria-hidden, hung in the 16px gutter so the titles keep their width) only where its filter has a meaning colour:
-Cautions' tan dot, and Source's cyan square while Read from the paper is chosen; none beside the enzyme fields, the
+aria-hidden, hung in the 16px gutter so the titles keep their width) nowhere now: none beside the enzyme fields, the
 measurement and Source database (round 13's dot there wore the accent: decoration once the chips lost their colour), nor
-beside Review result and Compared with databases, whose options each have their own mark. The words read 15:1 or more on
+beside Review result, Compared with databases and Cautions, whose options each say it, nor (round 17) Source's cyan
+square while Read from the paper is chosen, whose option is its words in the darker cyan. The words read 15:1 or more on
 the white chip and the × 4.5:1. Undo comes first in the bar whenever the bar shows, dimmed
 ("Nothing to undo") until a change of the filters reaches the results (a box ticked, a field typed, a chip removed,
 Clear all, Back or a link that sets filters; never the address a page opens with); it then restores the set before
@@ -575,7 +577,7 @@ for cautions, --ec-1 to --ec-7 and --db-* for the categorical sets, --bar-neutra
 
 Colour meanings (round 14, the user: "you keep using the same colours of the Nature BPG palette; there are some others,
 right?"). The palette is Supantha's saved Nature BPG (ggsci npg "nrc"). One meaning per colour, the same meaning on
-Browse, the record, the chips, the sidebar's dots, Stats, the Guide's legend and Team, and colour never alone (a dot, a
+Browse, the record, the chips, the sidebar's options, Stats, the Guide's legend and Team, and colour never alone (a dot, a
 square, a tick, a "!" disc or the words go with it). Marks (dots, squares, the "!" disc, ticks) are opaque; figures fill
 at 60% (#RRGGBB99 on white) with a 1px opaque outline, with three exceptions where a 60% fill would look like another
 meaning's: a correction is opaque red, and the exact-factor corrections and Not checked are hatched (red, slate); tints
@@ -586,11 +588,11 @@ colour itself goes on the mark beside the words.
 
 | BPG colour | Meaning (one per colour) | Where it shows | Text / ring (AA on white) |
 |---|---|---|---|
-| navy #3C5488 | Accepted | status dot, Accepted's count (counts band, Stats band), chips, Stats bars and donut | itself, 7.5:1 |
-| salmon #F39B7F | Not confirmed | status dot (ringed), chips, Stats bars and donut | ring #c4664a, 3.9:1 (the words are ink) |
-| slate #8491B4 | Not checked (both kinds, Unverified and Not reviewed: one word, one colour; the record names which) | status dot, chips; in Stats' bars, donut and swatches slate hatching on white (135° lines, 1.5px every 4px, a slate outline), never a flat fill: slate at 60% (#B5BDD2) is navy at 60% (#8A98B8) a step lighter in the same hue | the words are ink |
-| deep red #DC0000 | Disputed | status dot, chips, Stats bars | itself, 5.2:1 |
-| cyan #4DBBD5 | CatLog's reading of the paper: Read from the paper; Not in the databases (a value only that reading has); Added, the source had none (an earlier version read it from the paper) | Read from the paper's count and label, its chip and the Source dot while chosen, Stats' from-paper marks (Values per paper, Enzyme classes' stripe, From paper counts, the from-paper tables, variants against wild type, assay temperature and pH, the wild-type analyses of round 16, the Checks meters of the AI checks, CatLog's dots and line in CatLog and BRENDA by publication year, the line in --src-paper-line #278CA4 so it keeps 3:1 on the grey band), Not in the databases' square and bars (a database's own "not listed" kinds as cyan hatching, a light cyan and the full fill), the AI agents on Team | text #207286, 5.5:1; ring #2DA1BD, 3.0:1 |
+| navy #3C5488 | Accepted | the word Accepted (table, record, chips, sidebar, Guide), Accepted's count (counts band, Stats band), Stats bars and donut | itself, 7.5:1 (6.6:1 on the selected row) |
+| salmon #F39B7F | Not confirmed | the word Not confirmed in its darker shade (table, record, chips, sidebar, Guide), Stats bars and donut (ringed) | word #975B4C, 5.4:1 (4.7:1 on the selected row); ring #c4664a, 3.9:1 |
+| slate #8491B4 | Not checked (both kinds, Unverified and Not reviewed: one word, one colour; the record names which) | status dot, chips; in Stats' bars, donut and swatches slate hatching on white (135° lines, 1.5px every 4px, a slate outline), never a flat fill: slate at 60% (#B5BDD2) is navy at 60% (#8A98B8) a step lighter in the same hue; the word Not checked in its darker, greyer shade (table, record, chips, sidebar, Guide) | word #60687F, 5.6:1 (4.9:1 on the selected row; CIEDE2000 11.2 from Accepted's navy) |
+| deep red #DC0000 | Disputed | the word Disputed (table, record, chips, sidebar, Guide), Stats bars | itself, 5.2:1 (4.6:1 on the selected row) |
+| cyan #4DBBD5 | CatLog's reading of the paper: Read from the paper; Not in the databases (a value only that reading has); Added, the source had none (an earlier version read it from the paper) | Read from the paper's count, its words wherever the source is named (the table's and the record's "from paper", its chip, its Source option, the Guide; round 17: no square), Stats' from-paper marks (Values per paper, Enzyme classes' stripe, From paper counts, the from-paper tables, variants against wild type, assay temperature and pH, the wild-type analyses of round 16, the Checks meters of the AI checks, CatLog's dots and line in CatLog and BRENDA by publication year, the line in --src-paper-line #278CA4 so it keeps 3:1 on the grey band), Not in the databases' square and bars (a database's own "not listed" kinds as cyan hatching, a light cyan and the full fill), the AI agents on Team | text #207286, 5.5:1; ring #2DA1BD, 3.0:1 |
 | green #00A087 | Agreement with a second source: Same number (a database lists the paper's number); human-checked (a human reviewer approved the values) | Same number's square, chip and bars; human-checked's tick, word and counts (Browse, record, Stats' Human review, its Checks meter) | text and tick #007664, 5.6:1 (4.7:1 on its 12% tint) |
 | mint #91D1C2 | The same number in another form: Same, other label (database); More digits or rounding (an earlier correction) | their squares, chips and bars | ring #45A48E, 3.0:1 (the words are ink) |
 | brown #7E6148 | Different number (database; an earlier correction's "a different number") | square, chip, bars | itself, 5.7:1 |
@@ -629,10 +631,15 @@ the category's name or number, so the hue names the category alone there.
 Table numbers share regular weight; enzyme names use medium weight. Reserve
 semibold for counts, section headings, and the selected record's main values. Numeric
 headers and values align right. Names wrap to two lines; the full name is on
-hover and in the record. A variant's mutation (the bare signature, "D102E", or
-"variant, not specified") has its own line under the name, a small accent tag that
-is never clipped with the name, which then keeps one line; wild type shows
-nothing. Records of one paper that read alike but differ in their assay carry a
+hover and in the record. A variant has its own line under the name (round 17; the user: the boxed code was hard to
+understand): "variant D102E" in plain 12/16px words, no box, "variant" muted and the mutation in --text-2, several
+mutations as the paper lists them and a long list cut with "…"; a signature that says what it is ("deletion mutant",
+"chimera 1", "truncated enzyme", "N-domain (...)": SELF_DESCRIBED_FORM) stands alone, and "variant, not specified"
+without one. Its title is "Variant D102E: Asp102 → Glu", the substitutions in words where every part is a clean
+one-letter substitution (a trailing name in brackets aside; 93% of variant records on 2026-10-22's snapshot); the
+record's header says the same for up to three substitutions, a longer list's words in the code's title. The line is
+never clipped with the name, which then keeps one line; wild type shows nothing; the downloads keep the bare
+signature. Records of one paper that read alike but differ in their assay carry a
 short condition note (the export's condition_note, "+10 mM FBP") as a grey second
 line under the substrate, the substrate then taking one line; without a note,
 records with values on the page that share a paper, every column, temperature
@@ -663,10 +670,12 @@ questionable and No cautions. Stats' Cautions table counts each group from the s
 (scripts/build-catlog-followup-summary.py CAUTION_GROUPS = the page's CAUTION_FLAG_BITS; a unit test holds them
 together), so its counts are Browse's.
 
-Review result cells (the column is headed "Review result", as in the Guide) align left: a dot and the review result (Accepted, Not confirmed,
-Not checked or Disputed: words that define themselves and promise no further
-work), then whole-word tags on a second line that always starts with what happened to the record: "from paper" (read
-by CatLog), or "not re-read" (read out "Not yet re-read") followed by its source: the
+Review result cells (the column is headed "Review result", as in the Guide) align left: the review result as a word in
+its colour's text shade, 13px/500 (Accepted, Not confirmed, Not checked or Disputed: words that define themselves and
+promise no further work; round 17, "words, not shapes": no dot), human-checked's 12px green check right after it in
+every width ("Accepted ✓", read out "human-checked", the word in the badge's title), then whole-word 12px tags on a
+second line that always starts with what happened to the record: "from paper" (read by CatLog; in the darker cyan),
+or "not re-read" (read out "Not yet re-read"; muted, as the tags after it) followed by its source: the
 databases (BRENDA, SABIO-RK, OED, UniProt, SKiD, STRENDA DB; a merged record names
 each), "earlier extraction" or "source not recorded". Beside an open record only that first tag stays. "no paper linked" marks a
 record without a PMID or DOI; under the user's review rules (an export that
@@ -681,17 +690,12 @@ as wide as their widest entry (and their heading) and never wrap; Enzyme, Organi
 start as wide as three in four of their names. The room left in the window goes
 to the name columns, first until their names fit on one line, then in
 proportion to their widths, so the table fills the window and the arrow sits
-right after Review result. In a narrow window Review result's human-checked tag
-first moves up as a 12px green check right after the review result ("Accepted ✓",
-read out "human-checked"; the word stays in the badge's tooltip), where the tag
-line's "…" never cuts it (what that frees beyond the need goes back to the names: one
-human-checked row had held Review result at 194px beside the 1280px sidebar and cut
-every enzyme name above its variant tag), then the names give way (two lines, broken
+right after Review result. In a narrow window the names give way first (two lines, broken
 between words while they can; the full name is on hover), then they go to their
-minimums, then Review result's tags
-(the badge's accessible name and the record keep them all), and when that is not enough the
-table scrolls sideways. A phone card whose tag line is too long for it (not re-read · BRENDA · corrected · human-checked
-at 320px) moves human-checked up the same way, card by card. The table has no temperature or pH columns (the user,
+minimums, then Review result's tags end in "…" (never the result and its check;
+the badge's accessible name and the record keep them all), and when that is not enough the
+table scrolls sideways. (Until round 17 the human-checked tag sat on the tag line and moved up as the check only when
+room ran short, in the table and card by card; the check is now always there and the tag gone.) The table has no temperature or pH columns (the user,
 2026-10-13: the rows stay about the enzyme and its values); the records of one
 paper's temperature or pH series on the page (the same enzyme, variant, EC,
 organism, substrate and source, whatever their values or review result) say
@@ -727,7 +731,7 @@ downloads keep every stored digit).
 Every column fits in about 910px of table; a table with less room (beside the
 sidebar or a record, or on a tablet) has tighter cells and then scrolls sideways
 with the enzyme name kept in view. Table headers are 12px/600 --text-2 (units
-12px --muted under them), cells 13px, enzyme names 13px/500, rows 44px (a variant's 12px tag is a 16px box and a condition note a 16px line, so neither adds height). With a record open, EC and the arrow give way; Review result
+12px --muted under them), cells 13px, enzyme names 13px/500, rows 44px (a variant's 12/16px line and a condition note's 16px line add no height). With a record open, EC and the arrow give way; Review result
 stays with its source line (the other tags give way) and human-checked as the check after "Accepted". On phones (640px and below) the page scrolls
 as a whole (2026-10-15: the pinned header, counts band and toolbar had left 1.5-2.5 cards in view, kept Safari's toolbars
 from collapsing and put the pager below an iPhone SE's window): the list is as tall as its cards, the pager sticks to the
@@ -748,14 +752,15 @@ The phone filter sheet ends with a "Show N records" button. Filter chips are pla
 a hairline on white with the option's own mark (Filters, above), 12px text, and wrap within the toolbar.
 
 White and neutral surfaces carry the data. One accent (--accent, ink, 16.5:1) marks
-links (with a quiet underline), selection, buttons and the focus ring (2px, 2px offset). Status uses a
-coloured dot from the Nature BPG palette (ggsci NPG "nrc") and ink words:
-accepted navy, not confirmed salmon, not checked slate (one colour for Unverified and
-Not reviewed: the word says Not checked for both; its title names which),
-disputed deep red; the light salmon dot carries a 1px darker ring. The
-sidebar's boxes are all neutral (the accent); each option with a meaning colour shows its own mark between its box and its
-words, a review result its status dot, human-checked its green tick, a caution its "!", a database result its square
-(round 15 polish: the ticks had worn the status colours, so a result's colour showed only once it was ticked). The filter chips carry the meaning colours only on the marks of the options they name
+links (with a quiet underline), selection, buttons and the focus ring (2px, 2px offset). Status is a word in its
+Nature BPG colour's text shade (ggsci NPG "nrc"; round 17, the user: the dots and squares looked AI-made): Accepted navy
+#3C5488, Not confirmed terracotta #975B4C (salmon's darker, quieter shade; CIEDE2000 16.9 from Disputed), Not checked
+slate grey #60687F (one colour for Unverified and Not reviewed: the word says Not checked for both; its title names
+which; greyed so it stays 11.2 from Accepted's navy), Disputed deep red; each 4.6:1 or more on the selected row. The
+sidebar's boxes are all neutral (the accent); a review result is its word in that colour, Read from the paper its words
+in the darker cyan, human-checked its green tick and word, a caution its "!" and a database result its square between
+box and words (round 15 polish: the ticks had worn the status colours, so a result's colour showed only once it was
+ticked). The filter chips carry the meaning colours only on the marks of the options they name
 (Filters, above); the other filters have no mark (the site has one light theme, so there are no dark-mode forms). Tan (--caution-mark, its text --caution) marks cautions. Green (human-checked,
 #007664, 5.6:1 on white and 4.7:1 on its tint, the darker shade of BPG green) is for "human-checked" and, at the colour itself, for a
 database's Same number (one meaning: agreement with a second source):
@@ -813,18 +818,18 @@ they compare with the databases and how far they were checked come first, the co
   short locant ("4-", "1,2-", "3α-", "D-2-"), which stays with the part after it, nor before a last part of three
   characters or fewer ("TEM-1"): each part is an inline block (detailNameHtml), so a part too wide for the line beside
   the buttons goes under them whole; the text and a copy of it are the name as it is. "EC 1.4.1.20 · *Bacillus sphaericus* · Variant
-  `N145A`" (the binomial in italics, a strain or "sp." roman; "Wild type" or
+  `N145A`: Asn145 → Ala" (the binomial in italics, a strain or "sp." roman; up to three substitutions in words, muted,
+  where every part parses, a longer list's words in the code's title; "Wild type" or
   "Variant, not specified"; nothing when the record does not say; an EC the
   paper does not print reads "EC 2.3.1.183 (from the databases; not in the
   paper)"); "Substrate: ..." (two lines at most; in full under Protein
   and substrate), with the record's condition note under it in grey; one status
-  line in the table's colours, the dot in the exact status's colour (slate for
-  Unverified, tan with its ring for Not reviewed, salmon with its ring for Not
-  confirmed), the result word at 13px/600: the review result ("Not checked
-  (Unverified)" keeps the earlier status in brackets), the source ("read from
-  the paper" for a record CatLog read, else as the table names it: "BRENDA",
-  "earlier extraction", "source not recorded"), then "corrected", "no paper
-  linked" or "✓ human-checked" (each "·" sits in the gap before its tag, so a
+  line in the table's words and colours (round 17: no dot), the result word at 13px/600 in its colour's text shade
+  (--status-ink: navy, terracotta, slate grey, deep red): the review result ("Not checked
+  (Unverified)" keeps the earlier status in brackets), "✓ human-checked" 6px after it, then the tags: "from paper"
+  in the darker cyan for a record CatLog read, else "not re-read" and the source as the table names it: "BRENDA",
+  "earlier extraction", "source not recorded"), then "corrected" or "no paper
+  linked" (each "·" sits in the gap before its tag, so a
   tag that wraps onto the next line on a phone leaves no "·" at the end of one
   line or the start of the next); last the record ID in 12px mono and Copy link
   (the page's address with #record=). Copy link, and Show and Copy under E,
@@ -1714,3 +1719,19 @@ Each new field is optional; a snapshot without it (Oct 18's) reads as before.
   much of BRENDA it covers."
 - The review of records read from the paper (review.v2) says "none of their N values was disputed" when catlog-v2 counts
   the values (review.v2.values), else "no value was disputed".
+
+## Round 17: words, not shapes (2026-10-23)
+The user: "The colour and shapes for Accepted and from paper: make them more eye-soothing and better, not AI-ish or low
+quality"; "the mutation in the enzyme entries is hard to understand". Browse's review result, its source, the sidebar's
+options, the chips, the counts band's labels, the record's status line and the Guide's legend name a result and the
+source in words only: the result in its colour's text shade (--st-accepted-ink navy, --st-pending-ink #975B4C,
+--st-unverified-ink #60687F, --st-disputed-ink deep red), "from paper" and Read from the paper in --src-paper-ink, the
+other tags muted. human-checked is the green check right after the result everywhere (the table, cards, the record
+"Accepted ✓ human-checked · from paper"); the Guide's legend keeps the "✓ human-checked" tag and says where it shows. The
+dot (state-label::before, state-mark, chip-state::before, detail-status::before, summary-accepted's) and Read from the
+paper's square (src-mark, Source's group dot while chosen) are gone, and with the check always shown the table's
+status-compact step and the cards' tags-compact (fitCardTags) went too. Classes kept: state-badge, state-label,
+state-tags, state-tag, state-check, detail-status, detail-status-word, detail-status-checked, chip-state, enzyme-form,
+card-form; added: state-tag.source-paper, state-word, source-word, detail-status-source, form-word, mutation-words.
+The variant line (Type And Color) reads "variant E124Q" with its substitutions in words in its title (mutationWords).
+

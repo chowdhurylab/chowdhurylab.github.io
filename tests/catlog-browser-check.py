@@ -517,7 +517,7 @@ def check_human_checked(driver, url):
     rows = driver.find_elements(By.CSS_SELECTOR, "#recordsBody tr[data-key]")
     assert rows, "The human-checked link shows no records"
     wait.until(lambda d: all(
-        row.find_elements(By.CSS_SELECTOR, ".state-badge .state-tag.human-checked svg.check-icon")
+        row.find_elements(By.CSS_SELECTOR, ".state-badge .state-label .state-check svg.check-icon")
         for row in d.find_elements(By.CSS_SELECTOR, "#recordsBody tr[data-key]")))
     assert all(row.find_element(By.CSS_SELECTOR, ".state-label").text == "Accepted" for row in rows)
     # Each badge's title says human-checked's rule (the user, 2026-10-13): every kcat and Km, and the kcat/Km approved
@@ -3109,10 +3109,9 @@ def check_filters(driver, browser, url, route_label):
         """)
         assert [row["mark"]["colour"] for row in rows[:6]] == colours and rows[6]["mark"] is None, rows
         assert all(row["mark"]["hidden"] == "true" and row["mark"]["size"] == [10, 10] for row in rows[:6]), rows
-        # Round 15 polish: one pattern in the sidebar. Every box is neutral (the accent), each option with a meaning colour
-        # shows its own mark between box and words (a review result its dot, a caution its "!", a database result its
-        # square), and the words of those groups' top-level options start at one edge (No cautions and Corrected earlier
-        # keep the mark's room); the Cautions title carries no dot.
+        # Round 15 polish: one pattern in the sidebar. Every box is neutral (the accent), a caution shows its "!" and a
+        # database result its square between box and words, and the words of those groups' top-level options start at one
+        # edge (No cautions and Corrected earlier keep the mark's room); the Cautions title carries no dot.
         open_more("cautionFilterSection")
         pattern = driver.execute_script("""
             const probe = document.createElement('span'); document.body.appendChild(probe);
@@ -3121,12 +3120,22 @@ def check_filters(driver, browser, url, route_label):
                 while (walker.nextNode()) { const node = walker.currentNode;
                     if (node.data.trim() && !node.parentElement.closest('.visually-hidden')) { const range = document.createRange();
                         const at = node.data.search(/\\S/); range.setStart(node, at); range.setEnd(node, at + 1); return range.getBoundingClientRect().left; } } return null; };
-            const rows = [...document.querySelectorAll('#statusChecklist .check-row:not(.nested), #databaseChecklist .check-row:not(.nested), #cautionChecklist .check-row')];
+            const rows = [...document.querySelectorAll('#databaseChecklist .check-row:not(.nested), #cautionChecklist .check-row')];
+            const results = [...document.querySelectorAll('#statusChecklist .check-row:not(.nested)')];
+            const probe = document.createElement('span'); document.body.appendChild(probe);
+            const ink = name => { probe.style.color = `var(${name})`; return getComputedStyle(probe).color; };
+            const want = ['--st-accepted-ink', '--st-pending-ink', '--st-unverified-ink', '--st-disputed-ink'].map(ink); probe.remove();
             return {edges: rows.map(words), marks: rows.map(row => Boolean(row.querySelector(':scope > span > :is(.option-mark, .db-mark)'))),
+                    resultEdges: results.map(words), resultMarks: results.filter(row => row.querySelector('.option-mark, .db-mark, .state-mark')).length,
+                    resultColours: results.map(row => getComputedStyle(row.querySelector('.state-word')).color), want,
                     boxes: [...document.querySelectorAll('#catalogFilters .check-row input')].map(input => getComputedStyle(input).accentColor),
                     accent, titleDots: [...document.querySelectorAll('#cautionFilterSection > summary .group-dot')].length};
         """)
         assert all(pattern["marks"]) and max(pattern["edges"]) - min(pattern["edges"]) <= 1, pattern
+        # Round 17 ("words, not shapes"): a review result is its word in its colour's text shade, no mark; the four words
+        # start at one edge.
+        assert pattern["resultMarks"] == 0 and pattern["resultColours"] == pattern["want"], pattern
+        assert max(pattern["resultEdges"]) - min(pattern["resultEdges"]) <= 1, pattern
         assert set(pattern["boxes"]) == {pattern["accent"]} and pattern["titleDots"] == 0, pattern
         definitions = ("Every compared value is the number a database lists for it.",
                        "A database lists this number for the paper under another substrate, variant or organism.",
@@ -3416,8 +3425,10 @@ def check_filters(driver, browser, url, route_label):
         driver.find_element(By.ID, "humanCheckedFilter").click()
         wait.until(lambda d: summary() == f"{checked:,} records")
         assert "checked=1" in fragment()
-        badges = driver.execute_script("return [...document.querySelectorAll('#recordsBody tr[data-key] .state-badge')].map(b => b.textContent)")
-        assert badges and all("human-checked" in badge for badge in badges), "A row without the human-checked tag"
+        # (round 17: the green check after the review result, named human-checked, as is the badge)
+        badges = driver.execute_script("""return [...document.querySelectorAll('#recordsBody tr[data-key] .state-badge')].map(b =>
+            [b.getAttribute('aria-label'), b.querySelector('.state-label .state-check')?.getAttribute('aria-label') || ''])""")
+        assert badges and all("human-checked" in name and check == "human-checked" for name, check in badges), "A row without the human-checked check"
         driver.save_screenshot(str(OUTPUT / f"{browser}-{route_label}-filters-human-checked.png"))
         # The marks load after the index: an address with checked=1 still opens with the same records.
         open_page(base + "#browse?checked=1")
@@ -3546,17 +3557,25 @@ def check_filters(driver, browser, url, route_label):
         driver.find_element(By.CSS_SELECTOR, "#activeFilters [data-filter-clear]").click()
         wait.until(lambda d: not fragment())
 
-        # 6. Variants: the mutation has its own line under the name (never clipped with it), and rows keep one height.
+        # 6. Variants: the variant has its own line under the name (never clipped with it), and rows keep one height.
+        # Round 17 (the user: the boxed code was hard to understand): it says "variant E124Q" in plain words, no box, its
+        # title the substitutions in words ("Variant E124Q: Glu124 → Gln") where they parse.
         open_page(base + "#browse?variant=variant")
         forms = driver.execute_script("""
             return [...document.querySelectorAll('#recordsBody tr[data-key]')].map(row => {
                 const form = row.querySelector('.primary-cell > .enzyme-form');
                 const name = row.querySelector('.primary-cell > .clamp-2');
-                return {text: form ? form.textContent : null, below: form ? form.getBoundingClientRect().top >= name.getBoundingClientRect().bottom - 1 : false,
+                const style = form && getComputedStyle(form);
+                return {text: form ? form.textContent : null, title: form ? form.title : null,
+                        boxed: style ? parseFloat(style.borderTopWidth) > 0 || style.backgroundColor !== 'rgba(0, 0, 0, 0)' : null,
+                        below: form ? form.getBoundingClientRect().top >= name.getBoundingClientRect().bottom - 1 : false,
                         height: Math.round(row.getBoundingClientRect().height)};
             });
         """)
-        assert forms and all(item["text"] and not item["text"].startswith("Variant") and item["below"] for item in forms), forms[:3]
+        assert forms and all(item["text"] and item["below"] and not item["boxed"] and item["title"].startswith("Variant") for item in forms), forms[:3]
+        substitution = re.compile(r"^variant ([A-Z])(\d+)([A-Z])$")
+        assert all(item["title"].startswith(f"Variant {item['text'][8:]}: ") and "\u2192" in item["title"]
+                   for item in forms if (match := substitution.match(item["text"])) and match.group(1) != match.group(3)), forms[:3]
         assert len({item["height"] for item in forms}) == 1, {item["height"] for item in forms}
         driver.find_element(By.CSS_SELECTOR, "#activeFilters [data-filter-clear]").click()
         wait.until(lambda d: not fragment())
@@ -3659,8 +3678,9 @@ CHIP_COLOURS_JS = """
     document.body.appendChild(probe);
     const token = name => { probe.style.color = `var(${name})`; return getComputedStyle(probe).color; };
     const tokens = Object.fromEntries(['--st-accepted', '--st-pending', '--st-unverified', '--st-not-reviewed', '--st-disputed',
+        '--st-accepted-ink', '--st-pending-ink', '--st-unverified-ink', '--st-disputed-ink',
         '--cmp-same', '--cmp-other', '--cmp-differs', '--cmp-new', '--chg-magnitude', '--chg-precision', '--caution', '--caution-mark',
-        '--checked', '--accent', '--bar-neutral', '--src-paper'].map(name => [name, token(name)]));
+        '--checked', '--accent', '--bar-neutral', '--src-paper', '--src-paper-ink'].map(name => [name, token(name)]));
     probe.remove();
     const square = mark => { const e = document.querySelector(`#databaseChecklist .db-mark-${mark}`); return e ? getComputedStyle(e).backgroundColor : null; };
     const chips = [...document.querySelectorAll('#activeFilters .filter-chip')].map(chip => {
@@ -3676,13 +3696,16 @@ CHIP_COLOURS_JS = """
                 cross: Math.round(contrast(getComputedStyle(chip.querySelector('.chip-x')).color, style.backgroundColor) * 10) / 10,
                 dots: dots.map(dot => ({colour: getComputedStyle(dot).backgroundColor, hidden: dot.getAttribute('aria-hidden'),
                                         shown: dot.getBoundingClientRect().width === 8})),
-                states: [...chip.querySelectorAll('.chip-state')].map(e => getComputedStyle(e, '::before').backgroundColor),
-                // the option's own mark before its name: the status dot, human-checked's tick, a caution's "!", a database
-                // result's square, each in its colour (none for Source, the enzyme fields and the measurement)
-                mark: chip.querySelector('.chip-state') ? 'dot' : chip.querySelector('.chip-check') ? 'tick'
-                    : chip.querySelector('.chip-flag') ? 'flag' : chip.querySelector('.db-mark') ? 'square' : chip.querySelector('.src-mark') ? 'source' : null,
-                markColour: (e => e ? (e.matches('.chip-check') ? getComputedStyle(e).color : getComputedStyle(e).backgroundColor) : null)(
-                    chip.querySelector('.chip-check, .chip-flag, .db-mark, .src-mark')),
+                // a review result's words in their colours (round 17: no dot before them)
+                states: [...chip.querySelectorAll('.chip-state')].map(e => getComputedStyle(e).color),
+                stateDots: [...chip.querySelectorAll('.chip-state')].filter(e => getComputedStyle(e, '::before').content !== 'none').length,
+                // the option's own words or mark: a review result's words, Read from the paper's words in the darker cyan,
+                // human-checked's tick, a caution's "!", a database result's square, each in its colour (none for Not yet
+                // re-read, the enzyme fields and the measurement)
+                mark: chip.querySelector('.chip-state') ? 'words' : chip.querySelector('.chip-check') ? 'tick'
+                    : chip.querySelector('.chip-flag') ? 'flag' : chip.querySelector('.db-mark') ? 'square' : chip.querySelector('.source-word') ? 'source' : null,
+                markColour: (e => e ? (e.matches('.chip-check, .source-word') ? getComputedStyle(e).color : getComputedStyle(e).backgroundColor) : null)(
+                    chip.querySelector('.chip-check, .chip-flag, .db-mark, .source-word')),
                 words: chip.textContent.trim()};
     });
     probe.style.color = 'var(--line-strong)'; document.body.appendChild(probe); tokens['--line-strong'] = getComputedStyle(probe).color;
@@ -3712,8 +3735,9 @@ def check_chip_colours_and_undo(driver, browser, base, wait, open_page, chip_key
     """The active-filter chips are plain (round 14: a tint, a tinted line and a 3px stripe showed one colour three times,
     a template look): a 1px hairline on white, the words, and the option's own mark in its meaning colour where it has
     one, so the colour coding the user asked for (2026-10-15: "can the filters be different color or sth so that its
-    user friendly to keep track to undo") lives on the mark: a review result its status dot, human-checked its green
-    tick, Read from the paper its cyan square, a database result its square, a caution its tan "!". The filters with no
+    user friendly to keep track to undo") lives on the words or mark: a review result its word in its colour (round 17:
+    no dot), human-checked its green tick, Read from the paper its words in the darker cyan (no square), a database
+    result its square, a caution its tan "!". The filters with no
     meaning colour have no mark and no group dot. Undo, first in the bar, works once a change is made, says what it gives
     back, restores the filter set before the last change (a removed chip, Clear all; Enter on it too) and is dimmed when
     there is nothing more to undo. It keeps its place, so clicking it again at the same point undoes one more change,
@@ -3743,17 +3767,19 @@ def check_chip_colours_and_undo(driver, browser, base, wait, open_page, chip_key
     assert tones == {"source:paper": "tone-paper", "checked": "tone-checked", "db:differs": "tone-cmp-differs", "ec": "tone-identity",
                      "organism": "tone-identity", "metric:kcat": "tone-measurement", "temperature": "tone-measurement"}, tones
     assert all(plain_chip(chip, tokens) for chip in chips), chips
-    # Colour sits on the option's own mark only: Read from the paper's cyan square, human-checked's tick, a database
-    # result's square (the sidebar's); the enzyme fields and the measurement have none.
+    # Colour sits on the option's own words or mark only: Read from the paper's words in the darker cyan (round 17: no
+    # square), human-checked's tick, a database result's square (the sidebar's); the enzyme fields and the measurement
+    # have none.
     marks = {chip["key"]: (chip["mark"], chip["markColour"]) for chip in chips}
-    assert marks == {"source:paper": ("source", tokens["--src-paper"]), "checked": ("tick", tokens["--checked"]),
+    assert marks == {"source:paper": ("source", tokens["--src-paper-ink"]), "checked": ("tick", tokens["--checked"]),
                      "db:differs": ("square", tokens["--cmp-differs"]), "ec": (None, None), "organism": (None, None),
                      "metric:kcat": (None, None), "temperature": (None, None)}, marks
     assert page["squares"]["differs"] == tokens["--cmp-differs"], page["squares"]
-    # The sidebar's group marks: Source's cyan square while Read from the paper is chosen; no mark beside the groups with
-    # no meaning colour (an ink dot there was decoration), nor beside Review result and Compared with databases.
+    # The sidebar's group marks: none (round 17: Source's cyan square while Read from the paper was chosen became the
+    # option's cyan words); no mark beside the groups with no meaning colour (an ink dot there was decoration), nor beside
+    # Review result and Compared with databases.
     by_key = {chip["key"]: chip for chip in chips}
-    assert by_key["source:paper"]["dots"] and all(dot["shown"] and dot["colour"] == tokens["--src-paper"] for dot in by_key["source:paper"]["dots"]), by_key["source:paper"]
+    assert not any(dot["shown"] for dot in by_key["source:paper"]["dots"]), by_key["source:paper"]
     assert all(not any(dot["shown"] for dot in by_key[key]["dots"]) for key in ("ec", "organism", "metric:kcat", "temperature")), by_key
     assert page["plainDots"] == [0, 0], page["plainDots"]
     open_page(base + "#browse?source=brenda")
@@ -3761,7 +3787,7 @@ def check_chip_colours_and_undo(driver, browser, base, wait, open_page, chip_key
     source_chip = driver.execute_script(CHIP_COLOURS_JS)["chips"][0]
     assert source_chip["tone"] == "tone-source" and plain_chip(source_chip, tokens) and source_chip["mark"] is None, source_chip
     assert not any(dot["shown"] for dot in source_chip["dots"]), source_chip
-    # A Review result chip names each result after its status dot; a caution its tan "!" (Cautions' title has no dot:
+    # A Review result chip names each result in its colour's text shade (round 17: no dot); a caution its tan "!" (Cautions' title has no dot:
     # each caution option shows its "!", round 15 polish); Not in the databases its square's cyan, Same, other label its
     # square's mint.
     open_page(base + "#browse?status=accepted,curation_pending&caution=units&db=not_listed,other_label")
@@ -3769,11 +3795,11 @@ def check_chip_colours_and_undo(driver, browser, base, wait, open_page, chip_key
     page = driver.execute_script(CHIP_COLOURS_JS)
     by_key = {chip["key"]: chip for chip in page["chips"]}
     assert all(plain_chip(chip, tokens) for chip in page["chips"]), page["chips"]
-    assert by_key["status"]["states"] == [tokens["--st-accepted"], tokens["--st-pending"]], by_key["status"]
+    assert by_key["status"]["states"] == [tokens["--st-accepted-ink"], tokens["--st-pending-ink"]] and not by_key["status"]["stateDots"], by_key["status"]
     assert not by_key["caution:units"]["dots"], by_key["caution:units"]
     assert page["squares"]["notListed"] == tokens["--cmp-new"] and page["squares"]["otherLabel"] == tokens["--cmp-other"], page["squares"]
     assert {key: (chip["mark"], chip["markColour"]) for key, chip in by_key.items()} == {
-        "status": ("dot", None), "caution:units": ("flag", tokens["--caution-mark"]), "db:not_listed": ("square", tokens["--cmp-new"]),
+        "status": ("words", None), "caution:units": ("flag", tokens["--caution-mark"]), "db:not_listed": ("square", tokens["--cmp-new"]),
         "db:other_label": ("square", tokens["--cmp-other"])}, by_key
     results["colours"] = {chip["key"]: chip["markColour"] for chip in page["chips"]}
     # Nothing to undo on a fresh page: the address's filters are the start; Undo is in its place, first, dimmed. (A set
@@ -4194,20 +4220,20 @@ def check_layout(driver, browser, url, route_label):
         """)
         for key in ("records", "accepted", "paper", "checked"):
             assert colours[key][0] == colours[key][1], (key, colours)
-        # Every label is muted (round 14: three dark teals had read as one family); the colour is on the mark before it,
-        # Accepted's navy dot, Read from the paper's BPG cyan square and Human-checked's green tick, and on the number.
+        # Every label is muted (round 14: three dark teals had read as one family); the colour is on the number, and on
+        # Human-checked's green tick, the site's one mark for it (round 17, "words, not shapes": no dot before Accepted, no
+        # square before Read from the paper).
         marks = driver.execute_script("""
             const probe = document.createElement('i'); document.body.appendChild(probe);
             const resolve = name => { probe.style.color = `var(${name})`; return getComputedStyle(probe).color; };
             const result = {labels: [...document.querySelectorAll('.summary-card > span, .snapshot-paper > span, .snapshot-checked > span')].map(e => getComputedStyle(e).color),
-                muted: resolve('--muted'), dot: getComputedStyle(document.querySelector('.summary-accepted > span'), '::before').backgroundColor,
-                square: getComputedStyle(document.querySelector('.snapshot-paper > span'), '::before').backgroundColor,
-                tick: getComputedStyle(document.querySelector('.snapshot-checked .check-icon')).color,
-                want: [resolve('--st-accepted'), resolve('--src-paper'), resolve('--checked')]};
+                muted: resolve('--muted'), dot: getComputedStyle(document.querySelector('.summary-accepted > span'), '::before').content,
+                square: getComputedStyle(document.querySelector('.snapshot-paper > span'), '::before').content,
+                tick: getComputedStyle(document.querySelector('.snapshot-checked .check-icon')).color, want: resolve('--checked')};
             probe.remove();
             return result;
         """)
-        assert set(marks["labels"]) == {marks["muted"]} and [marks["dot"], marks["square"], marks["tick"]] == marks["want"], marks
+        assert set(marks["labels"]) == {marks["muted"]} and marks["dot"] == marks["square"] == "none" and marks["tick"] == marks["want"], marks
         assert len({colours[key][0] for key in ("records", "accepted", "paper", "checked")}) == 4, colours
         assert colours["shadow"] == "none" and colours["wash"] == "none" and colours["border"] == "1px" and colours["line"][0] == colours["line"][1], colours
         # Type set in columns, not tiles (round 15): one thin rule, before the parameters; none between the key numbers.
@@ -4639,13 +4665,13 @@ def check_layout(driver, browser, url, route_label):
             return ['.filter-chips-clear', '#clearButton'].map(selector => document.querySelector(selector).getBoundingClientRect().height);
         """)
         assert min(targets) >= 24, f"Clear all is at least 24px tall: {targets}"
-        # The human-review marks widen Status with the human-checked tag after the rows are drawn: a table that then
+        # The human-review marks widen Status with the human-checked check after the rows are drawn: a table that then
         # scrolls sideways shows it at once (scroll buttons, sticky Enzyme column, edge cue), before any scroll.
         manifest = driver.execute_script("return window.CATLOG_STATIC_MANIFEST")
         if isinstance(((manifest.get("summary") or {}).get("overview") or {}).get("human_checked_accepted"), int):
             open_page("#browse?checked=1")
             wait.until(lambda d: all(
-                row.find_elements(By.CSS_SELECTOR, ".state-tag.human-checked")
+                row.find_elements(By.CSS_SELECTOR, ".state-label .state-check")
                 for row in d.find_elements(By.CSS_SELECTOR, "#recordsBody tr[data-key]")))
             cues = driver.execute_script("""
                 const wrap = document.getElementById('recordTableWrap');
@@ -4658,17 +4684,14 @@ def check_layout(driver, browser, url, route_label):
             assert cues["scrollLeft"] == 0 and cues["overflow"] == cues["right"] == cues["controls"] == cues["sticky"], (
                 f"The scroll cues follow the table's width once the marks are in: {cues}")
             results["scroll-cues-1280"] = True
-            # A table short of room shows human-checked as a green check right after the review result ("Accepted ✓", named
-            # "human-checked") and gives its tag's room to the names; a table with room shows the tag whole. Either way the
-            # mark is in view, never cut by the tag line's "…" nor hidden beside an open record. 1024 beside the open
-            # sidebar is short of room.
+            # human-checked is a green check right after the review result ("Accepted ✓", named "human-checked") in every
+            # width (round 17: no tag on the tag line): in view, never cut by the tag line's "…" nor hidden beside an open
+            # record, at 1280px, at 1024px beside the open sidebar and beside a record.
             def checked_tags():
                 return driver.execute_script("""
-                    const table = document.querySelector('#recordTableWrap table');
                     const shown = (element) => !!element && element.getBoundingClientRect().width > 0;
-                    return {compact: table.classList.contains('status-compact'),
-                            tags: [...document.querySelectorAll('#recordsBody .state-badge')].filter(badge =>
-                                badge.querySelector('.state-tag.human-checked')).map(badge => {
+                    return {tags: [...document.querySelectorAll('#recordsBody .state-badge')].filter(badge =>
+                                badge.querySelector('.state-check')).map(badge => {
                                 const cell = badge.closest('td').getBoundingClientRect();
                                 const tag = badge.querySelector('.state-tag.human-checked');
                                 const up = badge.querySelector('.state-label .state-check');
@@ -4681,18 +4704,16 @@ def check_layout(driver, browser, url, route_label):
                             })};
                 """)
             tags = checked_tags()
-            assert tags["tags"] and all(tag["icon"] and tag["named"] for tag in tags["tags"]), tags
-            if not tags["compact"]:
-                assert all(not tag["up"] and tag["word"] > 20 and tag["wordIn"] for tag in tags["tags"]), (
-                    f"With room human-checked shows whole: {tags}")
+            assert tags["tags"] and all(tag["icon"] and tag["named"] and tag["up"] and not tag["word"] for tag in tags["tags"]), (
+                f"human-checked is the check after the review result: {tags}")
             set_browse_viewport(driver, browser, 1024, 900)
             open_page("#browse?checked=1")
             if not is_open():
                 driver.find_element(By.ID, "filterRailButton").click()
                 wait.until(lambda d: is_open())
-            wait.until(lambda d: d.find_elements(By.CSS_SELECTOR, "#recordsBody .state-tag.human-checked"))
+            wait.until(lambda d: d.find_elements(By.CSS_SELECTOR, "#recordsBody .state-label .state-check"))
             tags = checked_tags()
-            assert tags["compact"] and tags["tags"] and all(
+            assert tags["tags"] and all(
                 tag["icon"] and tag["named"] and tag["up"] and not tag["word"] for tag in tags["tags"]), (
                 f"At 1024px beside the sidebar human-checked is a check after the review result: {tags}")
             # Beside an open record the tag line keeps only the source; human-checked stays as the check after Accepted.
@@ -5147,12 +5168,12 @@ def check_layout(driver, browser, url, route_label):
             assert notice["inside"] and notice["wrapped"] and notice["sideways"] <= 1 and notice["page"] <= 1, (
                 f"At 320px the empty-results notice and its buttons wrap inside the table: {notice}")
             results["phone-320-empty-notice"] = True
-            # A card's tag line starts "not re-read" for a record not yet re-read; where the line is too long for the card
-            # (with human-checked at 320px), human-checked is the check after the review result, never cut by the "…".
+            # A card's tag line starts "not re-read" for a record not yet re-read; human-checked is the check after the
+            # review result (round 17: in every width), never cut by the tag line's "…".
             if isinstance(((manifest.get("summary") or {}).get("overview") or {}).get("human_checked_accepted"), int):
                 set_browse_viewport(driver, browser, 320, 800)
                 open_page("#browse?source=databases&checked=1")
-                wait.until(lambda d: d.find_elements(By.CSS_SELECTOR, "#recordsBody .state-tag.human-checked"))
+                wait.until(lambda d: d.find_elements(By.CSS_SELECTOR, "#recordsBody .state-label .state-check"))
                 marks = driver.execute_script("""
                     const shown = (element) => !!element && element.getBoundingClientRect().width > 0;
                     return [...document.querySelectorAll('#recordsBody tr[data-key] .state-badge')].map(badge => {
@@ -5162,8 +5183,8 @@ def check_layout(driver, browser, url, route_label):
                                 tagIn: !shown(tag) || tag.getBoundingClientRect().right <= line.getBoundingClientRect().right + 1};
                     });
                 """)
-                assert marks and all(mark["first"] == "not re-read" and (mark["up"] != mark["tag"]) and mark["tagIn"]
-                                     for mark in marks), f"At 320px each card shows human-checked whole or as a check: {marks}"
+                assert marks and all(mark["first"] == "not re-read" and mark["up"] and not mark["tag"] and mark["tagIn"]
+                                     for mark in marks), f"At 320px each card shows human-checked as the check after the result: {marks}"
                 results["phone-320-card-tags"] = True
             # 360-389px with a filter on (the Filters count): the buttons narrow so the menu still shows "Review result"
             # whole (its text, padding and arrow), with Sort's arrow beside it (the word "Sort" from 390px, or with no filter).
@@ -5268,16 +5289,19 @@ def check_record_panel(driver, browser, url, route_label):
                 reveal.click();
             }
             const status = content.querySelector('.detail-top .detail-status');
-            const selectedDot = document.querySelector('#recordsBody tr[aria-selected="true"] .state-label');
+            const statusWord = status && status.querySelector('.detail-status-word');
+            const selectedWord = document.querySelector('#recordsBody tr[aria-selected="true"] .state-label');
             const databases = content.querySelector('.databases-section');
             return {
                 sections: [...content.querySelectorAll('.detail-section > h3, details.detail-disclosure > summary')].map(e => e.textContent.trim()),
-                // The status line's dot and the selected row's dot (the same status colour), the definition lists' columns
-                // (112px labels, 96px on phones, one column with each label above its value up to 400px) and what
-                // section G says.
-                dotColor: status ? getComputedStyle(status, '::before').backgroundColor : null,
-                rowDotColor: selectedDot && selectedDot.getBoundingClientRect().width > 0
-                    ? getComputedStyle(selectedDot, '::before').backgroundColor : null,
+                // The status line's result word and the selected row's (the same status colour; round 17: words, no
+                // dot), the definition lists' columns (112px labels, 96px on phones, one column with each label above
+                // its value up to 400px) and what section G says.
+                dotColor: statusWord ? getComputedStyle(statusWord).color : null,
+                statusDot: status ? getComputedStyle(status, '::before').content : null,
+                ink: getComputedStyle(document.body).color,
+                rowDotColor: selectedWord && selectedWord.getBoundingClientRect().width > 0
+                    ? getComputedStyle(selectedWord).color : null,
                 kvColumns: getComputedStyle(content.querySelector('.detail-section .kv-line')).gridTemplateColumns.split(' '),
                 databasesText: databases ? databases.innerText : null,
                 headingSize: getComputedStyle(content.querySelector('.detail-section > h3')).fontSize,
@@ -5344,7 +5368,8 @@ def check_record_panel(driver, browser, url, route_label):
                     assert len(panel["kvColumns"]) == 1, panel["kvColumns"]
                 else:
                     assert panel["kvColumns"][0] == ("96px" if width <= 720 else "112px"), panel["kvColumns"]
-                assert panel["dotColor"] and panel["dotColor"] not in ("rgba(0, 0, 0, 0)", "transparent"), panel["dotColor"]
+                assert panel["dotColor"] and panel["dotColor"] != panel["ink"] and panel["statusDot"] in ("none", "normal"), (
+                    panel["dotColor"], panel["statusDot"])
                 if panel["rowDotColor"]:
                     assert panel["dotColor"] == panel["rowDotColor"], (panel["dotColor"], panel["rowDotColor"])
                 if kind.startswith("database"):

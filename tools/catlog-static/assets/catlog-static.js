@@ -287,13 +287,11 @@
   // earlier version is named only in help texts and the Guide's method section.
   const SOURCE_CATLOG_LABEL = "Read from the paper";
   const SOURCE_DATABASES_LABEL = "Not yet re-read";
-  // Their short tags, first on the table's tag line and the phone card's (a screen reader hears the labels).
+  // Their short tags, first on the table's tag line and the phone card's (a screen reader hears the labels). Read from
+  // the paper is said in words in its dark cyan wherever the source is named (round 17, "words, not shapes": its cyan
+  // square went), so the palette's cyan shows on Browse beside its count: the tag, the record's status line, its chip and
+  // its Source option.
   const SOURCE_CATLOG_TAG = "from paper";
-  // Read from the paper's mark (round 14): a small BPG cyan square before the words where the source is named, so the
-  // palette's cyan shows on Browse beside its count, its tag and its chip (aria-hidden: the words say it). Its Source
-  // option has none (the label keeps one line beside a six-figure count at 256px); the group's title wears it instead
-  // while it is chosen.
-  const SOURCE_MARK_HTML = '<span class="src-mark" aria-hidden="true"></span>';
   const SOURCE_DATABASES_TAG = "not re-read";
   // The source both downloads give a record read from the paper (the field names stay).
   const SOURCE_CATLOG_EXPORT = "CatLog (read from the paper)";
@@ -1834,17 +1832,55 @@
     return showUnknown ? "Not recorded" : "";
   }
 
-  // The table's variant line: the bare mutation ("D102E", "H254Q/H257F"), "variant, not specified" without one, and
-  // nothing for wild type or a record that does not say.
+  // A variant's form as the downloads name it: the bare mutation ("D102E", "H254Q/H257F"), "variant, not specified"
+  // without one, and nothing for wild type or a record that does not say.
   function enzymeFormText(row) {
     const label = enzymeFormLabel(row);
     if (!label.startsWith("Variant")) return "";
     return mutationSignature(row) || "variant, not specified";
   }
 
+  // One-letter amino-acid codes, for a variant's substitutions in words.
+  const AMINO_ACIDS = { A: "Ala", R: "Arg", N: "Asn", D: "Asp", C: "Cys", Q: "Gln", E: "Glu", G: "Gly", H: "His", I: "Ile",
+    L: "Leu", K: "Lys", M: "Met", F: "Phe", P: "Pro", S: "Ser", T: "Thr", W: "Trp", Y: "Tyr", V: "Val" };
+  // A signature's substitutions in words, only where every part is a clean one-letter substitution ("E124Q" -> "Glu124 →
+  // Gln"; "P161S/S336A" -> "Pro161 → Ser, Ser336 → Ala"; "W88*" -> "Trp88 → stop"), a name in brackets after them aside
+  // ("D76G/K102T (M2)"); anything else (a deletion, a chimera, a subunit's name, a described form) gives "".
+  function mutationWords(signature) {
+    const list = String(signature || "").trim().replace(/\s+\([^()]*\)$/, "");
+    const words = list.split("/").map((part) => {
+      const match = part.trim().match(/^([ACDEFGHIKLMNPQRSTVWY])(\d+)([ACDEFGHIKLMNPQRSTVWY*])$/);
+      if (!match || match[1] === match[3]) return "";
+      return `${AMINO_ACIDS[match[1]]}${match[2]} → ${match[3] === "*" ? "stop" : AMINO_ACIDS[match[3]]}`;
+    });
+    return words.every(Boolean) ? words.join(", ") : "";
+  }
+
+  // The table's variant line under the enzyme name (round 17; the user: the bare boxed code was hard to understand):
+  // "variant E124Q" in muted text, several mutations as the paper lists them, a long list cut with "…"; a signature that
+  // says what it is ("deletion mutant", "chimera 1", "truncated enzyme", "N-domain (...)") stands alone; "variant, not
+  // specified" without one; nothing for wild type. Its title gives the whole signature and the substitutions in words.
+  const SELF_DESCRIBED_FORM = /\b(?:mutants?|variants?|chimer\w*|truncat\w*|deletion|deleted|insertions?|inserted|fusion|isoform|form|domain|evolvant|heteromer|substituted|lacking|fragment)\b/i;
+  function enzymeFormDisplay(row) {
+    const signature = mutationSignature(row);
+    if (!enzymeFormText(row)) return "";
+    return signature && !SELF_DESCRIBED_FORM.test(signature) ? `variant ${signature}` : enzymeFormText(row);
+  }
+
+  function enzymeFormTitle(row) {
+    const signature = mutationSignature(row);
+    if (!signature) return "Variant, not specified";
+    const words = mutationWords(signature);
+    return `Variant ${signature}${words ? `: ${words}` : ""}`;
+  }
+
   function enzymeFormHtml(row, { className = "enzyme-form" } = {}) {
-    const text = enzymeFormText(row);
-    return text ? `<span class="${className}" title="Variant: ${escapeHtml(text)}">${escapePublic(text)}</span>` : "";
+    const text = enzymeFormDisplay(row);
+    if (!text) return "";
+    const inner = text.startsWith("variant ") && mutationSignature(row)
+      ? `<span class="form-word">variant</span> ${escapePublic(text.slice(8))}`
+      : escapePublic(text);
+    return `<span class="${className}" title="${escapePublic(enzymeFormTitle(row))}">${inner}</span>`;
   }
 
   // The temperature (°C) and pH the table shows, as numbers for sorting (null when the table shows a dash).
@@ -2223,10 +2259,11 @@
     return own ? `${result} (${own})` : result;
   }
 
-  // One badge for the table: a dot and the review result, then whole-word tags: what happened to the record (from paper,
-  // or not re-read and its source: BRENDA, ...), then corrected, no paper linked, human-checked. The tag line is always
-  // present, so every badge has the same height. Its title says what the result means for this record; its accessible
-  // name is the words alone ("Accepted, from paper", "Accepted, Not yet re-read, BRENDA").
+  // One badge for the table: the review result as a word in its colour (round 17: no dot), human-checked's green check
+  // right after it, then whole-word tags: what happened to the record (from paper, in its dark cyan, or not re-read and
+  // its source: BRENDA, ...), then corrected, no paper linked. The tag line is always present, so every badge has the
+  // same height. Its title says what the result means for this record; its accessible name is the words alone
+  // ("Accepted, from paper", "Accepted, Not yet re-read, BRENDA, human-checked").
   function statusBadge(row) {
     const config = stateConfig(row._recordState || recordStateForRow(row));
     const isCorrected = row.verification_status === "corrected";
@@ -2268,10 +2305,9 @@
       ? `${description} Human-checked: ${HUMAN_CHECKED_RULE} shown${fromPaper ? " (the same values, in the review of the earlier version’s records)" : ""}; ${HUMAN_CHECKED_RATIO}.`
       : description;
     const className = `${config.className}${noPaper ? " identity-only" : ""}`;
-    const tagsHtml = tags.map((tag) => `<span class="state-tag">${tag === SOURCE_CATLOG_TAG ? SOURCE_MARK_HTML : ""}${escapeHtml(tag)}</span>`).join("")
-      + (checked ? `<span class="state-tag human-checked">${CHECK_ICON_HTML}human-checked</span>` : "");
-    // A table short of room, or beside an open record, shows human-checked as a green check right after the review result
-    // instead (the stylesheet shows one or the other), so the mark is never cut or hidden with the tags.
+    const tagsHtml = tags.map((tag) => `<span class="state-tag${tag === SOURCE_CATLOG_TAG ? " source-paper" : ""}">${escapeHtml(tag)}</span>`).join("");
+    // human-checked is a green check right after the review result ("Accepted ✓"), in every width, so the tag line's "…"
+    // and an open record never cut or hide it; the badge's title and accessible name say the word.
     const checkHtml = checked ? `<span class="state-check" role="img" aria-label="human-checked">${CHECK_ICON_HTML}</span>` : "";
     const name = [label, ...tags.map((tag) => (tag === SOURCE_DATABASES_TAG ? SOURCE_DATABASES_LABEL : tag)),
       checked ? "human-checked" : ""].filter(Boolean).join(", ");
@@ -9225,12 +9261,12 @@
       // Review result: the four results, "Only human-checked" nested under Accepted. A short line for each is behind the
       // group's "?" (the box stays small, so the options stay in view); each option's full definition is its title, and
       // the Guide has them with the tags, a link away.
-      // Every option with a meaning colour shows its own mark between a neutral box and its words (round 15 polish: the
-      // ticks had worn the status colours, so a result's colour showed only once ticked): a result its status dot, as the
-      // table and its chip do; human-checked its tick; a caution its "!"; a database result its square.
+      // Every box is neutral (round 15 polish: the ticks had worn the status colours, so a result's colour showed only
+      // once ticked). A result is its word in its colour, as the table and its chip show it (round 17: no dot);
+      // human-checked its green check and word; a caution its "!" and a database result its square, before the words.
       $("statusChecklist").innerHTML = recordStates.map((item) => checkRowHtml({
         name: "recordState", value: item.value, label: item.label, title: stateDescriptions[item.value],
-        labelHtml: `<span class="option-mark state-mark ${item.className}" aria-hidden="true"></span>${escapeHtml(item.label)}`,
+        labelHtml: `<span class="state-word ${item.className}">${escapeHtml(item.label)}</span>`,
         checked: true, count: `state:${item.value}`, className: item.className,
       }) + (item.value === "accepted" ? checkRowHtml({
         name: "humanChecked", value: "1", id: "humanCheckedFilter",
@@ -9296,13 +9332,14 @@
           escapeHtml(aboutDefinition(item.title))}.</p>`).join("")
           + `<p><a href="#guide-cautions">Cautions in the Guide<span aria-hidden="true">&nbsp;&rarr;</span></a></p>`;
       }
-      // Source: the three choices, the first group under More filters; the databases of Not yet re-read are their own
-      // group there too (Source database), and ticking one selects Not yet re-read.
+      // Source: the three choices, the first group under More filters (Read from the paper in its dark cyan, as its tag);
+      // the databases of Not yet re-read are their own group there too (Source database), and ticking one selects Not
+      // yet re-read.
       if ($("sourceChecklist")) {
         $("sourceChecklist").innerHTML = `<div class="source-modes" role="radiogroup" aria-label="Source">${sourceModes.map((item) => `
           <label class="check-row radio-row"${item.help ? ` title="${escapeHtml(item.title || item.help.charAt(0).toUpperCase() + item.help.slice(1))}"` : ""}>
             <input type="radio" name="sourceMode" value="${item.value}"${item.value === "all" ? " checked" : ""} />
-            <span>${escapeHtml(item.label)}</span>
+            <span>${item.value === "paper" ? `<span class="source-word">${escapeHtml(item.label)}</span>` : escapeHtml(item.label)}</span>
             <strong data-count="source:${item.value}">${EMPTY_VALUE}</strong>
           </label>`).join("")}
         </div>`;
@@ -9782,18 +9819,18 @@
     if (controls.q) add("q", `Search: ${controls.q}`, () => clearInputs("globalSearchInput"));
     if (controls.states.length !== recordStates.length) {
       const names = controls.states.map((value) => stateConfig(value).label);
-      // Each result after its dot, as the table's status cells show it.
+      // Each result in its colour, as the table's status cells show it.
       const namesHtml = controls.states.map((value) => `<span class="chip-state ${stateConfig(value).className}">${escapeHtml(stateConfig(value).label)}</span>`);
       add("status", `Review result: ${names.length ? names.join(", ") : "none"}`, () => setCheckboxes("recordState", recordStates.map((item) => item.value)),
         names.length ? `Review result: ${namesHtml.join(", ")}` : "");
     }
     if (controls.sourceMode !== "all" && !controls.sources.length) {
       add(`source:${controls.sourceMode}`, `Source: ${(controls.sourceMode === "paper" ? SOURCE_CATLOG_LABEL : SOURCE_DATABASES_LABEL).replace(": ", ", ")}`,
-        () => setSourceControls("all"), controls.sourceMode === "paper" ? `Source: ${SOURCE_MARK_HTML}${escapeHtml(SOURCE_CATLOG_LABEL)}` : "");
+        () => setSourceControls("all"), controls.sourceMode === "paper" ? `Source: <span class="source-word">${escapeHtml(SOURCE_CATLOG_LABEL)}</span>` : "");
     }
-    // A chip whose option has a mark on this page shows it before the option's name (a review result its dot, as above;
-    // human-checked its tick; a caution its "!"; a database result its square), so colour is not all that tells its
-    // group from another: Source, the enzyme fields and the measurement have no mark of their own.
+    // A chip whose option has a mark on this page shows it before the option's name (human-checked its tick; a caution
+    // its "!"; a database result its square), so colour is not all that tells its group from another; a review result
+    // and Read from the paper are their words in their colours (above), the enzyme fields and the measurement plain.
     if (controls.checked) add("checked", "Only human-checked", () => uncheck("humanChecked", "1"), `<span class="chip-check">${CHECK_ICON_HTML}</span>Only human-checked`);
     // "EC 1" for ec=1. (the EC classes Stats links to), as Stats names them: a trailing dot is left out.
     if (ecFilterQueries(controls.ec).length) add("ec", `EC ${controls.ec.replace(/^e\.?c\.?[\s:]*/i, "").replace(/(\d)\.+(?=[\s,;]|$)/g, "$1")}`, () => clearInputs("ecFilterInput"));
@@ -10813,7 +10850,7 @@
       const enzymeName = row.enzyme_display_name || "Name not recorded";
       // A variant's mutation has its own line, never clipped: the name keeps one line beside it (rows stay one height).
       const enzymeForm = enzymeFormHtml(row);
-      const enzymeTitle = [enzymeName, enzymeFormText(row)].filter(Boolean).join(" · ");
+      const enzymeTitle = [enzymeName, enzymeFormDisplay(row)].filter(Boolean).join(" · ");
       return `
       <tr data-key="${escapeHtml(row.record_key)}" class="${row.record_key === state.selectedKey ? "selected" : ""}" tabindex="${row.record_key === activeRowKey ? "0" : "-1"}" aria-selected="${row.record_key === state.selectedKey ? "true" : "false"}">
         <td class="c-enzyme primary-cell"><span class="clamp-2${enzymeForm ? " has-form" : ""}" title="${escapePublic(enzymeTitle)}"><strong>${escapePublic(enzymeName)}</strong></span>${enzymeForm}</td>
@@ -10880,12 +10917,10 @@
   // A name column (Enzyme, Organism, Substrate) starts as wide as three in four of its names, within a minimum and a cap.
   // The room left in the window goes to the name columns: first until each of their names fits on one line, then the
   // rest in proportion to their widths, so the table fills the window and the arrow sits right after Review result. When
-  // the window is too narrow the table gives way, one step after another and each only as far as needed: first Review
-  // result's human-checked tag moves up as a green check after the review result (accessible name "human-checked"; the
-  // word stays in the badge's tooltip), all at once, and the names get back what that frees beyond the need (one human-checked row had held Review result at
-  // 194px beside the open sidebar at 1280px and cut every enzyme name above its variant tag); the names wrap to two lines
-  // between words (the full name is in the tooltip); the names narrow to their minimums, Organism last (a word longer
-  // than its column is hyphenated); then Review result's tag line ends in "…", down to the review result's word. So
+  // the window is too narrow the table gives way, one step after another and each only as far as needed: the names wrap
+  // to two lines between words (the full name is in the tooltip); the names narrow to their minimums, Organism last (a
+  // word longer than its column is hyphenated); then Review result's tag line ends in "…", down to the review result's
+  // word and its human-checked check (round 17: the check always sits after the word, so no tag moves up). So
   // beside the open sidebar from 1280px every column, Review result included, stays in view. Only when even
   // that is not enough (a tablet, a record beside the table) does the table scroll sideways, its names then stopping at
   // their longest word and its tags whole. Phones show cards, and placeholder or empty tables keep the stylesheet's
@@ -10920,7 +10955,6 @@
   // also updates the sideways-scroll cues: the sticky Enzyme column, the edge shadows and the scroll buttons.
   function fitTableColumns() {
     fitColumnWidths();
-    fitCardTags();
     fitCardOrganisms();
     updateTableScrollControls();
   }
@@ -10944,22 +10978,6 @@
     }).forEach((row) => row.classList.add("organism-wraps"));
   }
 
-  // Phone cards: a tag line too long for its card ("not re-read · BRENDA, SABIO-RK · corrected · human-checked" at
-  // 320px) shows human-checked as the green check after the review result, as a table short of room does, so the line's
-  // "…" never cuts it. Every card is measured with its tag first, then the classes are set (one layout pass).
-  function fitCardTags() {
-    const table = $("recordTableWrap")?.querySelector?.("table");
-    const colgroup = table?.querySelector?.("colgroup");
-    if (!table || !colgroup || typeof window.getComputedStyle !== "function") return;
-    const badges = [...table.querySelectorAll("#recordsBody .state-badge")];
-    badges.forEach((badge) => badge.classList.remove("tags-compact"));
-    if (window.getComputedStyle(colgroup).display !== "none") return;
-    badges.filter((badge) => {
-      const tags = badge.querySelector(".state-tags");
-      return badge.querySelector(".state-tag.human-checked") && tags && tags.scrollWidth > tags.clientWidth + 1;
-    }).forEach((badge) => badge.classList.add("tags-compact"));
-  }
-
   function fitColumnWidths() {
     const table = $("recordTableWrap")?.querySelector?.("table");
     const style = window.getComputedStyle;
@@ -10969,7 +10987,6 @@
     if (!cols.open || FIT_COLUMNS.some((column) => !cols[column.key])) return;
     Object.values(cols).forEach((col) => { col.style.width = ""; });
     table.style.minWidth = "";
-    table.classList.remove("status-compact");
     const rows = [...table.querySelectorAll("#recordsBody tr[data-key]")];
     if (style(table).display !== "table") return;
     if (!rows.length) {
@@ -11008,12 +11025,7 @@
       // Review result gives way last, down to the review result's word and its human-checked check (or its header): its
       // tag line then ends in "…".
       const floor = column.key === "state" ? statusFloor(table, cells, min, padding) : 0;
-      // Before that, human-checked can move up as a check after the review result: the widest badge without its tag.
-      const compact = column.key === "state" ? Math.max(floor, Math.min(width, Math.ceil(Math.max(header, ...cells.map((cell) => {
-        const part = (selector) => cell.querySelector(selector)?.getBoundingClientRect().width || 0;
-        return Math.max(part(".state-label"), part(".state-tags") - part(".state-tag.human-checked"));
-      })) + padding))) : 0;
-      return { ...column, min, width, full: width, oneLine, words, cells, cellWords, padding, floor, compact };
+      return { ...column, min, width, oneLine, words, cells, cellWords, padding, floor };
     });
     table.classList.remove("measuring");
     const arrow = visible(cols.open) ? parseFloat(style(cols.open).width) || 24 : 0;
@@ -11025,10 +11037,7 @@
     // Organism goes below its longest word last among the names: a genus is capitalized, so it would break without a
     // hyphen (Chlamydomona-s), where an enzyme or a substrate is usually hyphenated.
     const organism = shrinkable.filter((column) => column.key === "organism");
-    // The human-checked tag goes up first and whole (true): whatever room it frees beyond the need goes back to the names
-    // below. It is one word on a few rows; an enzyme name above a variant tag has one line and is cut at its longest word.
     const steps = [
-      [status, (column) => column.compact, true],
       [shrinkable, (column) => Math.max(column.min, column.words)],
       [shrinkable.filter((column) => column.key !== "organism"), (column) => column.min],
       [organism, (column) => column.min],
@@ -11042,13 +11051,12 @@
       // that cannot keep it in view even then (beside a record from 1024px, on a tablet beside the sidebar) scrolls
       // sideways: its names stop at their longest word, so the sticky Enzyme column stays narrow and the values come into
       // view sooner, and no word is broken nor tag cut for room the table cannot win.
-      // A table that scrolls anyway still moves the human-checked tag up, so it scrolls less.
       const giveWay = floor <= available + arrow;
-      for (const [columns, target, whole] of giveWay ? steps : steps.slice(0, 2)) {
+      for (const [columns, target] of giveWay ? steps : steps.slice(0, 1)) {
         const excess = total() - available;
         const slack = columns.reduce((sum, column) => sum + Math.max(0, column.width - target(column)), 0);
         if (excess <= 0 || !slack) continue;
-        const share = whole ? 1 : Math.min(1, excess / slack);
+        const share = Math.min(1, excess / slack);
         columns.forEach((column) => { column.width = Math.floor(column.width - share * Math.max(0, column.width - target(column))); });
       }
     }
@@ -11067,7 +11075,6 @@
     }
     widths.forEach((column) => { cols[column.key].style.width = `${column.width}px`; });
     table.style.minWidth = `${Math.ceil(total() + arrow)}px`;
-    table.classList.toggle("status-compact", status.some((column) => column.width < column.full));
     // Only a name with a word longer than its column is hyphenated; the others break between words.
     widths.filter((column) => column.shrink).forEach((column) => column.cells.forEach((cell, index) => {
       (cell.firstElementChild || cell).classList.toggle("hyphenate", column.cellWords[index] + column.padding > column.width);
@@ -13438,17 +13445,16 @@
   }
 
   // ---- Record panel: header and source details ----
-  // The record's status as one line, in the table's words and colours: a dot, the review result (a Not checked record
-  // keeps its exact earlier status in brackets, "Not checked (Unverified)"), the table's tags ("from paper"; "not
-  // re-read" then the source, "BRENDA", ...; one tag set for the table and the record, the user, 2026-10-15), then
-  // "corrected", "no paper linked" or "human-checked".
+  // The record's status as one line, in the table's words and colours (round 17: no dot or square): the review result in
+  // its colour (a Not checked record keeps its exact earlier status in brackets, "Not checked (Unverified)"), "✓
+  // human-checked" right after it, then the table's tags ("from paper" in its dark cyan; "not re-read" then the source,
+  // "BRENDA", ...; one tag set for the table and the record, the user, 2026-10-15), then "corrected" or "no paper linked".
   function detailStatusHtml(row, { v2Record = isV2Row(row), detail = null } = {}) {
     const config = stateConfig(row._recordState || recordStateForRow(row));
     const status = row.verification_status;
     const identityOnly = hasNoPaperLinked(row);
-    // The dot is the exact status's colour, as in the table: Not checked is slate (Unverified) or tan (Not reviewed).
-    const colour = { accepted: "accepted", curation_pending: "pending", disputed: "disputed" }[config.value]
-      || (status === "mathematically_inferred" ? "not-reviewed" : "unverified");
+    // The word's colour is the result's, as in the table (Not checked is slate for both its kinds).
+    const colour = { accepted: "accepted", curation_pending: "pending", disputed: "disputed" }[config.value] || "unverified";
     const words = [
       rowStatusLabel(row, { exact: true }),
       v2Record ? SOURCE_CATLOG_TAG : SOURCE_DATABASES_TAG,
@@ -13458,9 +13464,11 @@
       identityOnly ? "no paper linked" : "",
     ].filter(Boolean);
     const checkedHtml = isHumanChecked(row) ? `<span class="detail-status-checked">${CHECK_ICON_HTML}human-checked</span>` : "";
-    // The light salmon and tan dots get their darker rings (design spec 2).
-    const ring = colour === "pending" || colour === "not-reviewed" ? `;--status-ring:var(--st-${colour}-ring)` : "";
-    return `<p class="detail-status" style="--status-color:var(--st-${colour})${ring}">${words.map((word, index) => `<span${index ? "" : ' class="detail-status-word"'}>${word === SOURCE_CATLOG_TAG ? SOURCE_MARK_HTML : ""}${escapeHtml(word)}</span>`).join("")}${checkedHtml}</p>`;
+    const wordHtml = (word, index) => {
+      const className = index ? (word === SOURCE_CATLOG_TAG ? "detail-status-source" : "") : "detail-status-word";
+      return `<span${className ? ` class="${className}"` : ""}>${escapeHtml(word)}</span>${index ? "" : checkedHtml}`;
+    };
+    return `<p class="detail-status" style="--status-ink:var(--st-${colour}-ink)">${words.map(wordHtml).join("")}</p>`;
   }
 
   // The record's name; a long one (several names in brackets) is set smaller, so the header that stays in view while the
@@ -13507,11 +13515,18 @@
     return match ? `<i>${escapePublic(match[1])}</i>${escapePublic(match[2])}` : escapePublic(text);
   }
 
-  // The form as the header names it: "Wild type", "Variant H150A" (the mutation in mono) or "Variant, not specified";
-  // nothing for a record that does not say.
+  // The form as the header names it: "Wild type", "Variant H150A: His150 → Ala" (the mutation in mono; up to three
+  // substitutions also in words, where they parse, as the table's title says them; a longer list's words in its title)
+  // or "Variant, not specified"; nothing for a record that does not say.
+  const DETAIL_MUTATION_WORDS = 3;
   function detailFormHtml(row) {
     const signature = mutationSignature(row);
-    if (signature) return `<span class="detail-form">Variant <code class="mutation">${escapePublic(signature)}</code></span>`;
+    if (signature) {
+      const words = mutationWords(signature);
+      const shown = words && words.split(", ").length <= DETAIL_MUTATION_WORDS;
+      return `<span class="detail-form">Variant <code class="mutation"${words && !shown ? ` title="${escapePublic(words)}"` : ""}>${escapePublic(signature)}</code>${
+        shown ? `<span class="mutation-words">: ${escapePublic(words)}</span>` : ""}</span>`;
+    }
     const label = enzymeFormLabel(row);
     if (label === "Variant (unspecified)") return "Variant, not specified";
     return label === "Wild type" ? "Wild type" : "";
@@ -15527,6 +15542,7 @@
       publicLoadMessage,
       enzymeFormLabel,
       enzymeFormHtml,
+      mutationWords,
       sequenceSourceLabel,
       sequenceNoteText,
       isV2Row,

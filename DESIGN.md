@@ -9,9 +9,10 @@ specialist groups (Source, first since round 14; Wild type or variant, Assay con
 Cautions, Source database) under one "More filters", which opens by itself when one of them is set
 and counts them on its title; help text sits behind each group's "?", never in view; no
 option, address or chip changed (the user, 2026-10-18). Browse's active-filter chips
-are plain since round 14 (a 1px hairline on white, no stripe or tint): the colour is on the option's own mark before
-its name, in its meaning colour (a review result's status dot, human-checked's tick, Read from the paper's cyan square,
-a database result's square, a caution's "!"), and the filters with no meaning colour have no mark; and Undo,
+are plain since round 14 (a 1px hairline on white, no stripe or tint): the colour is on the option's own words or mark,
+in its meaning colour (a review result's word and Read from the paper's words in their colours' text shades since round
+17, human-checked's tick, a database result's square, a caution's "!"), and the filters with no meaning colour have no
+mark; and Undo,
 first in the bar (it keeps its place, dimmed with nothing to undo), restores the filter set before the last change,
 Clear all too
 (tools/catlog-static/DESIGN.md, Filters).
@@ -91,8 +92,9 @@ each, so the legend table keeps its room beside the donut), one below. Figures a
    "read" on two lines): Stats wraps each one in its text in a nowrap span (keepReRead) and the Guide writes the same span. Browse's counts band is a step quieter (round 13, the user:
    "the numbers and overall progress ... so small and colour same so it doesn't capture any attention"; round 14: no
    glow): a plain white hairline card with the four key numbers at 28px (24px on tablets, 20px on phones),
-   each label over its number and each number in its meaning's colour (Records ink, Accepted navy with its status dot,
-   Read from the paper the darker BPG cyan, Human-checked the darker BPG green with its tick), no text-shadow; a linked
+   each label over its number and each number in its meaning's colour (Records ink, Accepted navy, Read from the paper
+   the darker BPG cyan, Human-checked the darker BPG green with its tick; round 17 took the dot and the square off the
+   labels), no text-shadow; a linked
    count tints in its colour around itself without moving anything. Round 15: one even row across the card, type set in
    columns (one thin rule, before the parameters; none between the key numbers), each number over one 12px muted line
    of context, a fact from the snapshot or the results: Records "41,218 papers", Accepted "43.5% of records", Read from
@@ -732,3 +734,16 @@ license only when it is not CC BY 4.0; nothing the header says (form, "from pape
 (tools/catlog-static/DESIGN.md, Record Details). Its name wraps between its parts only (at a space or after a hyphen or
 slash), a short locant ("4-", "1,2-") kept with the part after it, and on a phone it takes the panel's width under
 ‹ › × after its first lines (round 14).
+
+## Round 17: words, not shapes (Browse's review result and variant line)
+The user (2026-10-23): the dots and squares for Accepted and from paper looked AI-made, not eye-soothing; the boxed
+mutation code was hard to understand. A review result is now its word in its colour's text shade (Accepted navy
+#3C5488, Not confirmed terracotta #975B4C, Not checked slate grey #60687F, Disputed deep red #DC0000; AA on white, the
+hovered and the selected row), with human-checked's green check right after it in every width ("Accepted ✓"); the
+source line under it says "from paper" in Read from the paper's dark cyan #207286 or "not re-read · BRENDA" in muted
+grey. The sidebar's options, the chips, the record's status line ("Accepted ✓ human-checked · from paper"), the Guide's
+legend and the counts band follow: no dot, square or pill anywhere a result or the source is named. A variant reads
+"variant E124Q" in muted text under the enzyme (no box; a long list cut with "…"), its title the substitutions in words
+where every part parses ("Variant E124Q: Glu124 → Gln"), the record's header the same for up to three
+(tools/catlog-static/DESIGN.md, Type And Color).
+

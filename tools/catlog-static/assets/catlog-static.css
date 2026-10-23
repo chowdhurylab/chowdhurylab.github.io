@@ -63,8 +63,11 @@
   --bpg-brown:#7E6148;        /* 5.7:1  Different number */
   --bpg-red:#E64B35;          /* 3.9:1  a correction: Corrects a value, unit or magnitude */
   --bpg-tan:#B09C85;          /* 2.6:1  caution (ring 4.1:1, text 5.5:1) */
-  /* Review result: the dot (opaque) beside the word; Not checked is one colour for both its kinds (Unverified, Not
-     reviewed: the record names which). Salmon's dot gets a darker 1px ring. */
+  /* Review result: the colour itself on figures and Stats' marks (Not checked is one colour for both its kinds,
+     Unverified and Not reviewed: the record names which; salmon's marks get a darker 1px ring). On Browse, the record,
+     the chips, the sidebar and the Guide the result is a word in its colour's text shade (round 17, "words, not
+     shapes": no dot); the light salmon and slate words take a darker shade of the same hue, the slate one greyed so it
+     stays apart from Accepted's navy (CIEDE2000 11.2). Contrast on white / the hovered row / the selected row. */
   --st-accepted:var(--bpg-navy);
   --st-pending:var(--bpg-salmon);
   --st-pending-ring:#c4664a;  /* 3.9:1 */
@@ -72,6 +75,10 @@
   --st-not-reviewed:var(--bpg-slate);
   --st-not-reviewed-ring:var(--bpg-slate);
   --st-disputed:var(--bpg-deep-red);
+  --st-accepted-ink:var(--bpg-navy);  /* 7.5 / 6.8 / 6.6:1 */
+  --st-pending-ink:#975B4C;   /* 5.4 / 4.9 / 4.7:1, salmon's darker, quieter shade (terracotta; CIEDE2000 16.9 from Disputed) */
+  --st-unverified-ink:#60687F;  /* 5.6 / 5.1 / 4.9:1, slate's darker, greyer shade */
+  --st-disputed-ink:var(--bpg-deep-red);  /* 5.2 / 4.8 / 4.6:1 */
   /* Filter ticks: the status colour, or a darker form where it is light (3:1 or more on white). */
   /* Agreement with a second source (BPG green): human-checked's tick and word in the darker green (a human reviewer
      approved the values), a database result's Same number at the colour itself. */
@@ -310,14 +317,12 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
   .snapshot-note-base { position:absolute; width:1px; height:1px; margin:-1px; overflow:hidden; clip:rect(0 0 0 0); clip-path:inset(50%); white-space:nowrap }
 }
 /* The meaning colours: the same as everywhere else on the site (DESIGN.md "Type And Color", one meaning per colour). */
-.summary-card.summary-accepted { --key:var(--st-accepted) }
-.summary-accepted > span::before { content:""; flex:0 0 8px; width:8px; height:8px; margin-right:6px; border-radius:50%; background:var(--st-accepted) }
+.summary-card.summary-accepted { --key:var(--st-accepted-ink) }
 .snapshot-paper { --key:var(--src-paper-ink) }
 .snapshot-checked { --key:var(--checked) }
-/* Every label is muted; the colour is on the mark before it (Accepted's dot, Read from the paper's cyan square,
-   Human-checked's green tick) and on the number, at 0 too (no link then). */
+/* Every label is muted; the colour is on the number, at 0 too (no link then), and on Human-checked's green check, the
+   site's one mark for it (round 17: no dot before Accepted, no square before Read from the paper). */
 .snapshot-checked .check-icon { margin-right:3px; color:var(--checked) }
-.snapshot-paper > span::before { content:""; flex:0 0 8px; width:8px; height:8px; margin-right:6px; border-radius:1px; background:var(--src-paper); box-shadow:inset 0 0 0 1px var(--src-paper-ring) }
 /* A linked count tints in its own colour around its words under the pointer (::before), so nothing moves. */
 .snapshot-paper[href], .snapshot-checked[href] { isolation:isolate }
 .snapshot-paper[href]::before, .snapshot-checked[href]::before { content:""; position:absolute; inset:-4px -8px; z-index:-1; border-radius:var(--radius); background:transparent; pointer-events:none }
@@ -479,17 +484,18 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
 .check-row { display:grid; grid-template-columns:14px minmax(0,1fr) auto; min-height:28px; align-items:start; gap:var(--sp-2); padding:5px 0; color:var(--text); font-size:var(--fs-13); line-height:var(--lh-13) }
 .check-row input { width:14px; height:14px; margin:2px 0 0; accent-color:var(--accent) }
 .check-row > strong { padding-top:1px; white-space:nowrap }
-/* Every box is neutral (the accent); an option with a meaning colour shows its own mark between the box and its words
-   (round 15 polish: Review result's ticks had worn the status colours, shown only once ticked, Against the databases a
-   square, Cautions nothing): a review result its status dot, human-checked its green tick, a caution its "!", a database
-   result its square. Each mark takes the square's 10px slot, 6px after the box and 4px before the words, so the words of
-   every group with marks start at one edge; an option without one (No cautions, Corrected earlier) keeps the slot. */
+/* Every box is neutral (the accent). A review result and Read from the paper are their words in their colour's text
+   shade, as in the table (round 17: no dot or square); human-checked its green check and word. A caution shows its "!"
+   and a database result its square between the box and its words: each mark takes the square's 10px slot, 6px after the
+   box and 4px before the words, so the words of those groups start at one edge; an option without one (No cautions,
+   Corrected earlier) keeps the slot. */
 .option-mark { display:inline-block; flex:none; width:10px; height:10px; margin:0 4px 0 -2px; vertical-align:-1px }
-.state-mark::before { content:""; display:block; width:8px; height:8px; margin:1px; border-radius:50%; background:var(--status-color); box-shadow:inset 0 0 0 1px var(--status-ring, transparent) }
-.state-mark.accepted { --status-color:var(--st-accepted) }
-.state-mark.review { --status-color:var(--st-pending); --status-ring:var(--st-pending-ring) }
-.state-mark.unresolved { --status-color:var(--st-unverified) }
-.state-mark.disputed { --status-color:var(--st-disputed) }
+.state-word { color:var(--status-ink,var(--text)) }
+:is(.state-word,.chip-state).accepted { --status-ink:var(--st-accepted-ink) }
+:is(.state-word,.chip-state).review { --status-ink:var(--st-pending-ink) }
+:is(.state-word,.chip-state).unresolved { --status-ink:var(--st-unverified-ink) }
+:is(.state-word,.chip-state).disputed { --status-ink:var(--st-disputed-ink) }
+.source-word { color:var(--src-paper-ink) }
 /* the "!" disc at its legible 12px, centred where the dots and squares are */
 .caution-option-mark { display:inline-grid; width:12px; height:12px; margin:0 3px 0 -3px; place-items:center; border-radius:50%; background:var(--caution-mark); box-shadow:inset 0 0 0 1px var(--caution-ring); color:var(--text); font-size:var(--fs-12); font-weight:600; line-height:1; vertical-align:-2px }
 .caution-option-mark::before { content:"!" }
@@ -504,7 +510,7 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
 #catalogFilters[data-counts="pending"] [data-count] { opacity:0.5; transition-delay:250ms }
 /* An option no current result has: grey, still clickable. */
 .check-row.is-zero > span, .range-row.is-zero > .range-label { color:var(--muted) }
-.check-row.is-zero .human-checked-word { color:inherit }
+.check-row.is-zero :is(.human-checked-word,.state-word,.source-word) { color:inherit }
 
 /* Source: three choices, one line each (the help is behind the group's "?"), the first group under More filters; the
    databases of Not yet re-read are their own group there, Source database.
@@ -606,10 +612,8 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
 .active-filters { display:flex; flex-wrap:wrap; min-width:0; align-items:center; gap:6px var(--sp-2) }
 /* A group's colour (--group), for the dot beside its title in the sidebar. */
 .tone-source { --group:var(--fg-source) }
-/* Read from the paper: BPG cyan, as on the counts band and Stats; the Source group's dot wears it while that option is
-   chosen, so the dot and the chip agree. */
+/* Read from the paper: BPG cyan, as on the counts band and Stats (its chip's tone; the chip says it in words). */
 .tone-paper { --group:var(--src-paper) }
-.filter-section:has(input[name="sourceMode"][value="paper"]:checked) > .filter-section-title .group-dot { --group:var(--src-paper) }
 .tone-identity { --group:var(--fg-identity) }
 .tone-measurement { --group:var(--fg-measurement) }
 .tone-caution { --group:var(--caution-mark); --group-tint:var(--caution-tint); --group-line:var(--caution-line) }
@@ -628,15 +632,12 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
 .filter-chip { display:inline-flex; min-width:0; max-width:100%; min-height:28px; align-items:center; gap:var(--sp-1); border:1px solid var(--line-strong); border-radius:var(--radius); background:var(--bg); color:var(--text); cursor:pointer; padding:2px 6px; font-size:var(--fs-12); line-height:var(--lh-12) }
 .filter-chip > span { min-width:0; max-width:280px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap }
 .filter-chip .chip-x { flex:0 0 12px; width:12px; height:12px; color:var(--muted) }
-/* The Review result chip names each result after its dot, as the table's status cells do. */
-.chip-state::before { content:""; display:inline-block; width:8px; height:8px; margin:0 4px 1px 0; border-radius:50%; background:var(--status-color); box-shadow:inset 0 0 0 1px var(--status-ring, transparent); vertical-align:middle }
-.chip-state.accepted { --status-color:var(--st-accepted) }
-.chip-state.review { --status-color:var(--st-pending); --status-ring:var(--st-pending-ring) }
-.chip-state.unresolved { --status-color:var(--st-unverified) }
-.chip-state.disputed { --status-color:var(--st-disputed) }
-/* The other marks a chip's option has on the page, before its name like the status dot, so a chip's group is told by
-   more than its colour (two colours can look alike to a colour-blind reader): human-checked's green tick, a caution's
-   tan "!" (the table's, at 12px) and a database result's square (the sidebar's, at 8px like the dot). */
+/* The Review result chip names each result in its colour's text shade, as the table's status cells do, and the Source
+   chip Read from the paper in its dark cyan (round 17: words, no dot or square). */
+.chip-state { color:var(--status-ink,var(--text)) }
+/* The marks a chip's option has on the page, before its name, so a chip's group is told by more than its colour (two
+   colours can look alike to a colour-blind reader): human-checked's green tick, a caution's tan "!" (the table's, at
+   12px) and a database result's square (the sidebar's, at 8px). */
 .chip-check { color:var(--checked) }
 .chip-check .check-icon { width:12px; height:12px; margin-right:2px; vertical-align:-2px }
 .chip-flag { display:inline-grid; width:12px; height:12px; margin:0 4px 1px 0; place-items:center; border-radius:50%; background:var(--caution-mark); box-shadow:inset 0 0 0 1px var(--caution-ring); color:var(--text); font-size:var(--fs-12); font-weight:600; line-height:1; vertical-align:middle }
@@ -653,14 +654,12 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
    tall. */
 :is(.filter-chips-undo, .filter-chips-clear, #undoFiltersButton, #clearButton, #clearResultsButton) { min-height:24px }
 .active-filters.results-empty .filter-chips-clear { display:none }
-/* The mark beside a sidebar group's title, only where the group's filter has a meaning colour: Cautions' tan dot, and
-   Source's cyan square while Read from the paper is chosen (Read from the paper's mark). The groups with no meaning
-   colour (the enzyme fields, the measurement, Source database) have none: an ink dot there was decoration. Review
-   result and Against the databases have none either: each option has its own mark. It hangs in the 16px gutter (4px
-   from the edge, 4px before the words), so the titles keep their width and wrap where they did. */
+/* A mark beside a sidebar group's title: none shows. The groups with no meaning colour (the enzyme fields, the
+   measurement, Source database) have none (an ink dot there was decoration); Review result, Against the databases and
+   Cautions say it on their options; Source's cyan square while Read from the paper was chosen went in round 17 (the
+   option's words are its dark cyan). A dot would hang in the 16px gutter (4px from the edge, 4px before the words). */
 .group-dot { display:inline-block; width:8px; height:8px; margin:0 4px 1px -12px; border-radius:50%; background:var(--group); box-shadow:inset 0 0 0 1px var(--fg-dot-ring); vertical-align:middle }
 .group-dot:is(.tone-identity, .tone-measurement, .tone-source) { display:none }
-.filter-section:has(input[name="sourceMode"][value="paper"]:checked) > .filter-section-title .group-dot { display:inline-block; border-radius:1px; box-shadow:inset 0 0 0 1px var(--src-paper-ring) }
 /* Columns: shown when the table is wider than its room (the script hides it otherwise). */
 .table-scroll-controls { display:flex; gap:2px; border:1px solid var(--line); border-radius:var(--radius); background:var(--bg); padding:1px }
 .table-scroll-controls > span { align-self:center; padding:0 var(--sp-1) 0 6px; color:var(--muted); font-size:var(--fs-12); white-space:nowrap }
@@ -746,9 +745,13 @@ tbody tr.selected td:first-child { box-shadow:inset 3px 0 0 var(--accent) }
 tbody tr.selected .row-arrow { color:var(--accent) }
 .primary-cell { min-width:0 }
 .primary-cell strong { color:var(--accent); font-weight:500 }
-/* A variant's mutation: its own line under the name, never clipped by it; the name then keeps one line, so every row
-   keeps one height. Phones show it on its own line under the name (td.c-form, hidden in the table). */
-.enzyme-form { display:inline-block; max-width:100%; overflow:hidden; border:1px solid var(--accent-line); border-radius:4px; background:var(--accent-tint); padding:0 4px; color:var(--accent); font-size:var(--fs-12); font-weight:500; line-height:14px; text-overflow:ellipsis; white-space:nowrap; vertical-align:top }
+/* A variant's line under the name, never clipped by it; the name then keeps one line, so every row keeps one height.
+   Phones show it on its own line under the name (td.c-form, hidden in the table). Round 17 (the user: the boxed code
+   was hard to understand): plain words, no box, "variant" muted and the mutation in the darker grey of secondary text,
+   12/16px (the old tag's 16px box), a long list cut with "…" (the title and the record give it whole, with the
+   substitutions in words). */
+.enzyme-form { display:inline-block; max-width:100%; overflow:hidden; color:var(--text-2); font-size:var(--fs-12); font-weight:400; line-height:var(--lh-12); text-overflow:ellipsis; white-space:nowrap; vertical-align:top }
+.enzyme-form .form-word { color:var(--muted) }
 .primary-cell .enzyme-form { display:block; width:max-content; margin-top:2px }
 .clamp-2.has-form { max-height:17px; -webkit-line-clamp:1 }
 td.c-form { display:none }
@@ -794,41 +797,32 @@ td.c-form { display:none }
 .catalog-load-failed .table-wrap table { min-width:0 !important }
 .catalog-load-failed .table-wrap colgroup, .catalog-load-failed .table-wrap thead { display:none }
 
-/* Status: a coloured dot and the word, then whole-word tags on a second line; a fixed height keeps rows even. */
+/* Review result (round 17, "words, not shapes"; the user: the dots and squares looked AI-made): the result is a word in
+   its colour's text shade (Accepted navy, Not confirmed terracotta, Not checked slate grey, Disputed deep red), with
+   human-checked's 12px green check right after it ("Accepted ✓", read out "human-checked"); under it, in 12px, where the
+   record comes from: "from paper" in Read from the paper's dark cyan, or "not re-read" and its source in muted grey,
+   then "corrected" or "no paper linked". No dot, square or pill: the words carry the colour and say what it means, so
+   the column also reads in greyscale. A fixed height keeps rows even. */
 td.c-status { text-align:left }
 .state-badge { display:grid; grid-template-rows:18px auto; align-content:center; justify-items:start; height:34px; min-width:0; max-width:100%; color:var(--text); font-size:var(--fs-13); line-height:var(--lh-13); white-space:nowrap }
-.state-label { display:inline-flex; align-items:center; gap:6px; font-weight:500 }
-.state-label::before { content:""; flex:0 0 8px; height:8px; border-radius:50%; background:var(--status-color,var(--st-unverified)); box-shadow:inset 0 0 0 1px var(--status-ring,transparent) }
-/* The dot is the exact status's colour (Not checked: Unverified slate, Not reviewed tan); the word says the group. */
-.state-badge.accepted { --status-color:var(--st-accepted) }
-.state-badge.review { --status-color:var(--st-pending); --status-ring:var(--st-pending-ring) }
-.state-badge.unresolved { --status-color:var(--st-unverified) }
-.state-badge.unresolved[data-status="mathematically_inferred"] { --status-color:var(--st-not-reviewed); --status-ring:var(--st-not-reviewed-ring) }
-.state-badge.disputed { --status-color:var(--st-disputed) }
-.state-tags { max-width:100%; overflow:hidden; text-overflow:ellipsis; padding-left:14px; color:var(--muted); font-size:var(--fs-12); line-height:var(--lh-12) }
-
-/* No spaces in the separator, so each tag stays one box. */
-.state-tag + .state-tag::before { content:"\00b7"; margin:0 3px }
-/* human-checked: a small check and the tag in green; the separator before it stays grey. */
+.state-label { display:inline-flex; align-items:center; gap:3px; color:var(--status-ink,var(--text)); font-weight:500 }
+.state-badge.accepted { --status-ink:var(--st-accepted-ink) }
+.state-badge.review { --status-ink:var(--st-pending-ink) }
+.state-badge.unresolved { --status-ink:var(--st-unverified-ink) }
+.state-badge.disputed { --status-ink:var(--st-disputed-ink) }
+.state-tags { max-width:100%; overflow:hidden; text-overflow:ellipsis; color:var(--muted); font-size:var(--fs-12); line-height:var(--lh-12) }
+/* No spaces in the separator, so each tag stays one box; it stays grey beside a coloured tag. */
+.state-tag + .state-tag::before { content:"\00b7"; margin:0 3px; color:var(--muted); font-weight:400 }
+/* Read from the paper's words in its dark cyan (the counts band's number, the record's status line, its chip, the
+   sidebar's option, the Guide): the source is said in words, never by a square. */
+.state-tag.source-paper { color:var(--src-paper-ink) }
 .check-icon { display:inline-block; width:1em; height:1em; vertical-align:-0.14em }
+/* human-checked as a tag (the Guide's legend): a small check and the word in green. */
 .state-tag.human-checked { color:var(--checked); font-weight:500 }
-/* Read from the paper's mark: a small BPG cyan square with its darker ring, before the words where the source is named
-   (the counts band, the table's "from paper" tag, the record's, its chip, the Guide's legend; Source's group title while
-   it is chosen). */
-.src-mark { display:inline-block; flex:0 0 7px; width:7px; height:7px; margin-right:3px; border-radius:1px; background:var(--src-paper); box-shadow:inset 0 0 0 1px var(--src-paper-ring); vertical-align:0 }
-.filter-chip .src-mark { width:8px; height:8px; flex-basis:8px; margin-right:5px }
-.state-tag.human-checked::before { color:var(--muted); font-weight:400 }
 .state-tag.human-checked .check-icon { margin-right:2px }
-/* A table short of room (the script sets .status-compact) or beside an open record: human-checked moves up as a 12px green
-   check right after the review result ("Accepted ✓", read out "human-checked"), where the tag line's "…" or the record's
-   room never cuts or hides it; its tag gives its room to the names. The table measures with the check shown. */
-.state-check { display:none; flex:0 0 auto; margin-left:-2px; color:var(--checked) }
+/* The check after the review result, in every table, card and width (the table measures it with the word). */
+.state-check { display:inline-flex; flex:0 0 auto; color:var(--checked) }
 .state-check .check-icon { width:12px; height:12px; vertical-align:0 }
-:is(table.status-compact,table.measuring) #recordsBody .state-check { display:inline-flex }
-table.status-compact #recordsBody .state-tag.human-checked { display:none }
-/* A phone card whose tag line does not fit (the script sets .tags-compact) does the same. */
-#recordsBody .state-badge.tags-compact .state-check { display:inline-flex }
-#recordsBody .state-badge.tags-compact .state-tag.human-checked { display:none }
 
 .pagination { display:flex; min-height:48px; flex-shrink:0; align-items:center; justify-content:flex-end; gap:12px; border-top:1px solid var(--line); background:var(--surface-3); padding:6px 12px; color:var(--text-2); font-size:var(--fs-13) }
 .pagination select { width:64px }
@@ -875,6 +869,7 @@ body.detail-open .detail-panel { display:block }
 .detail-top p { margin:0; color:var(--text-2); font-size:var(--fs-13); line-height:var(--lh-13); overflow-wrap:break-word }
 .detail-form { display:inline-block; max-width:100% }
 .detail-subtitle code.mutation { color:var(--text); font:var(--fs-12)/var(--lh-12) var(--font-mono); overflow-wrap:anywhere }
+.detail-subtitle .mutation-words { color:var(--muted) }
 .detail-top p.detail-substrate { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; color:var(--text) }
 .detail-substrate > span:first-child { color:var(--muted) }
 .detail-top p.detail-condition-note { margin-top:-2px; color:var(--muted); font-size:var(--fs-12); line-height:var(--lh-12) }
@@ -918,16 +913,20 @@ body.detail-open .detail-panel { display:block }
 .source-efficiency-value .listed-end { white-space:nowrap }
 .measurement-listed { margin-top:12px }
 
-/* Status line: a dot, the review result (13px/600), then its tags. Each tag's "·" sits in the 12px gap before it; a tag
-   that wraps starts its line, where its "·" falls left of the line and is clipped, so no line starts or ends with a "·"
-   (the line has no side padding of its own: on phones its margins keep it off the panel's edges). */
+/* Status line, in the table's words and colours (round 17: no dot or square): the review result (13px/600) in its
+   colour's text shade (--status-ink, set on the line), "✓ human-checked" 6px after it, then the tags: "from paper" in
+   Read from the paper's dark cyan or "not re-read", "BRENDA" in grey, "corrected", "no paper linked". Each tag's "·"
+   sits in the 12px gap before it; a tag that wraps starts its line, where its "·" falls left of the line and is
+   clipped, so no line starts or ends with a "·" (the line has no side padding of its own: on phones its margins keep
+   it off the panel's edges). */
 .detail-status { display:flex; flex-wrap:wrap; align-items:center; gap:2px 12px; margin-top:2px; overflow-x:clip }
-.detail-status::before { content:""; width:8px; height:8px; margin-right:-6px; border-radius:50%; background:var(--status-color); box-shadow:inset 0 0 0 1px var(--status-ring, transparent) }
 .detail-status > span { position:relative; white-space:nowrap }
 .detail-status > span + span::before { content:"\00b7"; position:absolute; top:0; right:100%; width:12px; color:var(--text-2); font-weight:400; text-align:center }
-.detail-status-word { color:var(--text); font-weight:600 }
-.detail-status > .detail-status-checked { color:var(--checked); font-weight:500 }
+.detail-status-word { color:var(--status-ink,var(--text)); font-weight:600 }
+.detail-status > .detail-status-checked { margin-left:-6px; color:var(--checked); font-weight:500 }
+.detail-status > .detail-status-checked::before { content:none }
 .detail-status-checked .check-icon { margin-right:3px }
+.detail-status-source { color:var(--src-paper-ink) }
 .human-review-line > dd .check-icon { margin-right:4px; color:var(--checked) }
 
 /* B. Values: one table (Parameter | Value | Unit | As printed | Where), numbers right-aligned in 16px/600. */
@@ -2047,7 +2046,6 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
 @media (min-width: 1024px) {
   body.detail-open :is(.col-ec,.col-open,.c-ec,.c-open) { display:none }
   body.detail-open #recordsBody .state-tag:not(:first-child) { display:none }
-  body.detail-open #recordsBody .state-check { display:inline-flex }
   /* With nothing in it to show (no chip, no count other than the page range), the title row takes no room (fix pass
      after round 16b: beside a record at 1024px its visually hidden lines kept a 30px row and a 45px empty band above
      Columns, Export and Sort); its hidden lines stay for screen readers. */
@@ -2109,7 +2107,6 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
 @container records (max-width: 1100px) {
   table { --cell-x:6px }
   th.c-enzyme, td.c-enzyme { padding-left:10px }
-  #recordsBody .state-tags { padding-left:0 }
   .load-notice.empty-notice { position:sticky; left:16px; max-width:min(520px,calc(100% - 32px)); margin:0 }
 }
 
@@ -2279,7 +2276,7 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
   #recordsBody .value-flag { display:inline-flex; flex:0 1 auto; min-width:0; max-width:100%; align-items:flex-start; gap:3px; width:auto; height:auto; background:none; box-shadow:none; color:var(--caution); font-size:var(--fs-12); line-height:14px }
   #recordsBody .value-flag::before { display:grid; flex:0 0 14px; place-items:center; width:14px; height:14px; border-radius:50%; background:var(--caution-mark); box-shadow:inset 0 0 0 1px var(--caution-ring); color:var(--text) }
   #recordsBody .value-flag .visually-hidden { position:static; width:auto; min-width:0; height:auto; margin:0; clip:auto; clip-path:none; white-space:normal; overflow-wrap:anywhere }
-  #recordsBody .state-tags { min-width:0; padding-left:0; white-space:nowrap }
+  #recordsBody .state-tags { min-width:0; white-space:nowrap }
   #recordsBody tr.skeleton-row { padding:14px 16px }
   #recordsBody tr.skeleton-row td:not(.c-enzyme,.c-organism,.c-kcat) { display:none }
   #recordsBody tr.skeleton-row td { padding:3px 0 }
@@ -2526,7 +2523,7 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
 .guide-view .guide-shell .guide-anatomy-card .guide-anatomy-title { font-size:var(--fs-18); font-weight:600; line-height:var(--lh-18) }
 .guide-view .guide-shell .guide-anatomy-card .guide-anatomy-meta { margin-top:2px; color:var(--text-2); font-size:var(--fs-13); line-height:var(--lh-13) }
 .guide-view .guide-shell .guide-anatomy-card .guide-anatomy-heading { margin-bottom:6px; font-weight:600 }
-.guide-view .guide-anatomy-status { --status-color:var(--st-accepted); margin:0 }
+.guide-view .guide-anatomy-status { --status-ink:var(--st-accepted-ink); margin:0 }
 .guide-view .guide-anatomy-card .values-table { margin:0 }
 .guide-view .guide-shell .guide-anatomy-card .guide-anatomy-quote { border-left:2px solid var(--line); padding-left:10px; color:var(--text-2) }
 .guide-view .guide-anatomy-quote > span { color:var(--text); font-weight:600 }
@@ -2657,15 +2654,13 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
 .guide-view .guide-checklist li::before { content:"\2013"; content:"\2013" / ""; position:absolute; top:0; left:2px; color:var(--muted) }
 .guide-view .guide-choice-link { margin-top:16px; font-size:var(--fs-14) }
 .guide-view .guide-shell .guide-note { margin:16px 0 0; color:var(--muted) }
-/* Review status: the table's badge (dot, status word in ink, tags) beside its meaning. */
+/* Review status: the table's badge (the result's word in its colour, tags) beside its meaning. */
 .guide-view .guide-status-list { margin:16px 0 0; border-top:1px solid var(--line-soft) }
 .guide-view .guide-status-list > div { display:grid; grid-template-columns:11em minmax(0, 1fr); gap:4px 20px; align-items:start; border-bottom:1px solid var(--line-soft); padding:10px 0 }
 .guide-view .guide-status-list dt { display:block }
 .guide-view .guide-status-list .state-badge { display:inline-grid; height:auto; justify-items:start; align-content:start; max-width:100%; color:var(--text); font-size:var(--fs-16); line-height:var(--lh-16); white-space:nowrap }
-.guide-view .guide-status-list .state-label { display:inline-flex; align-items:center; gap:8px; font-weight:500 }
-/* The table's status dot: the badge's colour with its ring. */
-.guide-view .guide-status-list .state-label::before { content:""; flex:0 0 8px; width:8px; height:8px; border-radius:50%; background:var(--status-color,var(--st-unverified)); box-shadow:inset 0 0 0 1px var(--status-ring,transparent) }
-.guide-view .guide-status-list .state-tags { padding-left:16px; color:var(--muted); font-size:var(--fs-14); line-height:var(--lh-14) }
+.guide-view .guide-status-list .state-label { display:inline-flex; align-items:center; gap:4px; font-weight:500 }
+.guide-view .guide-status-list .state-tags { color:var(--muted); font-size:var(--fs-14); line-height:var(--lh-14) }
 .guide-view .guide-status-list .state-tags:empty { display:none }
 .guide-view .guide-status-list .state-tag + .state-tag::before { content:" · " }
 .guide-view .guide-status-list dd { margin:0 }
@@ -2675,6 +2670,7 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
 /* Tags: the table's tag words beside their meaning; human-checked keeps its check and colour. */
 .guide-view .guide-tag-list .state-tag { color:var(--muted); font-size:var(--fs-16); font-weight:500; white-space:nowrap }
 .guide-view .guide-tag-list .state-tag.human-checked { color:var(--checked) }
+.guide-view .guide-tag-list .state-tag.source-paper { color:var(--src-paper-ink) }
 .guide-view .guide-tag-list .check-icon { width:14px; height:14px; margin-right:4px; vertical-align:-1px }
 /* Lists of terms (units, downloads, sources, citation details): term left, meaning right. */
 .guide-view :is(.guide-download-list, .guide-term-list) { display:block; margin:4px 0 0; border-top:1px solid var(--line-soft) }

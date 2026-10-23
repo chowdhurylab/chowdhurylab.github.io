@@ -1543,7 +1543,7 @@ assert.doesNotMatch(guideHtml, /not by CatLog/, "Earlier extractions come from C
 {
   // The two kinds of record are the legend's tags (from paper, not re-read), said once there: no section repeats them.
   assert.doesNotMatch(guideHtml, /Two kinds of record|guide-kinds/);
-  assert.match(guideHtml, /<dt><span class="state-tag"><span class="src-mark" aria-hidden="true"><\/span>from paper<\/span><\/dt>\s*<dd>Read from the paper by CatLog&rsquo;s current, second version \(<a href="#guide-method">how<\/a>\)\.<\/dd>/);
+  assert.match(guideHtml, /<dt><span class="state-tag source-paper">from paper<\/span><\/dt>\s*<dd>Read from the paper by CatLog&rsquo;s current, second version \(<a href="#guide-method">how<\/a>\)\.<\/dd>/);
   assert.equal((guideHtml.match(/second version/g) || []).length, 1, "The Guide says once that the current version is the second");
 }
 // The table shows pH or temperature only under the substrate, to tell apart records of one paper (lookAlikeRowKeys); the
@@ -1574,7 +1574,7 @@ for (const [, href] of guideFind.matchAll(/<a href="(#browse[^"]*)"/g)) {
     "variant", "tmin", "tmax", "phmin", "phmax", "caution", "source", "sort"].includes(key)), `${href} uses the shared keys`);
 }
 assert.doesNotMatch(guideHtml, /<img/);
-assert.match(guideHtml, /class="state-tag human-checked"><svg class="check-icon"/, "Guide shows the human-checked tag as the table does");
+assert.match(guideHtml, /class="state-tag human-checked"><svg class="check-icon"/, "the Guide's legend shows the human-checked tag with its check");
 // Short and plain (round 14, the user: "still so verbose, AI-ish, confusing"): no meta sentences or AI tells, and no
 // more than three sentences in any paragraph or list item of the Guide's own text.
 {
@@ -1600,8 +1600,17 @@ assert.match(
   />variant, not specified</,
   "the table marker should identify an unspecified variant",
 );
-assert.match(api.enzymeFormHtml({ mutation_signature: "D102E", wild_type: false }), /<span class="enzyme-form" title="Variant: D102E">D102E<\/span>/,
-  "the table shows the bare mutation");
+// Round 17 (the user: the bare boxed code was hard to understand): the table says "variant D102E", its title the
+// substitution in words where it parses; a signature that says what it is in words stands alone.
+assert.match(api.enzymeFormHtml({ mutation_signature: "D102E", wild_type: false }),
+  /<span class="enzyme-form" title="Variant D102E: Asp102 → Glu"><span class="form-word">variant<\/span> D102E<\/span>/,
+  "the table says it is a variant");
+assert.match(api.enzymeFormHtml({ mutation_signature: "P161S/S336A" }), /title="Variant P161S\/S336A: Pro161 → Ser, Ser336 → Ala">.*> P161S\/S336A</);
+assert.match(api.enzymeFormHtml({ mutation_signature: "Δ74-80" }), /title="Variant Δ74-80"><span class="form-word">variant<\/span> Δ74-80</);
+assert.match(api.enzymeFormHtml({ mutation_signature: "deletion mutant" }), /<span class="enzyme-form" title="Variant deletion mutant">deletion mutant<\/span>/);
+assert.match(api.enzymeFormHtml({ mutation_signature: "L169S/L176S (sol-hMGL)" }), /title="Variant L169S\/L176S \(sol-hMGL\): Leu169 → Ser, Leu176 → Ser"><span class="form-word">variant<\/span> /);
+assert.deepEqual(["E124Q", "W88*", "E124Q/D269E/E273D", "D76G/K102T (M2)", "E124Q/Δ18", "FrdC R28N", "A12A", "e124q", "D92N (large) + E122G"].map(api.mutationWords),
+  ["Glu124 → Gln", "Trp88 → stop", "Glu124 → Gln, Asp269 → Glu, Glu273 → Asp", "Asp76 → Gly, Lys102 → Thr", "", "", "", "", ""]);
 assert.equal(api.enzymeFormHtml({ wild_type: true }), "", "wild type shows nothing");
 assert.equal(api.enzymeFormHtml({}), "", "a record that does not say shows nothing");
 assert.equal(api.enzymeFormLabel({}, { showUnknown: true }), "Not recorded");
@@ -3593,7 +3602,8 @@ function row(overrides = {}) {
   assert.match(api.statusBadge(row({ verification_status: "disputed" })), /class="state-badge disputed"[^>]*>.*Disputed</);
   const paperBadge = api.statusBadge(row({ source_db: "primary_paper_direct", enzyme_label_source: "explicit_enzyme_name" }));
   assert.match(paperBadge, /title="Read from the paper by an AI model; a second, separate AI check compared each value with the paper\." aria-label="Accepted, from paper"/);
-  assert.match(paperBadge, /<span class="state-tags"><span class="state-tag"><span class="src-mark" aria-hidden="true"><\/span>from paper<\/span><\/span>/);
+  assert.match(paperBadge, /<span class="state-tags"><span class="state-tag source-paper">from paper<\/span><\/span>/);
+  assert.doesNotMatch(paperBadge, /src-mark/);
   assert.doesNotMatch(paperBadge, /not re-read|Not yet re-read/);
   assert.doesNotMatch(paperBadge, /independent|run\b|code converted/);
   assert.equal(api.reviewOutcome(prepared), "Not checked: taken from the source database as listed.");
@@ -4275,9 +4285,9 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
     ],
   });
   const html = element("detailContent").innerHTML;
-  assert.match(html, /<p class="detail-subtitle">EC 1\.4\.1\.20 &middot; <i>Bacillus sphaericus<\/i> &middot; <span class="detail-form">Variant <code class="mutation">N145A<\/code><\/span><\/p>/);
+  assert.match(html, /<p class="detail-subtitle">EC 1\.4\.1\.20 &middot; <i>Bacillus sphaericus<\/i> &middot; <span class="detail-form">Variant <code class="mutation">N145A<\/code><span class="mutation-words">: Asn145 → Ala<\/span><\/span><\/p>/);
   assert.match(html, /<p class="detail-substrate"><span>Substrate:<\/span> <span class="detail-substrate-name">3-phenyl-2-oxopropanoate<\/span><\/p>/);
-  assert.match(html, /<span class="detail-status-word">Accepted<\/span><span><span class="src-mark" aria-hidden="true"><\/span>from paper<\/span>/);
+  assert.match(html, /<span class="detail-status-word">Accepted<\/span><span class="detail-status-source">from paper<\/span>/);
   assert.match(html, /<p class="detail-key"><span class="visually-hidden">Record ID <\/span><code id="detailRecordKey">v2-structure<\/code>.*data-copy-text="[^"]*#record=v2-structure" data-copy-label="Copy link">Copy link<\/button><\/p>/);
   const order = ['class="detail-top"', ">Values</h3>", ">Checks</h3>", ">Conditions</h3>", ">Protein and substrate</h3>", ">Paper</h3>",
     'id="downloadSelectedJson"'];
@@ -4313,15 +4323,15 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   // status in brackets.
   api.renderDetail(row({ record_key: "status-words", verification_status: "mathematically_inferred", source_db: "skid" }), {});
   assert.match(element("detailContent").innerHTML, /<span class="detail-status-word">Not checked \(Not reviewed\)<\/span><span>not re-read<\/span><span>SKiD<\/span>/);
-  // Its dot is the exact status's colour, as in the table: tan with its ring for Not reviewed, salmon with its ring for
-  // Not confirmed, slate for Unverified.
-  assert.match(element("detailContent").innerHTML, /<p class="detail-status" style="--status-color:var\(--st-not-reviewed\);--status-ring:var\(--st-not-reviewed-ring\)">/);
+  // Its word is the result's colour, as in the table (round 17: no dot): slate for both kinds of Not checked, terracotta
+  // (salmon's text shade) for Not confirmed.
+  assert.match(element("detailContent").innerHTML, /<p class="detail-status" style="--status-ink:var\(--st-unverified-ink\)">/);
   api.renderDetail(row({ record_key: "status-words-2", verification_status: "manual_review_required", source_db: "sabio_rk;brenda" }), {});
   assert.match(element("detailContent").innerHTML, /<span class="detail-status-word">Not confirmed<\/span><span>not re-read<\/span><span>BRENDA, SABIO-RK<\/span>/);
-  assert.match(element("detailContent").innerHTML, /style="--status-color:var\(--st-pending\);--status-ring:var\(--st-pending-ring\)"/);
+  assert.match(element("detailContent").innerHTML, /style="--status-ink:var\(--st-pending-ink\)"/);
   api.renderDetail(row({ record_key: "status-words-3", verification_status: "unverified", source_db: "unknown" }), {});
   assert.match(element("detailContent").innerHTML, /<span class="detail-status-word">Not checked \(Unverified\)<\/span><span>not re-read<\/span><span>source not recorded<\/span>/);
-  assert.match(element("detailContent").innerHTML, /<p class="detail-status" style="--status-color:var\(--st-unverified\)">/);
+  assert.match(element("detailContent").innerHTML, /<p class="detail-status" style="--status-ink:var\(--st-unverified-ink\)">/);
 }
 // A record read by CatLog: Method (with "values stored as printed" when code converted nothing) and Check; the EC the
 // paper does not print is said in the header. Badges are named by their words, not the method sentence.
@@ -4801,7 +4811,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   // A record read by CatLog has no Source section: its header says "from paper", the Guide how it was read, and its
   // footnote gives the license and the snapshot.
   assert.doesNotMatch(html, />Source<\/h3>|<dt>Values from<\/dt>|<dt>Method<\/dt>|<dt>Name from<\/dt>/);
-  assert.match(html, /<span class="detail-status-word">Accepted<\/span><span><span class="src-mark" aria-hidden="true"><\/span>from paper<\/span>/);
+  assert.match(html, /<span class="detail-status-word">Accepted<\/span><span class="detail-status-source">from paper<\/span>/);
   assert.doesNotMatch(html, /<dt>Source<\/dt>/, "the Source section's first row does not repeat its heading");
   // The source's own details are rows of the Source section (each wraps; nothing to open at the record's end).
   assert.doesNotMatch(html, /Source details|<details class="detail-disclosure"/);
@@ -5708,14 +5718,15 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   const accepted = row({ record_key: "hc-accepted", measurement_key: "hc-accepted", verification_status: "verified" });
   const pending = row({ record_key: "hc-pending", measurement_key: "hc-pending", verification_status: "manual_review_required" });
   const noted = row({ record_key: "hc-note", measurement_key: "hc-note", verification_status: "corrected" });
-  assert.match(api.statusBadge(accepted), /<span class="state-tag human-checked"><svg class="check-icon"[^>]*>.*<\/svg>human-checked<\/span>/);
-  // The same mark as a check after the review result, for a table short of room or beside an open record.
+  // human-checked is a green check right after the review result, in every width (round 17); no tag repeats it.
+  assert.doesNotMatch(api.statusBadge(accepted), /state-tag human-checked/);
   assert.match(api.statusBadge(accepted), /<span class="state-label">Accepted<span class="state-check" role="img" aria-label="human-checked"><svg class="check-icon"/);
   assert.doesNotMatch(api.statusBadge(pending), /human-checked/);
   assert.doesNotMatch(api.statusBadge(noted), /human-checked/);
   api.renderDetail(accepted, {});
   let html = element("detailContent").innerHTML;
-  assert.match(html, /class="detail-status-checked"><svg class="check-icon"/);
+  // The record's line: the result, "✓ human-checked" right after it, then the source.
+  assert.match(html, /<span class="detail-status-word">Accepted<\/span><span class="detail-status-checked"><svg class="check-icon"[^>]*>.*?<\/svg>human-checked<\/span><span>not re-read<\/span>/);
   assert.match(plainMetricNames(html), /<div class="kv-line human-review-line"><dt>Human review<\/dt><dd><svg class="check-icon"[^>]*>.*<\/svg>A human reviewer approved every kcat and Km shown; the kcat\/Km was approved too or agrees with kcat ÷ Km\.<\/dd><\/div>/);
   assert.match(api.statusBadge(accepted), /title="[^"]*Human-checked: a human reviewer approved every kcat and Km shown; the kcat\/Km was approved too or agrees with kcat ÷ Km\."/);
   assert.match(api.statusBadge(accepted), /aria-label="Accepted, Not yet re-read, BRENDA, human-checked"/);
@@ -6182,7 +6193,7 @@ assert.doesNotMatch(detailFalseKiHtml, /<i>K<\/i><sub>i<\/sub>/);
     ["from paper", "earlier extraction", "BRENDA, SABIO-RK", "source not recorded", "OED"]);
   assert.match(api.statusBadge(oed), /<span class="state-tags"><span class="state-tag">not re-read<\/span><span class="state-tag">OED<\/span><span class="state-tag">corrected<\/span><\/span>/);
   assert.match(api.statusBadge(earlier), /<span class="state-tags"><span class="state-tag">not re-read<\/span><span class="state-tag">earlier extraction<\/span><\/span>/);
-  assert.match(api.statusBadge(fromPaper), /<span class="state-tag"><span class="src-mark" aria-hidden="true"><\/span>from paper<\/span>/);
+  assert.match(api.statusBadge(fromPaper), /<span class="state-tag source-paper">from paper<\/span>/);
   const keysFor = async (address) => {
     api.applyBrowseParams(new Map(new URLSearchParams(address)));
     await api.ensureCurrentFilters();
@@ -7839,8 +7850,9 @@ for (const hash of ["#stats", "#guide", "#guide-units"]) {
 {
   const source = element("sourceChecklist").innerHTML;
   // Each record by what happened to it (the user, 2026-10-13, round 8): Read from the paper and Not yet re-read, one line
-  // each beside its count; CatLog is the one name, never v1 or v2.
-  assert.match(source, /<label class="check-row radio-row" title="Read from the paper by an AI model; a second, separate AI check compared each value with the paper\.">\s*<input type="radio" name="sourceMode" value="paper" \/>\s*<span>Read from the paper<\/span>\s*<strong data-count="source:paper">/);
+  // each beside its count; CatLog is the one name, never v1 or v2. Read from the paper is its words in its dark cyan
+  // (round 17).
+  assert.match(source, /<label class="check-row radio-row" title="Read from the paper by an AI model; a second, separate AI check compared each value with the paper\.">\s*<input type="radio" name="sourceMode" value="paper" \/>\s*<span><span class="source-word">Read from the paper<\/span><\/span>\s*<strong data-count="source:paper">/);
   assert.match(source, /value="databases" \/>\s*<span>Not yet re-read<\/span>\s*<strong data-count="source:databases">/);
   assert.doesNotMatch(source + element("aboutSource").innerHTML, /\bv[12]\b|source-mode-what/);
   assert.match(source, /value="all" checked \/>\s*<span>All records<\/span>\s*<strong/);
@@ -7865,8 +7877,9 @@ for (const hash of ["#stats", "#guide", "#guide-units"]) {
   // keeps the mark's room only.
   assert.match(element("cautionChecklist").innerHTML, /value="units" \/>\s*<span><span class="option-mark caution-option-mark" aria-hidden="true"><\/span>Unit or magnitude error<\/span>/);
   assert.match(element("cautionChecklist").innerHTML, /value="none" \/>\s*<span><span class="option-mark option-mark-none" aria-hidden="true"><\/span>No cautions<\/span>/);
-  assert.match(element("statusChecklist").innerHTML, /value="curation_pending" checked \/>\s*<span><span class="option-mark state-mark review" aria-hidden="true"><\/span>Not confirmed<\/span>/);
-  // No help text in view (the user, 2026-10-18): the notes of Parameter and Wild type or variant are behind their
+  // A review result is its word in its colour (round 17: no dot).
+  assert.match(element("statusChecklist").innerHTML, /value="curation_pending" checked \/>\s*<span><span class="state-word review">Not confirmed<\/span><\/span>/);
+  // No help text in view (the user, 2026-10-18): the notes of Measurement type and Wild type or variant are behind their
   // "?", the cautions' definitions behind Cautions' "?" (Km and kcat keep their capitals after the dash).
   assert.doesNotMatch(element("measurementChecklist").innerHTML + element("variantChecklist").innerHTML, /filter-note|<p/);
   assert.equal(element("aboutMeasurement").innerHTML, "<p>Records that give the value; ticking several shows records with all of them.</p>");
