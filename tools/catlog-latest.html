@@ -510,7 +510,7 @@ JSON</span>
                 </div>
                 <div class="guide-anatomy-part">
                   <span class="guide-pin" aria-hidden="true"></span>
-                  <p class="detail-status guide-anatomy-status"><span class="detail-status-word">Accepted</span><span><span class="src-mark" aria-hidden="true"></span>from paper</span><span class="detail-status-checked"><svg class="check-icon" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.4 6.5 4.9 9 9.6 3.4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>human-checked</span></p>
+                  <p class="detail-status guide-anatomy-status"><span class="detail-status-word">Accepted</span><span class="detail-status-checked"><svg class="check-icon" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.4 6.5 4.9 9 9.6 3.4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>human-checked</span><span class="detail-status-source">from paper</span></p>
                 </div>
                 <div class="guide-anatomy-part">
                   <span class="guide-pin" aria-hidden="true"></span>
@@ -566,8 +566,58 @@ JSON</span>
           <section class="guide-section guide-legend" id="guide-marks" aria-labelledby="guide-marks-title">
             <h2 id="guide-marks-title">Marks and cautions</h2>
             <div class="guide-legend-grid">
-              <section class="guide-legend-group" aria-labelledby="guide-marks-list-title">
-                <h3 id="guide-marks-list-title">Marks beside a value</h3>
+              <section class="guide-legend-group" aria-labelledby="guide-results-title">
+                <h3 id="guide-results-title">Review result</h3>
+                <dl class="guide-status-list">
+                  <div>
+                    <dt><span class="state-badge accepted" data-status="verified"><span class="state-label">Accepted</span><span class="state-tags"></span></span></dt>
+                    <dd id="guideAcceptedDefinition">Read from the paper by CatLog; or, for a record not yet <span class="nowrap">re-read</span>, accepted by the earlier automated review.</dd>
+                  </div>
+                  <div>
+                    <dt><span class="state-badge review" data-status="manual_review_required"><span class="state-label">Not confirmed</span><span class="state-tags"></span></span></dt>
+                    <dd>The earlier review left a question open.</dd>
+                  </div>
+                  <div>
+                    <dt><span class="state-badge unresolved" data-status="unverified"><span class="state-label">Not checked</span><span class="state-tags"></span></span></dt>
+                    <dd id="guideNotCheckedDefinition">No review result. The record says <em>Unverified</em> (no final check) or <em>Not reviewed</em> (no PMID or DOI).</dd>
+                  </div>
+                  <div>
+                    <dt><span class="state-badge disputed" data-status="disputed"><span class="state-label">Disputed</span><span class="state-tags"></span></span></dt>
+                    <dd>A check found a problem.</dd>
+                  </div>
+                </dl>
+              </section>
+              <section class="guide-legend-group" aria-labelledby="guide-tags-title">
+                <h3 id="guide-tags-title">Tags</h3>
+                <dl class="guide-status-list guide-tag-list">
+                  <div>
+                    <dt><span class="state-tag source-paper">from paper</span></dt>
+                    <dd>Read from the paper by CatLog&rsquo;s current, second version (<a href="#guide-method">how</a>).</dd>
+                  </div>
+                  <div>
+                    <dt><span class="state-tag">not <span class="nowrap">re-read</span></span></dt>
+                    <dd>From CatLog&rsquo;s earlier version, built from database entries; replaced when CatLog reads the paper.</dd>
+                  </div>
+                  <div>
+                    <dt><span class="state-tag">earlier extraction</span></dt>
+                    <dd>Read from a paper by CatLog&rsquo;s earlier version.</dd>
+                  </div>
+                  <div>
+                    <dt><span class="state-tag">corrected</span></dt>
+                    <dd>Corrected by the earlier review; the record shows the change.</dd>
+                  </div>
+                  <div>
+                    <dt><span class="state-tag">no paper linked</span></dt>
+                    <dd id="guideNoPaperDefinition">No PMID or DOI, so the value cannot be traced to a paper.</dd>
+                  </div>
+                  <div>
+                    <dt><span class="state-tag human-checked"><svg class="check-icon" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.4 6.5 4.9 9 9.6 3.4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>human-checked</span></dt>
+                    <dd>A reviewer approved every value shown (a <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> may instead agree with <i>k</i><sub>cat</sub> &divide; <i>K</i><sub>m</sub>). In the table, the green check after Accepted.</dd>
+                  </div>
+                </dl>
+              </section>
+              <section class="guide-legend-group" aria-labelledby="guide-marks-title">
+                <h3 id="guide-marks-title">Marks beside a value</h3>
                 <dl class="guide-status-list guide-mark-list">
                   <div><dt><span class="guide-mark-sample guide-mark-tick"><svg class="check-icon" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.4 6.5 4.9 9 9.6 3.4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="visually-hidden">Green tick</span></span></dt><dd>A human reviewer approved this value.</dd></div>
                   <div><dt><span class="guide-mark-sample"><span class="value-flag guide-flag" aria-hidden="true"></span><span class="visually-hidden">Exclamation mark</span></span></dt><dd>A caution; the record says what it is (<a href="#guide-cautions">Cautions</a>).</dd></div>
@@ -584,6 +634,19 @@ JSON</span>
                   <div><dt><span class="db-mark db-mark-differs" aria-hidden="true"></span>Different number</dt><dd>A database lists another number; the cause is not yet known.</dd></div>
                   <div><dt><span class="db-mark db-mark-not-listed" aria-hidden="true"></span>Not in the databases</dt><dd>No compared database lists this value.</dd></div>
                 </dl>
+              </section>
+              <section class="guide-legend-group guide-legend-wide" aria-labelledby="guide-chips-title">
+                <h3 id="guide-chips-title">Filters in use</h3>
+                <ul class="guide-chip-row">
+                  <li><span class="filter-chip tone-paper"><span>Source: <span class="source-word">Read from the paper</span></span><svg class="chip-x" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M3.5 3.5l5 5M8.5 3.5l-5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span></li>
+                  <li><span class="filter-chip tone-identity"><span>Enzyme: laccase</span><svg class="chip-x" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M3.5 3.5l5 5M8.5 3.5l-5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span></li>
+                  <li><span class="filter-chip tone-measurement"><span>Has <i>k</i><sub>cat</sub></span><svg class="chip-x" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M3.5 3.5l5 5M8.5 3.5l-5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span></li>
+                  <li><span class="filter-chip tone-st-accepted"><span>Review result: <span class="chip-state accepted">Accepted</span></span><svg class="chip-x" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M3.5 3.5l5 5M8.5 3.5l-5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span></li>
+                  <li><span class="filter-chip tone-checked"><span><span class="chip-check"><svg class="check-icon" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M2.4 6.5 4.9 9 9.6 3.4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Only human-checked</span><svg class="chip-x" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M3.5 3.5l5 5M8.5 3.5l-5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span></li>
+                  <li><span class="filter-chip tone-caution"><span>Caution: <span class="chip-flag" aria-hidden="true"></span>No unit given</span><svg class="chip-x" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M3.5 3.5l5 5M8.5 3.5l-5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span></li>
+                  <li data-guide-databases hidden><span class="filter-chip tone-cmp-corrects"><span>Databases: <span class="db-mark db-mark-corrects" aria-hidden="true"></span>Corrects a value</span><svg class="chip-x" viewBox="0 0 12 12" aria-hidden="true" focusable="false"><path d="M3.5 3.5l5 5M8.5 3.5l-5 5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span></li>
+                </ul>
+                <p class="guide-chip-key">&times; removes a filter; <em>Undo</em> brings back the last change.</p>
               </section>
             </div>
 
