@@ -565,8 +565,8 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
   .rail-heading #clearButton[hidden] ~ .icon-button { margin-left:0 }
 }
 
-/* Records: a 48px toolbar (Filters on phones, the active filters as chips and Clear all; Columns, Export and Sort at the
-   right), the table, page controls. With its 1px rule it is 48px like the sidebar's heading, so the two rules line up
+/* Records: a 48px toolbar (Filters on phones, the active filters as chips and Clear all; Columns and Export at the
+   right, and Sort on phones), the table, page controls. With its 1px rule it is 48px like the sidebar's heading, so the two rules line up
    (7px above and below a 32px control). */
 .table-panel { display:flex; flex-direction:column; min-width:0; min-height:0; overflow:hidden }
 /* The toolbar and the chips start at the row's top, the chips' first line 2px down so it centres on the 32px toolbar:
@@ -576,11 +576,16 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
 .records-title { display:flex; flex-wrap:wrap; align-items:center; gap:var(--sp-2) var(--sp-3); min-width:0; min-height:30px; padding-top:2px }
 .records-title > span { color:var(--text-2); font-size:var(--fs-13) }
 .records-tools { display:flex; align-items:center; gap:var(--sp-2); color:var(--text-2); font-size:var(--fs-13) }
-/* The Sort menu is 180px, or as wide as its longest option when a wider font needs more ("kcat/Km, high to low" was cut
-   in Verdana), so the chosen order always reads whole. */
-.records-tools select { width:auto; min-width:180px }
+/* Sorting is by the column headers; phones, whose cards have none, get a compact control instead (Sort ↑ reverses the
+   order, the menu picks the column). */
 .records-tools label { white-space:nowrap }
-.sort-control { display:inline-flex; min-width:0; align-items:center; gap:var(--sp-2) }
+.sort-control { display:none; min-width:0; align-items:center; gap:var(--sp-2) }
+.sort-direction { display:inline-flex; min-height:32px; align-items:center; gap:2px; color:var(--muted); font-size:var(--fs-12); font-weight:400; text-decoration:none; white-space:nowrap }
+.sort-direction .sort-icon { visibility:visible; margin-top:0; color:var(--accent) }
+.sort-direction[data-direction="ascending"] .sort-icon { transform:rotate(180deg) }
+.sort-direction:hover:not(:disabled) { color:var(--text) }
+.sort-direction:disabled { cursor:default }
+.sort-direction:disabled .sort-icon { color:var(--muted) }
 .records-tools .button { white-space:nowrap }
 #openFiltersButton { display:none }
 .table-wrap { width:100%; flex:1; min-height:0; overflow:auto; background:var(--bg) }
@@ -679,14 +684,24 @@ table { --cell-x:10px; width:100%; border-collapse:collapse; table-layout:fixed 
 th, td { border-bottom:1px solid var(--line-soft); padding:4px var(--cell-x); text-align:left; vertical-align:middle; font-size:var(--fs-13); line-height:17px; overflow-wrap:break-word }
 th { position:sticky; top:0; z-index:1; height:48px; background:var(--surface-2); color:var(--text-2); font-size:var(--fs-12); font-weight:600; line-height:1.25; white-space:nowrap }
 .header-unit { display:block; margin-top:4px; color:var(--muted); font-size:var(--fs-12); font-weight:400; white-space:nowrap }
-/* Sortable value headers: the arrow shows the current sort and its direction (down: high to low). */
+/* Every header sorts (round 17): a click sorts the column its natural way (names A to Z, EC 1 to 7, values high to low,
+   Review result accepted first), a second click the other way. The headings keep their type; the sorted column's
+   heading is ink with a quiet arrow (up: ascending, A to Z or low to high; down: descending), and hovering another
+   heading shows a faint arrow for the way a click would sort it. The whole cell is the target (the script forwards a
+   click on its padding to the button). Value headings put the arrow before their words (they are right-aligned), the
+   others after. */
+th.sortable { cursor:pointer }
+th.sortable:has(.sort-button:disabled) { cursor:default }
 .sort-button { display:inline-flex; align-items:flex-start; gap:2px; border:0; background:none; padding:0; color:inherit; font:inherit; text-align:right; cursor:pointer }
+th:not(.num) > .sort-button { align-items:center; gap:4px; text-align:left }
 .sort-button:disabled { cursor:default }
 .sort-icon { flex:0 0 12px; height:12px; margin-top:1px; color:var(--accent); visibility:hidden }
+th:not(.num) > .sort-button .sort-icon { margin-top:0 }
 th[aria-sort] { color:var(--text) }
 th[aria-sort] .sort-icon, .sort-button:enabled:is(:hover,:focus-visible) .sort-icon { visibility:visible }
 th:not([aria-sort]) .sort-icon { color:var(--muted) }
-th[aria-sort="ascending"] .sort-icon { transform:rotate(180deg) }
+th[aria-sort="ascending"] .sort-icon, th[data-sort-natural="ascending"]:not([aria-sort]) .sort-icon { transform:rotate(180deg) }
+th.sortable:hover:not([aria-sort]) .sort-button:enabled .sort-icon { visibility:visible }
 
 .c-substrate, .c-eff { border-right:1px solid var(--line) }
 /* A condition note under the substrate: the name takes one line, the note the second (the row keeps its height). */
@@ -2054,7 +2069,7 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
   .records-header { grid-template-columns:minmax(0,1fr) }
   .records-tools { flex-wrap:wrap }
 }
-/* 721-1000px (beside the open sidebar or a record on a laptop): Export and Sort drop "results" and "by", and the chips
+/* 721-1000px (beside the open sidebar or a record on a laptop): Export drops "results", and the chips
    share the toolbar's one 48px row while they fit beside it, Clear all last. When they do not fit, the toolbar keeps the
    row and the chips take the full width under it (never a narrow column, one per line and cut), with a count that is
    not the page range and "Clear search and filters". Row-reverse with the toolbar first keeps it at the right on the
@@ -2063,14 +2078,13 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
   .records-header { display:flex; flex-direction:row-reverse; flex-wrap:wrap; row-gap:var(--sp-2) }
   .records-tools { order:-1; flex:none }
   .records-title { flex:1 1 auto }
-  .download-page-detail, .records-tools .sort-label-detail { display:none }
+  .download-page-detail { display:none }
 }
-/* Beside an open record on a desktop the pane can be narrower still (536px at 1024px): Export and Sort drop "results"
-   and "by" there too, so Columns, Export and Sort keep one row in a wide font (fix pass after round 16b: DejaVu Sans
-   wrapped them onto two). */
+/* Beside an open record on a desktop the pane can be narrower still (536px at 1024px): Export drops "results" there
+   too, so Columns and Export keep one row in a wide font (fix pass after round 16b: DejaVu Sans wrapped them). */
 @media (min-width: 1024px) {
   @container records (max-width: 720px) {
-    body.detail-open :is(.download-page-detail, .records-tools .sort-label-detail) { display:none }
+    body.detail-open .download-page-detail { display:none }
   }
 }
 @container records (max-width: 1100px) {
@@ -2178,10 +2192,9 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
   #pageSummary, #clearResultsButton, #activeFilters { grid-column:1 / -1; grid-row:auto; justify-self:start }
   /* The chips row never grows past its row (a long chip ends in "…"): the table's box no longer clips it on phones. */
   #activeFilters { max-width:100%; min-width:0 }
-  /* "Sort" stays visible beside the menu, so it never reads as a review-result filter. */
-  .records-tools label { color:var(--muted); font-size:var(--fs-12); white-space:nowrap }
-  .records-tools .sort-label-detail { display:none }
-  .sort-control { flex:1 1 auto }
+  /* The cards have no headers: Sort ↑ (the direction, a tap reverses it) and the column menu stand in for them. "Sort"
+     stays visible beside the menu, so it never reads as a review-result filter. */
+  .sort-control { display:inline-flex; flex:1 1 auto; gap:var(--sp-1) }
   .records-tools select { flex:1 1 auto; width:auto; min-width:0 }
   .download-page-detail { display:none }
   /* Export results opens across the toolbar, inside the page's gutters. */
@@ -2191,7 +2204,7 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
   .table-scroll-controls { display:none }
   #recordTableWrap table, #recordTableWrap tbody { display:block; width:100%; min-width:0 !important }
   #recordTableWrap colgroup { display:none }
-  /* Cards sort with the Sort by menu: the hidden column headers are no tab stops. */
+  /* Cards sort with the Sort control: the hidden column headers are no tab stops. */
   #recordTableWrap thead { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); visibility:hidden }
   #recordsBody tr { display:block; height:auto; border-bottom:1px solid var(--line-soft) }
   #recordsBody tr:nth-child(even) { background:var(--bg) }
@@ -2375,22 +2388,30 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
   .guide-choice-link { width:100%; white-space:normal }
 }
 
-/* The smallest phones (below 360px): "Sort" is read out but not shown and the toolbar's buttons are narrower, so the
-   Sort menu keeps about 110px and shows "Review result" whole, a Filters count included. */
+/* The smallest phones (below 360px): "Sort" is read out but not shown (its arrow stays, a 20px target) and the
+   toolbar's buttons and gaps are narrower, so the Sort menu keeps about 120px and shows "Review result" whole, a Filters
+   count included. */
 @media (max-width: 359px) {
   /* The header's gaps are 8px, so "Paper ↗ Lab ↗" keeps one line beside the brand; only a wider font still wraps it. */
   .app-header, body:is(.stats-open,.guide-open,.team-open) .app-header { column-gap:var(--sp-2) }
   .external-nav { column-gap:var(--sp-2) }
-  .sort-control label { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); clip-path:inset(50%); white-space:nowrap }
-  .records-header :is(#openFiltersButton, .export-menu > summary) { gap:var(--sp-1); padding-inline:var(--sp-2) }
+  .sort-direction-word { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); clip-path:inset(50%); white-space:nowrap }
+  .sort-direction { min-width:20px; justify-content:center }
+  .records-header { column-gap:6px }
+  .records-tools { gap:6px }
+  .records-header :is(#openFiltersButton, .export-menu > summary) { gap:var(--sp-1); padding-inline:6px }
+  /* Export drops its chevron here, as Filters has none: the menu then shows "Review result" whole. */
+  .records-header .export-menu > summary .chevron { display:none }
 }
 /* Phones from 360 to 389px: with a filter on, the Filters count left the Sort menu too little room for "Review result"
-   (it read "Review res"), so the toolbar's buttons are narrower there too; "Sort" stays. */
+   (it read "Review res"), so the toolbar's buttons are narrower there too and "Sort" gives way to its arrow alone (read
+   out still). */
 @media (min-width: 360px) and (max-width: 389px) {
   .records-header:has(#activeFilterCount:not(.hidden)) :is(#openFiltersButton, .export-menu > summary) { gap:var(--sp-1); padding-inline:var(--sp-2) }
   /* Linux's wider DejaVu font still left it 2px short at 360px: the toolbar's gaps close up a little too. */
   .records-header:has(#activeFilterCount:not(.hidden)) { column-gap:6px }
-  .records-header:has(#activeFilterCount:not(.hidden)) .sort-control { gap:var(--sp-1) }
+  .records-header:has(#activeFilterCount:not(.hidden)) .sort-direction-word { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); clip-path:inset(50%); white-space:nowrap }
+  .records-header:has(#activeFilterCount:not(.hidden)) .sort-direction { min-width:20px; justify-content:center }
 }
 
 @media (prefers-reduced-motion: reduce) {

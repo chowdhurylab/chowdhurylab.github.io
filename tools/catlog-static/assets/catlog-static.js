@@ -34,6 +34,9 @@
     teamBound: false,
     recordsGeneration: 0,
     sortCache: new Map(),
+    // The table's order (a SORT_COLUMNS key or its reverse key); sorting waits until every record has loaded.
+    sort: "evidence",
+    sortAvailable: true,
     filterRunId: 0,
     filterFailure: "",
     filterTimer: null,
@@ -2529,8 +2532,9 @@
         : (tierOrder[row.evidence_confidence_tier] ?? 99);
       row._sourceCount = Number(row.source_record_count || 0);
       row._sortEnzyme = sortText(row.enzyme_display_name);
-      row._sortOrganism = sortText(row.organism);
-      row._sortSubstrate = sortText(row.substrate_name);
+      // As the table shows them: an "Unknown" organism or substrate is a dash, so it sorts with the records without one.
+      row._sortOrganism = sortText(recordedName(row.organism));
+      row._sortSubstrate = sortText(recordedName(row.substrate_name));
       row._sortTemperature = temperatureValue(row);
       row._sortPh = phValue(row);
       // _ecSort and _search are filled on first use (ecParts, searchText): most rows never need them.
@@ -2754,7 +2758,7 @@
 
   // A value sort (from an address) waits for every record: a top 25 of the records loaded so far would change.
   function sortWaitsForRecords() {
-    return !state.recordsReady && ($("sortSelect")?.value || "evidence") !== "evidence";
+    return !state.recordsReady && currentSort() !== "evidence";
   }
 
   function loadProgressText() {
@@ -2800,50 +2804,118 @@
     }
   }
 
+  // Every column header sorts (round 17, the user: "like Excel"): a first click sorts the column's natural way, a second
+  // click the opposite way. A sort key names the column and its direction: the column's own key is its natural order
+  // (names A to Z, EC 1 to 7, values high to low, Review result accepted first) and `reverse` the opposite; records
+  // without the value stay last both ways. Review result's natural order is the default, so it needs no key in the
+  // address. Phones show cards without headers: a column menu and a direction toggle (Sort ↑) stand in for them.
+  const SORT_COLUMNS = {
+    evidence: { name: "Review result", natural: "accepted first", reverse: "not checked first", reverseKey: "evidence_desc", naturalAria: "ascending" },
+    enzyme: { name: "Enzyme", natural: "A to Z", reverse: "Z to A", reverseKey: "enzyme_desc", naturalAria: "ascending" },
+    ec_number: { name: "EC number", natural: "1 to 7", reverse: "7 to 1", reverseKey: "ec_number_desc", naturalAria: "ascending" },
+    organism: { name: "Organism", natural: "A to Z", reverse: "Z to A", reverseKey: "organism_desc", naturalAria: "ascending" },
+    substrate: { name: "Substrate", natural: "A to Z", reverse: "Z to A", reverseKey: "substrate_desc", naturalAria: "ascending" },
+    kcat: { name: "kcat", natural: "high to low", reverse: "low to high", reverseKey: "kcat_asc", naturalAria: "descending" },
+    km: { name: "Km", natural: "high to low", reverse: "low to high", reverseKey: "km_asc", naturalAria: "descending" },
+    kcat_over_km: { name: "kcat/Km", natural: "high to low", reverse: "low to high", reverseKey: "kcat_over_km_asc", naturalAria: "descending" },
+  };
+  const SORT_REVERSE_KEYS = Object.fromEntries(Object.entries(SORT_COLUMNS).map(([key, column]) => [column.reverseKey, key]));
+
+  // { column, reversed } of a sort key; an unknown key is the default order.
+  function sortParts(sort) {
+    if (SORT_COLUMNS[sort]) return { column: sort, reversed: false };
+    if (SORT_REVERSE_KEYS[sort]) return { column: SORT_REVERSE_KEYS[sort], reversed: true };
+    return { column: "evidence", reversed: false };
+  }
+
+  function sortKeyFor(column, reversed) {
+    return reversed ? SORT_COLUMNS[column].reverseKey : column;
+  }
+
+  // The order's words: "Enzyme, Z to A".
+  function sortWords(sort) {
+    const { column, reversed } = sortParts(sort);
+    const info = SORT_COLUMNS[column];
+    return `${info.name}, ${reversed ? info.reverse : info.natural}`;
+  }
+
+  function currentSort() {
+    return state.sort || "evidence";
+  }
+
+  // The one place the sort changes: the headers and the phone menu follow it.
+  function setSort(sort) {
+    state.sort = normalizedSortName(sort);
+    syncSortHeaders();
+  }
+
   function setSortAvailable(available) {
+    state.sortAvailable = Boolean(available);
     const select = $("sortSelect");
-    if (!select) return;
-    select.disabled = !available;
-    select.title = available ? "" : SORT_LOADING_TITLE;
+    if (select) {
+      select.disabled = !available;
+      select.title = available ? "" : SORT_LOADING_TITLE;
+    }
+    const toggle = $("sortDirectionButton");
+    if (toggle) toggle.disabled = !available;
     document.querySelectorAll?.(".sort-button").forEach((button) => { button.disabled = !available; });
     syncSortHeaders();
   }
 
-  // The numeric columns sort both ways: "kcat" is high to low, "kcat_asc" low to high. A column header shows the
-  // direction of the current sort (aria-sort and an arrow); clicking it sorts high to low, then low to high.
-  const SORT_HEADER_NAMES = { kcat: "kcat", km: "Km", kcat_over_km: "kcat/Km" };
-
+  // The active column's header has aria-sort and a quiet arrow (up: ascending, A to Z or low to high; down: descending);
+  // every header's title says what a click does. The phone menu shows the column, its toggle the direction.
   function syncSortHeaders() {
-    const sort = $("sortSelect")?.value || "evidence";
-    const loading = Boolean($("sortSelect")?.disabled);
+    const { column, reversed } = sortParts(currentSort());
+    const loading = !state.sortAvailable;
     document.querySelectorAll?.(".sort-button").forEach((button) => {
       const key = button.dataset.sort;
-      const direction = sort === key ? "descending" : sort === `${key}_asc` ? "ascending" : "";
+      const info = SORT_COLUMNS[key];
       const th = button.closest("th");
-      if (direction) th.setAttribute("aria-sort", direction);
+      if (!info || !th) return;
+      const active = key === column;
+      const opposite = info.naturalAria === "ascending" ? "descending" : "ascending";
+      th.dataset.sortNatural = info.naturalAria;
+      if (active) th.setAttribute("aria-sort", reversed ? opposite : info.naturalAria);
       else th.removeAttribute("aria-sort");
-      button.title = loading
-        ? SORT_LOADING_TITLE
-        : `Sort by ${SORT_HEADER_NAMES[key]}, ${direction === "descending" ? "low to high" : "high to low"}`;
+      button.title = loading ? SORT_LOADING_TITLE : `Sort by ${info.name}, ${active && !reversed ? info.reverse : info.natural}`;
     });
+    const select = $("sortSelect");
+    if (select) select.value = column;
+    const toggle = $("sortDirectionButton");
+    if (toggle) {
+      const info = SORT_COLUMNS[column];
+      const opposite = info.naturalAria === "ascending" ? "descending" : "ascending";
+      toggle.dataset.direction = reversed ? opposite : info.naturalAria;
+      const words = `Reverse the order (now ${reversed ? info.reverse : info.natural})`;
+      toggle.setAttribute("aria-label", words);
+      toggle.title = loading ? SORT_LOADING_TITLE : words;
+    }
   }
 
+  // A header click: the column's natural order, or the opposite when it is already sorted that way.
   function sortByColumn(key) {
-    const select = $("sortSelect");
-    if (!select || select.disabled) return;
-    select.value = select.value === key ? `${key}_asc` : key;
-    syncSortHeaders();
+    if (!state.sortAvailable || !SORT_COLUMNS[key]) return;
+    const { column, reversed } = sortParts(currentSort());
+    changeSort(sortKeyFor(key, column === key && !reversed));
+  }
+
+  // The phone toggle: the same column the other way.
+  function reverseSort() {
+    if (!state.sortAvailable) return;
+    const { column, reversed } = sortParts(currentSort());
+    changeSort(sortKeyFor(column, !reversed));
+  }
+
+  function changeSort(sort) {
+    setSort(sort);
     announceSort();
     applyFiltersInBackground();
   }
 
   // A screen reader hears the new order (the counts, which it also hears, do not change).
   function announceSort() {
-    const select = $("sortSelect");
     const status = $("tableStatus");
-    if (!select || !status) return;
-    const label = select.options?.[select.selectedIndex]?.textContent || select.value;
-    status.textContent = `Sorted by ${label}`;
+    if (status) status.textContent = `Sorted by ${sortWords(currentSort())}`;
   }
 
   function recordIndexPath() {
@@ -9309,7 +9381,7 @@
       cautions: selectedCheckboxes("caution"),
       databases: selectedCheckboxes("database"),
       ...sourceControlState(),
-      sort: $("sortSelect")?.value || "evidence",
+      sort: currentSort(),
     };
   }
 
@@ -9575,10 +9647,7 @@
     if (paper && anyDatabase) setSourceControls("all", []);
     else setSourceControls(anyDatabase ? "databases" : (paper ? "paper" : "all"), databases);
     openActiveFilterSections();
-    if ($("sortSelect")) {
-      $("sortSelect").value = normalizedSortName(String(params.get("sort") || "evidence").trim().toLowerCase());
-      syncSortHeaders();
-    }
+    setSort(String(params.get("sort") || "evidence").trim().toLowerCase());
     const rows = Number(params.get("rows"));
     if (PAGE_SIZES.includes(rows)) setPageSize(rows);
     const page = Number(params.get("page"));
@@ -9911,7 +9980,7 @@
     state.filterTyping = null;
     window.clearTimeout(state.filterTimer);
     state.filterTimerPending = false;
-    const current = $("sortSelect")?.value || "evidence";
+    const current = currentSort();
     const sort = entry.sort !== entry.sortAfter && current === entry.sortAfter ? entry.sort : current;
     const params = new Map(entry.params);
     if (sort && sort !== "evidence") params.set("sort", sort);
@@ -10234,8 +10303,14 @@
     return typeof first === "number" && Number.isFinite(first) ? first : Number.MAX_SAFE_INTEGER;
   }
 
+  // A record without the value: an empty name (organism and substrate as the table shows them: "Unknown" is a dash),
+  // an EC number with no digit at all.
+  const ecMissing = (row) => ecParts(row).every((part) => part === Number.MAX_SAFE_INTEGER);
+
   function rowComparator(sort) {
-    const textKey = (field) => (a, b) => a[field].localeCompare(b[field]);
+    // Names A to Z or Z to A; records without one last both ways.
+    const textKey = (field, reversed = false) => (a, b) => (!a[field] - !b[field])
+      || (reversed ? b[field].localeCompare(a[field]) : a[field].localeCompare(b[field]));
     const numericDesc = (field) => (a, b) => {
       const av = a[field] == null ? Number.NEGATIVE_INFINITY : Number(a[field]);
       const bv = b[field] == null ? Number.NEGATIVE_INFINITY : Number(b[field]);
@@ -10247,27 +10322,30 @@
       const bv = b[field] == null ? Number.POSITIVE_INFINITY : Number(b[field]);
       return av - bv;
     };
+    // The default order, the one the index is built in (build-catlog-viewer-index.py default_order_key): accepted
+    // first, read from the paper leading them, then tier; then the enzyme's name A to Z, so page 1 is not one paper's
+    // 25 records of EC 1.1.1.1 (2026-10-15), with a paper's records of one enzyme together, then the load order.
+    const byName = (a, b) => compareDefaultName(a._sortEnzyme, b._sortEnzyme) || (rowPaperNumber(a) - rowPaperNumber(b));
     const sorters = {
       ec_number: ecSort,
+      // EC 7 to 1; a record without an EC number stays last.
+      ec_number_desc: (a, b) => (ecMissing(a) - ecMissing(b)) || ecSort(b, a),
       enzyme: textKey("_sortEnzyme"),
+      enzyme_desc: textKey("_sortEnzyme", true),
       organism: textKey("_sortOrganism"),
+      organism_desc: textKey("_sortOrganism", true),
       substrate: textKey("_sortSubstrate"),
+      substrate_desc: textKey("_sortSubstrate", true),
       kcat: numericDesc("kcat"),
       kcat_asc: numericAsc("kcat"),
       km: numericDesc("km"),
       km_asc: numericAsc("km"),
       kcat_over_km: numericDesc("kcat_over_km"),
       kcat_over_km_asc: numericAsc("kcat_over_km"),
-      // The default order, the one the index is built in (build-catlog-viewer-index.py default_order_key): accepted
-      // first, read from the paper leading them, then tier; then the enzyme's name A to Z, so page 1 is not one paper's
-      // 25 records of EC 1.1.1.1 (2026-10-15), with a paper's records of one enzyme together, then the load order.
-      evidence: (a, b) => {
-        const stateDelta = a._stateRank - b._stateRank;
-        if (stateDelta !== 0) return stateDelta;
-        const tierDelta = a._tierRank - b._tierRank;
-        if (tierDelta !== 0) return tierDelta;
-        return compareDefaultName(a._sortEnzyme, b._sortEnzyme) || (rowPaperNumber(a) - rowPaperNumber(b));
-      },
+      evidence: (a, b) => (a._stateRank - b._stateRank) || (a._tierRank - b._tierRank) || byName(a, b),
+      // Review result the other way (Not checked and Disputed first, accepted read from the paper last); the names
+      // within each result stay A to Z.
+      evidence_desc: (a, b) => (b._stateRank - a._stateRank) || (b._tierRank - a._tierRank) || byName(a, b),
     };
     const primaryComparator = sorters[sort] || sorters.evidence;
     return (a, b) => primaryComparator(a, b) || (a._loadIndex - b._loadIndex);
@@ -10355,20 +10433,10 @@
     return isSortEntryCurrent(entry) ? records.slice() : null;
   }
 
+  // Every column's natural key and its reverse key (SORT_COLUMNS); anything else, an older address's sort=temperature
+  // or sort=ph_asc included (the table has no such column since round 12), is the default order.
   function normalizedSortName(sort) {
-    return [
-      "evidence",
-      "ec_number",
-      "enzyme",
-      "organism",
-      "substrate",
-      "kcat",
-      "kcat_asc",
-      "km",
-      "km_asc",
-      "kcat_over_km",
-      "kcat_over_km_asc",
-    ].includes(sort) ? sort : "evidence";
+    return SORT_COLUMNS[sort] || SORT_REVERSE_KEYS[sort] ? sort : "evidence";
   }
 
   function retainSortEntry(sort, entry) {
@@ -14803,8 +14871,7 @@
     clearInputs(...RANGE_INPUT_IDS);
     if ($("humanCheckedFilter")) $("humanCheckedFilter").checked = false;
     setSourceControls("all");
-    $("sortSelect").value = "evidence";
-    syncSortHeaders();
+    setSort("evidence");
     resetDetail();
     return applyFiltersInBackground();
   }
@@ -14871,13 +14938,16 @@
       // Typing in a field is one Undo step until the field is left.
       $(id).addEventListener("blur", () => endFilterTyping(FILTER_KEYS_BY_ID[id]));
     });
-    $("sortSelect").addEventListener("change", () => {
-      syncSortHeaders();
-      announceSort();
-      applyFiltersInBackground();
-    });
+    // Phones: the column menu sorts that column its natural way; Sort ↑ reverses the order.
+    $("sortSelect").addEventListener("change", () => changeSort($("sortSelect").value));
+    $("sortDirectionButton")?.addEventListener("click", reverseSort);
     document.querySelectorAll(".sort-button").forEach((button) => {
       button.addEventListener("click", () => sortByColumn(button.dataset.sort));
+      // The whole header cell is the target, not only its words and arrow.
+      const th = button.closest("th");
+      th?.addEventListener("click", (event) => {
+        if (!button.contains(event.target)) button.click();
+      });
     });
     Object.keys(suggestionInputs).forEach((id) => {
       const input = $(id);
@@ -15387,6 +15457,11 @@
       rowComparator,
       cooperativeStableSort,
       orderedRecordsFor,
+      currentSort,
+      setSort,
+      sortByColumn,
+      reverseSort,
+      sortWords,
       applyFilters,
       ensureCurrentFilters,
       applyFiltersInBackground,
