@@ -1454,6 +1454,13 @@ a.stats-total-value:focus-visible { outline:0 }
    1440px, so the supplement's measure changed from figure to figure); a narrower column shrinks it, and on a phone the
    bar spans the row. */
 .stats-chart-percent :is(.stats-chart-row, .stats-chart-axis, .stats-chart-head) { grid-template-columns:var(--label-w) minmax(0,560px) var(--value-w,64px); justify-content:start }
+/* A 100% bar in a half-width figure (the supplement's two to a row: each database against the values read from its papers,
+   the earlier version's corrections) has one length too: its row less a fixed 200px for the names and numbers, so two
+   charts whose names or numbers differ in width still draw equal bars (380 and 384px at 1440px before). Phones span the
+   row with every bar, as below. */
+@media (min-width: 641px) {
+  .stats-part-grid > :not(.stats-wide) .stats-chart-percent :is(.stats-chart-row, .stats-chart-axis, .stats-chart-head) { grid-template-columns:var(--label-w) minmax(0,min(560px, 100% - 200px)) var(--value-w,64px) }
+}
 .stats-chart-label { min-width:0; color:var(--text); font-size:var(--fs-13); line-height:var(--lh-12); overflow-wrap:anywhere }
 .stats-chart-label small { display:block; color:var(--muted); font-size:var(--fs-12); line-height:var(--lh-12) }
 /* A label with a breakdown under it (Figure 2's Other): the bar and the numbers stand on the name's line (all three are
