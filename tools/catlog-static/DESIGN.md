@@ -373,7 +373,7 @@ extractions", read out in full as the sidebar reads them; an EC class "EC 1", as
 trailing dot). Every chip says its group (round 15 polish: "Variant", "Corrects a value" and "T 20–30 °C" had stood
 bare beside "Review result: Disputed"): the group's name first (Review result, Source, Caution, Databases, Enzyme,
 Organism, Substrate, Search) unless the option's own words say it (Has kcat, Wild type, Variant, Only human-checked, EC 1,
-Temperature 20–30 °C, pH ≥ 7, Not in the databases), the Guide's Filters in use sample too; after Undo and followed by Clear all (with no matching
+Temperature 20–30 °C, pH ≥ 7, Not in the databases) (round 17: the Guide no longer draws a chips sample); after Undo and followed by Clear all (with no matching
 records, "Clear search and filters" takes Clear all's place, so the toolbar has one clear
 button; Undo, Clear all here and in the sidebar's heading are 24px tall targets at
 least); the count beside Filters is the number of chips. Chips are plain (round 14: a 3px bar, a 12% tint and a 45%
@@ -930,8 +930,8 @@ come first, the context after.
   review result (fix pass after round 16b: "(values not located)" on a record not accepted said more than any field
   records; the Guide: "The paper is linked; where it prints the values was not saved."),
   "Several database records" or "Database record only"); the license and the snapshot's data ID are the footnote's
-  (a source that names none reads "License: See the source's terms", as the
-  Guide's Sources and licenses list says "License: see the source's terms"; a
+  (a source that names none reads "License: See the source's terms"; the
+  Guide's Sources and their licenses list says "See the source's terms" after the source's name since round 17; a
   record with no recorded source reads "License: Not recorded");
   a database note on request, headed by
   its source ("Note from BRENDA", "Notes from SKiD"; "Database note" on a
