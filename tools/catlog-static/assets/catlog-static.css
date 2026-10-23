@@ -1623,6 +1623,8 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-ci-title { margin:6px 0 0; color:var(--text-2); font-size:var(--fs-12); line-height:var(--lh-12); text-align:center }
 /* Errors found in CatLog: neutral bars (the counts carry no meaning colour), a route's kinds as parts of its bar, All
    (each value once) set off by a hairline and weight. */
+.stats-errors-section > .stats-fig { max-width:920px }
+.stats-wide .stats-chart[data-chart="errors"] { --label-w:minmax(140px,320px) }
 .stats-chart[data-chart="errors"] .stats-chart-row[data-row="all"] { margin-top:4px; border-top:1px solid var(--line); padding-top:12px }
 .stats-chart[data-chart="errors"] .stats-chart-row[data-row="all"] :is(.stats-chart-label, .stats-chart-value) { font-weight:600 }
 @media (max-width: 1023px) {

@@ -6678,7 +6678,7 @@
         body = `<div class="stats-ci" role="img" aria-label="${escapeHtml(words)}" data-tip="${escapeHtml(words)}">
           <div class="stats-ci-plot">${ci}<i class="stats-ci-dot" style="left:${at(share)}%"></i><span class="stats-ci-value" style="left:${at(share)}%">${escapeHtml(shareText)}</span></div>
           <div class="stats-ci-axis" aria-hidden="true">${ticks.join("")}</div>
-          <p class="stats-ci-title" aria-hidden="true">${audit.ci ? `Share removed as wrong, with its 95% interval (${escapeHtml(audit.ci[0])}–${escapeHtml(audit.ci[1])}%)` : "Share removed as wrong"}</p></div>`;
+          <p class="stats-ci-title" aria-hidden="true">${audit.ci ? `Share removed as wrong, with its 95% interval <span class="nowrap">(${escapeHtml(audit.ci[0])}–${escapeHtml(audit.ci[1])}%)</span>` : "Share removed as wrong"}</p></div>`;
       }
       panels.push(panel("audit", audit.random ? "AI audit of a random sample" : "AI audits", escapeHtml(covered), body));
     }
@@ -6864,7 +6864,7 @@
       text: `${item.name}: ${valuesText(item.values)} in ${papersText(item.papers)}${item.note ? ` (${item.note})` : ""}.`,
     }));
     return {
-      id: "statsErrorsTitle", key: "errors", title: "Errors found in CatLog", wide: true, className: "stats-narrow stats-errors-section",
+      id: "statsErrorsTitle", key: "errors", title: "Errors found in CatLog", wide: true, className: "stats-errors-section",
       body: statsBarChart({ key: "errors", rows, scale: max, step, axis: statsAxis(max, step), valueHeads: ["Values", "Papers"] }),
       caption: "Values CatLog held that a later check found wrong, by how they were found.",
       rules: "A value found in more than one way counts under each, and once in All.",
