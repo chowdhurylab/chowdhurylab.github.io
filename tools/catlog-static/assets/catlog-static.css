@@ -2080,13 +2080,6 @@ a.stats-total-value:focus-visible { outline:0 }
   .stats-total { padding:var(--sp-2) }
   .stats-part-title { font-size:var(--fs-18); line-height:var(--lh-18) }
   .stats-part-grid { gap:40px 0 }
-  /* Checks on the values: each check stacked, its name, then what it covered and what it found under it (fix pass after
-     round 16b: three narrow columns wrapped AI audits to five or six lines); the errors table keeps its columns. */
-  .stats-checks-table :is(th, td), .stats-checks-table th[scope="row"], .stats-checks-table .stats-check-covered { padding-right:8px; white-space:normal }
-  .stats-checks-table:not(.stats-errors-table) thead { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap }
-  .stats-checks-table:not(.stats-errors-table) tr { display:grid; gap:2px; padding:10px 0; border-bottom:1px solid var(--line-soft) }
-  .stats-checks-table:not(.stats-errors-table) tr > * { display:block; padding:0; border:0 }
-  .stats-checks-table:not(.stats-errors-table) .stats-check-covered { color:var(--muted); font-size:var(--fs-13); line-height:var(--lh-13) }
   /* Phones: the class number only, so the curves keep their width (the names are in the supplement and the tooltip line); the
      same in the class medians beside kcat against Km, so their numbers keep their columns. */
   .stats-ridges { --ridge-label:44px }

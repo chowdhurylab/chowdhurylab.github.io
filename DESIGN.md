@@ -104,26 +104,57 @@ each, so the legend table keeps its room beside the donut), one below. Figures a
    line over the card says what CatLog is, without the band's numbers, and ends with the snapshot date (in the card
    where that line has no room). One row from 1024px up, two rows on tablets, two by two on phones
    (tools/catlog-static/DESIGN.md, Layout). Nothing moves, as the window widens or the filters change.
-2. Quality (round 14: no second big number and no dashboard cards; one answer and two small tables): Human review,
-   one sentence ("People checked 2,770 entries from the earlier version (431 papers); a check of the paper found all 3
-   disputed values printed as the entry gives them.") over a table of its verdicts (No value disputed, A value disputed,
-   then "Also noted, with either verdict": Value missing, Other disagreement and, under it, the value not found in the
-   paper; entries and share), with the links to the Guide's method and Team; then Checks on the values, a table of the
-   checks (Second AI check, AI audits, Human-checked: what each covered, what it found, a small bar of the share kept or
-   approved in its meaning colour), each row with its own base, so the counts are never read as one set. The review's
-   flags by kind and the reviewers' approved values read from the paper again are the supplement's Quality tables.
-3. What is in the catalog: Review result (the donut) beside Records by main source, then CatLog and BRENDA by
-   publication year (round 16, when the manifest has `summary.publication_years`) and Enzyme classes, each across the row.
-4. Values: Value ranges, Between papers, kcat against Km, Substrate specificity and Variants against their wild type, each
-   full width (round 16 added the second and fourth).
-5. Compared with databases (manifest `summary.database_comparison`; round 9 brief section 5): a two-sentence lead
-   (round 14: it ran to about 110 words and five links): what was compared and how often a paired number is the
-   paper's, then the corrections and the different numbers, linked into Browse, with the caveat right after them
-   ("which can mean a different measurement rather than a database error"); the other results are Figure 7's, its
-   legend linking each. Then Values
-   compared with databases, then Corrections by cause and how found, each across the row (the corrections' bars kept to
-   760px, stats-narrow). Each only when the snapshot has its counts; without a figure here the part has no heading,
-   and a figure in the supplement that compares values still gets the caveat once, at the head of its group there.
+   Round 17: the band ends with the counting words, defined once where Stats first uses them, in one 12px muted line
+   ("Record: one enzyme or variant, one substrate, one set of assay conditions, one paper. Value: one kcat, Km or
+   kcat/Km, up to three per record."); the line under the title is "Select a name to see its records in Browse."
+2. Quality (round 17, the user: "after the first box it should be the quality thing, with figures to understand it, not
+   all those tables"): three numbered figures, no table, the review's share At a glance's alone.
+   - Human review: a unit chart, one 5px square per record people checked on a 6px pitch, 100 to a row (50 on phones, a
+     second drawing; statsUnitGridSvg), so 3 disputed among 2,604 show: CatLog's earlier version's records with no
+     value disputed (human-checked's green at 60%), with a value disputed (Disputed's deep red, opaque as its dot), then
+     a blank row and the records with no PMID or DOI as open squares in Not checked's slate; a key beside the squares
+     from 1024px (under them below) gives the counts in words and what a check of the paper found of the disputed values.
+     Under it, at the same size, the records read from the paper people checked (drawn at random, then a row of those
+     picked as hard cases) with their values none disputed; then one line on the records in Browse with the
+     human-checked tag and why they are fewer ("accepted, every value shown approved").
+   - Checks on the values: two panels. The second AI check as one 100% bar of every value read from the paper,
+     confirmed (Read from the paper's cyan) and corrected (a correction's opaque red), each count and share under its
+     end; the random AI audit as its share removed as wrong on a small axis (0 to 0.5, 1, 2 ... 100%, the first with a
+     fifth of room above the interval), an ink ring at the share (to the interval's precision, "0.43%") over its 95%
+     interval, a 2px line with end ticks: a statistic, no meaning colour. Under the figure, two plain sentences on the
+     papers read or checked with database values in view and where reading them again stands (statsExposureText, from
+     reread_blind and reread_blind_done: sent back and none or some done, or all done); which agent saw them, when
+     they were sent back and the papers not sent back are its rule (statsExposureRule), with the audit's date, its
+     Wilson interval and its follow-ups.
+   - Errors found in CatLog: neutral bars on one axis, a row per route (the sweep's kinds and a database check's fates as
+     parts of its bar, when they make it; the audit's random and follow-up values in words), Values and Papers beside
+     each, then All, each value once, after a hairline and in 600.
+   A snapshot without the reviewers' own counts gives the match read from the paper again in words as Quality's lead
+   (statsReviewFallbackHtml), and the human-checked line under Checks on the values. One line of links ends the part.
+3. What is in the catalog: Review result beside Records by main source, then Enzyme classes. Review result (round 17:
+   no legend table) is the 100% bar with its labels under it, a column per result as wide as its part (name, records,
+   share; Accepted's records read from the paper as a stripe through its part and a line under its label, Not checked's
+   two kinds under it; a result under a tenth of the records on a line of its own under the bar's end); Accepted's other
+   parts are its title and the rule, and the fields saved in records that are not accepted a table in the rule.
+4. Values: Value ranges, Between papers, kcat against Km, Substrate specificity and Variants against their wild type.
+   Round 17, no table: Between papers' same-temperature-and-pH table is 100% bars under its histograms, each parameter's
+   pairs within 2-fold, 2- to 10-fold and more than 10-fold apart (one cyan, darker for closer, open for the farthest),
+   its share on each part where it fits and the median beside it, the same at a temperature and pH both papers give
+   right under it; kcat against Km's class medians are a dot plot beside the map (the map's numbered dots on a log
+   axis of kcat and one of Km, the value beside each, the records at the end; a row lights its dot on the map);
+   Substrate specificity's table is bars of the median range by substrates tested on a log axis of folds.
+5. Compared with databases: a one-sentence lead ("Where a database lists a number for a value read from the paper
+   (142,515 of 197,799), it is the paper’s for 97.4%."), then Values compared with databases (each part's share on the
+   bar itself where it fits, statsFitSegmentLabels; no share table; the caveat its caption, "a different number may be
+   another assay’s") and Corrections by cause and how found (its caption calls the corrections a lower bound). The
+   corrections, how they were found and the values that differ for a reason not yet known are Values compared with
+   databases' rule, with the database numbers no CatLog value matches and the link to the Dataset notes.
+6. CatLog and BRENDA by publication year (round 17, the user: "the CatLog and BRENDA plot should come later"): its own
+   part, the last main one, the figure headed "Values per publication year"; its caption one sentence (the band, and
+   "CatLog’s line is what it has read so far"), the reading order and the values outside the years drawn its rule.
+Round 17's writing: captions one sentence, part leads one short sentence or none, the method's detail in How these
+numbers are counted; visible prose (captions, leads, notes and paragraphs outside the figures' labels) 354 words at
+1440px against 719 before, and no table on the main page against 9.
 S. Supplementary figures (round 14, the user: "not every figure has to be shown like that (and tables, right?)"; round
    17, the user: "they should click on Supplementary figures and tables and all of them open, not one click per figure.
    Way too many tables there that you can convert to figures"): the figures that do not tell the main story, last
