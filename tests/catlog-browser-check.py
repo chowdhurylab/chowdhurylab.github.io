@@ -6489,12 +6489,16 @@ def check_record_marks_and_paper_link(driver, browser, base, wait):
     return results
 
 
+# Review result's labels under its 100% bar (round 17: no table any more); every snapshot has at least Accepted and one
+# other result with records, so two labels mean the part is drawn.
+STATS_STATUS_LABELS = ".stats-status-section .stats-status-label[data-stat-key]"
+
 def check(driver, browser, url):
     wait = WebDriverWait(driver, 120, ignored_exceptions=(StaleElementReferenceException,))
     expected_query = parse_qsl(urlsplit(url).query, keep_blank_values=True)
     driver.set_window_size(1440, 1000)
     driver.get(url + ("&" if "?" in url else "?") + "release=link-check#stats")
-    wait.until(lambda d: len(d.find_elements(By.CSS_SELECTOR, ".stats-status-section tr[data-stat-key]")) >= 5)
+    wait.until(lambda d: len(d.find_elements(By.CSS_SELECTOR, STATS_STATUS_LABELS)) >= 2)
     wait.until(lambda d: parse_qsl(urlsplit(d.current_url).query, keep_blank_values=True) == expected_query)
     stats_path = urlsplit(url).path.replace("catlog-latest.html", "catlog-stats.html")
     assert urlsplit(driver.current_url).path == stats_path
@@ -6920,7 +6924,7 @@ def check(driver, browser, url):
         wait.until(lambda d: d.find_element(By.ID, "activeSummary").text == f"{count:,} records")
         driver.back()
         wait.until(lambda d: d.find_element(By.ID, "statsView").is_displayed()
-                   and len(d.find_elements(By.CSS_SELECTOR, ".stats-status-section tr[data-stat-key]")) >= 5)
+                   and len(d.find_elements(By.CSS_SELECTOR, STATS_STATUS_LABELS)) >= 2)
 
     # A Stats link opens Browse; Back returns to Stats.
     pending_link = driver.find_element(By.CSS_SELECTOR, '.stats-status-section [data-stat-key="manual_review_required"] a.stats-link')
@@ -6930,7 +6934,7 @@ def check(driver, browser, url):
     assert urlsplit(driver.current_url).path == urlsplit(url).path
     driver.back()
     wait.until(lambda d: d.find_element(By.ID, "statsView").is_displayed()
-               and len(d.find_elements(By.CSS_SELECTOR, ".stats-status-section tr[data-stat-key]")) >= 5)
+               and len(d.find_elements(By.CSS_SELECTOR, STATS_STATUS_LABELS)) >= 2)
 
     # Browse keeps the filters the Stats link set (shown as chips); Clear all shows every record again.
     pending = expected.get("manual_review_required", 0)
@@ -7137,7 +7141,7 @@ def check(driver, browser, url):
     assert not driver.find_elements(By.CSS_SELECTOR, ".catalog-load-failed"), "Browser reported a load failure"
     # A clean Stats address must also survive a fresh page load, not just history navigation.
     driver.refresh()
-    wait.until(lambda d: len(d.find_elements(By.CSS_SELECTOR, ".stats-status-section tr[data-stat-key]")) >= 5)
+    wait.until(lambda d: len(d.find_elements(By.CSS_SELECTOR, STATS_STATUS_LABELS)) >= 2)
     assert driver.find_element(By.ID, "statsView").is_displayed()
     assert not driver.find_element(By.ID, "catalogView").is_displayed()
     assert urlsplit(driver.current_url).path == stats_path and not urlsplit(driver.current_url).fragment
