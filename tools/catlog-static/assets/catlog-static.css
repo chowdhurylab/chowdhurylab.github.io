@@ -1167,6 +1167,8 @@ p.cmp-note { padding-left:16px }
 .stats-band > .stats-part-title { margin:0 0 var(--sp-1) var(--sp-2); border:0; padding:0 }
 .stats-totals dl { display:grid; grid-template-columns:repeat(var(--stats-columns,4),minmax(0,1fr)); margin:0; padding:var(--sp-2) 0 }
 .stats-totals dl + dl { border-top:1px solid var(--line-soft) }
+.stats-band-words { margin:0; border-top:1px solid var(--line-soft); padding:var(--sp-2) var(--sp-3) var(--sp-1); color:var(--muted); font-size:var(--fs-12); line-height:var(--lh-12) }
+.stats-band-words b { color:var(--text-2); font-weight:600 }
 .stats-total { position:relative; min-width:0; border-radius:var(--radius); padding:var(--sp-2) var(--sp-3) }
 .stats-total + .stats-total::before { content:""; position:absolute; left:0; top:10px; bottom:10px; border-left:1px solid var(--line-soft) }
 .stats-totals dt { color:var(--muted); font-size:var(--fs-13); line-height:var(--lh-13) }
@@ -1271,6 +1273,12 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-part-caution { --part:var(--caution-mark); --part-line:var(--caution-ring) }
 .stats-part-records { --part:var(--line-strong) }
 .stats-part-human { --part:var(--bpg-green); --part-line:var(--checked) }
+/* Between papers' bars (round 17): pairs within 2-fold in Read from the paper's cyan at 60%, 2- to 10-fold in a light
+   cyan, more than 10-fold apart open (white, the cyan ring): one hue, darker for closer, as the histograms above wear it. */
+.stats-part-fold-2 { --part:var(--src-paper); --part-line:var(--src-paper-ring) }
+.stats-part-fold-10 { --part:color-mix(in srgb, var(--src-paper) 40%, var(--bg)); --part-line:var(--src-paper-ring) }
+.stats-part-fold-more { --part:var(--bg); --part-line:var(--src-paper-ring) }
+:is(.stats-seg, .stats-swatch).stats-part-fold-more { background:var(--bg) }
 /* Enzyme classes: the class's colour (--ec-N), and a short bar of it before the class's number (deepened a little, so
    the light classes still show on white). */
 .stats-ec-1 { --part:var(--ec-1) }
@@ -1522,7 +1530,21 @@ a.stats-total-value:focus-visible { outline:0 }
 /* Figure 1: the review results as one 100% bar over their legend table, as wide as the table (fix pass after round 16b:
    a donut with the total in its hole). Pointing at a segment, or at its row, outlines it in its colour and dims the
    other segments. */
-.stats-status-layout { display:grid; gap:12px; max-width:640px }
+.stats-status-layout { display:flex; flex-direction:column; gap:10px; max-width:760px }
+/* Review result's labels (round 17: on the figure, no legend table): a column under each result's part of the bar, as
+   wide as the part, its name, records and share, then its parts in 12px; a result too small for a column stands right
+   under the bar's end with its swatch. */
+.stats-status-labels { display:grid; column-gap:0; row-gap:8px; font-size:var(--fs-13); line-height:var(--lh-13) }
+.stats-status-label { position:relative; display:flex; flex-direction:column; gap:2px; min-width:0; padding-right:8px }
+.stats-status-label:not(.is-minor)::before { content:""; position:absolute; left:0; top:-10px; height:6px; border-left:1px solid var(--line-strong) }
+.stats-status-name { display:flex; align-items:baseline; gap:6px; font-weight:600 }
+.stats-status-name .stats-swatch { align-self:center }
+.stats-status-count { color:var(--text) }
+.stats-status-sub { display:flex; align-items:flex-start; gap:6px; margin-top:2px; color:var(--text-2); font-size:var(--fs-12); line-height:var(--lh-12) }
+.stats-status-sub > .stats-swatch { margin-top:3px }
+.stats-status-minor { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:4px 16px; grid-column:1 / -1 }
+.stats-status-label.is-minor { flex-direction:row; align-items:baseline; gap:6px; padding:0; border:0 }
+.stats-status-label.is-minor .stats-status-name { font-weight:600 }
 .stats-status-bar { height:20px }
 .stats-status-bar .stats-seg.is-active { box-shadow:inset 0 0 0 2px var(--part-line, var(--part)) }
 .stats-fig.has-active .stats-status-bar .stats-seg[data-hl]:not(.is-active) { opacity:0.42 }
@@ -1686,7 +1708,28 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-map-facts dd { margin:2px 0 0; color:var(--text); font-size:var(--fs-18); font-weight:600; line-height:var(--lh-18) }
 .stats-map-facts dd small { display:block; margin-top:2px; color:var(--muted); font-size:var(--fs-12); font-weight:400; line-height:var(--lh-12) }
 .stats-map-facts dd .stats-muted { font-size:var(--fs-14); font-weight:500 }
-.stats-map-classes tbody tr.is-active > :is(th,td) { background:var(--surface-2) }
+/* kcat against Km's class medians (round 17: a dot plot, no table): per class its number in the map's own dot on a log
+   axis of kcat and one of Km, the value beside the dot and the records at the end; the row lights the map's dot. */
+.stats-class-dots { --class-cols:minmax(0,9.5em) minmax(0,1fr) minmax(0,1fr) 7ch; min-width:0; font-size:var(--fs-12); line-height:var(--lh-12) }
+.stats-class-head, .stats-class-row { display:grid; grid-template-columns:var(--class-cols); column-gap:12px; align-items:center }
+.stats-class-head { margin:0 0 4px; color:var(--muted) }
+.stats-class-head > span:first-child { color:var(--text); font-size:var(--fs-13); font-weight:600 }
+.stats-class-head > span:last-child, .stats-class-n { text-align:right }
+.stats-class-rows { margin:0; padding:0; list-style:none }
+.stats-class-row { height:26px; border-bottom:1px solid var(--line-soft) }
+.stats-class-label { min-width:0; overflow:hidden; color:var(--text); font-size:var(--fs-13); line-height:var(--lh-13); text-overflow:ellipsis; white-space:nowrap }
+.stats-class-track { position:relative; align-self:stretch; margin:0 18px }
+.stats-class-grid { position:absolute; top:3px; bottom:3px; border-left:1px solid var(--line-soft) }
+.stats-class-track .stats-map-dot { width:14px; height:14px; font-size:9px }
+.stats-class-value { position:absolute; top:50%; padding-left:11px; color:var(--text); white-space:nowrap; transform:translateY(-50%) }
+.stats-class-value.is-left { padding:0 11px 0 0; transform:translate(-100%, -50%) }
+.stats-class-n { color:var(--muted) }
+.stats-class-axis { margin-top:2px }
+.stats-class-ticks { position:relative; height:16px; margin:0 18px }
+.stats-class-ticks > span { position:absolute; top:2px; transform:translateX(-50%); white-space:nowrap }
+.stats-class-ticks sup { font-size:var(--fs-12) }
+.stats-class-row.is-active { background:var(--surface-2) }
+.stats-fig.has-active .stats-class-row[data-hl]:not(.is-active) .stats-map-dot { opacity:0.3 }
 /* Before a name in a table, the class bar stands 6px from it (the name's flex gap, less its own margin). */
 .stats-name > .stats-ec-key { margin-right:-2px }
 .stats-map-legend li { align-items:center }
@@ -1756,8 +1799,18 @@ a.stats-total-value:focus-visible { outline:0 }
    half) per row, a little lower than a ridge's row as no curve stands over it. */
 .stats-range.stats-insight, .stats-ridges.stats-medians { --part:var(--src-paper) }
 .stats-insight-pair { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:24px 48px; align-items:start }
-.stats-pairs-table { max-width:640px; margin-top:24px }
-.stats-range-table, .stats-typical-table { max-width:560px }
+.stats-typical-table { max-width:560px }
+/* A segment's own share (round 17): 12px ink on the bar's 60% fill, centred; hidden where it does not fit. */
+.stats-seg-label { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; overflow:hidden; color:var(--text); font-size:var(--fs-12); line-height:1; white-space:nowrap; pointer-events:none }
+.stats-seg-label.is-hidden { visibility:hidden }
+.stats-fold-bars { max-width:760px; margin-top:32px }
+.stats-fold-bars .stats-chart-percent { --label-w:minmax(96px,200px) }
+.stats-chart[data-chart="between-papers"] .stats-chart-rows { gap:4px }
+.stats-chart[data-chart="between-papers"] .stats-chart-row[data-row$="-all"]:not(:first-child) { margin-top:10px }
+.stats-fold-scope { color:var(--text-2); font-size:var(--fs-12) }
+.stats-range-by-tested { min-width:0 }
+.stats-wide .stats-range-by-tested .stats-chart { --label-w:minmax(72px,9.5em) }
+.stats-range-by-title { margin:0 0 12px; font-size:var(--fs-14); font-weight:600; line-height:var(--lh-14) }
 .stats-medians .stats-ridge-row { height:26px; align-items:center }
 .stats-medians :is(.stats-ridge-label, .stats-ridge-value, .stats-ridge-n) { padding-bottom:0 }
 .stats-medians .stats-ridge-plot::after { top:50%; bottom:auto; border-bottom-color:var(--line-soft) }
@@ -1765,15 +1818,12 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-medians .stats-ridge-median { top:calc(50% - 4.5px); bottom:auto }
 .stats-typical-table :is(th,td) small { display:block; margin-top:2px; color:var(--muted); font-size:var(--fs-12); font-weight:400; line-height:var(--lh-12) }
 /* The table at the same temperature and pH fits a phone: its number headings wrap. */
-.stats-pairs-table thead th.stats-num { white-space:normal }
-.stats-pairs-table :is(th,td) { padding-inline:6px }
 .stats-typical-table .stats-row-reference > * { border-top:1px solid var(--line) }
 /* On the narrowest phones (320px) in a wide font the two tables keep inside the page: tighter cells, 12px type and
    headings and the record counts that may wrap (the release check of 2026-10-22 found them 1-9px too wide). */
 @media (max-width: 360px) {
-  .stats-pairs-table, .stats-typical-table { font-size:var(--fs-12); line-height:var(--lh-12) }
-  .stats-pairs-table :is(th,td), .stats-typical-table :is(th,td) { padding-inline:4px }
-  .stats-pairs-table th, .stats-typical-table :is(th,td) { white-space:normal; overflow-wrap:anywhere }
+  .stats-typical-table { font-size:var(--fs-12); line-height:var(--lh-12) }
+  .stats-typical-table :is(th,td) { padding-inline:4px; white-space:normal; overflow-wrap:anywhere }
 }
 /* Values by enzyme class: a ridge per class (each scaled to its own peak) overlapping the row above; the ridge under the
    pointer takes a thicker line and the others dim. The 10-90% line and the median dot sit on its baseline. Three panels side by side from
@@ -1843,6 +1893,8 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-explanation dd { margin:0 }
 .stats-unaccepted-fields { margin-top:8px }
 .stats-unaccepted-fields table { max-width:760px }
+.stats-explanation .stats-unaccepted-fields p { margin:8px 0 0 }
+.stats-method-sub { color:var(--text-2) }
 .stats-method { border-top:1px solid var(--line); padding-top:8px }
 /* Each figure's own rules, under its number (Figure 4, Table 1), its title first. */
 .stats-method-figures { border-top:1px solid var(--line-soft); padding-top:4px }
@@ -1984,7 +2036,9 @@ a.stats-total-value:focus-visible { outline:0 }
   /* Phones: the class number only, so the curves keep their width (the names are in the supplement and the tooltip line); the
      same in the class medians beside kcat against Km, so their numbers keep their columns. */
   .stats-ridges { --ridge-label:44px }
-  .stats-ridge-name, .stats-map-classes .stats-ec-name { display:none }
+  .stats-ridge-name, .stats-class-label .stats-ec-name { display:none }
+  .stats-class-dots { --class-cols:44px minmax(0,1fr) minmax(0,1fr) 7ch }
+  .stats-class-ticks > span:not(:first-child, :last-child) { visibility:hidden }
   /* On phones each name sits above its bar, with its numbers right-aligned on the name's line (under Figure 5's
      headings), 8px from it, and the bar and the axis span the row, so the bars take the full width and a small segment
      (OED's accepted, BRENDA's) stays wide enough to see. A long class name (Figure 5) hyphenates; a name with a
