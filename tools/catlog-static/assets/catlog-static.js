@@ -439,7 +439,7 @@
     explicit_enzyme_name: "The source database’s listing",
     brenda_recommended_name: "BRENDA recommended name",
     protein_name_fallback: "Protein name",
-    uniprot_name_fallback: "The UniProt entry",
+    uniprot_name_fallback: "UniProt",
     ec_accepted_name_fallback: "The EC list’s accepted name",
     ec_name_fallback: "The EC list’s accepted name",
     uniprot_fallback: "The UniProt accession (no name recorded)",
@@ -465,9 +465,10 @@
 
   // How a record's protein is matched to UniProt, in the record's UniProt line.
   const identityLabels = {
-    accession_resolved: "UniProt entry",
-    sequence_resolved_no_accession: "Sequence known, no UniProt entry",
-    candidate_pool: "Several possible UniProt entries",
+    // (UniProt's own records are named by their accessions: round 17 keeps "entry" off the site.)
+    accession_resolved: "UniProt accession",
+    sequence_resolved_no_accession: "Sequence known, no UniProt accession",
+    candidate_pool: "Several possible UniProt accessions",
     identity_unresolved: "Not matched to UniProt",
   };
 
@@ -11710,7 +11711,7 @@
   function uniprotLink(value) {
     const accession = String(value || "").trim();
     if (!accession) return EMPTY_VALUE;
-    return `<a class="reference-link" href="https://www.uniprot.org/uniprotkb/${encodeURIComponent(accession)}/entry" target="_blank" rel="noreferrer" aria-label="Open UniProt entry ${escapeHtml(accession)}">${escapeHtml(accession)}</a>`;
+    return `<a class="reference-link" href="https://www.uniprot.org/uniprotkb/${encodeURIComponent(accession)}/entry" target="_blank" rel="noreferrer" aria-label="Open ${escapeHtml(accession)} in UniProt">${escapeHtml(accession)}</a>`;
   }
 
   function proteinAccessionLink(value, database) {
@@ -11718,7 +11719,7 @@
     if (!accession) return EMPTY_VALUE;
     if (database === "UniProt") return uniprotLink(accession);
     if (database === "NCBI Protein") {
-      return `<a class="reference-link" href="https://www.ncbi.nlm.nih.gov/protein/${encodeURIComponent(accession)}" target="_blank" rel="noreferrer" aria-label="Open NCBI Protein entry ${escapeHtml(accession)}">${escapeHtml(accession)}</a>`;
+      return `<a class="reference-link" href="https://www.ncbi.nlm.nih.gov/protein/${encodeURIComponent(accession)}" target="_blank" rel="noreferrer" aria-label="Open ${escapeHtml(accession)} in NCBI Protein">${escapeHtml(accession)}</a>`;
     }
     return escapeHtml(accession);
   }
@@ -11836,7 +11837,7 @@
     // CatLog v2 notes, in short plain words (same meaning).
     match = text.match(/^no sequence: (.+) share UniProt (\S+): which sequence is which is not known\.?$/)
       || text.match(/^No sequence shown: (.+) (?:all|both) map to UniProt (\S+), which does not say which is which\.?$/);
-    if (match) return `No sequence: ${match[1]} share one UniProt entry (${match[2]}), which does not say which is which.`;
+    if (match) return `No sequence: ${match[1]} share one UniProt accession (${match[2]}), which does not say which is which.`;
     if (/^no sequence: the measured construct could not be placed on UniProt\.?$/.test(text)) {
       return "No sequence: the measured construct could not be matched to UniProt.";
     }
@@ -11862,7 +11863,7 @@
   function identityResolutionLabel(row) {
     const state = String(row?.identity_resolution_state || "").trim();
     if (state === "accession_resolved" && isEcOrganismInferredSequenceSource(row?.sequence_source)) {
-      return "UniProt entry inferred from EC number and organism";
+      return "UniProt accession inferred from EC number and organism";
     }
     return identityLabels[state] || "Not matched to UniProt";
   }
@@ -11874,7 +11875,7 @@
     manual_literature_structure_uniprot_resolution: "from the cited paper’s structure",
     source_record: "from the source database",
     multiple: "from several sources",
-    uniprot_accession_inactive_uniparc: "entry now in the UniParc archive",
+    uniprot_accession_inactive_uniparc: "accession now in the UniParc archive",
   };
 
   function uniprotHowText(sequenceSource, accession) {
@@ -13311,10 +13312,10 @@
     const sharedEntry = /(?:all|both) map to UniProt \S+, which does not say which is which|share UniProt \S+: which sequence is which/.test(rawNote);
     let identityRow;
     if (proteinAccession) {
-      const how = isUniProt ? (sharedEntry ? "one entry for several forms of this enzyme" : uniprotHowText(sequenceSourceValue, proteinAccession)) : "";
+      const how = isUniProt ? (sharedEntry ? "one accession for several forms of this enzyme" : uniprotHowText(sequenceSourceValue, proteinAccession)) : "";
       identityRow = linkedKv(accessionLabel, `${proteinAccessionLink(proteinAccession, proteinAccessionDatabase)}${how ? ` <span class="identity-how">(${escapePublic(how)})</span>` : ""}`);
     } else if (accessionCandidates.length) {
-      identityRow = linkedKv("UniProt", `${accessionCandidates.length > 1 ? identityLabels.candidate_pool : "Possible UniProt entry"}${referenceList(accessionCandidates, uniprotLink)}`);
+      identityRow = linkedKv("UniProt", `${accessionCandidates.length > 1 ? identityLabels.candidate_pool : "Possible UniProt accession"}${referenceList(accessionCandidates, uniprotLink)}`);
     } else if (state === "sequence_resolved_no_accession" || hasSequence) {
       identityRow = kv("UniProt", identityLabels.sequence_resolved_no_accession);
     } else {
@@ -13595,7 +13596,7 @@
         shownEc: String(summary.ec_number || "").trim(),
         shownEcSource: ecFromDatabases(detail)
           ? "the enzyme databases"
-          : (uniprot ? `the UniProt entry ${uniprot}` : ""),
+          : (uniprot ? `UniProt ${uniprot}` : ""),
       },
       cautionFields: ["kcat", "km", "kcat_over_km"].filter((field) => notes.some((note) => note.field === field)),
     };
