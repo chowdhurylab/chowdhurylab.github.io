@@ -5123,7 +5123,8 @@
     ].join("");
     // The class medians beside the map as a dot plot (round 17: no table): a row per class, its numbered dot (the map's
     // own mark) at its median kcat and at its median Km on two log axes of whole decades, the value beside each dot and
-    // the records at the row's end; a row lights its dots on the map.
+    // the records at the row's end; a row lights its dots on the map. A 1px rule (stats-class-sep) stands between the kcat
+    // and Km panels, through their rows and tick rows, so the two axes never read as one (round 17 fix pass: "10² 10⁻²").
     const axisOf = (values) => {
       const from = Math.floor(Math.log10(Math.min(...values)) - 0.05);
       const to = Math.max(Math.ceil(Math.log10(Math.max(...values)) + 0.05), from + 2);
@@ -5140,11 +5141,11 @@
       };
       const rows = classes.map((item) => `<li class="stats-class-row" data-hl="ec_${item.class}" data-tip="${escapeHtml(medianText(item))}">
           <span class="stats-class-label"><a class="stats-link" href="${escapeHtml(statsBrowseHref({ ec: `${item.class}.`, source: "paper", metric: "kcat,km" }))}">EC ${item.class}</a><span class="stats-ec-name"> ${escapeHtml(classNames[item.class] || "")}</span></span>
-          ${track(item.kcat_median, kcatFrom, kcatTo, item)}${track(item.km_median, kmFrom, kmTo, item)}<span class="stats-class-n">${formatInteger(item.n)}</span></li>`).join("");
+          ${track(item.kcat_median, kcatFrom, kcatTo, item)}<i class="stats-class-sep" aria-hidden="true"></i>${track(item.km_median, kmFrom, kmTo, item)}<span class="stats-class-n">${formatInteger(item.n)}</span></li>`).join("");
       return `<div class="stats-class-dots" role="group" aria-label="Medians by enzyme class">
-          <p class="stats-class-head" aria-hidden="true"><span>Class medians</span><span><i>k</i><sub>cat</sub> (s⁻¹)</span><span><i>K</i><sub>m</sub> (mM)</span><span>Records</span></p>
+          <p class="stats-class-head" aria-hidden="true"><span>Class medians</span><span><i>k</i><sub>cat</sub> (s⁻¹)</span><span></span><span><i>K</i><sub>m</sub> (mM)</span><span>Records</span></p>
           <ol class="stats-class-rows">${rows}</ol>
-          <p class="stats-class-head stats-class-axis" aria-hidden="true"><span></span><span class="stats-class-ticks">${statsDecadeTicks(kcatFrom, kcatTo)}</span><span class="stats-class-ticks">${statsDecadeTicks(kmFrom, kmTo)}</span><span></span></p></div>`;
+          <p class="stats-class-head stats-class-axis" aria-hidden="true"><span></span><span class="stats-class-ticks">${statsDecadeTicks(kcatFrom, kcatTo)}</span><i class="stats-class-sep"></i><span class="stats-class-ticks">${statsDecadeTicks(kmFrom, kmTo)}</span><span></span></p></div>`;
     })();
     const description = `kcat against Km of ${formatInteger(records)} records read from the paper, on log scales${ratio ? `; median kcat ÷ Km ${statsRangeNumber(ratio, { figures: 2 })} mM⁻¹ s⁻¹` : ""}${limits ? `; ${formatInteger(limits[0])} at the diffusion limit or above` : ""}.${classes.length ? ` Class medians: ${classes.map((item) => `EC ${item.class} kcat ${statsRangeNumber(item.kcat_median, { figures: 2 })} s⁻¹, Km ${statsRangeNumber(item.km_median, { figures: 2 })} mM`).join("; ")}.` : ""}`;
     const legend = `<ul class="stats-legend stats-map-legend">
@@ -5155,7 +5156,7 @@
     const yTicks = statsDecadeTicks(kcatStart, kcatEnd).replace(/style="left:/g, 'style="bottom:');
     return {
       id: "statsKcatKmTitle", key: "kcat-km", title: "<i>k</i><sub>cat</sub> against <i>K</i><sub>m</sub>", wide: true,
-      body: `${legend}<div class="stats-map">
+      body: `${legend}<div class="stats-map${classDots ? " stats-map-medians" : ""}">
         <div class="stats-map-frame">
           <p class="stats-map-y-title" aria-hidden="true"><i>k</i><sub>cat</sub> <span class="stats-range-unit">(s⁻¹)</span></p>
           <div class="stats-map-y" aria-hidden="true">${yTicks}</div>
@@ -5168,7 +5169,7 @@
           <div class="stats-map-x" aria-hidden="true">${statsDecadeTicks(kmStart, kmEnd)}</div>
           <p class="stats-map-x-title" aria-hidden="true"><i>K</i><sub>m</sub> <span class="stats-range-unit">(mM)</span></p>
         </div>
-        <div class="stats-map-side"><dl class="stats-map-facts">${facts}</dl>${classDots}</div>
+        <div class="stats-map-side"><dl class="stats-map-facts">${facts}</dl></div>${classDots}
       </div>`,
       caption: metricWordsHtml(escapeHtml("Records read from the paper with kcat and Km; numbered dots are class medians.")),
       rules: "Each cell is a quarter of a power of ten on both axes; the outer rows and columns hold every value beyond them. kcat ÷ Km is each record’s own kcat over its Km. A record in several classes counts in each. Values without a recorded unit, or in another unit, are left out.",

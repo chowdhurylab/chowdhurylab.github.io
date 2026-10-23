@@ -1833,6 +1833,12 @@ tools/site_patches/20261023-site-round17-brief.md, section 5.
   hidden on phones), its numbered dot (.stats-map-dot, 14px) at its median on a log axis of kcat and one of Km (whole
   decades with at least two, a median on a decade given room below), the value beside the dot (left of it in the
   axis's last third), the records at the end; the row lights the map's dot (data-hl). Phones show the axes' end labels.
+  Fix pass: one grid for the plot (head, rows and tick row are subgrids), its name column as wide as the longest name
+  from 641px ("EC 1 Oxidoreductases" in the system font and DejaVu Sans; 44px of class numbers on phones), and a 1px
+  --line rule (.stats-class-sep) between the kcat and the Km panel through the rows and the tick row, 30px from either
+  track, so "10² 10⁻²" never reads as one axis. The plot stands beside the map under its facts from 1280px and under the
+  map (760px at most, .stats-map-medians) from 1024px to 1279px, where the column beside the map is 350px. The browser
+  check finds no cut class name at 1700, 1280, 1080, 884 and 760px (STATS_CLASS_NAMES_CUT_JS).
 - Substrate specificity: beside the histogram, "Median range by substrates tested", statsBarChart bars from 1-fold on a
   log axis of whole decades of folds (1×, 10×, 100×, 1,000×), Median range and Panels beside.
 - Compared with databases: statsDatabaseLeadHtml is one sentence; statsDatabaseDifferRule (corrections and how found, the

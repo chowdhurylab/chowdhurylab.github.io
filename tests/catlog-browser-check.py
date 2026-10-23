@@ -1537,6 +1537,14 @@ STATS_AXIS_EVEN = """
 """
 
 
+# kcat against Km's class medians name each class in full from 641px (round 17 fix pass: "EC 1 Oxidoreduc..." at 1440px,
+# EC 2 and EC 7 too in DejaVu Sans): the names that are cut.
+STATS_CLASS_NAMES_CUT_JS = """
+    return [...document.querySelectorAll('.stats-class-label')].filter((label) => label.getClientRects().length
+        && label.scrollWidth > label.clientWidth + 0.5).map((label) => `${label.textContent.trim()} ${label.clientWidth}/${label.scrollWidth}`);
+"""
+
+
 def check_stats_contents(driver, width):
     """On this page, under the Stats title: the parts as their headings number them, each a link to its own address
     (#stats-<key>); the line fits the window, wrapping between parts only; following the last link scrolls that part to
@@ -7030,6 +7038,7 @@ def check(driver, browser, url):
     # 1024-1279px: Review result takes the row (its bar over its labels) and Records by main source the next one.
     layout = driver.execute_script(first_figures)
     assert layout["wide"] and layout["over"] and layout["bar"][1] >= 16, f"Figures 1 and 2 at 1080px: {layout}"
+    assert not driver.execute_script(STATS_CLASS_NAMES_CUT_JS), f"Class medians' names are cut at 1080px: {driver.execute_script(STATS_CLASS_NAMES_CUT_JS)}"
     if browser == "chrome":
         # The key numbers grow with the window, from the phones' 28px to 40px at 1200px: never smaller on a wider window,
         # no jump where the layout changes (720/721, 1023/1024, 1199/1200), and each number inside its item.
@@ -7074,6 +7083,8 @@ def check(driver, browser, url):
             });
         """), "Bars of one chart share one scale"
         assert driver.execute_script(STATS_AXIS_EVEN), f"Axis labels sit unevenly or touch at {width}px"
+        cut = driver.execute_script(STATS_CLASS_NAMES_CUT_JS)
+        assert not cut, f"Class medians' names are cut at {width}px: {cut}"
         spacing = driver.execute_script("""
             // 16px bars 8px apart: rows whose name fits on one line are exactly as tall as their bar.
             const gaps = [];
