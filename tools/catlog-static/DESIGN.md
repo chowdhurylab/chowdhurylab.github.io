@@ -1839,3 +1839,9 @@ tools/site_patches/20261023-site-round17-brief.md, section 5.
   check_stats_databases (SEGMENT_LABELS_JS), check_stats_insights (class dot plot), check_stats_years (part `years`) and
   the Stats block of check().
 
+## Round 17 fix pass, Browse lane (2026-10-23)
+- Records' "?": the label's words are span.summary-label, the "?" follows them and its note (div#recordsAbout) sits
+  outside the label span, in the card, at the same spot over the band.
+- A mutation field that holds an old pipeline's reasoning or an assay note names no form: mutationSignature() treats it
+  as none (NOT_A_FORM), so the record reads "variant, not specified" everywhere (table, cards, titles, record, search,
+  downloads). catlog-v2's stage step is to blank those signatures at the source.

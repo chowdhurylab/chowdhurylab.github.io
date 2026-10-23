@@ -1622,6 +1622,25 @@ assert.deepEqual(["E124Q", "W88*", "E124Q/D269E/E273D", "D76G/K102T (M2)", "E124
   "E124Q/Δ18", "FrdC R28N", "A12A", "e124q", "D92N (large) + E122G", "A0G", "E124Q/", ""].map(api.mutationWords),
   ["Glu124 → Gln", "Trp88 → stop", "Glu124 → Gln, Asp269 → Glu, Glu273 → Asp", "Asp76 → Gly, Lys102 → Thr", "Glu124 → Gln, Asp269 → Glu",
     "Glu124 → Gln, Asp269 → Glu", "Glu124 → Gln, Asp269 → Glu", "Glu124 → Gln, Asp269 → Glu", "", "", "", "", "", "", "", ""]);
+// An old pipeline's reasoning or an assay note in the mutation field names no form (facts only): such a record reads as
+// a variant that does not say which, in the table, its title, the record and the downloads; described forms keep their words.
+for (const signature of [
+  "but the preserved evidence still stops at an abstract-only paper context and unstructured notes. Promoting it would overstate what the source actually proves.",
+  "but it still stops at enzyme-family and substrate context. Without a resolved accession or variant sequence",
+  "Aedes aegypti EC 2.5.1.18 row remains manual_review_required because the preserved evidence stops at legacy GSTE isozyme labels",
+  "stopped-flow measurement of reductive half-reaction", "calculation from stopped-flow data calculation from stopped-flow data",
+  "stopped flow experiment", "stopped flow stopped flow", "reaction stopped with Na2CO3",
+]) {
+  const row = { mutation_signature: signature, wild_type: false };
+  assert.equal(api.mutationSignature(row), "", signature);
+  assert.equal(api.enzymeFormText(row), "variant, not specified", signature);
+  assert.equal(api.enzymeFormTitle(row), "Variant, not specified", signature);
+  assert.match(api.enzymeFormHtml(row), /<span class="enzyme-form" title="Variant, not specified"><span class="form-word">variant, not specified<\/span><\/span>/, signature);
+}
+for (const signature of ["truncated thioredoxin reductase missing its final eight amino acids",
+  "chimera #1 (residues 1-120 of CYP2B1 fused to CYP2B6)", "Δ74-80", "E124Q", "S-M loop mutant (pepsin loop S238-M245 replaced by the corresponding human cathepsin D loop V254-Y261)"]) {
+  assert.equal(api.mutationSignature({ mutation_signature: signature, wild_type: false }), signature, signature);
+}
 assert.equal(api.enzymeFormHtml({ wild_type: true }), "", "wild type shows nothing");
 assert.equal(api.enzymeFormHtml({}), "", "a record that does not say shows nothing");
 assert.equal(api.enzymeFormLabel({}, { showUnknown: true }), "Not recorded");
