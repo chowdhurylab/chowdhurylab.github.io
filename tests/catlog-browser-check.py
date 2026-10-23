@@ -1622,10 +1622,10 @@ def check_stats_figures(driver, browser, url):
             # One short sentence (round 17): how often a database's number for the same measurement is the paper's, of all
             # the values compared; the corrections and the values that differ are the figures' (their counts link into
             # Browse beside the bars) and their rules.
-            assert re.fullmatch(rf"Where a database lists the same measurement \([\d,]+ of {compared:,} values\), its number is the paper’s for [\d.,]+%?\.", lead_text), lead_text
+            assert re.fullmatch(rf"Where a database lists a number for a value read from the paper \([\d,]+ of {compared:,}\), it is the paper’s for [\d.,]+%?\.", lead_text), lead_text
             assert not lead.find_elements(By.CSS_SELECTOR, "a")
             # The caveat is said once in part 5, in the caption of Values compared with databases, never under each figure.
-            caveats = ("a different number can mean another measurement", "it does not by itself mean a database is wrong.")
+            caveats = ("a different number may be another assay’s", "it does not by itself mean a database is wrong.")
             assert sum(part.get_attribute("innerText").count(text) for text in caveats) == 1, part.get_attribute("innerText")
             figures = driver.execute_script("""
                 return [...document.querySelectorAll('.stats-chart-percent')].map(chart => ({
@@ -1678,11 +1678,11 @@ def check_stats_figures(driver, browser, url):
             # figures; the values that differ for a reason not yet known are its rule.
             for key in ("db-sources", "db-found"):
                 caption = driver.find_element(By.CSS_SELECTOR, f"[data-figure='{key}'] figcaption").get_attribute("innerText").strip()
-                assert "can mean another measurement" not in caption and "rather than database errors" not in caption, caption
+                assert "another assay’s" not in caption and "rather than database errors" not in caption, caption
             caption = driver.find_element(By.CSS_SELECTOR, "[data-figure='db-values'] figcaption").get_attribute("innerText").strip()
-            assert caption.endswith("Values read from the paper against the databases; a different number can mean another measurement."), caption
+            assert caption.endswith("Values read from the paper against the databases; a different number may be another assay’s."), caption
             method = " ".join(driver.execute_script("return document.querySelector('.stats-method').textContent").split())
-            assert re.search(r"Different number: [\d,]+ differs? for a reason not yet known[^.]*; some may be other measurements in the paper rather than database errors\.", method), method
+            assert re.search(r"Different number: [\d,]+ differs? for a reason not yet known[^.]*; some may be other assays in the paper rather than database errors\.", method), method
             # Figure 2: stacked by review result, with its legend.
             legend = driver.find_element(By.CSS_SELECTOR, "[data-figure='main-source'] .stats-legend").text
             for word in ("Accepted", "Not confirmed", "Not checked"):
