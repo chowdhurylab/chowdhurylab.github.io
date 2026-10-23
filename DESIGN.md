@@ -104,85 +104,84 @@ each, so the legend table keeps its room beside the donut), one below. Figures a
    line over the card says what CatLog is, without the band's numbers, and ends with the snapshot date (in the card
    where that line has no room). One row from 1024px up, two rows on tablets, two by two on phones
    (tools/catlog-static/DESIGN.md, Layout). Nothing moves, as the window widens or the filters change.
-   Round 17: the band ends with the counting words, defined once where Stats first uses them, in one 12px muted line
-   ("Record: one enzyme or variant, one substrate, one set of assay conditions, one paper. Value: one kcat, Km or
-   kcat/Km, up to three per record."); the line under the title is "Select a name to see its records in Browse."
-2. Quality (round 17, the user: "after the first box it should be the quality thing, with figures to understand it, not
-   all those tables"): three numbered figures, no table, the review's share At a glance's alone.
-   - Human review: a unit chart, one 5px square per record people checked on a 6px pitch, 100 to a row (50 on phones, a
-     second drawing; statsUnitGridSvg), so 3 disputed among 2,604 show: CatLog's earlier version's records with no
-     value disputed (human-checked's green at 60%), with a value disputed (Disputed's deep red, opaque as its dot), then
-     a blank row and the records with no PMID or DOI as open squares in Not checked's slate; a key beside the squares
-     from 1024px (under them below) gives the counts in words and what a check of the paper found of the disputed values.
-     Under it, at the same size, the records read from the paper people checked (drawn at random, then a row of those
-     picked as hard cases) with their values none disputed; then one line on the records in Browse with the
-     human-checked tag and why they are fewer ("accepted, every value shown approved").
-   - Checks on the values: two panels. The second AI check as one 100% bar of every value read from the paper,
-     confirmed (Read from the paper's cyan) and corrected (a correction's opaque red), each count and share under its
-     end; the random AI audit as its share removed as wrong on a small axis (0 to 0.5, 1, 2 ... 100%, the first with a
-     fifth of room above the interval), an ink ring at the share (to the interval's precision, "0.43%") over its 95%
-     interval, a 2px line with end ticks: a statistic, no meaning colour. Under the figure, two plain sentences on the
-     papers read or checked with database values in view and where reading them again stands (statsExposureText, from
-     reread_blind and reread_blind_done: sent back and none or some done, or all done); which agent saw them, when
-     they were sent back and the papers not sent back are its rule (statsExposureRule), with the audit's date, its
-     Wilson interval and its follow-ups.
-   - Errors found in CatLog: neutral bars on one axis, a row per route (the sweep's kinds and a database check's fates as
-     parts of its bar, when they make it; the audit's random and follow-up values in words), Values and Papers beside
-     each, then All, each value once, after a hairline and in 600.
-   A snapshot without the reviewers' own counts gives the match read from the paper again in words as Quality's lead
-   (statsReviewFallbackHtml), and the human-checked line under Checks on the values. One line of links ends the part.
-3. What is in the catalog: Review result beside Records by main source, then Enzyme classes. Review result (round 17:
-   no legend table) is the 100% bar with its labels under it, a column per result as wide as its part (name, records,
-   share; Accepted's records read from the paper as a stripe through its part and a line under its label, Not checked's
-   two kinds under it; a result under a tenth of the records on a line of its own under the bar's end); Accepted's other
-   parts are its title and the rule, and the fields saved in records that are not accepted a table in the rule.
-4. Values: Value ranges, Between papers, kcat against Km, Substrate specificity and Variants against their wild type.
-   Round 17, no table: Between papers' same-temperature-and-pH table is 100% bars under its histograms, each parameter's
-   pairs within 2-fold, 2- to 10-fold and more than 10-fold apart (one cyan, darker for closer, open for the farthest),
-   its share on each part where it fits and the median beside it, the same at a temperature and pH both papers give
-   right under it; kcat against Km's class medians are a dot plot beside the map (the map's numbered dots on a log
-   axis of kcat and one of Km, the value beside each, the records at the end; a row lights its dot on the map);
-   Substrate specificity's table is bars of the median range by substrates tested on a log axis of folds.
-5. Compared with databases: a one-sentence lead ("Where a database lists a number for a value read from the paper
-   (142,515 of 197,799), it is the paper’s for 97.4%."), then Values compared with databases (each part's share on the
-   bar itself where it fits, statsFitSegmentLabels; no share table; the caveat its caption, "a different number may be
-   another assay’s") and Corrections by cause and how found (its caption calls the corrections a lower bound). The
-   corrections, how they were found and the values that differ for a reason not yet known are Values compared with
-   databases' rule, with the database numbers no CatLog value matches and the link to the Dataset notes.
-6. CatLog and BRENDA by publication year (round 17, the user: "the CatLog and BRENDA plot should come later"): its own
-   part, the last main one, the figure headed "Values per publication year"; its caption one sentence (the band, and
-   "CatLog’s line is what it has read so far"), the reading order and the values outside the years drawn its rule.
-Round 17's writing: captions one sentence, part leads one short sentence or none, the method's detail in How these
-numbers are counted; visible prose (captions, leads, notes and paragraphs outside the figures' labels) 354 words at
-1440px against 719 before, and no table on the main page against 9.
-S. Supplementary figures and tables (round 14, the user: "not every figure has to be shown like that (and tables,
-   right?)"): the figures and tables that do not tell the main story, last before How these numbers are counted, in
-   five groups, each listing its figures first, then its tables (fix pass: Figure S7 had stood after two tables)
-   (Quality: Human review by kind, Approved values read from the paper again; What is in the catalog: Read
-   from the paper and not yet re-read, Values per paper,
-   Papers by parameter, What the records contain; Organisms, enzymes and variants (Biology
-   until round 14's polish): Single substitutions, the four top-ten tables, Wild type and variants (with the
-   variants since the fix pass), Kinds of variant; Values: Values by enzyme class, Assay temperature and pH, kcat and
-   assay temperature, Km and substrate size, The typical wild-type enzyme, Units as printed, Cautions on values; Against
-   the databases: the same by enzyme class, Results by database, Corrections on
-   records not yet re-read, Entries replaced by reading the paper, Paired values by database, Corrections by cause and
-   database). Figures and tables are numbered apart from the main ones and from each other, in the order the list
-   shows them ("Figure S1", "Table S1"); a figure the snapshot cannot draw takes no number. Each item is one closed line on a
-   hairline list (a muted "+", its number in a muted column, its title in accent; open, "−" and the title in ink 600):
-   a `<details>` whose summary holds the item's heading (h4, under the group's h3), the figure under it with its
-   caption "Figure S1. ..." and no heading of its own. A figure drawn half-width in the main parts keeps to 760px; a
-   wide one takes the column, with no indent, so Values by enzyme class keeps the x of Value ranges' shared log axis.
-   Every item has its own address, #stats-s3 for Figure S3 and #stats-table-s2 for Table S2 (statsAddressTarget), and
-   an item a visitor opens (a click on, or Enter or Space in, its summary) puts it in the address bar in place
-   (replaceState; closing it goes back to #stats-supplement; printing or a script opening items leaves the address
-   alone), so an open item can be copied and sent: the address
-   opens the item and scrolls to it, also when the page opens there, and a link to it focuses its summary (Enter or
-   Space closes it again). The older #stats-biology opens What is in the catalog (its enzyme classes) and
-   #stats-cautions the Cautions table. "On this page" ends with "S Supplementary figures and tables"
-   (#stats-supplement). An item that opens fits its value columns and tables then (statsFitOpened, on its toggle); on
-   paper every item prints open (beforeprint and the print stylesheet), and no Stats address loads the record index
-   (the preload hint skips #stats-*, as #guide-*). The supplement's rules stand under their own numbers in How these
-   numbers are counted, after the main figures'; Shares names "Tables S1-S4 and S9" as statsNumbersText writes them.
+2. Quality (round 14: no second big number and no dashboard cards; one answer and two small tables): Human review,
+   one sentence ("People checked 2,770 entries from the earlier version (431 papers); a check of the paper found all 3
+   disputed values printed as the entry gives them.") over a table of its verdicts (No value disputed, A value disputed,
+   then "Also noted, with either verdict": Value missing, Other disagreement and, under it, the value not found in the
+   paper; entries and share), with the links to the Guide's method and Team; then Checks on the values, a table of the
+   checks (Second AI check, AI audits, Human-checked: what each covered, what it found, a small bar of the share kept or
+   approved in its meaning colour), each row with its own base, so the counts are never read as one set. The review's
+   flags by kind and the reviewers' approved values read from the paper again are the supplement's Quality tables.
+3. What is in the catalog: Review result (the donut) beside Records by main source, then CatLog and BRENDA by
+   publication year (round 16, when the manifest has `summary.publication_years`) and Enzyme classes, each across the row.
+4. Values: Value ranges, Between papers, kcat against Km, Substrate specificity and Variants against their wild type, each
+   full width (round 16 added the second and fourth).
+5. Compared with databases (manifest `summary.database_comparison`; round 9 brief section 5): a two-sentence lead
+   (round 14: it ran to about 110 words and five links): what was compared and how often a paired number is the
+   paper's, then the corrections and the different numbers, linked into Browse, with the caveat right after them
+   ("which can mean a different measurement rather than a database error"); the other results are Figure 7's, its
+   legend linking each. Then Values
+   compared with databases, then Corrections by cause and how found, each across the row (the corrections' bars kept to
+   760px, stats-narrow). Each only when the snapshot has its counts; without a figure here the part has no heading,
+   and a figure in the supplement that compares values still gets the caveat once, at the head of its group there.
+S. Supplementary figures (round 14, the user: "not every figure has to be shown like that (and tables, right?)"; round
+   17, the user: "they should click on Supplementary figures and tables and all of them open, not one click per figure.
+   Way too many tables there that you can convert to figures"): the figures that do not tell the main story, last
+   before How these numbers are counted. It is one closed disclosure (details.stats-supp-all) whose summary is the
+   part's heading line: the muted S, its title, then at the line's end a muted "+" and "Show all 22 figures" in the
+   accent ("−" and "Hide" when open). Its title says what it holds: "Supplementary figures" while every item is a figure,
+   "Supplementary figures and tables" if a table comes back (statsSupplementTitle; On this page names it the same).
+   One click opens everything: inside, five groups (Quality; What is in the catalog; Organisms, enzymes and variants;
+   Values; Compared with databases), each a grid of open items laid out as the main parts' (two to a row from 1024px, a
+   wide figure or an odd one out taking the row, one per row below 1024px), no disclosure in any item. An item is a
+   div.stats-supp-item with its own address as its id (#stats-s3 for Figure S3; #stats-table-s2 for a Table S2), its
+   heading (h4, under the group's h3) its number, a muted link to that address, and its title, then the figure with its
+   caption "Figure S1. ..." (one sentence; what a mark means beyond it is the figure's rule in How these numbers are
+   counted). Numbers run in the order the page shows them; a figure the snapshot cannot draw takes no number.
+   Addresses: #stats-supplement and any item's address open the supplement (statsAddressTarget) and scroll to what they
+   name, also when the page opens there; a followed link focuses the supplement's summary (Enter or Space closes it) or
+   the item's heading. The live round 16b numbering (11 figures, 14 tables) is kept as an alias map,
+   STATS_SUPPLEMENT_OLD_ADDRESSES (#stats-table-s4, the most common organisms, opens that figure today, by the item's key
+   in data-supp): an old address that no item has now opens the item it named; a number an item still has opens that
+   item. The older #stats-biology opens What is in the catalog and #stats-cautions the Cautions figure. A visitor's own
+   click on the summary puts #stats-supplement in the address bar in place (replaceState) and closing it gives back the
+   address from before; a number link pushes the item's address. The supplement fits its value columns and tables when
+   it opens (statsFitOpened on its toggle); on paper it prints open (beforeprint and the print stylesheet, its Show
+   all hidden), and no Stats address loads the record index (the preload hint skips #stats-*, as #guide-*). The
+   supplement's rules stand under their own numbers in How these numbers are counted, after the main figures'.
+   Round 17 drew the 14 tables as figures, in the page's figure style (statsListChart: statsBarChart's rows, a name a
+   Browse link where one filter opens exactly those records, a bar, its count and share; a count above 0 at least 2px
+   wide; small multiples, statsPanelsHtml, panels side by side where each gets 300px):
+   - Human review by kind: bars in --bar-neutral, the other disagreements indented under their total, what CatLog has
+     read since of the values reviewers named as a muted line under the Value missing bar.
+   - Approved values read from the paper again: bars in the colours the words mean on the page (Same value green,
+     another name and rounding mint, the paper supports CatLog's value cyan, CatLog error Disputed's deep red, still to
+     check slate hatching, left out neutral); who checked the values that differ is its rule.
+   - What the records contain: bars on a 0-100% axis of all records, the kinds of sequence and both temperature and pH
+     indented under their field (the old Sequence fields disclosure is gone).
+   - Most common organisms and Most common EC numbers: one figure each of two panels, All records (--bar-neutral) and
+     Read from the paper (cyan), each its ten commonest with counts and shares (were Tables S4-S7).
+   - Wild type and variants: two panels, all records by enzyme form and the variant records read from the paper by kind
+     of change, both on a 0-100% axis (were Tables S8 and S9).
+   - The typical wild-type enzyme: a dot plot, a panel per parameter on its own log axis, the median dot and middle-80%
+     line of the wild-type records (as Values by enzyme class draws them), and on the kcat/Km panel the average enzyme of
+     Bar-Even et al. 2011 as an open diamond at about 10⁵ M⁻¹ s⁻¹, its name the DOI link; each panel names its papers and
+     enzymes.
+   - Units as printed: three panels, a parameter each, the printed units as cyan bars of that parameter's values.
+   - Cautions on values: a tan bar per caution, each name a Browse link; No cautions, most records, is a link in the
+     caption, so its bar does not make the others slivers.
+   - Paired values by database: a dot plot, per database the share of its paired values CatLog's number corrects (a red
+     dot) and that differ (a brown square, colour never alone) on one percent axis, their counts beside them (Corrects
+     a Browse link per database; All's Differs too), the paired values and the share the same under the name; no marks
+     under 1,000 paired values; the All row under a hairline.
+   - Corrections by cause and database: a heat map, a row per database and a column per cause family, each cell's count
+     on a grey shaded from 8% to 60% of the map's ink by the log of its count (no meaning colour: a light correction red
+     is Not confirmed's salmon; ink numbers keep 5:1), each database's total and the All row as plain margins, every
+     count a Browse link where Browse can filter it; where the table does not fit its figure (phones, a wide font) a
+     line per database instead (statsFitDatabaseTables).
+   - Single substitutions' five commonest substitutions: bars under the map's facts.
+   The one table form left is inside Corrections on records not yet re-read (its share table under the 100% bars, the
+   legend's names as heads, round 15): a segment of 1.5% cannot carry its own number.
    New in round 14, counted by `build_overview` from the records read from the paper only (about 2 KB):
    - Papers by parameter (`from_paper_parameters`: papers, kcat, km, kcat_km, kcat_over_km, all; a calculated kcat/Km is
      not given): bars in Read from the paper's colour, Papers and % of papers, drawn only for the papers the band
@@ -193,13 +192,13 @@ S. Supplementary figures and tables (round 14, the user: "not every figure has t
      residue (columns), as grey cells shaded as the kcat against Km map (a cell's count and both residues' names in
      its tooltip line); beside it the variants, the commonest new residue and the five commonest substitutions.
    - Kinds of variant (`from_paper_insights.variant_kinds`: the variant records by mutation_type: one substitution,
-     several, deletion, insertion, truncation, other or not specified; drawn when they add up to the records): a table,
-     its records linked to source=paper&variant=variant.
+     several, deletion, insertion, truncation, other or not specified; drawn when they add up to the records): a panel
+     of Wild type and variants (round 17), its records linked to source=paper&variant=variant.
    - Units as printed (`from_paper_insights.printed_units`: per parameter the values, up to eight printed units by
      count and Other): the unit printed with each value (its proof line's raw_unit) with a power of ten set aside, read
      by `printed_unit` (per s, min or h; M, mM, µM, nM or pM, mol/L spelled out too; a lower-case m standing alone is
-     the molar sign, as small capitals come out of a text layer), in a table grouped by parameter with its stored unit,
-     shares of that parameter's values.
+     the molar sign, as small capitals come out of a text layer), a panel per parameter with its stored unit (round 17;
+     a table grouped by parameter until then), shares of that parameter's values.
    No publication year or journal in the Full data, so no figure from it by year (the brief's example; the one figure
    by year, CatLog and BRENDA by publication year, reads the manifest's `summary.publication_years`, which catlog-v2's
    build dates by PubMed); no organism kingdom or substrate kind either (no field gives them).
@@ -209,7 +208,8 @@ rules are said (the user, 2026-10-15, of the line that stood under every figure,
 143,184 values in all; ...": "Do we need this???"). It gives Snapshot (the date and Data ID, counted from this
 snapshot's Full data download, the human-review results and, when the audits are shown, the AI audit records),
 Shares (what a share is out of: all records in the
-figures and tables that count all records, named by number (Figure 1 and Tables S1-S4 and S9 today; `STATS_SHARES_OF_ALL`),
+figures and tables that count all records, named by number (since round 17 the review result, What the records contain
+and Cautions on values, `STATS_SHARES_OF_ALL`; the supplement's two-panel figures name each panel's own records),
 elsewhere its own bar's, row's or card's total or the total its caption names; one decimal, a nonzero share under 0.1%
 written <0.1%), Papers, Names, Human-checked, Main source, Read from the paper
 and Not yet re-read (with an overview), Human review (with a lead: its date and definitions), Compared with databases
