@@ -6749,7 +6749,7 @@
   // people checked, drawn at random and picked as hard cases (a row apart); under them, the records in Browse with the
   // human-checked tag and why they are fewer. A snapshot without the reviewers' own counts gives no figure (Quality then
   // says the match read from the paper again in words, statsReviewFallbackHtml).
-  function statsReviewFigure(overview, { humanChecked = null, humanValues = null } = {}) {
+  function statsReviewFigure(overview, { humanChecked = null, humanValues = null, marked = null } = {}) {
     const quality = overview?.quality || {};
     const review = reviewFacts(quality.review?.v1);
     if (!review) return null;
@@ -6786,7 +6786,7 @@
         grids(earlier, earlierLabel), `<ul class="stats-units-key">${earlier.filter((run) => run.count).map(keyLine).join("")}</ul>`),
       v2 ? panel("from-paper", SOURCE_CATLOG_LABEL, escapeHtml(v2Head), grids(v2Runs, `Human review of records read from the paper: ${v2Head}.`), "") : "",
     ].join("");
-    const tagged = statsHumanCheckedFoot(humanChecked, humanValues);
+    const tagged = statsHumanCheckedFoot(humanChecked, humanValues, marked);
     return {
       id: "statsReviewTitle", key: "review", title: "Human review", wide: true, className: "stats-review-section",
       body: `<div class="stats-units">${panels}</div>${tagged}`,
@@ -6796,11 +6796,17 @@
   }
 
   // The records in Browse with the human-checked tag, under Human review (round 17's words: say in a few words why two
-  // counts of records differ): fewer than people checked, as the tag needs the record accepted and every value it shows
-  // approved. "" without the count.
-  function statsHumanCheckedFoot(humanChecked, humanValues = null) {
+  // counts of records differ): of the records with a reviewer's verdict in Browse (`marked`, the count the method's
+  // bridge gives, statsHumanCheckedBridge), those accepted with every kcat and Km approved and the kcat/Km approved or
+  // agreeing with kcat ÷ Km: the tag's rule (HUMAN_CHECKED_RULE, HUMAN_CHECKED_RATIO), never "every value" (round 17 fix
+  // pass). Without `marked`, the rule alone. "" without the count.
+  function statsHumanCheckedFoot(humanChecked, humanValues = null, marked = null) {
     if (humanChecked === null) return "";
-    return `<p class="stats-units-foot" data-note="human-checked"><a class="stats-link" href="${escapeHtml(statsBrowseHref({ checked: "1" }))}">${formatInteger(humanChecked)} ${humanChecked === 1 ? "record" : "records"}</a> in Browse${humanValues !== null ? ` (${formatInteger(humanValues)} ${humanValues === 1 ? "value" : "values"})` : ""} ${humanChecked === 1 ? "carries" : "carry"} the human-checked tag: accepted, every value shown approved.</p>`;
+    const rule = "accepted with every kcat and Km approved and the kcat/Km approved or agreeing with kcat ÷ Km";
+    const among = marked !== null && marked >= humanChecked && marked > 0
+      ? `of the ${marked === 1 ? "record" : `${formatInteger(marked)} records`} with a reviewer’s verdict in Browse, ${humanChecked === 1 ? "the one" : "those"} ${rule}`
+      : rule;
+    return `<p class="stats-units-foot" data-note="human-checked"><a class="stats-link" href="${escapeHtml(statsBrowseHref({ checked: "1" }))}">${formatInteger(humanChecked)} ${humanChecked === 1 ? "record" : "records"}</a> in Browse${humanValues !== null ? ` (${formatInteger(humanValues)} ${humanValues === 1 ? "value" : "values"})` : ""} ${humanChecked === 1 ? "carries" : "carry"} the human-checked tag: ${metricWordsHtml(escapeHtml(among))}.</p>`;
   }
 
   // Without the reviewers' own counts (an older snapshot): the match read from the paper again, or what reviewers found
@@ -6988,7 +6994,7 @@
   // How the human-review counts relate (fix pass after round 16b; round 17's words: records, never entries): " Of the
   // 2,131 records with a reviewer’s verdict in Browse, the other 290 have a value not approved or are not accepted. The
   // review counts records as reviewers saw them in the earlier version, by whether a value was disputed, and Approved
-  // values read from the paper again counts approved values one by one; the tag needs every value a record shows
+  // values read from the paper again counts approved values one by one; the tag needs every kcat and Km a record shows
   // approved." "" without the counts.
   function statsHumanCheckedBridge(humanChecked, marked, review, match) {
     if (humanChecked === null || marked === null || marked < humanChecked) return "";
@@ -6996,7 +7002,7 @@
     const rest = other ? ` Of the ${formatInteger(marked)} records with a reviewer’s verdict in Browse, the other ${formatInteger(other)} ${other === 1 ? "has a value not approved or is" : "have a value not approved or are"} not accepted.` : "";
     const counts = [review ? "the review counts records as reviewers saw them in the earlier version, by whether a value was disputed" : "",
       match ? `${review ? "" : "the "}Approved values read from the paper again counts approved values one by one` : ""].filter(Boolean);
-    const joined = counts.length ? ` ${counts.join(", and ").replace(/^./, (letter) => letter.toUpperCase())}; the tag needs every value a record shows approved.` : "";
+    const joined = counts.length ? ` ${counts.join(", and ").replace(/^./, (letter) => letter.toUpperCase())}; the tag needs every kcat and Km a record shows approved.` : "";
     return `${rest}${joined}`;
   }
 
@@ -8467,13 +8473,13 @@
     const audit = auditFacts(overview);
     const marked = statsCount(overview?.human_marked, total);
     const humanValues = humanChecked !== null ? statsCount(overview?.human_checked_values) : null;
-    const reviewFigure = statsReviewFigure(overview, { humanChecked, humanValues });
+    const reviewFigure = statsReviewFigure(overview, { humanChecked, humanValues, marked });
     const errorsFigure = statsErrorsFigure(quality, audit);
     const checksFigure = statsChecksFigure({ fromPaper, papersRead, audit, secondCheck: secondCheckFacts(overview?.from_paper),
       exposure: statsExposureText(quality), errorsShown: Boolean(errorsFigure) });
     if (checksFigure) {
       checksFigure.rules = [checksFigure.rules, statsExposureRule(quality)].filter(Boolean).join(" ");
-      if (!reviewFigure) checksFigure.after += statsHumanCheckedFoot(humanChecked, humanValues);
+      if (!reviewFigure) checksFigure.after += statsHumanCheckedFoot(humanChecked, humanValues, marked);
     }
     const quality_ = [reviewFigure, checksFigure, checksFigure ? errorsFigure : null].filter(Boolean);
     const reviewFallback = statsReviewFallbackHtml(overview);
@@ -16550,6 +16556,7 @@
       reviewFromPaperText,
       statsReviewErrorsFound,
       statsHumanCheckedBridge,
+      statsHumanCheckedFoot,
       renderTeam,
       teamNumbers,
       teamWrappedLines,

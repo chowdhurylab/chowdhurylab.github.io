@@ -2220,7 +2220,14 @@ function row(overrides = {}) {
   const metricPlain = (html) => html.replace(/<i>([kK])<\/i><sub>(cat|m|i)<\/sub>/g, "$1$2");
   // Without the review's figure, the records with the human-checked tag stand under Checks on the values (round 17), the
   // tag's rule in a few words; no table, meter or dashboard card.
-  assert.match(chart, /<p class="stats-units-foot" data-note="human-checked"><a class="stats-link" href="[^"]*#browse\?checked=1">1 record<\/a> in Browse carries the human-checked tag: accepted, every value shown approved\.<\/p>/);
+  // (round 17 fix pass: the tag's own rule, of the records with a reviewer's verdict, never "every value shown approved")
+  assert.match(metricPlain(chart), /<p class="stats-units-foot" data-note="human-checked"><a class="stats-link" href="[^"]*#browse\?checked=1">1 record<\/a> in Browse carries the human-checked tag: of the 2 records with a reviewer’s verdict in Browse, the one accepted with every kcat and Km approved and the kcat\/Km approved or agreeing with kcat ÷ Km\.<\/p>/);
+  assert.doesNotMatch(chart, /every value shown approved/);
+  // Without the records with a verdict, the rule alone.
+  assert.equal(metricPlain(api.statsHumanCheckedFoot(1841, 3952)).replace(/<[^>]+>/g, ""),
+    "1,841 records in Browse (3,952 values) carry the human-checked tag: accepted with every kcat and Km approved and the kcat/Km approved or agreeing with kcat ÷ Km.");
+  assert.equal(metricPlain(api.statsHumanCheckedFoot(1841, 3952, 2131)).replace(/<[^>]+>/g, ""),
+    "1,841 records in Browse (3,952 values) carry the human-checked tag: of the 2,131 records with a reviewer’s verdict in Browse, those accepted with every kcat and Km approved and the kcat/Km approved or agreeing with kcat ÷ Km.");
   assert.doesNotMatch(chart, /stats-checks-table|stats-minibar|stats-col-bar|stats-meter|stats-check-number/, "No table or dashboard cards");
   assert.doesNotMatch(chart, /data-check="audit"|wrong number or unit/, "Without overview.quality there is no audit check and no accuracy");
   // How these numbers are counted: human-checked's rule as one clause after "where".
@@ -2284,7 +2291,7 @@ function row(overrides = {}) {
     assert.equal(api.statsChecksFigure({ fromPaper: null, papersRead: null }), null);
     // How the counts relate (fix pass after round 16b; round 17's words): the records left out, and what the review and
     // the match count.
-    assert.equal(api.statsHumanCheckedBridge(1721, 2005, {}, {}), " Of the 2,005 records with a reviewer’s verdict in Browse, the other 284 have a value not approved or are not accepted. The review counts records as reviewers saw them in the earlier version, by whether a value was disputed, and Approved values read from the paper again counts approved values one by one; the tag needs every value a record shows approved.");
+    assert.equal(api.statsHumanCheckedBridge(1721, 2005, {}, {}), " Of the 2,005 records with a reviewer’s verdict in Browse, the other 284 have a value not approved or are not accepted. The review counts records as reviewers saw them in the earlier version, by whether a value was disputed, and Approved values read from the paper again counts approved values one by one; the tag needs every kcat and Km a record shows approved.");
     assert.equal(api.statsHumanCheckedBridge(1721, null, {}, {}), "");
     // The review of records read from the paper in counts, never a share of so few.
     assert.equal(api.reviewFromPaperText({ entries: 99, papers: 40, value_disputed: 0, picked_value_disputed: 0, entries_random: 68, entries_picked: 31,
@@ -2436,7 +2443,7 @@ function row(overrides = {}) {
     assert.match(svg[0], /<path class="stats-unit stats-part-disputed" d="(?:M426 156|M126 318)h5v5h-5zm6 0h5v5h-5zm6 0h5v5h-5z" data-hl="disputed"/, "the 3 disputed right after the 2,671");
   }
   assert.match(lead, /<strong>Figure 1\.<\/strong> Each square is one record people checked\./);
-  assert.match(lead, /<p class="stats-units-foot" data-note="human-checked"><a class="stats-link" href="[^"]*#browse\?checked=1">1 record<\/a> in Browse carries the human-checked tag: accepted, every value shown approved\.<\/p>/);
+  assert.match(metricPlain(lead), /<p class="stats-units-foot" data-note="human-checked"><a class="stats-link" href="[^"]*#browse\?checked=1">1 record<\/a> in Browse carries the human-checked tag: of the 2 records with a reviewer’s verdict in Browse, the one accepted with every kcat and Km approved and the kcat\/Km approved or agreeing with kcat ÷ Km\.<\/p>/);
   // No disputed value and no record without a paper: green squares only; records without a paper are open squares.
   assert.equal(api.statsUnitGridSvg([{ key: "a", part: "human", count: 3, tip: "a" }, { key: "b", part: "not-reviewed", open: true, start: "gap", count: 2, tip: "b" }], 2, { label: "x", layout: "wide" }),
     '<svg class="stats-units-svg is-wide" viewBox="0 0 11 23" width="11" height="23" role="img" aria-label="x" focusable="false"><path class="stats-unit stats-part-human" d="M0 0h5v5h-5zm6 0h5v5h-5zM0 6h5v5h-5z" data-hl="a" data-tip="a"/><path class="stats-unit stats-part-not-reviewed is-open" d="M0.5 18.5h4v4h-4zm6 0h4v4h-4z" data-hl="b" data-tip="b"/></svg>');

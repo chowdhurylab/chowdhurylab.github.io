@@ -116,7 +116,9 @@ each, so the legend table keeps its room beside the donut), one below. Figures a
      from 1024px (under them below) gives the counts in words and what a check of the paper found of the disputed values.
      Under it, at the same size, the records read from the paper people checked (drawn at random, then a row of those
      picked as hard cases) with their values none disputed; then one line on the records in Browse with the
-     human-checked tag and why they are fewer ("accepted, every value shown approved").
+     human-checked tag and why they are fewer ("of the 2,131 records with a reviewer’s verdict in Browse, those accepted
+     with every kcat and Km approved and the kcat/Km approved or agreeing with kcat ÷ Km": the tag's rule, never "every
+     value").
    - Checks on the values: two panels. The second AI check as one 100% bar of every value read from the paper,
      confirmed (Read from the paper's cyan) and corrected (a correction's opaque red), each count and share under its
      end; the random AI audit as its share removed as wrong on a small axis (0 to 0.5, 1, 2 ... 100%, the first with a

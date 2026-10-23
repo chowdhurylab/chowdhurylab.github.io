@@ -1329,7 +1329,10 @@ def check_quality_round16b(driver, browser, url):
             units = driver.execute_script(UNITS_DRAWN_JS, lead)
             assert units["squares"] == 2770 and units["layout"] == ("wide" if width > 640 else "narrow") and units["fits"], units
             foot = text(lead.find_element(By.CSS_SELECTOR, "[data-note='human-checked']"))
-            assert re.fullmatch(r"[\d,]+ records? in Browse \(3,486 values\) carr(?:y|ies) the human-checked tag: accepted, every value shown approved\.", foot), foot
+            # (the tag's own rule, of the records with a reviewer's verdict: round 17 fix pass)
+            assert re.fullmatch(r"[\d,]+ records? in Browse \(3,486 values\) carr(?:y|ies) the human-checked tag: (?:of the [\d,]+ records? with a "
+                                r"reviewer’s verdict in Browse, (?:those|the one) )?accepted with every kcat and Km approved and the kcat/Km "
+                                r"approved or agreeing with kcat ÷ Km\.", foot), foot
             method = " ".join(driver.execute_script("return document.querySelector('.stats-method').textContent").split())
             assert "A record with no PMID or DOI could not be checked against a paper, so the review’s share leaves it out." in method, method
             assert "Their values are the kcat, Km and kcat/Km values a reviewer approved on them" in method, method
