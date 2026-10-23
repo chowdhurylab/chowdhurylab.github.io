@@ -143,7 +143,8 @@ each, so the legend table keeps its room beside the donut), one below. Figures a
    pairs within 2-fold, 2- to 10-fold and more than 10-fold apart (one cyan, darker for closer, open for the farthest),
    its share on each part where it fits and the median beside it, the same at a temperature and pH both papers give
    right under it; kcat against Km's class medians are a dot plot beside the map (the map's numbered dots on a log
-   axis of kcat and one of Km, the value beside each, the records at the end; a row lights its dot on the map);
+   axis of kcat and one of Km, a 1px rule between the two panels, the value beside each, the records at the end, the
+   names whole from 641px; a row lights its dot on the map; under the map from 1024px to 1279px);
    Substrate specificity's table is bars of the median range by substrates tested on a log axis of folds.
 5. Compared with databases: a one-sentence lead ("Where a database lists a number for a value read from the paper
    (142,515 of 197,799), it is the paper’s for 97.4%."), then Values compared with databases (each part's share on the

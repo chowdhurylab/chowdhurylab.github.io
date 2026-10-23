@@ -1792,15 +1792,22 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-map-facts dd small { display:block; margin-top:2px; color:var(--muted); font-size:var(--fs-12); font-weight:400; line-height:var(--lh-12) }
 .stats-map-facts dd .stats-muted { font-size:var(--fs-14); font-weight:500 }
 /* kcat against Km's class medians (round 17: a dot plot, no table): per class its number in the map's own dot on a log
-   axis of kcat and one of Km, the value beside the dot and the records at the end; the row lights the map's dot. */
-.stats-class-dots { --class-cols:minmax(0,9.5em) minmax(0,1fr) minmax(0,1fr) 7ch; min-width:0; font-size:var(--fs-12); line-height:var(--lh-12) }
-.stats-class-head, .stats-class-row { display:grid; grid-template-columns:var(--class-cols); column-gap:12px; align-items:center }
+   axis of kcat and one of Km, the value beside the dot and the records at the end; the row lights the map's dot. One
+   grid for the whole plot (its head, rows and tick row are subgrids), so the name column is as wide as the longest name
+   ("EC 1 Oxidoreductases" in DejaVu Sans too: round 17 fix pass, it had been cut at 9.5em) and every row's tracks still
+   line up; a 1px rule (stats-class-sep) between the kcat and the Km panel runs through the rows and the tick row, 30px
+   from either track. Beside the map from 1280px, under its facts; under the map, as wide as the figure allows, from
+   1024px to 1279px (the column beside the map is 350px there); after the facts below 1024px. */
+.stats-class-dots { display:grid; grid-template-columns:max-content minmax(0,1fr) 1px minmax(0,1fr) max-content; column-gap:12px; min-width:0; font-size:var(--fs-12); line-height:var(--lh-12) }
+.stats-class-head, .stats-class-rows, .stats-class-row { display:grid; grid-column:1 / -1; grid-template-columns:max-content minmax(0,1fr) 1px minmax(0,1fr) max-content; grid-template-columns:subgrid; column-gap:12px; align-items:center }
 .stats-class-head { margin:0 0 4px; color:var(--muted) }
 .stats-class-head > span:first-child { color:var(--text); font-size:var(--fs-13); font-weight:600 }
 .stats-class-head > span:last-child, .stats-class-n { text-align:right }
 .stats-class-rows { margin:0; padding:0; list-style:none }
 .stats-class-row { height:26px; border-bottom:1px solid var(--line-soft) }
 .stats-class-label { min-width:0; overflow:hidden; color:var(--text); font-size:var(--fs-13); line-height:var(--lh-13); text-overflow:ellipsis; white-space:nowrap }
+.stats-class-sep { align-self:stretch; margin-bottom:-1px; background:var(--line) }
+.stats-class-axis > .stats-class-sep { margin:-2px 0 0 }
 .stats-class-track { position:relative; align-self:stretch; margin:0 18px }
 .stats-class-grid { position:absolute; top:3px; bottom:3px; border-left:1px solid var(--line-soft) }
 .stats-class-track .stats-map-dot { width:14px; height:14px; font-size:9px }
@@ -1811,6 +1818,12 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-class-ticks { position:relative; height:16px; margin:0 18px }
 .stats-class-ticks > span { position:absolute; top:2px; transform:translateX(-50%); white-space:nowrap }
 .stats-class-ticks sup { font-size:var(--fs-12) }
+.stats-map-medians > .stats-class-dots { grid-column:1 / -1; max-width:760px }
+@media (min-width: 1280px) {
+  .stats-map-medians { grid-template-rows:auto 1fr }
+  .stats-map-medians > .stats-map-frame { grid-row:1 / span 2 }
+  .stats-map-medians > .stats-class-dots { grid-column:2; grid-row:2; max-width:none }
+}
 .stats-class-row.is-active { background:var(--surface-2) }
 .stats-fig.has-active .stats-class-row[data-hl]:not(.is-active) .stats-map-dot { opacity:0.3 }
 /* Before a name in a table, the class bar stands 6px from it (the name's flex gap, less its own margin). */
@@ -2119,7 +2132,8 @@ a.stats-total-value:focus-visible { outline:0 }
      same in the class medians beside kcat against Km, so their numbers keep their columns. */
   .stats-ridges { --ridge-label:44px }
   .stats-ridge-name, .stats-class-label .stats-ec-name { display:none }
-  .stats-class-dots { --class-cols:44px minmax(0,1fr) minmax(0,1fr) 7ch }
+  /* (the class numbers alone: "Class medians" wraps in their 44px, as before the plot became one grid) */
+  .stats-class-dots { grid-template-columns:44px minmax(0,1fr) 1px minmax(0,1fr) max-content }
   .stats-class-ticks > span:not(:first-child, :last-child) { visibility:hidden }
   /* On phones each name sits above its bar, with its numbers right-aligned on the name's line (under Figure 5's
      headings), 8px from it, and the bar and the axis span the row, so the bars take the full width and a small segment
