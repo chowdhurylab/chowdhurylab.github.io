@@ -1641,6 +1641,25 @@ for (const signature of ["truncated thioredoxin reductase missing its final eigh
   "chimera #1 (residues 1-120 of CYP2B1 fused to CYP2B6)", "Δ74-80", "E124Q", "S-M loop mutant (pepsin loop S238-M245 replaced by the corresponding human cathepsin D loop V254-Y261)"]) {
   assert.equal(api.mutationSignature({ mutation_signature: signature, wild_type: false }), signature, signature);
 }
+// Codes that are not substitutions get no words: one position with two different wild-type residues, and, on a record
+// whose enzyme or substrate says "phosph", a list of sugar-phosphate-shaped codes only; the code still shows as printed.
+const phosphoglucomutase = { enzyme_display_name: "phosphoglucomutase", substrate_name: "alpha-D-glucose 1-phosphate" };
+for (const signature of ["M6P/M1P/G1P/G6P", "K2H/H2P", "H2P/K2H", "G6P/F6P", "F168V/T201N/S192F/M191T/F192S"]) {
+  assert.equal(api.mutationWords(signature), "", signature);
+  assert.equal(api.mutationWords(signature, { enzyme_display_name: "nitrilase", substrate_name: "benzonitrile" }), "", signature);
+}
+for (const [signature, row] of [["G6P", { enzyme_display_name: "glucose-6-phosphate dehydrogenase (NADP+)", substrate_name: "NADP+" }],
+  ["F6P", { enzyme_display_name: "6-phosphofructokinase", substrate_name: "ATP" }],
+  ["G3P", { enzyme_display_name: "dehydrogenase", substrate_name: "sn-glycerol 3-phosphate" }],
+  ["G1P/F6P", phosphoglucomutase], ["G1P/G6P", phosphoglucomutase], ["S6P", { enzyme_display_name: "tryptophan synthase", substrate_name: "(3-indolyl)-glycerol phosphate" }]]) {
+  assert.equal(api.mutationWords(signature, row), "", signature);
+  assert.equal(api.enzymeFormTitle({ mutation_signature: signature, wild_type: false, ...row }), `Variant ${signature}`, signature);
+  assert.match(api.enzymeFormHtml({ mutation_signature: signature, wild_type: false, ...row }), new RegExp(`<span class="form-mutation">${signature.replace("/", "\\/")}<`), signature);
+}
+assert.equal(api.mutationWords("E4P/Y56S/F66N", phosphoglucomutase), "Glu4 → Pro, Tyr56 → Ser, Phe66 → Asn", "a real substitution list keeps its words");
+assert.equal(api.mutationWords("G6P", { enzyme_display_name: "lysozyme", substrate_name: "peptidoglycan" }), "Gly6 → Pro", "a phosphate-shaped code elsewhere keeps its words");
+assert.equal(api.mutationWords("T7P", { enzyme_display_name: "SULT1A3", substrate_name: "acetaminophen" }), "Thr7 → Pro");
+assert.equal(api.mutationWords("E124Q/E124Q"), "Glu124 → Gln, Glu124 → Gln", "one position with one wild-type residue is fine");
 assert.equal(api.enzymeFormHtml({ wild_type: true }), "", "wild type shows nothing");
 assert.equal(api.enzymeFormHtml({}), "", "a record that does not say shows nothing");
 assert.equal(api.enzymeFormLabel({}, { showUnknown: true }), "Not recorded");

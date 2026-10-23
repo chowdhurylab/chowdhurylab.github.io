@@ -1852,16 +1852,28 @@
   // A signature's substitutions in words, only where every part is a clean one-letter substitution ("E124Q" -> "Glu124 →
   // Gln"; "P161S/S336A" or "P161S, S336A" -> "Pro161 → Ser, Ser336 → Ala"; "W88*" -> "Trp88 → stop"), parts split at
   // "/", ",", ";", "+" or a space, one name in brackets after them aside ("D76G/K102T (M2)"); anything else (a deletion,
-  // a chimera, a subunit's name, a described form) gives "".
-  function mutationWords(signature) {
+  // a chimera, a subunit's name, a described form) gives "". Two codes that are not substitutions give "" too: a list
+  // that gives one position two different wild-type residues ("M6P/M1P/G1P/G6P", "K2H/H2P", "G6P/F6P": sugar-phosphate
+  // and other abbreviations an earlier catalog stored as mutations), and, for a record whose enzyme or substrate name
+  // says "phosph", a list of sugar-phosphate-shaped codes only ("G6P", "F6P", "G1P/F6P"; "E4P/Y56S/F66N" keeps its
+  // words). The code still shows as printed; only the words are left out.
+  const PHOSPHATE_CODE = /^[A-Z][1-7]P$/;
+  function mutationWords(signature, row = null) {
     const list = String(signature || "").trim().replace(/\s+\([^()]*\)$/, "");
     if (!list) return "";
-    const words = list.split(/\s*[/,;+]\s*|\s+/).map((part) => {
+    const parts = list.split(/\s*[/,;+]\s*|\s+/);
+    const wildType = new Map();
+    const words = parts.map((part) => {
       const match = part.match(/^([ACDEFGHIKLMNPQRSTVWY])([1-9]\d{0,4})([ACDEFGHIKLMNPQRSTVWY*])$/);
       if (!match || match[1] === match[3]) return "";
+      if ((wildType.get(match[2]) ?? match[1]) !== match[1]) return "";
+      wildType.set(match[2], match[1]);
       return `${AMINO_ACIDS[match[1]]}${match[2]} → ${match[3] === "*" ? "stop" : AMINO_ACIDS[match[3]]}`;
     });
-    return words.every(Boolean) ? words.join(", ") : "";
+    if (!words.every(Boolean)) return "";
+    const names = row && typeof row === "object" ? `${row.enzyme_display_name || ""} ${row.substrate_name || ""}` : "";
+    if (/phosph/i.test(names) && parts.every((part) => PHOSPHATE_CODE.test(part))) return "";
+    return words.join(", ");
   }
 
   // The table's variant line under the enzyme name (round 17; the user: the bare boxed code was hard to understand):
@@ -1882,7 +1894,7 @@
   function enzymeFormTitle(row) {
     const signature = mutationSignature(row);
     if (!signature) return "Variant, not specified";
-    const words = mutationWords(signature);
+    const words = mutationWords(signature, row);
     return `Variant ${signature}${words ? `: ${words}` : ""}`;
   }
 
@@ -13976,7 +13988,7 @@
   function detailFormHtml(row) {
     const signature = mutationSignature(row);
     if (signature) {
-      const words = mutationWords(signature);
+      const words = mutationWords(signature, row);
       const shown = words && words.split(", ").length <= DETAIL_MUTATION_WORDS;
       const title = words && !shown ? ` title="${escapePublic(`Variant ${signature}: ${words}`)}"` : "";
       return `<span class="detail-form">Variant&nbsp;<span class="mutation"${title}>${escapePublic(signature).replace(/\//g, "/<wbr>")}</span>${
