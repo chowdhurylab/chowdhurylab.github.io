@@ -4572,7 +4572,15 @@ def check_layout(driver, browser, url, route_label):
         driver.execute_script("arguments[0].focus()", organism)
         organism.send_keys(Keys.ENTER)
         wait.until(lambda d: header_state()["hash"] == "#browse?sort=organism")
-        results["header-sort"] = {"steps": len(walk) + 1, "first_enzymes": enzymes[:2]}
+        # A header sort after an edited address (page=3; popstate and hashchange both apply it) starts on page 1, and the
+        # address keeps no page=.
+        first_number = "return Number((document.getElementById('pageLabel').textContent.match(/^[\\d,]+/) || ['0'])[0].replace(/,/g, ''))"
+        driver.execute_script("location.hash = '#browse?page=3'")
+        wait.until(lambda d: header_state()["hash"] == "#browse?page=3" and d.execute_script(first_number) > 1
+                   and not d.find_elements(By.CSS_SELECTOR, "#recordsBody tr.skeleton-row"))
+        click_header("c-organism", "organism")
+        assert driver.execute_script(first_number) == 1, driver.find_element(By.ID, "pageLabel").text
+        results["header-sort"] = {"steps": len(walk) + 2, "first_enzymes": enzymes[:2]}
         # The license and how to cite, said once: one quiet line in the footer bar between Records per page and the page
         # range, linking to the Guide's Licence and citation; not shown where the bar has no room for it (phones, a table
         # beside an open record at 1024px).
