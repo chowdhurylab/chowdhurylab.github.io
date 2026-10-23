@@ -1888,9 +1888,10 @@ function row(overrides = {}) {
   const partTitles = () => [...(element("statsTotals").innerHTML + element("statsCharts").innerHTML)
     .matchAll(/<h2 id="statsPart\w+Title" class="stats-part-title"><span class="stats-part-number" aria-hidden="true">(\d+|S)<\/span><span>([^<]+)<\/span><\/h2>/g)]
     .map((match) => `${match[1]} ${match[2]}`);
-  // The supplement's items (round 14): "Figure S1 Title", in order, each a closed line whose heading is in its summary.
+  // The supplement's items (round 14): "Figure S1 Title", in order, each heading its number (a link to its own address)
+  // and its title over its figure, all inside the supplement's one disclosure (round 17).
   const supplementTitles = () => [...element("statsCharts").innerHTML
-    .matchAll(/<h4 id="[^"]+" class="stats-supp-title"><span class="stats-supp-number">([^<]+)<\/span> <span class="stats-supp-name">(.*?)<\/span><\/h4>/g)]
+    .matchAll(/<h4 id="[^"]+" class="stats-supp-title"><a class="stats-supp-number" href="#stats-(?:table-)?s\d+">([^<]+)<\/a> <span class="stats-supp-name">(.*?)<\/span><\/h4>/g)]
     .map((match) => `${match[1]} ${match[2].replace(/<[^>]*>/g, "")}`);
   // Quality's human review: its figure (round 17), or, without the reviewers' own counts, the part's lead in words.
   const leadHtml = () => element("statsCharts").innerHTML.match(/<p class="stats-part-lead" data-lead="review">[\s\S]*?<\/p>|<section class="stats-section stats-figure-section[^"]*" aria-labelledby="statsReviewTitle" data-figure="review">[\s\S]*?<\/section>/)?.[0] || "";
@@ -1947,8 +1948,8 @@ function row(overrides = {}) {
     const closed = { open: false, dataset: {} };
     const opened = { open: true, dataset: {} };
     const previousAll = document.querySelectorAll;
-    document.querySelectorAll = (selector) => (selector === ".stats-method:not([open]), .stats-supp-item:not([open])" ? [closed, opened].filter((item) => !item.open)
-      : selector === ".stats-method[data-print-opened], .stats-supp-item[data-print-opened]" ? [closed, opened].filter((item) => item.dataset.printOpened) : previousAll(selector));
+    document.querySelectorAll = (selector) => (selector === ".stats-method:not([open]), .stats-supp-all:not([open])" ? [closed, opened].filter((item) => !item.open)
+      : selector === ".stats-method[data-print-opened], .stats-supp-all[data-print-opened]" ? [closed, opened].filter((item) => item.dataset.printOpened) : previousAll(selector));
     try {
       api.statsOpenMethodForPrint();
       assert.deepEqual([closed.open, opened.open], [true, true]);
@@ -1958,8 +1959,8 @@ function row(overrides = {}) {
       document.querySelectorAll = previousAll;
     }
     assert.match(styleSource, /@media print \{[^@]*?\.stats-method::details-content \{ content-visibility:visible; display:block \}/);
-    // The supplement's items print open too.
-    assert.match(styleSource, /@media print \{[^@]*?\.stats-supp-item::details-content \{ content-visibility:visible; display:block \}/);
+    // The supplement prints open too, without its Show all or Hide.
+    assert.match(styleSource, /@media print \{[^@]*?\.stats-supp-all::details-content \{ content-visibility:visible; display:block \}\s*\.stats-supp-toggle \{ display:none \}/);
   }
   // A linked key number under the pointer: the tint and larger halo darken its ground, so its label and note step up
   // to --text-2 and keep AA contrast.
@@ -1973,12 +1974,14 @@ function row(overrides = {}) {
   assert.ok(api.statsSharesRule({ Figure: [], Table: [] }).startsWith("A share is of its own bar, row or card"));
   assert.match(element("statsCharts").innerHTML, /<strong>Figure 1\.<\/strong> Each record has exactly one review result \(<a class="stats-guide-link" href="[^"]*#guide-status">defined in the Guide<\/a>\)\.<\/span><\/figcaption>/);
   assert.match(element("statsCharts").innerHTML, /<strong>Table S1\.<\/strong> Records with each value or field; most records have several\.<\/span><\/figcaption>/);
-  // A supplement item: closed, its own address, its heading (number and title) in its summary, the figure under it with
-  // no heading of its own.
-  assert.match(element("statsCharts").innerHTML, /<details class="stats-supp-item" id="stats-table-s1" data-supp="contents">\s*<summary><h4 id="statsContentsTitle" class="stats-supp-title"><span class="stats-supp-number">Table S1<\/span> <span class="stats-supp-name">What the records contain<\/span><\/h4><\/summary>\s*<div class="stats-supp-body"><section class="stats-section stats-figure-section" aria-labelledby="statsContentsTitle" data-figure="contents">\s*<figure/);
-  assert.doesNotMatch(element("statsCharts").innerHTML, /<details class="stats-supp-item"[^>]* open/);
-  // The review result is one 100% bar (the one partition that is a true whole) with its labels under it (round 17: no
-  // legend table); Accepted's parts are its label's title and the figure's rule.
+  // The supplement (round 17): one disclosure, closed, whose summary is the part's heading line and Show all; inside it
+  // each item is open: its own address, its heading (its number, a link to that address, and its title), its figure
+  // under it with no heading of its own.
+  assert.match(element("statsCharts").innerHTML, /<section class="stats-part stats-supp" id="stats-supplement" data-part="supplement" aria-labelledby="statsPartSupplementTitle">\s*<details class="stats-supp-all"><summary><h2 id="statsPartSupplementTitle" class="stats-part-title"><span class="stats-part-number" aria-hidden="true">S<\/span><span>Supplementary figures and tables<\/span><\/h2><span class="stats-supp-toggle"><span class="stats-supp-show">Show all 1 table<\/span><span class="stats-supp-hide">Hide<\/span><\/span><\/summary>/);
+  assert.match(element("statsCharts").innerHTML, /<div class="stats-supp-item stats-wide" id="stats-table-s1" data-supp="contents">\s*<h4 id="statsContentsTitle" class="stats-supp-title"><a class="stats-supp-number" href="#stats-table-s1">Table S1<\/a> <span class="stats-supp-name">What the records contain<\/span><\/h4>\s*<section class="stats-section stats-figure-section stats-wide" aria-labelledby="statsContentsTitle" data-figure="contents">\s*<figure/);
+  assert.doesNotMatch(element("statsCharts").innerHTML, /<details class="stats-supp-all"[^>]* open|<details class="stats-supp-item/);
+  // The review result is one 100% bar (the one partition that is a true whole) over its legend table (fix pass after
+  // round 16b: a donut with the total in its hole); Accepted is split in the rows under it.
   assert.match(element("statsCharts").innerHTML, /<div class="stats-status-layout"><div class="stats-track stats-status-bar" role="img" aria-label="Review result of all records: 6 records\. Accepted 3 \(50\.0%\); Not confirmed 1 \(16\.7%\); Not checked \(Unverified\) 1 \(16\.7%\); Disputed 1 \(16\.7%\)\.">/);
   // Each segment has one fill (its colour at 60%, from the stylesheet), no gradient, and lights with its table row.
   assert.match(element("statsCharts").innerHTML, /<span class="stats-seg stats-part-unverified" style="left:66\.6667%;width:16\.6667%" data-hl="unverified" data-tip="Not checked \(Unverified\): 1 \(16\.7%\)"><\/span>/);
@@ -2101,8 +2104,8 @@ function row(overrides = {}) {
   // supplement its own entry in On this page.
   assert.deepEqual([...chart.matchAll(/<h3 id="statsSupplement\w+Title" class="stats-supp-group-title">([^<]+)<\/h3>/g)].map((match) => match[1]),
     ["What is in the catalog", "Organisms, enzymes and variants", "Values"]);
-  assert.match(chart, /<details class="stats-supp-item" id="stats-s1" data-supp="versions">/);
-  assert.match(chart, /<details class="stats-supp-item" id="stats-table-s5" data-supp="cautions">/);
+  assert.match(chart, /<div class="stats-supp-item(?: stats-wide)?" id="stats-s1" data-supp="versions">/);
+  assert.match(chart, /<div class="stats-supp-item(?: stats-wide)?" id="stats-table-s5" data-supp="cautions">/);
   assert.match(element("statsContents").innerHTML, /<li><a href="#stats-supplement"><span class="stats-contents-number" aria-hidden="true">S<\/span> Supplementary figures and tables<\/a><\/li><\/ul>$/);
   assert.ok(api.STATS_SECTION_HASH.test("#stats-s12") && api.STATS_SECTION_HASH.test("#stats-table-s3") && !api.STATS_SECTION_HASH.test("#stats-S1"));
   // A figure's caption ends its figcaption; its own rules stand under its number at the end of the page.
@@ -2383,12 +2386,12 @@ function row(overrides = {}) {
     '<svg class="stats-units-svg is-wide" viewBox="0 0 11 23" width="11" height="23" role="img" aria-label="x" focusable="false"><path class="stats-unit stats-part-human" d="M0 0h5v5h-5zm6 0h5v5h-5zM0 6h5v5h-5z" data-hl="a" data-tip="a"/><path class="stats-unit stats-part-not-reviewed is-open" d="M0.5 18.5h4v4h-4zm6 0h4v4h-4z" data-hl="b" data-tip="b"/></svg>');
   // The flags by kind and the match read from the paper again are the supplement's Quality tables (round 14).
   const qualitySupplement = element("statsCharts").innerHTML.match(/<section class="stats-supp-group" aria-labelledby="statsSupplementQualityTitle">[\s\S]*?(?=<section class="stats-supp-group"|$)/)?.[0] || "";
-  assert.match(qualitySupplement, /<span class="stats-supp-number">Table S1<\/span> <span class="stats-supp-name">Human review by kind<\/span>/);
+  assert.match(qualitySupplement, /<a class="stats-supp-number" href="#[^"]+">Table S1<\/a> <span class="stats-supp-name">Human review by kind<\/span>/);
   assert.match(metricPlain(qualitySupplement), /Value missing<small>The paper prints a value the entry lacked, most often the kcat; CatLog has since read 53 of the 58 values the reviewers named\.<\/small>/);
   assert.deepEqual([...qualitySupplement.matchAll(/data-stat-key="kind_([^"]+)" data-count="(\d+)"/g)].map((match) => [match[1], Number(match[2])]),
     [["could not find the value", 153], ["organism name", 13], ["DOI", 5], ["substrate name", 3], ["duplicate", 2], ["paper evidence mismatch", 1]]);
   // The match without the kinds of the other values (an agreement without them says only the wrong values found).
-  assert.match(qualitySupplement, /<span class="stats-supp-number">Table S2<\/span> <span class="stats-supp-name">Approved values read from the paper again<\/span>/);
+  assert.match(qualitySupplement, /<a class="stats-supp-number" href="#[^"]+">Table S2<\/a> <span class="stats-supp-name">Approved values read from the paper again<\/span>/);
   assert.deepEqual([...qualitySupplement.slice(qualitySupplement.indexOf("Table S2")).matchAll(/data-stat-key="(same|other|catlog_wrong)" data-count="(\d+)"/g)].map((match) => [match[1], Number(match[2])]),
     [["same", 3625], ["other", 449], ["catlog_wrong", 0]]);
   assert.match(qualitySupplement, /The 4,074 values reviewers approved on 311 papers CatLog has since read, as CatLog has them now\. Comparing them found 68 wrong labels and 1 missed value in CatLog, all fixed since\./);
@@ -2515,7 +2518,7 @@ function row(overrides = {}) {
   });
   // Compared with databases: the main part, then the supplement's group of the same name (round 14).
   const databaseSection = () => (element("statsCharts").innerHTML.match(/<section class="stats-part" id="stats-databases" data-part="databases"[\s\S]*?<\/div><\/section>(?=<section class="stats-part[ "]|<details|$)/)?.[0] || "")
-    + (element("statsCharts").innerHTML.match(/<section class="stats-supp-group" aria-labelledby="statsSupplementDatabasesTitle">[\s\S]*?<\/details><\/div><\/section>/)?.[0] || "");
+    + (element("statsCharts").innerHTML.match(/<section class="stats-supp-group" aria-labelledby="statsSupplementDatabasesTitle">[\s\S]*?<\/div><\/section>(?=<section class="stats-supp-group"|<\/div><\/details>)/)?.[0] || "");
   const figureHtml = (key) => element("statsCharts").innerHTML.match(new RegExp(`<section class="stats-section[^"]*" aria-labelledby="[^"]+" data-figure="${key}">[\\s\\S]*?</figure>[\\s\\S]*?</section>`))?.[0] || "";
   const plain = (html) => html.replace(/<[^>]*>/g, "").replace(/&#39;/g, "'").replace(/&amp;/g, "&").replace(/\s+/g, " ").trim();
   const earlierCounts = { records: 2881, items: 5059, other_items: 889, before_listed: [2601, 3635], values: {
@@ -2675,7 +2678,7 @@ function row(overrides = {}) {
   // The part: each value compared with databases and the corrections by cause, each across the row; then, in the
   // supplement, each database, the values it pairs, the causes by database, the earlier corrections and replaced entries.
   assert.deepEqual([...databaseSection().matchAll(/<section class="stats-section stats-figure-section( stats-wide)?[^"]*" aria-labelledby="[^"]+" data-figure="([^"]+)">/g)]
-    .map((match) => `${match[2]}${match[1] ? " wide" : ""}`), ["db-values wide", "db-found wide", "db-sources", "earlier-corrections", "replaced", "db-paired", "db-causes"]);
+    .map((match) => `${match[2]}${match[1] ? " wide" : ""}`), ["db-values wide", "db-found wide", "db-sources", "earlier-corrections", "replaced", "db-paired", "db-causes wide"]);
   assert.match(figures, /<strong>Table S\d+\.<\/strong> Paired: a database lists a number for the same measurement\./);
   assert.doesNotMatch(plain(databaseSection()), /\bv[12]\b|\bfive\b|independent|blind|claim/i);
   // A part-7 link never names an address key Browse does not match (it would open a wider list than its count).
@@ -2860,7 +2863,7 @@ function row(overrides = {}) {
     values: { kcat: { rounding: 1, different: 2, magnitude: 0, added: 1 } } } } };
   api.renderStats();
   assert.match(element("statsCharts").innerHTML, new RegExp(`on the ${correctedNow} records? accepted after a correction, by kind\\.`));
-  assert.match(element("statsCharts").innerHTML, /<details class="stats-supp-item" id="stats-s2" data-supp="earlier-corrections">/, "In the supplement, on its own line");
+  assert.match(element("statsCharts").innerHTML, /<div class="stats-supp-item(?: stats-wide)?" id="stats-s2" data-supp="earlier-corrections">/, "In the supplement");
   runtimeManifest.summary.overview = { ...overview, quality: { as_of: "2026-10-12", earlier_corrections: { records: correctedNow + 1,
     values: { kcat: { rounding: 1, different: 2, magnitude: 0, added: 1 } } } } };
   api.renderStats();
@@ -2952,12 +2955,12 @@ function row(overrides = {}) {
     assert.match(more, /data-stat-key="ec_1" data-count="4"[\s\S]*?<span class="stats-chart-value has-parts"><span class="stats-value-part" data-sizer="0&#10;Records"><span>4<\/span><\/span><span class="stats-value-part stats-accepted-count" data-sizer="0&#10;Accepted"><span>2<\/span><\/span><span class="stats-value-part stats-v2-count" data-sizer="0&#10;Read from&#10;the paper" data-sizer-narrow="0&#10;From&#10;paper"><span>2<\/span><\/span><\/span>/);
     assert.match(more, /stats-part-catlog-mark is-start is-end" style="left:0%;width:[\d.]+%" data-tip="EC 1: 2 read from the paper \(50\.0%\)"/);
     assert.match(more, /<i class="stats-swatch stats-part-catlog-mark" aria-hidden="true"><\/i><span>Read from the paper<\/span><\/li>/);
-    assert.match(more, /<h4 id="statsV2OrganismsTitle" class="stats-supp-title"><span class="stats-supp-number">Table S4<\/span> <span class="stats-supp-name">Most common organisms among records read from the paper<\/span><\/h4>[\s\S]*?<th scope="col" class="stats-num">Records<\/th>[\s\S]*?#browse\?source=paper&amp;organism=Homo\+sapiens"><i>Homo sapiens<\/i>[\s\S]*?100\.0%/);
+    assert.match(more, /<h4 id="statsV2OrganismsTitle" class="stats-supp-title"><a class="stats-supp-number" href="#[^"]+">Table S4<\/a> <span class="stats-supp-name">Most common organisms among records read from the paper<\/span><\/h4>[\s\S]*?<th scope="col" class="stats-num">Records<\/th>[\s\S]*?#browse\?source=paper&amp;organism=Homo\+sapiens"><i>Homo sapiens<\/i>[\s\S]*?100\.0%/);
     assert.match(more, /#browse\?source=paper&amp;ec=1\.1\.1\.1"><span class="stats-ec-number">1\.1\.1\.1<\/span> alcohol dehydrogenase/);
     // An EC number in a table carries no class colour (the bars beside it wear other meanings).
     assert.match(more, /<span class="stats-name"><span><a class="stats-link" href="[^"]*#browse\?source=paper&amp;ec=1\.1\.1\.1">/);
     // Values read from each paper: rows from the first bin to the last one with papers; shares of the papers CatLog read.
-    assert.match(more, /<h4 id="statsPerPaperTitle" class="stats-supp-title"><span class="stats-supp-number">Figure S2<\/span> <span class="stats-supp-name">Values per paper<\/span><\/h4>/);
+    assert.match(more, /<h4 id="statsPerPaperTitle" class="stats-supp-title"><a class="stats-supp-number" href="#[^"]+">Figure S2<\/a> <span class="stats-supp-name">Values per paper<\/span><\/h4>/);
     assert.match(more, /<strong>Figure S2\.<\/strong> The 1 paper CatLog has read, by how many values each gave\./);
     assert.doesNotMatch(more.replace(/<[^>]*>/g, " "), /\bv[12]\b|Entries/, "CatLog is the one name");
     assert.deepEqual([...more.matchAll(/data-row="(values_\d+)" data-count="(\d+)"/g)].map((match) => `${match[1]}:${match[2]}`), ["values_1:0", "values_2:1"]);
@@ -2971,7 +2974,7 @@ function row(overrides = {}) {
     assert.match(more, /data-tip="2–4 values: 1 paper \(100\.0%\)"/);
     assert.doesNotMatch(more, /\b1 values: /);
     // Values by enzyme class: a ridge per class, its median dot and 10–90% line, a link to the class in Browse.
-    assert.match(more, /<h4 id="statsClassValuesTitle" class="stats-supp-title"><span class="stats-supp-number">Figure S3<\/span> <span class="stats-supp-name">Values by enzyme class<\/span><\/h4>/);
+    assert.match(more, /<h4 id="statsClassValuesTitle" class="stats-supp-title"><a class="stats-supp-number" href="#[^"]+">Figure S3<\/a> <span class="stats-supp-name">Values by enzyme class<\/span><\/h4>/);
     assert.equal((more.match(/<li class="stats-ridge-row[ "]/g) || []).length, 2);
     // A class with fewer than 300 values is drawn lighter and dashed (is-few); its rules under How these numbers are
     // counted say so, with the hatched stub where an end bin holds values, the bins and the end-bin rule (round 14: one
@@ -3494,29 +3497,48 @@ function row(overrides = {}) {
     api.renderStats();
   }
 
-  // A Stats address opens what it names: a part, a supplement item (opened, its summary focused), or the part or item an
-  // older address names (#stats-biology: What is in the catalog; #stats-cautions: the Cautions table).
+  // A Stats address opens what it names: a part, a supplement item (the supplement opened, the item's heading focused),
+  // the supplement itself (opened, its summary focused), or the part or item an older address names (#stats-biology: What
+  // is in the catalog; #stats-cautions: the Cautions figure; round 17: an address of the live round 16b supplement that no
+  // item has now, #stats-table-s4, opens the item it named then, by its key).
   {
     const previousGet = document.getElementById;
     const previousQuery = document.querySelector;
     const summary = { tagName: "SUMMARY" };
-    const item = { id: "stats-table-s7", tagName: "DETAILS", open: false, classList: { contains: (name) => name === "stats-supp-item" },
-      querySelector: (selector) => (selector === "summary" ? summary : null), parentElement: { id: "statsView" } };
+    const heading = { tagName: "H4" };
+    const all = { tagName: "DETAILS", open: false, classList: { contains: (name) => name === "stats-supp-all" }, parentElement: null };
+    const supplement = { id: "stats-supplement", tagName: "SECTION", classList: { contains: (name) => name === "stats-supp" },
+      querySelector: (selector) => (selector === ".stats-supp-all" ? all : selector === ".stats-supp-all > summary" ? summary : null), parentElement: { id: "statsView" } };
+    all.parentElement = supplement;
+    const item = { id: "stats-s7", tagName: "DIV", classList: { contains: (name) => name === "stats-supp-item" },
+      querySelector: (selector) => (selector === ".stats-supp-title" ? heading : null), parentElement: all };
+    const organisms = { id: "stats-s5", tagName: "DIV", classList: { contains: (name) => name === "stats-supp-item" }, querySelector: () => null, parentElement: all };
     const inside = { id: "x", tagName: "SECTION", parentElement: item };
     const part = { id: "stats-catalog", tagName: "SECTION", classList: { contains: () => false }, querySelector: () => ({ tagName: "H2" }), parentElement: { id: "statsView" } };
-    const ids = { "stats-table-s7": item, "stats-catalog": part, "statsCautionsTitle": inside };
+    const ids = { "stats-s7": item, "stats-s5": organisms, "stats-catalog": part, "stats-supplement": supplement, "statsCautionsTitle": inside };
     document.getElementById = (id) => ids[id] || null;
-    document.querySelector = (selector) => (selector === '.stats-supp-item[data-supp="cautions"]' ? item : null);
+    document.querySelector = (selector) => (selector === '.stats-supp-item[data-supp="cautions"]' ? item
+      : selector === '.stats-supp-item[data-supp="organisms"]' ? organisms : null);
     try {
-      assert.equal(api.statsAddressTarget("#stats-table-s7"), item);
-      assert.equal(item.open, true, "A supplement item's address opens it");
-      assert.equal(api.statsAddressHeading(item), summary);
-      item.open = false;
+      assert.equal(api.statsAddressTarget("#stats-s7"), item);
+      assert.equal(all.open, true, "A supplement item's address opens the supplement");
+      assert.equal(api.statsAddressHeading(item), heading);
+      all.open = false;
+      assert.equal(api.statsAddressTarget("#stats-supplement"), supplement);
+      assert.equal(all.open, true, "The supplement's own address opens it");
+      assert.equal(api.statsAddressHeading(supplement), summary);
+      all.open = false;
       assert.equal(api.statsAddressTarget("#stats-cautions"), item);
-      assert.equal(item.open, true);
+      assert.equal(all.open, true);
+      all.open = false;
+      // the old Tables S4 and S6 (the most common organisms, all records and read from the paper) are one figure now
+      assert.equal(api.statsAddressTarget("#stats-table-s4"), organisms);
+      assert.equal(api.statsAddressTarget("#stats-table-s6"), organisms);
+      assert.equal(all.open, true);
       assert.equal(api.statsAddressTarget("#stats-biology"), part);
       assert.equal(api.statsAddressHeading(part).tagName, "H2");
       assert.equal(api.statsAddressTarget("#stats-nothing"), null);
+      assert.equal(api.statsAddressTarget("#stats-table-s99"), null);
       assert.equal(api.statsAddressTarget("#guide-units"), null);
     } finally {
       document.getElementById = previousGet;

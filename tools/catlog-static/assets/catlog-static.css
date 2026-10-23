@@ -1220,27 +1220,27 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-muted { color:var(--muted) }
 .stats-num { text-align:right; white-space:nowrap }
 .stats-note { margin:12px 0 0; max-width:80ch; color:var(--text-2); font-size:var(--fs-13); line-height:var(--lh-13) }
-/* Supplementary figures and tables (round 14): groups named as the main parts, each a hairline list with one closed line
-   per item ("+", its number in a muted column, its title in accent); an opened item shows its figure under its line,
-   a figure drawn half-width in the main parts kept to 760px. */
-.stats-supp-group + .stats-supp-group { margin-top:var(--sp-6) }
-.stats-supp-group-title { margin:0 0 var(--sp-2); color:var(--text-2); font-size:var(--fs-14); font-weight:600; line-height:var(--lh-14) }
-.stats-supp-group > .stats-part-lead { margin:0 0 var(--sp-3) }
-.stats-supp-list { border-top:1px solid var(--line) }
-.stats-supp-item { border-bottom:1px solid var(--line-soft) }
-.stats-supp-item > summary { display:flex; align-items:baseline; gap:8px; min-height:40px; padding:10px 0; cursor:pointer; list-style:none }
-.stats-supp-item > summary::-webkit-details-marker { display:none }
-.stats-supp-item > summary::before { content:"+"; content:"+" / ""; flex:0 0 12px; color:var(--muted); font-weight:600 }
-.stats-supp-item[open] > summary::before { content:"\2212"; content:"\2212" / "" }
-.stats-supp-item > summary:focus-visible { outline:2px solid var(--accent); outline-offset:2px; border-radius:2px }
-.stats-supp-title { display:flex; flex:1; min-width:0; gap:8px; margin:0; font-size:var(--fs-14); font-weight:400; line-height:var(--lh-14) }
-.stats-supp-number { flex:0 0 6.5em; color:var(--muted); white-space:nowrap }
-.stats-supp-name { min-width:0; color:var(--accent) }
-.stats-supp-item > summary:hover .stats-supp-name { text-decoration:underline; text-underline-offset:3px }
-.stats-supp-item[open] > summary .stats-supp-name { color:var(--text); font-weight:600 }
+/* Supplementary figures and tables (round 14; round 17: one click opens them all): one disclosure whose summary is the
+   part's heading line (its number S, its title, then a muted + and "Show all 22 figures" at the line's end, "Hide" with
+   a − when open); inside, groups named as the main parts, each a grid of open items as the main parts lay theirs out, an
+   item's heading its number (a muted link to its own address) and its title over its figure. */
+.stats-supp-all > summary { display:flex; flex-wrap:wrap; align-items:baseline; justify-content:space-between; gap:4px 16px; margin:0 0 var(--sp-5); border-bottom:1px solid var(--line); padding-bottom:var(--sp-3); cursor:pointer; list-style:none }
+.stats-supp-all > summary::-webkit-details-marker { display:none }
+.stats-supp-all > summary > .stats-part-title { margin:0; border:0; padding:0 }
+.stats-supp-all > summary:focus-visible { outline:2px solid var(--accent); outline-offset:4px; border-radius:2px }
+.stats-supp-toggle { display:inline-flex; align-items:baseline; min-height:28px; padding-block:4px; color:var(--accent); font-size:var(--fs-14); line-height:var(--lh-14); white-space:nowrap }
+.stats-supp-toggle::before { content:"+"; content:"+" / ""; display:inline-block; width:16px; color:var(--muted); font-weight:600 }
+.stats-supp-all[open] > summary .stats-supp-toggle::before { content:"\2212"; content:"\2212" / "" }
+.stats-supp-all > summary:hover .stats-supp-toggle > span { text-decoration:underline; text-underline-offset:3px }
+.stats-supp-all[open] .stats-supp-show, .stats-supp-all:not([open]) .stats-supp-hide { display:none }
+.stats-supp-group + .stats-supp-group { margin-top:var(--sp-7) }
+.stats-supp-group-title { margin:0 0 var(--sp-4); border-bottom:1px solid var(--line-soft); padding-bottom:var(--sp-2); color:var(--text-2); font-size:var(--fs-14); font-weight:600; line-height:var(--lh-14) }
+.stats-supp-group > .stats-part-lead { margin:0 0 var(--sp-4) }
+.stats-supp-title { display:flex; flex-wrap:wrap; align-items:baseline; gap:0 8px; margin:0 0 12px; font-size:var(--fs-16); font-weight:600; line-height:var(--lh-16) }
+.stats-supp-number { flex:0 0 auto; color:var(--muted); font-size:var(--fs-14); font-weight:400; line-height:var(--lh-14); text-decoration:none; white-space:nowrap }
+.stats-supp-number:hover, .stats-supp-number:focus-visible { color:var(--text-2); text-decoration:underline; text-underline-offset:3px }
+.stats-supp-name { min-width:0 }
 /* (no indent: Values by enzyme class keeps the x of Value ranges' shared log axis, so 10⁰ stands at one x in both) */
-.stats-supp-body { padding:var(--sp-2) 0 var(--sp-6) }
-.stats-supp-body > .stats-section:not(.stats-wide) { max-width:760px }
 /* Single substitutions: a 20 x 20 grid of grey cells, shaded as the kcat against Km map, one-letter residues along the
    top (new) and left (wild type); beside it the facts and the commonest substitutions (under it below 1024px). */
 .stats-subs { display:grid; grid-template-columns:minmax(0,440px) minmax(240px,1fr); gap:24px 48px; align-items:start }
@@ -2034,7 +2034,13 @@ a.stats-total-value:focus-visible { outline:0 }
   .stats-total { padding:var(--sp-2) }
   .stats-part-title { font-size:var(--fs-18); line-height:var(--lh-18) }
   .stats-part-grid { gap:40px 0 }
-  .stats-supp-number { flex-basis:5.75em }
+  /* Checks on the values: each check stacked, its name, then what it covered and what it found under it (fix pass after
+     round 16b: three narrow columns wrapped AI audits to five or six lines); the errors table keeps its columns. */
+  .stats-checks-table :is(th, td), .stats-checks-table th[scope="row"], .stats-checks-table .stats-check-covered { padding-right:8px; white-space:normal }
+  .stats-checks-table:not(.stats-errors-table) thead { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap }
+  .stats-checks-table:not(.stats-errors-table) tr { display:grid; gap:2px; padding:10px 0; border-bottom:1px solid var(--line-soft) }
+  .stats-checks-table:not(.stats-errors-table) tr > * { display:block; padding:0; border:0 }
+  .stats-checks-table:not(.stats-errors-table) .stats-check-covered { color:var(--muted); font-size:var(--fs-13); line-height:var(--lh-13) }
   /* Phones: the class number only, so the curves keep their width (the names are in the supplement and the tooltip line); the
      same in the class medians beside kcat against Km, so their numbers keep their columns. */
   .stats-ridges { --ridge-label:44px }
@@ -2077,8 +2083,8 @@ a.stats-total-value:focus-visible { outline:0 }
   /* How these numbers are counted prints open (the Data ID and the counting rules); the script opens it before printing,
      this where a browser prints without telling the page. */
   .stats-method::details-content { content-visibility:visible; display:block }
-  .stats-supp-item::details-content { content-visibility:visible; display:block }
-  .stats-supp-item > summary::before { content:none }
+  .stats-supp-all::details-content { content-visibility:visible; display:block }
+  .stats-supp-toggle { display:none }
   .stats-part-title { break-after:avoid }
   .stats-ridge-panels { grid-template-columns:repeat(3,minmax(0,1fr)); max-width:none }
   .stats-ridges { --ridge-label:44px }
