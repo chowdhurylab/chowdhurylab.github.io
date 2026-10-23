@@ -1519,6 +1519,11 @@ a.stats-total-value:focus-visible { outline:0 }
     :is(.stats-axis-ticks > span, .stats-refs > i):first-child:nth-last-child(4) ~ :not(:last-child) { visibility:hidden }
   }
 }
+/* An axis whose labels would still touch keeps only its end labels and their gridlines (statsFitAxes measures them in the
+   viewer's font: two panels side by side on a tablet leave a bar column of 80-90px). (Doubled class: it outranks the
+   thinning above, which hides the last of six ticks.) */
+.stats-chart.stats-chart[data-axis-ends] :is(.stats-axis-ticks > span, .stats-refs > i):not(:first-child, :last-child) { visibility:hidden }
+.stats-chart.stats-chart[data-axis-ends] :is(.stats-axis-ticks > span, .stats-refs > i):last-child { visibility:visible }
 .stats-ec-name { color:var(--text-2) }
 .stats-ec-number { white-space:nowrap }
 /* A muted line under a bar (Each database against the values read from its papers: the values from papers it does not
