@@ -586,13 +586,13 @@ passes WCAG AA (4.5:1; 3:1 for large numbers and for marks): where a colour is t
 (cyan, mint, salmon, tan), the text takes a darker shade of the same hue and the mark a 1px ring of it, and the palette
 colour itself goes on the mark beside the words.
 
-| BPG colour | Meaning (one per colour) | Where it shows | Text / ring (AA on white) |
+| BPG colour | Meaning (one per colour) | Where it shows | Text / ring (AA on white; a word's contrast on white / the hovered row #f1f6f4 / the selected row #eef1f0) |
 |---|---|---|---|
-| navy #3C5488 | Accepted | the word Accepted (table, record, chips, sidebar, Guide), Accepted's count (counts band, Stats band), Stats bars and donut | itself, 7.5:1 (6.6:1 on the selected row) |
-| salmon #F39B7F | Not confirmed | the word Not confirmed in its darker shade (table, record, chips, sidebar, Guide), Stats bars and donut (ringed) | word #975B4C, 5.4:1 (4.7:1 on the selected row); ring #c4664a, 3.9:1 |
-| slate #8491B4 | Not checked (both kinds, Unverified and Not reviewed: one word, one colour; the record names which) | status dot, chips; in Stats' bars, donut and swatches slate hatching on white (135° lines, 1.5px every 4px, a slate outline), never a flat fill: slate at 60% (#B5BDD2) is navy at 60% (#8A98B8) a step lighter in the same hue; the word Not checked in its darker, greyer shade (table, record, chips, sidebar, Guide) | word #60687F, 5.6:1 (4.9:1 on the selected row; CIEDE2000 11.2 from Accepted's navy) |
-| deep red #DC0000 | Disputed | the word Disputed (table, record, chips, sidebar, Guide), Stats bars | itself, 5.2:1 (4.6:1 on the selected row) |
-| cyan #4DBBD5 | CatLog's reading of the paper: Read from the paper; Not in the databases (a value only that reading has); Added, the source had none (an earlier version read it from the paper) | Read from the paper's count, its words wherever the source is named (the table's and the record's "from paper", its chip, its Source option, the Guide; round 17: no square), Stats' from-paper marks (Values per paper, Enzyme classes' stripe, From paper counts, the from-paper tables, variants against wild type, assay temperature and pH, the wild-type analyses of round 16, the Checks meters of the AI checks, CatLog's dots and line in CatLog and BRENDA by publication year, the line in --src-paper-line #278CA4 so it keeps 3:1 on the grey band), Not in the databases' square and bars (a database's own "not listed" kinds as cyan hatching, a light cyan and the full fill), the AI agents on Team | text #207286, 5.5:1; ring #2DA1BD, 3.0:1 |
+| navy #3C5488 | Accepted | the word Accepted (table, record, chips, sidebar, Guide), Accepted's count (counts band, Stats band), Stats bars and donut | word itself, 7.5 / 6.8 / 6.6:1 (--st-accepted-ink) |
+| salmon #F39B7F | Not confirmed | the word Not confirmed in its darker shade (table, record, chips, sidebar, Guide), Stats bars and donut (ringed) | word #975B4C (terracotta, --st-pending-ink: salmon's darker, quieter shade, not a BPG colour itself), 5.4 / 4.9 / 4.7:1, CIEDE2000 16.9 from Disputed's deep red and 11.2 from Different number's brown (fine while brown's words stay ink beside its square: never brown words); ring #c4664a, 3.9:1 |
+| slate #8491B4 | Not checked (both kinds, Unverified and Not reviewed: one word, one colour; the record names which) | the word Not checked in its darker, greyer shade (table, record, chips, sidebar, Guide; the record's "Not checked (Not reviewed)" too: no tan, round 17); in Stats' bars, donut and swatches slate hatching on white (135° lines, 1.5px every 4px, a slate outline), never a flat fill: slate at 60% (#B5BDD2) is navy at 60% (#8A98B8) a step lighter in the same hue | word #60687F (slate grey, --st-unverified-ink: slate's darker, greyer shade, not a BPG colour itself), 5.5 / 5.1 / 4.9:1, CIEDE2000 11.2 from Accepted's navy; 14.0 from the muted #5c6865 of the "not re-read" line under it (they differ in hue and weight: 13px/500 over 12px/400) |
+| deep red #DC0000 | Disputed | the word Disputed (table, record, chips, sidebar, Guide), Stats bars | word itself, 5.2 / 4.8 / 4.6:1 (--st-disputed-ink) |
+| cyan #4DBBD5 | CatLog's reading of the paper: Read from the paper; Not in the databases (a value only that reading has); Added, the source had none (an earlier version read it from the paper) | Read from the paper's count, its words wherever the source is named (the table's and the record's "from paper", its chip, its Source option, the Guide; round 17: no square), Stats' from-paper marks (Values per paper, Enzyme classes' stripe, From paper counts, the from-paper tables, variants against wild type, assay temperature and pH, the wild-type analyses of round 16, the Checks meters of the AI checks, CatLog's dots and line in CatLog and BRENDA by publication year, the line in --src-paper-line #278CA4 so it keeps 3:1 on the grey band), Not in the databases' square and bars (a database's own "not listed" kinds as cyan hatching, a light cyan and the full fill), the AI agents on Team | text #207286, 5.5 / 5.0 / 4.8:1 ("from paper" at 12px/400, so it reads as a word, not a link); ring #2DA1BD, 3.0:1 |
 | green #00A087 | Agreement with a second source: Same number (a database lists the paper's number); human-checked (a human reviewer approved the values) | Same number's square, chip and bars; human-checked's tick, word and counts (Browse, record, Stats' Human review, its Checks meter) | text and tick #007664, 5.6:1 (4.7:1 on its 12% tint) |
 | mint #91D1C2 | The same number in another form: Same, other label (database); More digits or rounding (an earlier correction) | their squares, chips and bars | ring #45A48E, 3.0:1 (the words are ink) |
 | brown #7E6148 | Different number (database; an earlier correction's "a different number") | square, chip, bars | itself, 5.7:1 |
@@ -632,14 +632,17 @@ Table numbers share regular weight; enzyme names use medium weight. Reserve
 semibold for counts, section headings, and the selected record's main values. Numeric
 headers and values align right. Names wrap to two lines; the full name is on
 hover and in the record. A variant has its own line under the name (round 17; the user: the boxed code was hard to
-understand): "variant D102E" in plain 12/16px words, no box, "variant" muted and the mutation in --text-2, several
-mutations as the paper lists them and a long list cut with "…"; a signature that says what it is ("deletion mutant",
-"chimera 1", "truncated enzyme", "N-domain (...)": SELF_DESCRIBED_FORM) stands alone, and "variant, not specified"
-without one. Its title is "Variant D102E: Asp102 → Glu", the substitutions in words where every part is a clean
-one-letter substitution (a trailing name in brackets aside; 93% of variant records on 2026-10-22's snapshot); the
-record's header says the same for up to three substitutions, a longer list's words in the code's title. The line is
-never clipped with the name, which then keeps one line; wild type shows nothing; the downloads keep the bare
-signature. Records of one paper that read alike but differ in their assay carry a
+understand): "variant D102E" in plain 12/16px words, no box, "variant" muted and the mutation in --text-2 with tabular
+figures, several mutations as the paper lists them and a long list cut with "…"; a signature that says what it is
+("deletion mutant", "chimera 1", "R4 mutant (E37K/...)": SELF_DESCRIBED_FORM) stands alone unless it starts with a
+one-letter substitution ("L386Q/G417R/V482G (variant L9)" keeps "variant": 87 records on 2026-10-22's snapshot), and
+"variant, not specified" without one, muted whole. Its title is "Variant D102E: Asp102 → Glu", the substitutions in
+words where every part is a clean one-letter substitution (parts split at "/", ",", ";", "+" or a space; "*" read
+"stop"; one trailing name in brackets aside; 93% of variant records on 2026-10-22's snapshot); the record's header says
+"Variant D102E (Asp102 → Glu)" for up to three substitutions, a longer list's words in the mutation's title. The
+table writes "variant" lower case because it is a label under the name, not the start of a sentence; the record's
+header writes "Variant" because it starts a part of its "·" line, as "Wild type" does. The line is never clipped with
+the name, which then keeps one line; wild type shows nothing; the downloads keep the bare signature. Records of one paper that read alike but differ in their assay carry a
 short condition note (the export's condition_note, "+10 mM FBP") as a grey second
 line under the substrate, the substrate then taking one line; without a note,
 records with values on the page that share a paper, every column, temperature
@@ -818,8 +821,11 @@ they compare with the databases and how far they were checked come first, the co
   short locant ("4-", "1,2-", "3α-", "D-2-"), which stays with the part after it, nor before a last part of three
   characters or fewer ("TEM-1"): each part is an inline block (detailNameHtml), so a part too wide for the line beside
   the buttons goes under them whole; the text and a copy of it are the name as it is. "EC 1.4.1.20 · *Bacillus sphaericus* · Variant
-  `N145A`: Asn145 → Ala" (the binomial in italics, a strain or "sp." roman; up to three substitutions in words, muted,
-  where every part parses, a longer list's words in the code's title; "Wild type" or
+  N145A (Asn145 → Ala)" (the binomial in italics, a strain or "sp." roman; the mutation set as the table sets it, plain
+  --text-2 with tabular figures, not monospace (round 17); up to three substitutions in words, muted and in brackets
+  (a colon read as a new clause inside the "·" line), where every part parses, a longer list's words in the mutation's
+  title, "Variant ...: ...", as the table's; "Variant" kept with the first mutation by a no-break space, a list wrapping
+  after a "/" (<wbr>) or between words and each "Asn145 → Ala" kept whole; "Wild type" or
   "Variant, not specified"; nothing when the record does not say; an EC the
   paper does not print reads "EC 2.3.1.183 (from the databases; not in the
   paper)"); "Substrate: ..." (two lines at most; in full under Protein
@@ -1311,7 +1317,7 @@ minute what CatLog is, how to read a record and what each label means. Rules for
   CatRange paper's own title excepted), "Note that", rule-of-three padding or a definition with a colon in every
   sentence. Facts only; a number the Guide does not need (the checks' results, the share of matching values) is Stats'.
 - Visuals only where they are simpler than words: the four steps, the numbered record, the legend of labels and colours
-  and small tables of the cautions, units and database results. They reuse the page's own components (status dot, tags,
+  and small tables of the cautions, units and database results. They reuse the page's own components (status words, tags,
   values table, filter chips, Browse's .db-mark squares, the "!" and the tick), so their colours follow the tokens (the
   palette is the look's: never a hard-coded colour here).
 - The look is calm and editorial: hairlines between parts, no boxes round prose, no icons, no tinted washes, shadows or
@@ -1733,5 +1739,10 @@ paper's square (src-mark, Source's group dot while chosen) are gone, and with th
 status-compact step and the cards' tags-compact (fitCardTags) went too. Classes kept: state-badge, state-label,
 state-tags, state-tag, state-check, detail-status, detail-status-word, detail-status-checked, chip-state, enzyme-form,
 card-form; added: state-tag.source-paper, state-word, source-word, detail-status-source, form-word, mutation-words.
-The variant line (Type And Color) reads "variant E124Q" with its substitutions in words in its title (mutationWords).
+The variant line (Type And Color) reads "variant E124Q" with its substitutions in words in its title (mutationWords), and
+the record's header "Variant E124Q (Glu124 → Gln)" in the same plain type. The badge's accessible name says each source
+in full ("Accepted, Read from the paper", "Accepted, Not yet re-read, BRENDA, human-checked"). Stats' headline band lost
+Accepted's dot and Read from the paper's square too, so no page draws them. Colour on words can look like a link: none
+of these words is underlined or changes the pointer on its own (the row's pointer and the record's are the only ones),
+and "from paper" stays at 400.
 
