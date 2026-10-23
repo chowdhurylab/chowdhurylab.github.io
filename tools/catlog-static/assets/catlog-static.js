@@ -2047,8 +2047,11 @@
   // shows the name the Source filter, Stats and its own "?" box use.
   // A database named as the snapshot writes it reads as the page names it (STRENDA DB), and a difference the snapshot
   // calls "not yet resolved" reads "cause not yet known", Browse's words for Different number (the user, 2026-10-15).
+  // A snapshot's "this measurement's kcat and Km" (a kcat/Km line naming the databases that list the record's kcat and
+  // Km) is "this record's" on the site (round 17's words: a record, never a measurement).
   function databaseWords(text) {
-    return String(text).replace(/\bSTRENDA\b(?! DB)/g, "STRENDA DB").replace(/\bnot yet resolved\b/g, "cause not yet known");
+    return String(text).replace(/\bSTRENDA\b(?! DB)/g, "STRENDA DB").replace(/\bnot yet resolved\b/g, "cause not yet known")
+      .replace(/\bthis measurement(?=[’']s\b)/g, "this record");
   }
 
   function versionWords(text) {
@@ -15501,6 +15504,7 @@
       rowComparator,
       cooperativeStableSort,
       orderedRecordsFor,
+      databaseWords,
       currentSort,
       setSort,
       sortByColumn,

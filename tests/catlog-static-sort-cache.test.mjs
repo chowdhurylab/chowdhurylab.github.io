@@ -5729,6 +5729,9 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.match(plainMetricNames(element("detailContent").innerHTML), /<dt>Human review<\/dt><dd>A human reviewer checked the same Km in CatLog’s review of the earlier version’s records\./);
   api.renderDetail(row({ record_key: "hc-note-2", measurement_key: "hc-note-2" }), {});
   assert.match(plainMetricNames(element("detailContent").innerHTML), /<dd>A human reviewer approved the same kcat and Km for this paper in the review of the earlier version’s records; kcat\/Km was not reviewed\.<\/dd>/);
+  // A database line's "this measurement's kcat and Km" is this record's on the site (round 17's words).
+  assert.equal(api.databaseWords("No compared database lists this printed kcat/Km for this paper. BRENDA and OED list this measurement's kcat and Km."),
+    "No compared database lists this printed kcat/Km for this paper. BRENDA and OED list this record's kcat and Km.");
   // The other shapes a note could take say the same.
   assert.deepEqual(["The CatLog v1 entry has no Km.", "a CatLog v1 entry", "An CatLog v1 entry", "CatLog v2 entries agree", "A CatLog v2 entry", "CatLog v2 reads",
     "when reviewing CatLog's earlier entries."].map(api.versionWords),
