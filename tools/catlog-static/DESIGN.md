@@ -279,7 +279,7 @@ enough to keep the group's options in view, never taking its title under the sti
 point and what the user might want"): in view, the filters most visitors use, each with a short label and its count:
 Enzyme, organism, substrate (labelled fields, Enzyme first, then EC number, Organism and Substrate; the EC field's
 example "e.g. 3 or 1.1.1" and its title say that a class, a subclass or a full number lists every enzyme under it; the
-only group without a "?": its fields are labelled and a "?" would wrap its long title at 256px), Measurement type (Has kcat, Has Km, Has kcat/Km; its "?" says that ticking several shows records with all of them), Review result (Accepted, Not
+only group without a "?": its fields are labelled and a "?" would wrap its long title at 256px), Parameter (round 17; Measurement type until then: Has kcat, Has Km, Has kcat/Km; its "?" says that ticking several shows records with all of them), Review result (Accepted, Not
 confirmed, Not checked and Disputed, each its word in its colour's text shade (round 17: no dot), the boxes neutral as
 everywhere in the sidebar (round 15 polish: the ticks had worn the status colours; Compared with databases and Cautions
 keep their square or "!" between box and words, in the square's 10px slot, so those groups' words start at one edge); "Only
