@@ -1216,24 +1216,17 @@ Database attribution belongs in Guide and dataset notes, not the Browse footer.
 
 One page from the snapshot manifest (never the record index) in numbered parts, each with one plain heading:
 1 At a glance (the headline band, the page's focal point: a plain white card with a 1px --line hairline, no glow, halo, wash or motion (round 14); 40px key numbers in the counts band's meaning colours (28px on phones, growing with the window from 721px to 30px at 1023px and on to 40px at 1200px, never smaller on a wider window, so a wide font keeps a six-digit count inside its column), then 20px scope counts),
-2 Quality (round 14: the review's 99.9% is At a glance's alone, with one line as the other notes have, "no value
-disputed, 2,601 of 2,604" (fix pass after round 16b: the gloss and the entries without a paper had made a three- to
-seven-line paragraph of a headline cell; the item's title says it in full, and Quality's lead says the rest; an older
-snapshot: "no value disputed, 2,767 of 2,770; 153 (5.5%) not found in the paper"); each item's label and number are two
-rows of the band (a subgrid), so the numbers of a row start at one height whatever label wraps); here no second big number and no dashboard cards: Human
-review in one sentence over a small table of its verdicts, then Checks on the values as a table of the checks, each row
-with what it covered and what it found (no meter since the fix pass after round 16b: the shares are in the words; on a
-phone each check is stacked, its name over the two), then Errors found in CatLog (round 16b), the three tables at one
-measure (640px at most); the review's flags by kind and the reviewers' approved values read from the paper again are the supplement's
-Quality tables), 3 What is in the catalog (the review results as one 100% bar over their legend
-table (fix pass after round 16b; a donut until then), records by main source with a Records | Share switch, then CatLog and BRENDA by publication year (round 16, when
-the manifest has summary.publication_years), then the enzyme classes with accepted and read-from-the-paper records), 4 Values (value ranges on one log axis per parameter; then, from the records read from
-the paper, Between papers (round 16) after the ranges, kcat against Km as a density map with lines of equal kcat/Km, the
-diffusion limit and each class's median, Substrate specificity (round 16), and variants against their wild type of the
-same paper, enzyme, substrate, pH and temperature), 5 Compared with databases
-(from the manifest's database comparison: a two-sentence lead that says once that a different number can mean a different
-measurement, and (round 16b) how the corrections were found and that they are a lower bound, values against the
-databases, corrections by cause), then S Supplementary figures and tables (round 14):
+2 Quality (round 17: three numbered figures, no table: Human review as one square per record people checked, Checks on
+the values as a bar and an interval, Errors found in CatLog as bars; "Round 17 Stats" below), 3 What is in the catalog
+(Review result, its 100% bar with its labels under it, beside Records by main source with a Records | Share switch, then
+the enzyme classes with accepted and read-from-the-paper records), 4 Values (value ranges on one log axis per
+parameter; then, from the records read from the paper, Between papers with its bars of pairs within 2-fold and 10-fold,
+all and at the same temperature and pH, kcat against Km as a density map with lines of equal kcat/Km, the diffusion
+limit and each class's median, its class medians a dot plot beside it, Substrate specificity with its median range by
+substrates tested as bars, and variants against their wild type of the same paper, enzyme, substrate, pH and
+temperature), 5 Compared with databases (from the manifest's database comparison: a one-sentence lead, values against
+the databases with each share on its bar, corrections by cause and how found), 6 CatLog and BRENDA by publication year
+(round 17: the last main part), then S Supplementary figures and tables (round 14):
 every other figure and table, numbered apart (Figure S1, Table S1), in five groups (Quality; What is in the catalog;
 Organisms, enzymes and variants, called Biology until round 14's polish; Values; Compared with databases), each item one
 closed line (a details whose summary holds its number and title) that opens its figure, with its own address
@@ -1726,23 +1719,75 @@ Each new field is optional; a snapshot without it (Oct 18's) reads as before.
 - The review of records read from the paper (review.v2) says "none of their N values was disputed" when catlog-v2 counts
   the values (review.v2.values), else "no value was disputed".
 
-## Round 17: words, not shapes (2026-10-23)
-The user: "The colour and shapes for Accepted and from paper: make them more eye-soothing and better, not AI-ish or low
-quality"; "the mutation in the enzyme entries is hard to understand". Browse's review result, its source, the sidebar's
-options, the chips, the counts band's labels, the record's status line and the Guide's legend name a result and the
-source in words only: the result in its colour's text shade (--st-accepted-ink navy, --st-pending-ink #975B4C,
---st-unverified-ink #60687F, --st-disputed-ink deep red), "from paper" and Read from the paper in --src-paper-ink, the
-other tags muted. human-checked is the green check right after the result everywhere (the table, cards, the record
-"Accepted ✓ human-checked · from paper"); the Guide's legend keeps the "✓ human-checked" tag and says where it shows. The
-dot (state-label::before, state-mark, chip-state::before, detail-status::before, summary-accepted's) and Read from the
-paper's square (src-mark, Source's group dot while chosen) are gone, and with the check always shown the table's
-status-compact step and the cards' tags-compact (fitCardTags) went too. Classes kept: state-badge, state-label,
-state-tags, state-tag, state-check, detail-status, detail-status-word, detail-status-checked, chip-state, enzyme-form,
-card-form; added: state-tag.source-paper, state-word, source-word, detail-status-source, form-word, mutation-words.
-The variant line (Type And Color) reads "variant E124Q" with its substitutions in words in its title (mutationWords), and
-the record's header "Variant E124Q (Glu124 → Gln)" in the same plain type. The badge's accessible name says each source
-in full ("Accepted, Read from the paper", "Accepted, Not yet re-read, BRENDA, human-checked"). Stats' headline band lost
-Accepted's dot and Read from the paper's square too, so no page draws them. Colour on words can look like a link: none
-of these words is underlined or changes the pointer on its own (the row's pointer and the record's are the only ones),
-and "from paper" stays at 400.
+## Round 17 Stats: figures first, less writing (2026-10-23)
+
+The user: "After the first box it should be the quality thing, with figures to understand it, not all those tables ...
+the CatLog and BRENDA plot should come later ... still too much writing." Brief: catlog-v2
+tools/site_patches/20261023-site-round17-brief.md, section 5.
+- Order: At a glance, Quality, What is in the catalog, Values, Compared with databases, CatLog and BRENDA by publication
+  year (its own part, key `years`, #stats-years, its figure headed "Values per publication year"), the supplement.
+  Quality's figures are numbered (Figures 1-3), so the rest follow from 4; no caption or rule names a number.
+- At a glance ends with the counting words in one 12px muted line (statsCountingWordsHtml): "Record: one enzyme or
+  variant, one substrate, one set of assay conditions, one paper. Value: one kcat, Km or kcat/Km, up to three per record."
+- Human review (statsReviewFigure): a unit chart (statsUnitGridSvg), one square per record people checked, a 5px square
+  on a 6px pitch, crisp at its own size: 100 to a row (599px) from 641px, 50 to a row (299px) on phones, the other
+  drawing display:none. Runs in reading order, one path each (a square per subpath), lit with its key line: no value
+  disputed in human-checked's green at 60% (.stats-part-human), a value disputed in Disputed's deep red opaque, a blank
+  row, then the records with no PMID or DOI as open squares (white, 1px slate: Not checked, as Browse calls them). The
+  key (counts in words, a 10px swatch each) stands beside from 1024px, under below. The records read from the paper
+  people checked follow at the same size (data-units="from-paper": drawn at random, then a new row of those picked as
+  hard cases, disputed ones red), their heading saying the papers and that none of their values was disputed; then
+  statsHumanCheckedFoot: the records in Browse with the human-checked tag (linked) and their values, "accepted, every
+  value shown approved", which says why they are fewer than the records people checked. Caption: "Each square is one
+  record people checked." Rule: reviewRulesText (records, never entries).
+- Checks on the values (statsChecksFigure): two panels side by side from 1024px. The second AI check's 100% bar (20px)
+  of confirmed (cyan) and corrected (opaque red), each count and share under its end; without the proof-line counts its
+  method in words. The audit (auditFacts) as its share removed on a small axis (statsShareAxis), the dot (an ink ring)
+  at the share given to its interval's precision (statsShareDigits), its 95% Wilson interval a 2px --text-2 line with
+  end ticks, the axis title naming the interval; no meaning colour (a statistic). Under it statsExposureText, two
+  sentences: "CatLog’s agents should work without database values but saw them, or the earlier version’s files, on 309
+  papers (Oct 9 to Oct 21, 2026)." then the re-read's state from reread_blind and reread_blind_done ("303 were sent
+  back to be read or checked again without them; none is done yet." / "120 are done so far." / "303 have since been
+  read or checked again without them."). Which agent saw them, the date sent back and the papers not sent back are
+  statsExposureRule, in the figure's rule with the audit's date, interval and follow-ups.
+- Errors found in CatLog (statsErrorsFigure): statsBarChart, neutral, one axis to All; a route's kinds as parts of its
+  bar only when they make it (statsErrorParts: the sweep's reprinted, partial and other values; a database check's
+  corrected, removed and awaiting), in words under its name (statsErrorKinds; the audit's "28 in the random audit, 46 in
+  follow-up audits", statsAuditSplit, when the two make it); Values and Papers beside; All, each value once, set off by a
+  hairline and 600. Names up to 320px, the figure to 920px.
+- Review result: statsStatusBar(..., { stripe }) draws Accepted's records read from the paper as a stripe through its
+  part (the Enzyme classes stripe); its labels are a grid of columns as wide as the parts (minmax(0, share fr)), each
+  under its part with a 6px tick up to the bar: name (a Browse link), records, share; Accepted's records read from the
+  paper and Not checked's two kinds (zero-count kinds left out) in 12px under them; a result under a tenth of the records
+  on its own line under the bar's end with its swatch. Accepted's other parts are its title and the figure's rule; the
+  fields saved in records that are not accepted are a table in the rule (rulesHtml: figure rules may carry HTML).
+- Records by main source: the counts as Browse gives them (a merged record under each database) are its rule.
+- Between papers: the histograms keep their heading and count line; the facts row and the same-conditions table give
+  way to one percent chart (statsBarChart percent, key between-papers): per parameter a row for all pairs and one for
+  the same temperature and pH, within 2-fold (cyan 60%), 2- to 10-fold (cyan 40%), more than 10-fold (open, the cyan
+  ring), each share on its part where it fits, the median beside ("Median"). The records of each subset are the rule.
+- A segment's own share (statsTrack's `inline`, .stats-seg-label: 12px ink centred in the segment) shows only where it
+  fits with 6px to spare (statsFitSegmentLabels, on drawing, a late font, a resize and an opened item); the tooltip line
+  and the row's text keep every share. Used by Between papers and Values compared with databases (statsDatabaseRow's
+  `inline`; shares only on a base of 1,000 values), which so lose their share tables.
+- kcat against Km's class medians: .stats-class-dots beside the map, a row per class (EC n and its name, the name
+  hidden on phones), its numbered dot (.stats-map-dot, 14px) at its median on a log axis of kcat and one of Km (whole
+  decades with at least two, a median on a decade given room below), the value beside the dot (left of it in the
+  axis's last third), the records at the end; the row lights the map's dot (data-hl). Phones show the axes' end labels.
+- Substrate specificity: beside the histogram, "Median range by substrates tested", statsBarChart bars from 1-fold on a
+  log axis of whole decades of folds (1×, 10×, 100×, 1,000×), Median range and Panels beside.
+- Compared with databases: statsDatabaseLeadHtml is one sentence; statsDatabaseDifferRule (corrections and how found, the
+  lower bound, the values that differ) and the database numbers no CatLog value matches (with the Dataset notes link)
+  are Values compared with databases' rule; Corrections by cause and how found's caption names the lower bound
+  (statsLowerBoundText).
+- Words: no "entries", "measurement(s)", "row(s)" as a count on the main page (records people checked, database
+  listings, "another assay’s"); SOURCE_DATABASES_HELP's "database entries" (shared with Browse and the Guide) is the
+  Guide lane's.
+- Prose: captions one sentence (records, papers and enzymes in the rules), part leads one sentence or none. Visible prose
+  on the main page at 1440px (captions, leads, notes and paragraphs outside the figures' labels): 719 words before, 354
+  after; tables on the main page: 9 (378 words) before, none after.
+- Tests: the node test's Stats blocks and the browser check's check_quality, check_review_headline,
+  check_quality_round16b (unit chart squares, key, foot, CI geometry, errors rows, exposure text), check_stats_figures,
+  check_stats_databases (SEGMENT_LABELS_JS), check_stats_insights (class dot plot), check_stats_years (part `years`) and
+  the Stats block of check().
 
