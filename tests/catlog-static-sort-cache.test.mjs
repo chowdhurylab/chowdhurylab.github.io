@@ -2441,7 +2441,7 @@ function row(overrides = {}) {
     v2: { entries: 40, papers: 3, value_disputed: 1, value_disputed_checked_as_printed: 0 } } } };
   api.renderStats();
   // The records read from the paper that people checked: a second panel of squares at the same size, its disputed one red.
-  assert.match(leadHtml(), /<div class="stats-units-panel" data-panel="from-paper">\s*<p class="stats-units-title"><strong>Read from the paper<\/strong> <span>40 records people checked \(3 papers\); a value disputed in 1 record<\/span><\/p>/);
+  assert.match(leadHtml(), /<div class="stats-units-panel" data-units="from-paper">\s*<p class="stats-units-title"><strong>Read from the paper<\/strong> <span>40 records people checked \(3 papers\); a value disputed in 1 record<\/span><\/p>/);
   assert.match(leadHtml(), /<path class="stats-unit stats-part-disputed" d="M234 0h5v5h-5z" data-hl="v2-disputed"/);
   api.renderGuideMethod();
   // Counts that do not hold together are not shown: a dispute count above the entries drops the review (the lead falls
@@ -3245,7 +3245,7 @@ function row(overrides = {}) {
     assert.deepEqual([...specificity.body.matchAll(/data-row="tested-(\d+)" data-count="(\d+)"[\s\S]*?<span class="stats-chart-label">([^<]+)<\/span>[\s\S]*?<span>([^<]+×)<\/span>/g)]
       .map((match) => match.slice(1).join(" ")), ["3 2 3 substrates 22×", "6 1 6–9 substrates 170×", "10 1 10 or more substrates 830×"]);
     assert.match(specificity.body, /<span class="stats-seg stats-part-catlog is-start is-end" style="left:0%;width:44\.7474%" data-tip="3 substrates tested: median range 22× over 2 panels"/, "22-fold: 1.34 of 3 decades");
-    assert.match(specificity.body, /<span class="stats-axis-ticks"><span style="left:0%">1×<\/span><span style="left:33\.333%">10×<\/span><span style="left:66\.667%">100×<\/span><span style="left:100%">1,000×<\/span><\/span>/);
+    assert.match(specificity.body, /<span class="stats-axis-ticks"><span style="left:0%">1×<\/span><span style="left:33\.3333%">10×<\/span><span style="left:66\.6667%">100×<\/span><span style="left:100%">1,000×<\/span><\/span>/);
     assert.doesNotMatch(specificity.body, /<table/);
     assert.equal(specificity.caption, "Best over worst <i>k</i><sub>cat</sub>/<i>K</i><sub>m</sub> of one wild-type enzyme on three or more substrates in one paper and assay; papers choose the substrates.");
     assert.match(specificity.rules, /^15 records, 3 papers and 1 enzyme\. A panel is/);
