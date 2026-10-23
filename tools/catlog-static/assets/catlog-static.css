@@ -919,12 +919,12 @@ body.detail-open .detail-panel { display:block }
 /* Status line, in the table's words and colours (round 17: no dot or square): the review result (13px/600) in its
    colour's text shade (--status-ink, set on the line), "✓ human-checked" 6px after it, then the tags: "from paper" in
    Read from the paper's dark cyan or "not re-read", "BRENDA" in grey, "corrected", "no paper linked". Each tag's "·"
-   sits in the 12px gap before it; a tag that wraps starts its line, where its "·" falls left of the line and is
+   (muted, so the line's three hues stay quiet) sits in the 12px gap before it; a tag that wraps starts its line, where its "·" falls left of the line and is
    clipped, so no line starts or ends with a "·" (the line has no side padding of its own: on phones its margins keep
    it off the panel's edges). */
 .detail-status { display:flex; flex-wrap:wrap; align-items:center; gap:2px 12px; margin-top:2px; overflow-x:clip }
 .detail-status > span { position:relative; white-space:nowrap }
-.detail-status > span + span::before { content:"\00b7"; position:absolute; top:0; right:100%; width:12px; color:var(--text-2); font-weight:400; text-align:center }
+.detail-status > span + span::before { content:"\00b7"; position:absolute; top:0; right:100%; width:12px; color:var(--muted); font-weight:400; text-align:center }
 .detail-status-word { color:var(--status-ink,var(--text)); font-weight:600 }
 .detail-status > .detail-status-checked { margin-left:-6px; color:var(--checked); font-weight:500 }
 .detail-status > .detail-status-checked::before { content:none }

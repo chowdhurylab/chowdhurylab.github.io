@@ -835,7 +835,7 @@ they compare with the databases and how far they were checked come first, the co
   (Unverified)" keeps the earlier status in brackets), "✓ human-checked" 6px after it, then the tags: "from paper"
   in the darker cyan for a record CatLog read, else "not re-read" and the source as the table names it: "BRENDA",
   "earlier extraction", "source not recorded"), then "corrected" or "no paper
-  linked" (each "·" sits in the gap before its tag, so a
+  linked" (each "·", muted, sits in the gap before its tag, so a
   tag that wraps onto the next line on a phone leaves no "·" at the end of one
   line or the start of the next); last the record ID in 12px mono and Copy link
   (the page's address with #record=). Copy link, and Show and Copy under E,
