@@ -289,6 +289,15 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
 .snapshot-meta { border-left:1px solid var(--line-soft); padding-left:var(--cell-pad) }
 .summary-card > span, .snapshot-paper > span, .snapshot-checked > span { display:inline-flex; align-items:center; color:var(--muted); font-size:var(--fs-13); line-height:16px }
 .summary-card > strong, .snapshot-paper > strong, .snapshot-checked > strong { align-self:baseline; color:var(--key); font-size:var(--band-num); font-weight:600; line-height:var(--band-num-lh) }
+/* Records' "?" (round 17: what a record and its values are, where a visitor first meets the word): the sidebar's "?" at
+   the label's size (16px, a 24px target), and the two sentences it opens in a hairline note over the band, under the
+   label, never moving the numbers. */
+.band-about { position:relative; display:inline-grid; width:16px; height:16px; margin-left:var(--sp-1); place-items:center; border:1px solid var(--line-strong); border-radius:50%; background:var(--bg); color:var(--muted); cursor:pointer; padding:0; font:inherit; font-size:var(--fs-12); font-weight:600; line-height:1 }
+.band-about::after { content:""; position:absolute; inset:-4px }
+.band-about:hover { border-color:var(--accent); color:var(--accent) }
+.band-about[aria-expanded="true"] { border-color:var(--accent-line); background:var(--accent-tint); color:var(--accent) }
+.band-about-text { position:absolute; z-index:30; top:20px; left:-9px; display:block; width:min(340px,calc(100vw - 32px)); border:1px solid var(--line-strong); border-radius:var(--radius); background:var(--bg); padding:var(--sp-2) 10px; color:var(--text-2); font-size:var(--fs-12); font-weight:400; line-height:var(--lh-12); white-space:normal }
+.band-about-text[hidden] { display:none }
 /* Each count keeps the room of a seven-character number ("185,804"), so a filter that changes its digits never moves
    the columns. */
 @media (min-width: 641px) {

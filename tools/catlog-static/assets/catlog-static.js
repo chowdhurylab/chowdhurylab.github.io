@@ -304,7 +304,7 @@
   // version's help is said once per place: the Source "?", Stats' How these numbers are counted, the Guide's method section.
   // Only part of its entries were checked against their papers (most are Not confirmed or Not checked).
   const SOURCE_CATLOG_HELP = "by an AI model; a second, separate AI check compared each value with the paper.";
-  const SOURCE_DATABASES_HELP = "from CatLog’s earlier version, built from database entries and partly checked against the papers; replaced when CatLog reads the paper.";
+  const SOURCE_DATABASES_HELP = "from CatLog’s earlier version, built from the enzyme databases and partly checked against the papers; replaced when CatLog reads the paper.";
   // One line each in the 256px sidebar, also with a wide font (DejaVu Sans): the label beside its count. The help is
   // behind the group's "?" and in each radio's title.
   const sourceModes = [
@@ -435,8 +435,8 @@
 
   // Where a record's enzyme name comes from, read after "Name from" (a CatLog v2 record's: the paper).
   const sourceLabels = {
-    source_record: "The source database’s entry",
-    explicit_enzyme_name: "The source database’s entry",
+    source_record: "The source database’s listing",
+    explicit_enzyme_name: "The source database’s listing",
     brenda_recommended_name: "BRENDA recommended name",
     protein_name_fallback: "Protein name",
     uniprot_name_fallback: "The UniProt entry",
@@ -1213,7 +1213,8 @@
     }
     if ($("comparisonDataDescription")) {
       const rows = statsCount(comparison?.rows);
-      $("comparisonDataDescription").textContent = describe("Values read from the paper, one line per value and database",
+      // One line of the file per value and database (round 17's words: "rows" never counts on the site).
+      $("comparisonDataDescription").textContent = describe("Each value read from the paper, beside each database that lists the paper",
         rows ? `${formatInteger(rows)} lines` : "", comparisonPath ? formatFileSize(comparison.size_bytes) : "", "CSV (gzip)");
     }
     const snapshotDate = manifest.generated_at ? formatDate(manifest.generated_at) : EMPTY_VALUE;
@@ -1357,9 +1358,9 @@
   function evidenceWords(text) {
     const cased = (word, replacement) => (/^[A-Z]/.test(word) ? replacement[0].toUpperCase() + replacement.slice(1) : replacement);
     return String(text)
-      .replace(/\bNo (\S+) was populated in the expected row\b/g, "The earlier version’s entry has no $1")
+      .replace(/\bNo (\S+) was populated in the expected row\b/g, "The earlier version’s record has no $1")
       .replace(/\b(\S+) is not populated for this row\b/g, "this record has no $1")
-      .replace(/\b(expected row)(?= has\b)/gi, (word) => cased(word, "the earlier version’s entry"))
+      .replace(/\b(expected row)(?= has\b)/gi, (word) => cased(word, "the earlier version’s record"))
       .replace(/\bnormali[sz]ation\b/gi, (word) => cased(word, "conversion"))
       .replace(/\bnormali[sz]ed value\b/gi, (word) => cased(word, "value in catalog units"))
       .replace(/\bnormali[sz]ed unit\b/gi, (word) => cased(word, "unit"))
@@ -1791,7 +1792,7 @@
   // paper has one only where CatLog read no printed kcat/Km for the measurement (which is all CatLog knows: a paper can
   // print one its reader did not record); an older record's source may still list a kcat/Km of its own (the record
   // shows it), so its note says only that CatLog calculated it.
-  const CALCULATED_V2_NOTE = "kcat ÷ Km, calculated by CatLog; no printed kcat/Km was read for this measurement.";
+  const CALCULATED_V2_NOTE = "kcat ÷ Km, calculated by CatLog; no printed kcat/Km was read for this record.";
   const CALCULATED_OLDER_NOTE = "kcat ÷ Km, calculated by CatLog.";
   const EQUALS_QUOTIENT_NOTE = "Equals kcat ÷ Km; the source does not say whether it was printed or calculated. Shown with the significant figures of kcat and Km.";
 
@@ -2051,9 +2052,13 @@
 
   function versionWords(text) {
     return String(text)
-      .replace(/\b([Tt]he) CatLog v1 (entry|entries)\b/g, "$1 earlier version’s $2")
-      .replace(/\b([Aa]n?) CatLog v1 entry\b/g, (match, article) => `${article[0] === "A" ? "An" : "an"} entry from the earlier version`)
-      .replace(/\bCatLog v1 (entry|entries)\b/g, "the earlier version’s $1")
+      // (Round 17's words: a record, never an entry.)
+      .replace(/\b([Tt]he) CatLog v1 entry\b/g, "$1 earlier version’s record")
+      .replace(/\b([Tt]he) CatLog v1 entries\b/g, "$1 earlier version’s records")
+      .replace(/\b([Aa]n?) CatLog v1 entry\b/g, (match, article) => `${article[0] === "A" ? "A" : "a"} record from the earlier version`)
+      .replace(/\bCatLog v1 entry\b/g, "the earlier version’s record")
+      .replace(/\bCatLog v1 entries\b/g, "the earlier version’s records")
+      .replace(/\b(CatLog[’']s|the) earlier entries\b/g, "$1 earlier records")
       .replace(/\b([Aa]) CatLog v2 entry\b/g, "$1 record read from the paper")
       .replace(/\b(?:[Tt]he )?CatLog v2 entries\b/g, "records read from the paper")
       .replace(/\bCatLog v[12]\b/g, "CatLog");
@@ -2256,7 +2261,7 @@
     // A record read by CatLog is human-checked for the same values of the same paper, enzyme, substrate and variant in
     // the review of the earlier version's entries.
     const fullDescription = checked
-      ? `${description} Human-checked: ${HUMAN_CHECKED_RULE} shown${fromPaper ? " (the same values, in the review of the earlier version’s entries)" : ""}; ${HUMAN_CHECKED_RATIO}.`
+      ? `${description} Human-checked: ${HUMAN_CHECKED_RULE} shown${fromPaper ? " (the same values, in the review of the earlier version’s records)" : ""}; ${HUMAN_CHECKED_RATIO}.`
       : description;
     const className = `${config.className}${noPaper ? " identity-only" : ""}`;
     const tagsHtml = tags.map((tag) => `<span class="state-tag">${tag === SOURCE_CATLOG_TAG ? SOURCE_MARK_HTML : ""}${escapeHtml(tag)}</span>`).join("")
@@ -3905,9 +3910,13 @@
         notes.records ? "The papers these records come from" : ""],
       ["accepted", "Accepted", accepted, notes.accepted, ""],
     ];
-    const countHtml = ([key, label, value, note, title]) => `<div class="summary-card summary-${key}"><span>${escapeHtml(label)}</span>`
+    // Records carries the one "?" of the band: what a record and its values are (round 17's words, said where a visitor
+    // first meets them; the Guide's first part says it too).
+    const countHtml = ([key, label, value, note, title]) => `<div class="summary-card summary-${key}"><span>${escapeHtml(label)}${key === "records" ? recordsAboutHtml() : ""}</span>`
       + `<strong>${formatCount(value)}</strong><small class="snapshot-note" aria-live="off"${title ? ` title="${escapeHtml(title)}"` : ""}>${escapeHtml(note)}</small></div>`;
+    const aboutHadFocus = document.activeElement?.id === "recordsAboutButton";
     $("summaryGrid").innerHTML = cards.map(countHtml).join("");
+    if (aboutHadFocus) $("recordsAboutButton")?.focus({ preventScroll: true });
     setBandNote("fromPaperNote", notes.fromPaper.text, notes.fromPaper.html, notes.fromPaper.title);
     setBandNote("humanCheckedNote", notes.checked);
     const kcatRows = isLoaded ? metricCoverage(rows, "kcat") : coverage.with_kcat;
@@ -3929,6 +3938,26 @@
     ].join("");
     $("snapshotDate").textContent = dateText;
     $("snapshotDate").title = dateTitle;
+  }
+
+  // The band's "?" beside Records and the two sentences it opens (a note over the band; Escape, the "?" again or a click
+  // elsewhere closes it). It is drawn with the counts, so its open state is kept in state.recordsAboutOpen.
+  const RECORDS_ABOUT_TEXT = [
+    "A record is one row of the table: one enzyme (wild type or a variant) with one substrate under one set of assay conditions in one paper.",
+    "It has one to three values: its kcat, Km and kcat/Km.",
+  ];
+  function recordsAboutHtml() {
+    const open = Boolean(state.recordsAboutOpen);
+    return `<button id="recordsAboutButton" class="band-about" type="button" aria-expanded="${open}" aria-controls="recordsAbout" title="What a record is">`
+      + '<span aria-hidden="true">?</span><span class="visually-hidden">What a record is</span></button>'
+      + `<span id="recordsAbout" class="band-about-text" role="note"${open ? "" : " hidden"}>${RECORDS_ABOUT_TEXT.map((text) => `<span>${kineticWordsHtml(escapeHtml(text))}</span>`).join(" ")}</span>`;
+  }
+
+  function setRecordsAboutOpen(open) {
+    state.recordsAboutOpen = open;
+    $("recordsAboutButton")?.setAttribute("aria-expanded", String(open));
+    const text = $("recordsAbout");
+    if (text) text.hidden = !open;
   }
 
   // "Read from the paper N" in the counts band (the name Stats and the Source filter give that count): the records read
@@ -14495,10 +14524,10 @@
     const added = earlierValuesAdded(summary, detail, { v2Record });
     const rows = [
       v2Record ? "" : kv("Values from", added ? EARLIER_VALUES_FROM_PAPER : recordSourceName(recordSourceDb(summary, detail))),
-      added ? kv("Database entry", `${recordSourceName(recordSourceDb(summary, detail))}; its entry had none of these values`) : "",
+      added ? kv("Database listing", `${recordSourceName(recordSourceDb(summary, detail))}; its listing had none of these values`) : "",
       // How many database rows a record merges is said once, here.
       mergedRows > 1
-        ? kv("Merged from", `${formatInteger(mergedRows)} database entries${paperCount ? `, ${formatInteger(paperCount)} ${paperCount === 1 ? "paper" : "papers"}` : ""}`)
+        ? kv("Merged from", `${formatInteger(mergedRows)} database listings${paperCount ? `, ${formatInteger(paperCount)} ${paperCount === 1 ? "paper" : "papers"}` : ""}`)
         : "",
       mergedDatabasesRow(summary, detail),
       v2Record ? "" : kv("Name from", sourceLabels[summary.enzyme_label_source] || "Not recorded"),
@@ -15002,6 +15031,19 @@
     $("showResultsButton")?.addEventListener("click", () => {
       setFiltersOpen(false, { focus: false });
       $("openFiltersButton")?.focus({ preventScroll: true });
+    });
+    // The band's "?" (what a record is): the counts are drawn again with each filter, so its clicks are taken on the grid.
+    $("summaryGrid")?.addEventListener("click", (event) => {
+      if (!event.target.closest?.("#recordsAboutButton")) return;
+      setRecordsAboutOpen(!state.recordsAboutOpen);
+    });
+    document.addEventListener("click", (event) => {
+      if (state.recordsAboutOpen && !event.target.closest?.("#recordsAboutButton, #recordsAbout")) setRecordsAboutOpen(false);
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key !== "Escape" || !state.recordsAboutOpen) return;
+      setRecordsAboutOpen(false);
+      if (document.activeElement?.closest?.("#summaryGrid")) $("recordsAboutButton")?.focus();
     });
     // Phones: the counts band shows the four key numbers; More shows their lines of context and the parameters.
     $("snapshotMoreButton")?.addEventListener("click", (event) => {
