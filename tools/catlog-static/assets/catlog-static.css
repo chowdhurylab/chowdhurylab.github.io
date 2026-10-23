@@ -1241,6 +1241,46 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-supp-number:hover, .stats-supp-number:focus-visible { color:var(--text-2); text-decoration:underline; text-underline-offset:3px }
 .stats-supp-name { min-width:0 }
 /* (no indent: Values by enzyme class keeps the x of Value ranges' shared log axis, so 10⁰ stands at one x in both) */
+/* The supplement's former tables as figures (round 17). A list chart's name may stand indented under the row before it
+   (a sub row) and every count above 0 shows at least 2px wide, a mark rather than a stray line (single-segment bars only,
+   so a stacked bar's segments keep their places). */
+.stats-chart-label > .stats-list-name { display:block }
+.stats-chart-label > .stats-list-name.is-sub { padding-left:14px; color:var(--text-2) }
+.stats-chart-label > .stats-list-name.is-sub + small { padding-left:14px }
+.stats-supp .stats-track .stats-seg.is-start.is-end { min-width:2px }
+/* Small multiples: panels side by side where each gets 300px, else one under another. */
+.stats-panels { display:grid; grid-template-columns:repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap:32px 40px; align-items:start }
+.stats-panel { min-width:0 }
+/* a panel's chart keeps its names to 40% of the panel (a wide figure's 240px would leave a 360px panel no bar) */
+.stats-panels .stats-panel .stats-chart:not(.stats-chart-percent) { --label-w:minmax(64px,40%) }
+.stats-panel-title { display:flex; flex-wrap:wrap; align-items:baseline; gap:0 8px; margin:0 0 12px; color:var(--text); font-size:var(--fs-14); font-weight:600; line-height:var(--lh-14) }
+.stats-panel-count { color:var(--muted); font-size:var(--fs-12); font-weight:400; line-height:var(--lh-12) }
+.stats-subs-top-title { margin-top:var(--sp-4) }
+/* short names (units, substitutions) keep their bars long: the name column is as wide as its longest name */
+.stats-supp .stats-chart:is([data-chart^="units-"], [data-chart="substitutions-top"]):not(.stats-chart-percent) { --label-w:max-content }
+/* Paired values by database: a dot plot, a red dot where CatLog's number corrects and a brown square where it differs,
+   both opaque marks (a correction is opaque red), each with a 1px white keyline so two that meet stay apart; the All row
+   stands under a hairline. */
+.stats-dot, .stats-dot-key { display:block; width:10px; height:10px; border-radius:50%; background:var(--part); box-shadow:0 0 0 1px var(--bg) }
+.stats-dot { position:absolute; top:3px; z-index:1; margin-left:-5px }
+.stats-dot-key { display:inline-block; flex:0 0 10px; margin-top:3px }
+:is(.stats-dot, .stats-dot-key).stats-part-differs { border-radius:1px; transform:scale(0.9) }
+.stats-dot[data-tip]:hover { box-shadow:0 0 0 1px var(--bg), 0 0 0 3px var(--part) }
+.stats-chart[data-chart="db-paired"] { --label-w:minmax(120px,40%) }
+.stats-chart[data-chart="db-paired"] .stats-chart-row[data-row="db_all"] { border-top:1px solid var(--line-soft); padding-top:8px }
+/* Corrections by cause and database: a heat map, each database x cause cell grey by its count (from 8% to 60% of the
+   map's ink, ink numbers on it at 5:1 or more), the totals plain at the row's end and in the All row. */
+.stats-table.stats-heat-table { width:auto; border-collapse:separate; border-spacing:2px }
+.stats-table.stats-heat-table :is(th, td) { border:0; padding:7px 8px }
+.stats-table.stats-heat-table thead th { white-space:normal }
+.stats-table.stats-heat-table thead th.stats-num { min-width:56px; max-width:84px }
+.stats-table.stats-heat-table tbody tr:nth-child(n) > td.stats-heat-cell { min-width:56px; border-radius:2px; background:color-mix(in srgb, color-mix(in srgb, var(--bar-neutral) 55%, var(--text)) var(--heat, 0%), var(--bg)) }
+.stats-heat-cell .stats-link { color:var(--text) }
+.stats-table.stats-heat-table .stats-heat-total { font-weight:600 }
+.stats-table.stats-heat-table tfoot :is(th, td) { border-top:1px solid var(--line); font-weight:600 }
+/* The typical wild-type enzyme: the average enzyme of Bar-Even et al. as an open diamond on the kcat/Km axis. */
+.stats-ridge-diamond { position:absolute; top:50%; width:9px; height:9px; margin:-5px 0 0 -5px; border:1.5px solid var(--text); background:var(--bg); transform:rotate(45deg) }
+.stats-typical .stats-ridge-label { overflow:visible }
 /* Single substitutions: a 20 x 20 grid of grey cells, shaded as the kcat against Km map, one-letter residues along the
    top (new) and left (wild type); beside it the facts and the commonest substitutions (under it below 1024px). */
 .stats-subs { display:grid; grid-template-columns:minmax(0,440px) minmax(240px,1fr); gap:24px 48px; align-items:start }
