@@ -1860,8 +1860,9 @@ function row(overrides = {}) {
   }
   // Records carries the band's one "?": what a record and its values are (round 17's words), closed until asked.
   const grid = element("summaryGrid").innerHTML;
-  assert.match(grid, /<span>(?:Matching records|Records)<button id="recordsAboutButton" class="band-about" type="button" aria-expanded="false" aria-controls="recordsAbout" title="What a record is">/);
-  assert.match(grid, /<span id="recordsAbout" class="band-about-text" role="note" hidden><span>A record is one row of the table: one enzyme \(wild type or a variant\) with one substrate under one set of assay conditions in one paper\.<\/span> <span>It has one to three values: its <i>k<\/i><sub>cat<\/sub>, <i>K<\/i><sub>m<\/sub> and <i>k<\/i><sub>cat<\/sub>\/<i>K<\/i><sub>m<\/sub>\.<\/span><\/span>/);
+  // The label's words have their own element (the band's tests read them alone); the note sits outside the label span.
+  assert.match(grid, /<span><span class="summary-label">(?:Matching records|Records)<\/span><button id="recordsAboutButton" class="band-about" type="button" aria-expanded="false" aria-controls="recordsAbout" title="What a record is">/);
+  assert.match(grid, /<\/button><\/span><div id="recordsAbout" class="band-about-text" role="note" hidden><span>A record is one row of the table: one enzyme \(wild type or a variant\) with one substrate under one set of assay conditions in one paper\.<\/span> <span>It has one to three values: its <i>k<\/i><sub>cat<\/sub>, <i>K<\/i><sub>m<\/sub> and <i>k<\/i><sub>cat<\/sub>\/<i>K<\/i><sub>m<\/sub>\.<\/span><\/div><strong>/);
   assert.doesNotMatch(grid, /\b(?:entr(?:y|ies)|measurements?)\b|\d[\d,]* rows?\b/i, "the band counts records and values only");
   Object.assign(api.state, previous);
 }
