@@ -1216,24 +1216,31 @@ Database attribution belongs in Guide and dataset notes, not the Browse footer.
 
 One page from the snapshot manifest (never the record index) in numbered parts, each with one plain heading:
 1 At a glance (the headline band, the page's focal point: a plain white card with a 1px --line hairline, no glow, halo, wash or motion (round 14); 40px key numbers in the counts band's meaning colours (28px on phones, growing with the window from 721px to 30px at 1023px and on to 40px at 1200px, never smaller on a wider window, so a wide font keeps a six-digit count inside its column), then 20px scope counts),
-2 Quality (round 17: three numbered figures, no table: Human review as one square per record people checked, Checks on
-the values as a bar and an interval, Errors found in CatLog as bars; "Round 17 Stats" below), 3 What is in the catalog
-(Review result, its 100% bar with its labels under it, beside Records by main source with a Records | Share switch, then
-the enzyme classes with accepted and read-from-the-paper records), 4 Values (value ranges on one log axis per
-parameter; then, from the records read from the paper, Between papers with its bars of pairs within 2-fold and 10-fold,
-all and at the same temperature and pH, kcat against Km as a density map with lines of equal kcat/Km, the diffusion
-limit and each class's median, its class medians a dot plot beside it, Substrate specificity with its median range by
-substrates tested as bars, and variants against their wild type of the same paper, enzyme, substrate, pH and
-temperature), 5 Compared with databases (from the manifest's database comparison: a one-sentence lead, values against
-the databases with each share on its bar, corrections by cause and how found), 6 CatLog and BRENDA by publication year
-(round 17: the last main part), then S Supplementary figures and tables (round 14):
-every other figure and table, numbered apart (Figure S1, Table S1), in five groups (Quality; What is in the catalog;
-Organisms, enzymes and variants, called Biology until round 14's polish; Values; Compared with databases), each item one
-closed line (a details whose summary holds its number and title) that opens its figure, with its own address
-(#stats-s3, #stats-table-s2) that opens it; new there: papers by parameter, single substitutions by residue, kinds of
-variant and units as printed, counted by build_overview from the records read from the paper; round 16 added kcat and
-assay temperature, Km and substrate size (Values' figures, after Assay temperature and pH) and The typical wild-type
-enzyme (Values' first table). No caption or rule names a figure's number: the numbers follow reading order, so a main
+2 Quality (round 14: the review's 99.9% is At a glance's alone, with one line as the other notes have, "no value
+disputed, 2,601 of 2,604" (fix pass after round 16b: the gloss and the entries without a paper had made a three- to
+seven-line paragraph of a headline cell; the item's title says it in full, and Quality's lead says the rest; an older
+snapshot: "no value disputed, 2,767 of 2,770; 153 (5.5%) not found in the paper"); each item's label and number are two
+rows of the band (a subgrid), so the numbers of a row start at one height whatever label wraps); here no second big number and no dashboard cards: Human
+review in one sentence over a small table of its verdicts, then Checks on the values as a table of the checks, each row
+with what it covered and what it found (no meter since the fix pass after round 16b: the shares are in the words; on a
+phone each check is stacked, its name over the two), then Errors found in CatLog (round 16b), the three tables at one
+measure (640px at most); the review's flags by kind and the reviewers' approved values read from the paper again are the supplement's
+Quality tables), 3 What is in the catalog (the review results as one 100% bar over their legend
+table (fix pass after round 16b; a donut until then), records by main source with a Records | Share switch, then CatLog and BRENDA by publication year (round 16, when
+the manifest has summary.publication_years), then the enzyme classes with accepted and read-from-the-paper records), 4 Values (value ranges on one log axis per parameter; then, from the records read from
+the paper, Between papers (round 16) after the ranges, kcat against Km as a density map with lines of equal kcat/Km, the
+diffusion limit and each class's median, Substrate specificity (round 16), and variants against their wild type of the
+same paper, enzyme, substrate, pH and temperature), 5 Compared with databases
+(from the manifest's database comparison: a two-sentence lead that says once that a different number can mean a different
+measurement, and (round 16b) how the corrections were found and that they are a lower bound, values against the
+databases, corrections by cause), then S Supplementary figures (round 14; round 17: one click opens all of it, and its
+tables are figures, "Stats supplement (round 17)" below): every other figure, numbered apart (Figure S1), in five groups
+(Quality; What is in the catalog; Organisms, enzymes and variants, called Biology until round 14's polish; Values;
+Compared with databases), each item open inside the one closed supplement, with its own address (#stats-s3) that opens
+the supplement at it; new there in round 14: papers by parameter, single substitutions by residue, kinds of variant and
+units as printed, counted by build_overview from the records read from the paper; round 16 added kcat and assay
+temperature, Km and substrate size (Values' figures, after Assay temperature and pH) and The typical wild-type enzyme
+(Values' first table until round 17, now a dot plot). No caption or rule names a figure's number: the numbers follow reading order, so a main
 figure added later (the BRENDA comparison by year) renumbers the rest by itself.
 Figures and tables, two to a row from 1024px, each have "Figure N." or "Table N." with a short caption in plain words
 (one sentence, no filler, about 15 words at most since round 14's fix pass: what a mark means beyond that, such as the
@@ -1272,7 +1279,7 @@ the rows centred on their line).
 | Substrate specificity | main, Values, after kcat against Km | a panel: one enzyme on three or more substrates in one paper with one cosubstrate, pH and temperature; per substrate the median kcat/Km (a calculated one included); the best over the worst in half decades from 1-fold (the last 10⁶-fold and more); a table of the median range by substrates tested (3, 4, 5, 6–9, 10 or more), since the range grows with them |
 | kcat and assay temperature | supplement, Values | the kcat records in 10 °C bins (below 20, 20 to <30 ... 80 or more: each from its lower edge to below the next, so no edge is in two labels) as medians and middle 80% (different enzymes in each bin); a series, one enzyme and substrate in one paper at two or more temperatures with one cosubstrate and pH: Q₁₀ = 10^(10 × least-squares slope of log10 kcat on °C), bars of a tenth of a decade centred on 10^−0.5 ... 10^1, a dashed line at no change |
 | Km and substrate size | supplement, Values | the Km records by the substrate's non-hydrogen atoms (counted from a one-piece SMILES: 1–5, 6–10, 11–15, 16–20, 21–30, 31–50, 51 or more) as medians and middle 80%; within a panel of four or more substrates of at least two sizes, Spearman's ρ of size and median Km, bars of 0.25 centred on −1 ... 1, a dashed line at no trend (all-equal Km counts at 0) |
-| The typical wild-type enzyme (Table) | supplement, Values' first table | each parameter's median and 10–90% over its wild-type records (a calculated kcat/Km included, as the rule says), its records, papers and enzymes on a line under its name (three columns, so it fits a phone), beside the average enzyme of Bar-Even et al., Biochemistry 2011 (its value in the Median column, right under CatLog's median kcat/Km in M⁻¹ s⁻¹, its 10–90% a dash) (doi:10.1021/bi2002289; its link is a stats-ref-link that opens the DOI in a new tab, as the record's DOI links do: stats-link always opens Browse) |
+| The typical wild-type enzyme (a dot plot since round 17) | supplement, Values, after Values by enzyme class | each parameter's median and 10–90% over its wild-type records (a calculated kcat/Km included, as the rule says), its records, papers and enzymes on a line under its name (three columns, so it fits a phone), beside the average enzyme of Bar-Even et al., Biochemistry 2011 (its value in the Median column, right under CatLog's median kcat/Km in M⁻¹ s⁻¹, its 10–90% a dash) (doi:10.1021/bi2002289; its link is a stats-ref-link that opens the DOI in a new tab, as the record's DOI links do: stats-link always opens Browse) |
 
 The round 16 figures keep a number with its unit (a no-break space in "10 °C", "1 °C" and "28,000 M⁻¹ s⁻¹") and write the
 name with a non-breaking hyphen (Bar‑Even, U+2011), so a phone line never ends at "per 10" or "Bar-" (round 16 review).
@@ -1285,6 +1292,34 @@ low molecular mass appears to limit Km optimization. The linear axes (ρ, Q₁�
 the builder's unit tests (test_wild_type_insights_pair_papers_panels_sizes_and_series, test_heavy_atoms_and_rank_correlation),
 the page's node test of the five figures, and the browser check (check_stats_insights: each panel's bars or rows add up
 to the overview's count, each figure in its part; the Chrome fixture adds all five), which reads only the DOM (Safari-safe).
+
+## Stats supplement (round 17)
+
+The user, 2026-10-23: "they should click on Supplementary figures and tables and all of them open, not one click per
+figure. Way too many tables there that you can convert to figures." The supplement is one closed disclosure whose summary
+is its heading line (S, the title, then "+ Show all 22 figures" at the line's end; "− Hide" when open); one click shows
+every item, open, in its group's grid (two to a row from 1024px, as the main parts lay theirs out), with no disclosure
+inside. An item's heading is its number (a muted link to its own address, #stats-s3) and its title. The title says what
+it holds: "Supplementary figures" while it has no table. #stats-supplement, every item's address and every address of the
+live round 16b supplement (STATS_SUPPLEMENT_OLD_ADDRESSES: #stats-table-s4 opens the most common organisms, now a
+figure) open it and scroll there. The repository's DESIGN.md (its Stats part S) describes each figure; in short:
+
+| Was (live round 16b) | Now | Form |
+|---|---|---|
+| Table S1 Human review by kind | figure | bars, --bar-neutral, kinds indented under Other disagreement |
+| Table S2 Approved values read from the paper again | figure | bars in the words' meaning colours (same green, another form mint, CatLog's reading cyan, still to check slate hatching) |
+| Table S3 What the records contain | figure | bars on 0-100% of all records, sequence kinds and both T and pH indented |
+| Tables S4-S7 Most common organisms / EC numbers (all, read from the paper) | two figures | two panels each: all records grey, read from the paper cyan |
+| Tables S8-S9 Wild type and variants, Kinds of variant | one figure | two panels on 0-100% |
+| Table S10 The typical wild-type enzyme | figure | dot plot per parameter (median, middle 80%), Bar-Even et al.'s average enzyme an open diamond |
+| Table S11 Units as printed | figure | three panels, a parameter each, cyan bars |
+| Table S12 Cautions on values | figure | tan bars; No cautions a link in the caption |
+| Table S13 Paired values by database | figure | dot plot: corrects (red dot) and differs (brown square) as shares of paired values |
+| Table S14 Corrections by cause and database | figure | heat map, databases x cause families, grey by log count, totals as margins; a line per database on phones |
+
+Captions are one sentence; what more a figure needs is its rule in How these numbers are counted. No table remains as a
+figure's own form; Corrections on records not yet re-read keeps the share table under its 100% bars (round 15), where a
+1.5% segment cannot hold its number. A list chart draws every count above 0 at least 2px wide.
 
 ## Team
 
