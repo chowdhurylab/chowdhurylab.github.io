@@ -176,12 +176,13 @@ for (const [pageHtml, publicPath] of [[indexHtml, "catlog-static/"], [stableAlia
   // (round 14, the user: a short Guide: a record's own words for a missing detail need no gloss there)
   assert.doesNotMatch(pageHtml, /is a dash too|None recorded/);
   assert.doesNotMatch(pageHtml, /hidden after a data check/, "A dash never suggests values were suppressed");
-  assert.ok(pageHtml.includes("beside a value flags a possible problem, which the record explains."));
+  // (round 17: the cautions fold like the Reference's parts; the "!" in the marks legend says what one is)
+  assert.ok(pageHtml.includes("<dd>A caution; the record says what it is (<a href=\"#guide-cautions\">Cautions</a>).</dd>"));
   // Cautions state the problem; they give no orders.
-  assert.doesNotMatch(pageHtml.match(/<h3 id="guide-cautions">[\s\S]*?<\/section>/)[0], /check the|to check|needs check|values differ<\/dt>|check units|unit mismatch|above limit</);
+  assert.doesNotMatch(pageHtml.match(/<details class="guide-ref guide-cautions" id="guide-cautions">[\s\S]*?<\/details>/)[0], /check the|to check|needs check|values differ<\/dt>|check units|unit mismatch|above limit</);
   assert.doesNotMatch(pageHtml, /Unusual stored values are kept and flagged|Open the row to see unusual stored values/);
   // A number stays with its unit, and a range with its power of ten, on one line.
-  const cautionsHtml = pageHtml.match(/<h3 id="guide-cautions">[\s\S]*?<\/section>/)[0];
+  const cautionsHtml = pageHtml.match(/<details class="guide-ref guide-cautions" id="guide-cautions">[\s\S]*?<\/details>/)[0];
   assert.ok(cautionsHtml.includes("exactly 0&nbsp;&deg;C"));
   // (catalase's kcat is about 4 × 10⁷ s⁻¹: "a few × 10⁷", never a range below it; round 14's fix pass)
 assert.ok(cautionsHtml.includes('the fastest known enzymes, such as catalase, reach a few <span class="nowrap">&times;&nbsp;10<sup>7</sup>&nbsp;s<sup>&minus;1</sup></span>'));
@@ -205,9 +206,16 @@ assert.ok(cautionsHtml.includes('the fastest known enzymes, such as catalase, re
   assert.ok(pageHtml.includes(`<meta property="og:url" content="https://chowdhurylab.github.io/tools/${publicPath}" />`));
   assert.ok(pageHtml.includes(`<link rel="canonical" href="https://chowdhurylab.github.io/tools/${publicPath}" />`));
   assert.match(pageHtml, /<link rel="icon" href="\/images\/rz\.png" \/>/);
-  // (round 13: Cite is a folded part of the Guide's Reference)
-  const citationSection = pageHtml.match(/<details class="guide-ref guide-citation"[\s\S]*?<\/details>/)?.[0];
+  // (round 17, the user: the license and snapshot said once, in the Guide's License and citation section, which Browse's
+  // footer line links to: the license, the snapshot date, the Data ID and the citation in view, the rest folded)
+  const citationSection = pageHtml.match(/<section class="guide-section guide-licence" id="guide-licence" aria-labelledby="guide-licence-title">[\s\S]*?<\/section>/)?.[0];
   assert.ok(citationSection, "Guide must keep its citation/version section");
+  assert.match(citationSection, /<h2 id="guide-licence-title">License and citation<\/h2>\s*<p>CatLog&rsquo;s compilation is free to reuse under <a href="https:\/\/creativecommons\.org\/licenses\/by\/4\.0\/"[^>]*>CC&nbsp;BY&nbsp;4\.0<\/a>, with credit\./);
+  for (const part of ["guide-cite", "guide-sources"]) {
+    assert.match(citationSection, new RegExp(`<details class="guide-ref[^"]*" id="${part}">\\s*<summary><h3 id="[^"]+">[^<]+</h3><span class="guide-ref-gist">`), part);
+  }
+  // (the Data ID check and its file name sit in the folded More on citing)
+  assert.match(citationSection.match(/<details class="guide-ref guide-cite" id="guide-cite">[\s\S]*?<\/details>/)[0], /id="guideDataIdFile"/);
   assert.ok(citationSection.includes('id="guidePaperCitation"'));
   assert.ok(citationSection.includes("Sajeevan, K. A., et al. (2026)."));
   assert.ok(citationSection.includes("CatRange enables robust prediction of enzyme variant kinetic regimes."));
@@ -223,7 +231,9 @@ assert.ok(cautionsHtml.includes('the fastest known enzymes, such as catalase, re
   const questions = pageHtml.match(/<section [^>]*id="guide-questions"[\s\S]*?<\/section>/)[0];
   assert.ok(questions.includes('href="mailto:ratul@iastate.edu?cc=supantha@iastate.edu&amp;subject=CatLog%20data%20issue"'));
   const notesPath = pageHtml === indexHtml ? "README_FIRST.txt" : "catlog-static/README_FIRST.txt";
-  assert.ok(citationSection.includes(`id="guideDatasetNotesLink" href="${notesPath}"`));
+  // (round 17: the Dataset notes link sits with the downloads it describes)
+  const downloadsPart = pageHtml.match(/<details class="guide-ref" id="guide-downloads">[\s\S]*?<\/details>/)[0];
+  assert.ok(downloadsPart.includes(`id="guideDatasetNotesLink" href="${notesPath}"`));
   assert.equal(pageHtml.split(`href="${notesPath}"`).length - 1, 2,
     "Download and Guide must both expose the correctly resolved README");
 }
@@ -1407,11 +1417,15 @@ const guideContents = guideHtml.match(/<nav class="guide-contents"[^>]*>([\s\S]*
 const guideAnchors = [...guideContents.matchAll(/href="#(guide-[a-z-]+)"/g)].map((match) => match[1]);
 // (round 13, the user: a short, visual Guide: how CatLog works first, then a record's parts, the labels and colours, the
 // comparison and what to mind, then the Reference's folded parts and the questions)
-assert.deepEqual(guideAnchors, ["guide-method", "guide-record", "guide-status", "guide-databases", "guide-caveats", "guide-find",
-  "guide-units", "guide-downloads", "guide-cite", "guide-sources", "guide-questions"]);
-// The Reference: Find records, Units, Downloads, Cite and Sources and licenses fold, each a <details> with its own anchor
-// and its heading in its summary, closed at first (an address or link to one opens it).
-for (const part of ["guide-find", "guide-units", "guide-downloads", "guide-cite", "guide-sources"]) {
+// (round 17, the user: "how are they going to know the values and records and entries?": the words first, a record, a
+// value and a paper with one labelled record and the labels it carries; then the method, a record's parts, the other
+// marks and the cautions, the comparison, what to mind, the Reference, and the license and citation said once)
+assert.deepEqual(guideAnchors, ["guide-words", "guide-method", "guide-record", "guide-marks", "guide-databases", "guide-caveats",
+  "guide-find", "guide-units", "guide-downloads", "guide-licence", "guide-questions"]);
+// The Reference: Find records, Units and Downloads fold, as do the cautions, the evidence labels, More on citing and the
+// sources' licenses, each a <details> with its own anchor and its heading in its summary, closed at first (an address or
+// link to one opens it).
+for (const part of ["guide-find", "guide-units", "guide-downloads", "guide-cautions", "guide-evidence", "guide-cite", "guide-sources"]) {
   assert.match(guideHtml, new RegExp(`<details class="guide-ref[^"]*" id="${part}">\\s*<summary><h3 id="[^"]+">[^<]+</h3><span class="guide-ref-gist">`), part);
 }
 assert.match(sourceCode, /function openGuidePart\(section\)/);
@@ -1483,13 +1497,46 @@ assert.equal((guideHtml.match(/Claude, Anthropic/g) || []).length, 1, "The full 
 assert.doesNotMatch(guideHtml, /earlier catalog|old catalog|independent|AI run|guide-note">Older records/i);
 assert.doesNotMatch(guideHtml, /\b(?:older|earlier) record/i, "The Guide says records not yet re-read, never older records");
 assert.doesNotMatch(guideHtml.replace(/<[^>]*>/g, " "), /\bv[12]\b|version 2/i);
-assert.match(guideHtml, /<summary>Evidence labels on records not yet <span class="nowrap">re-read<\/span><\/summary>/);
+assert.match(guideHtml, /<summary><h3 id="guide-evidence-title">Evidence labels<\/h3><span class="guide-ref-gist">On records not yet <span class="nowrap">re-read<\/span><\/span><\/summary>/);
 // "re-read" never breaks at its hyphen (a wide font split "re-" / "read"): every one in the Guide's text keeps one line.
 assert.doesNotMatch(guideHtml, /(?<!<span class="nowrap">)re-read(?![^<>]*>)/, "Each re-read in the Guide is kept whole");
 assert.equal(api.keepReRead('Not yet re-read <a title="not yet re-read">pre-reading re-read</a>'),
   'Not yet <span class="nowrap">re-read</span> <a title="not yet re-read">pre-reading <span class="nowrap">re-read</span></a>');
 // The tag a record not yet re-read carries where one read from the paper says "from paper".
-assert.match(guideHtml, /<dt><span class="state-tag">not <span class="nowrap">re-read<\/span><\/span><\/dt>\s*<dd>From CatLog&rsquo;s earlier version, built from database entries; replaced when CatLog reads the paper\.<\/dd>/);
+// (round 17: the tag's definition names the source label it stands for, Not yet re-read, and "the enzyme databases", never
+// "database entries")
+assert.match(guideHtml, /<dt><span class="state-tag">not <span class="nowrap">re-read<\/span><\/span><\/dt>\s*<dd>Not yet <span class="nowrap">re-read<\/span>: from CatLog&rsquo;s earlier version, built from the enzyme databases; replaced when CatLog reads the paper\.<\/dd>/);
+// Records and values (#guide-words, round 17): the Guide opens with the words. One Browse row drawn with the table's own
+// review badge (so the look's marks apply), a bracket over its three values and one under the whole row, its caption
+// naming the paper it is from; then record, value and paper, one line each; then the labels the row carries (the review
+// results and the tags, #guide-status, which Browse's "?" and Stats link), said here once.
+{
+  const words = guideHtml.match(/<section class="guide-section guide-words" id="guide-words" aria-labelledby="guide-words-title">([\s\S]*?)\n          <\/section>/)[1];
+  assert.match(words, /<h2 id="guide-words-title">Records and values<\/h2>/);
+  const row = words.match(/<div class="guide-row">([\s\S]*?)<\/div>\s*<figcaption id="guideRowCaption">([^<]*)<\/figcaption>/);
+  assert.ok(row, "the example row and its caption");
+  assert.equal(row[2], "One record and its three values, from Table 1 of one paper (PMID 12514023).");
+  assert.match(row[1], /<span class="guide-row-span gr-values-span" aria-hidden="true"><span>3 values<\/span><\/span>/);
+  assert.match(row[1], /<span class="guide-row-span gr-record-span" aria-hidden="true"><span>1 record<\/span><\/span>/);
+  assert.deepEqual([...row[1].matchAll(/<span class="guide-row-cell gr-(kcat|km|eff) num">/g)].map((match) => match[1]), ["kcat", "km", "eff"]);
+  assert.match(row[1], /<span class="state-badge accepted" data-status="verified"><span class="state-label">Accepted<\/span><span class="state-tags"><span class="state-tag"><span class="src-mark" aria-hidden="true"><\/span>from paper<\/span><span class="state-tag human-checked">/);
+  const terms = Object.fromEntries([...words.match(/<dl class="guide-term-list guide-words-list">([\s\S]*?)<\/dl>/)[1]
+    .matchAll(/<dt>([^<]*)<\/dt><dd>([\s\S]*?)<\/dd>/g)].map(([, term, text]) => [term, text.replace(/<[^>]+>/g, "")]));
+  assert.deepEqual(Object.keys(terms), ["Record", "Value", "Paper"]);
+  assert.equal(terms.Record, "One row of Browse: one enzyme, wild type or a variant, with one substrate under one set of assay conditions in one paper.");
+  assert.equal(terms.Value, "One number: a kcat, a Km or a kcat/Km. A record holds up to three.");
+  assert.match(words, /<div class="guide-legend-grid guide-labels" id="guide-status" role="group" aria-labelledby="guide-results-title">/);
+  for (const label of ["Accepted", "Not confirmed", "Not checked", "Disputed"]) assert.ok(words.includes(`<span class="state-label">${label}</span>`), label);
+  for (const tag of ["from paper", "not <span class=\"nowrap\">re-read</span>", "human-checked", "earlier extraction", "corrected", "no paper linked"]) {
+    assert.ok(words.includes(`${tag}</span></dt>`), tag);
+  }
+  // Said once: the labels are not defined again under Marks and cautions.
+  const marks = guideHtml.match(/<section class="guide-section guide-legend" id="guide-marks"[\s\S]*?\n          <\/section>/)[0];
+  assert.doesNotMatch(marks, /state-label|state-tag|Filters in use|guide-chip-row/);
+}
+// The site's two counting words (round 17, the user: values, records, entries and measurements were confusing): the Guide
+// says value, record and paper, never entry, measurement or slot (a UniProt entry is UniProt's own word).
+assert.doesNotMatch(guideHtml.replace(/<[^>]+>/g, " ").replace(/UniProt entry/g, ""), /\b(?:entry|entries|measurements?|slots?)\b/i);
 assert.match(guideHtml, /<dt><span class="state-tag">earlier extraction<\/span><\/dt>\s*<dd>Read from a paper by CatLog&rsquo;s earlier version\.<\/dd>/);
 assert.doesNotMatch(guideHtml, /not by CatLog/, "Earlier extractions come from CatLog's earlier version");
 {
@@ -1518,7 +1565,7 @@ assert.match(guideFind, /laccase/);
 assert.match(guideFind, /href="#browse\?checked=1"/);
 // The Guide lists the filters as the sidebar shows them (round 14: Source moved under More filters, as its first group):
 // the common groups in view, the specialist ones under More filters, which opens by itself when one of them is set.
-assert.match(guideFind, /<dt>Filters<\/dt><dd>Enzyme, EC number, organism, substrate; measurement type; review result\.<\/dd>/);
+assert.match(guideFind, /<dt>Filters<\/dt><dd>Enzyme, EC number, organism, substrate; parameter; review result\.<\/dd>/);
 assert.match(guideFind, /<dt>More filters<\/dt><dd>Source, wild type or variant, assay conditions,<span data-guide-databases hidden> compared with databases,<\/span> cautions and source database; it opens by itself/);
 for (const [, href] of guideFind.matchAll(/<a href="(#browse[^"]*)"/g)) {
   const params = new URLSearchParams(href.replace(/&amp;/g, "&").slice("#browse?".length));
@@ -3913,7 +3960,7 @@ assert.doesNotMatch(flaggedHtml, /Check against source|condition-flag|often mean
   // The caution says where it fires (10¹⁰ M⁻¹ s⁻¹), not "the diffusion limit", which Stats draws at 10⁸–10⁹.
   assert.match(plainNote(diffusion), /kcat\/Km is above 10¹⁰ M⁻¹ s⁻¹ \(10⁷ mM⁻¹ s⁻¹\), faster than diffusion allows; the unit or the value may be wrong\./);
   // The Guide says it once, in the record's words, for its whole group (round 14: the table's Unit or magnitude error row).
-  const guideCautions = indexHtml.match(/<h3 id="guide-cautions">[\s\S]*?<\/table>/)[0];
+  const guideCautions = indexHtml.match(/<details class="guide-ref guide-cautions" id="guide-cautions">[\s\S]*?<\/table>/)[0];
   assert.equal((guideCautions.match(/the unit or the value may be wrong\./gi) || []).length, 1, "said once");
   assert.match(guideCautions, /<tr><th scope="row">Unit or magnitude error<\/th><td><p>The unit or the value may be wrong\.<\/p>/);
   assert.doesNotMatch(guideCautions, /the unit may be wrong|magnitude may be wrong/);
@@ -4913,9 +4960,9 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   html = render(v2Summary, twoChanged);
   // A record with a Different number says the caution in one line right under its notes, and its "?" box leaves it out:
   // the record says it once (the reviewer: with the box open it showed twice).
-  assert.match(sectionOf(html), /<\/details><\/div><p class="section-note cmp-caution-line">A different number can mean a different measurement; it does not by itself mean a database is wrong\.<\/p>/);
+  assert.match(sectionOf(html), /<\/details><\/div><p class="section-note cmp-caution-line">A different number can belong to another record of the paper; it does not by itself mean a database is wrong\.<\/p>/);
   assert.equal((sectionOf(html).match(/cmp-caution-line/g) || []).length, 1, "one line, however many values differ");
-  assert.equal((sectionOf(html).match(/A different number can mean/g) || []).length, 1, "said once");
+  assert.equal((sectionOf(html).match(/A different number can /g) || []).length, 1, "said once");
   assert.match(sectionOf(html), /<p class="cmp-compared">Compared with the values [^<]*(?:<span class="nowrap">[^<]*<\/span>[^<]*)* for the same paper\.<\/p>/);
   // The "?" box links the Guide's section when the Guide has it (the manifest's comparison or the record index's).
   {
@@ -5332,7 +5379,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   // One Guide link, under the rows: how the earlier review worked, at the Guide's lines on it (round 14: #guide-method
   // held only the current four steps).
   assert.match(unverified, /<\/dl><p class="section-link"><a class="method-link" href="#guide-earlier">How the earlier review worked<span aria-hidden="true"> →<\/span><\/a><\/p>$/);
-  assert.match(indexHtml, /<div class="guide-earlier" id="guide-earlier" aria-labelledby="guide-earlier-title">[\s\S]*?CatLog&rsquo;s earlier version, built from enzyme database entries\. Its automated review checked part of them against their papers/);
+  assert.match(indexHtml, /<div class="guide-earlier" id="guide-earlier" aria-labelledby="guide-earlier-title">[\s\S]*?CatLog&rsquo;s earlier version built them from the enzyme databases\. Its automated review checked part of them against their papers/);
   assert.ok(paperCheckOf(row({ record_key: "db-pending", verification_status: "manual_review_required", source_db: "sabio_rk", has_proof_excerpt: false })));
   // Values the earlier review located in the paper (Evidence: Located in the paper) were checked against it: no line.
   assert.equal(paperCheckOf(row({ record_key: "db-located", verification_status: "unverified", source_db: "oed", has_proof_excerpt: false, proof_kind: "paper_evidence" })), null);
@@ -7665,7 +7712,8 @@ for (const hash of ["#stats", "#guide", "#guide-units"]) {
   const rows = api.sourceAttributionRows([paperSource, { key: "brenda", name: "BRENDA", license: "CC BY 4.0", row_count: 20 }]);
   assert.deepEqual(rows.map((item) => [item.name, item.row_count, item.licenseText || item.license]), [
     ["Read from the paper by CatLog", 74, "CatLog compilation CC BY 4.0; quoted paper text remains the publisher’s"],
-    ["Earlier paper extractions", 6, "License: as published (see paper)"],
+    // (round 17: under "Sources and their licenses" each license is named on its own, no "License:" before it)
+    ["Earlier paper extractions", 6, "As published (see paper)"],
     ["BRENDA", 20, "CC BY 4.0"],
   ]);
   // Before the records load, the Source choices count from the same snapshot figure as the counts band (the databases
