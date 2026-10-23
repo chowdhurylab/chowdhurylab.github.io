@@ -1793,8 +1793,11 @@ tools/site_patches/20261023-site-round17-brief.md, section 5.
   key (counts in words, a 10px swatch each) stands beside from 1024px, under below. The records read from the paper
   people checked follow at the same size (data-units="from-paper": drawn at random, then a new row of those picked as
   hard cases, disputed ones red), their heading saying the papers and that none of their values was disputed; then
-  statsHumanCheckedFoot: the records in Browse with the human-checked tag (linked) and their values, "accepted, every
-  value shown approved", which says why they are fewer than the records people checked. Caption: "Each square is one
+  statsHumanCheckedFoot: the records in Browse with the human-checked tag (linked) and their values, "of the 2,131
+  records with a reviewer’s verdict in Browse, those accepted with every kcat and Km approved and the kcat/Km approved or
+  agreeing with kcat ÷ Km" (the tag's own rule, never "every value"; 2,131 is overview.human_marked, the count the
+  method's statsHumanCheckedBridge gives; without it the rule alone), which says why they are fewer than the records
+  people checked; the bridge ends "the tag needs every kcat and Km a record shows approved". Caption: "Each square is one
   record people checked." Rule: reviewRulesText (records, never entries).
 - Checks on the values (statsChecksFigure): two panels side by side from 1024px. The second AI check's 100% bar (20px)
   of confirmed (cyan) and corrected (opaque red), each count and share under its end; without the proof-line counts its
