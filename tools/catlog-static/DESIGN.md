@@ -1845,3 +1845,6 @@ tools/site_patches/20261023-site-round17-brief.md, section 5.
 - A mutation field that holds an old pipeline's reasoning or an assay note names no form: mutationSignature() treats it
   as none (NOT_A_FORM), so the record reads "variant, not specified" everywhere (table, cards, titles, record, search,
   downloads). catlog-v2's stage step is to blank those signatures at the source.
+- mutationWords(signature, row) gives no words for codes that are not substitutions: a list that gives one position two
+  different wild-type residues ("M6P/M1P/G1P/G6P", "K2H/H2P"), and, where the enzyme or substrate name says "phosph",
+  a list of sugar-phosphate-shaped codes only ("G6P", "G1P/F6P"); the code still shows as printed.

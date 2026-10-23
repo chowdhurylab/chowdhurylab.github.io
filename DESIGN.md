@@ -825,4 +825,6 @@ type for up to three (tools/catlog-static/DESIGN.md, Type And Color).
 A mutation field that holds an old pipeline's reasoning or an assay note ("but the preserved evidence still stops at
 ...", "... remains manual_review_required because ...", "stopped-flow measurement of ...", "reaction stopped with ...":
 15 earlier-catalog records on Oct 22) names no form, so mutationSignature() treats it as none (NOT_A_FORM) and the record
-reads "variant, not specified" in the table, the cards, the titles, the record, the search and the downloads.
+reads "variant, not specified" in the table, the cards, the titles, the record, the search and the downloads. Codes
+that are not substitutions get no words (mutationWords): one position given two wild-type residues ("M6P/M1P/G1P/G6P",
+"K2H/H2P") and, on a record whose enzyme or substrate says "phosph", sugar-phosphate-shaped codes only ("G6P", "G1P/F6P").
