@@ -587,7 +587,6 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
 .records-tools { display:flex; align-items:center; gap:var(--sp-2); color:var(--text-2); font-size:var(--fs-13) }
 /* Sorting is by the column headers; phones, whose cards have none, get a compact control instead (Sort ↑ reverses the
    order, the menu picks the column). */
-.records-tools label { white-space:nowrap }
 .sort-control { display:none; min-width:0; align-items:center; gap:var(--sp-2) }
 .sort-direction { display:inline-flex; min-height:32px; align-items:center; gap:2px; color:var(--muted); font-size:var(--fs-12); font-weight:400; text-decoration:none; white-space:nowrap }
 .sort-direction .sort-icon { visibility:visible; margin-top:0; color:var(--accent) }
@@ -2214,7 +2213,8 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
   /* The chips row never grows past its row (a long chip ends in "…"): the table's box no longer clips it on phones. */
   #activeFilters { max-width:100%; min-width:0 }
   /* The cards have no headers: Sort ↑ (the direction, a tap reverses it) and the column menu stand in for them. "Sort"
-     stays visible beside the menu, so it never reads as a review-result filter. */
+     shows beside the menu where it fits (from 390px, or 360px with no filter on), so the menu never reads as a
+     review-result filter; narrower, its arrow alone does. */
   .sort-control { display:inline-flex; flex:1 1 auto; gap:var(--sp-1) }
   .records-tools select { flex:1 1 auto; width:auto; min-width:0 }
   .download-page-detail { display:none }
