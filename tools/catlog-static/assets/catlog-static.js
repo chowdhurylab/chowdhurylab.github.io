@@ -1809,10 +1809,16 @@
     return false;
   }
 
+  // A few earlier-catalog records carry, in their mutation field, an old pipeline's reasoning ("but the preserved evidence
+  // still stops at ...", "... remains manual_review_required because ...") or an assay note ("stopped-flow measurement of
+  // reductive half-reaction", "reaction stopped with Na2CO3"). Neither names a form (the site shows facts only), so such
+  // a record reads as a variant that does not say which, everywhere: the table, the cards, the titles, the record and the
+  // downloads.
+  const NOT_A_FORM = /^(?:but|and|because)\b|manual_review_required|preserved evidence|\bpromot\w*|overstate|resolved accession|stopped[- ]?flow|reaction stopped|calculation from/i;
   function mutationSignature(row) {
     const signature = String(row?.mutation_signature || "").trim();
     const key = signature.toLowerCase().replace(/[\s_-]+/g, "");
-    if (!signature || ["unknown", "wt", "wildtype", "none", "na", "n/a"].includes(key)) return "";
+    if (!signature || ["unknown", "wt", "wildtype", "none", "na", "n/a"].includes(key) || NOT_A_FORM.test(signature)) return "";
     return signature;
   }
 
@@ -2653,7 +2659,7 @@
       row.enzyme_display_name,
       row.organism,
       organismSearchText(row.organism),
-      row.mutation_signature === "Unknown" ? "" : row.mutation_signature,
+      mutationSignature(row),
       row.source_db,
       row.primary_uniprot_id,
       row.protein_accession,
@@ -15992,6 +15998,9 @@
       enzymeFormLabel,
       enzymeFormHtml,
       mutationWords,
+      mutationSignature,
+      enzymeFormText,
+      enzymeFormTitle,
       sequenceSourceLabel,
       sequenceNoteText,
       isV2Row,

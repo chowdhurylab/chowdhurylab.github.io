@@ -822,3 +822,7 @@ figures, no box; a long list cut with "…"; "variant, not specified" muted whol
 "deletion mutant", stands alone unless it starts with a substitution), its title the substitutions in words where every
 part parses ("Variant E124Q: Glu124 → Gln"), and the record's header "Variant E124Q (Glu124 → Gln)" in the same plain
 type for up to three (tools/catlog-static/DESIGN.md, Type And Color).
+A mutation field that holds an old pipeline's reasoning or an assay note ("but the preserved evidence still stops at
+...", "... remains manual_review_required because ...", "stopped-flow measurement of ...", "reaction stopped with ...":
+15 earlier-catalog records on Oct 22) names no form, so mutationSignature() treats it as none (NOT_A_FORM) and the record
+reads "variant, not specified" in the table, the cards, the titles, the record, the search and the downloads.
