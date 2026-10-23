@@ -4300,7 +4300,8 @@ def check_layout(driver, browser, url, route_label):
         assert len({colours[key][0] for key in ("records", "accepted", "paper", "checked")}) == 4, colours
         assert colours["shadow"] == "none" and colours["wash"] == "none" and colours["border"] == "1px" and colours["line"][0] == colours["line"][1], colours
         # Type set in columns, not tiles (round 15): one thin rule, before the parameters; none between the key numbers.
-        rules = driver.execute_script("""return [...document.querySelectorAll('.snapshot-overview *')].filter(e => e.getClientRects().length
+        # (The Records "?" button has a hairline box all round; it is a control, not a rule.)
+        rules = driver.execute_script("""return [...document.querySelectorAll('.snapshot-overview *:not(button, button *)')].filter(e => e.getClientRects().length
             && parseFloat(getComputedStyle(e).borderLeftWidth) > 0).map(e => e.id || e.className)""")
         assert rules == ["snapshotMeta"], rules
         assert set(sizes["th"]) == {"12px"} and set(sizes["thWeight"]) == {"600"} and set(sizes["td"]) == {"13px"}, sizes
