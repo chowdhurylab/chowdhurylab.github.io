@@ -3295,12 +3295,12 @@ def check_filters(driver, browser, url, route_label):
     try:
         set_browse_viewport(driver, browser, 1440, 1000)
         # 0. Round 13 (the user, 2026-10-18: "too many options and a bit confusing"): in view, the filters most visitors use
-        # (Enzyme, organism, substrate; Measurement type; Review result), then one closed More filters holding the
+        # (Enzyme, organism, substrate; Parameter; Review result), then one closed More filters holding the
         # specialist groups, Source first (round 14, the user 2026-10-20: "source can go to the extra filters"); no help
         # text in view (each group's "?" holds it); no option removed.
         open_page(base + "#browse")
         rest = driver.execute_script(SIDEBAR_GROUPS_JS)
-        assert rest["top"] == ["Enzyme, organism, substrate", "Measurement type", "Review result", "More filters"], rest
+        assert rest["top"] == ["Enzyme, organism, substrate", "Parameter", "Review result", "More filters"], rest
         assert rest["more"] == ["Source", "Wild type or variant", "Assay conditions", "Compared with databases", "Cautions", "Source database"], rest
         assert rest["moreOpen"] is False and rest["moreOpenInside"] == [True, True, True, False, False, False], rest
         assert rest["countHidden"] and rest["words"] == "", rest
@@ -4498,6 +4498,19 @@ def check_layout(driver, browser, url, route_label):
         assert (footer["shown"] and footer["text"] == "CC BY 4.0 · How to cite" and footer["href"] == "#guide-licence"
                 and footer["between"] and footer["whole"] and footer["bar"] == 48), f"The footer's license line: {footer}"
         results["footer-license"] = True
+        # Records' "?" in the counts band says what a record and its values are, over the band (the numbers stay put),
+        # and Escape closes it.
+        about = driver.find_element(By.ID, "recordsAboutButton")
+        driver.execute_script("arguments[0].scrollIntoView({block: 'center'})", about)
+        before = box(".summary-records > strong")
+        about.click()
+        wait.until(lambda d: d.find_element(By.ID, "recordsAbout").is_displayed())
+        note = driver.find_element(By.ID, "recordsAbout").text.strip()
+        assert note.startswith("A record is one row of the table") and about.get_attribute("aria-expanded") == "true", note
+        assert box(".summary-records > strong") == before, "The note does not move the band's numbers"
+        ActionChains(driver).send_keys(Keys.ESCAPE).perform()
+        wait.until(lambda d: not d.find_element(By.ID, "recordsAbout").is_displayed())
+        results["band-record-about"] = True
         # 1280: the sidebar is 256px; a record takes its place (the rail) and closing it brings it back.
         set_browse_viewport(driver, browser, 1280, 900)
         open_page()
