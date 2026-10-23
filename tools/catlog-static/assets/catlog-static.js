@@ -815,8 +815,9 @@
       renderStats();
       state.statsRendered = true;
     } else if (statsOpen) {
-      // The window may have changed width while Stats was hidden (its table is measured only while shown).
+      // The window may have changed width while Stats was hidden (its table and axes are measured only while shown).
       statsFitDatabaseTables($("statsCharts"));
+      statsFitAxes($("statsCharts"));
     }
     // The Team page too: drawn from the manifest the first time it is shown.
     if (teamOpen && !state.teamRendered && $("teamFigure")) {
@@ -4313,6 +4314,7 @@
     statsFitValueColumns(item);
     statsFitDatabaseTables(item);
     statsFitSegmentLabels(item);
+    statsFitAxes(item);
   }
 
   // A numbered part of the page (the user, 2026-10-13: At a glance, Quality, What is in the catalog, Biology, Values,
@@ -4476,6 +4478,7 @@
       segment.style.width = `${width}%`;
     });
     figure.querySelectorAll("[data-axis-mode]").forEach((axis) => { axis.hidden = axis.dataset.axisMode !== mode; });
+    statsFitAxes(figure);
   }
 
   // Figure 1's review results as one 100% bar above their table (fix pass after round 16b: a donut with the total in its
@@ -4523,6 +4526,26 @@
       if (!segment?.getClientRects?.().length) continue;
       const text = label.firstElementChild?.getBoundingClientRect?.().width ?? label.scrollWidth;
       if (text > segment.clientWidth - 6) label.classList.add("is-hidden");
+    }
+  }
+
+  // An axis whose labels still touch once the stylesheet has thinned them (a bar column of 80-90px: two panels side by side
+  // on a tablet, a wide font) keeps only its two end labels and their gridlines (data-axis-ends on the chart: "0" and
+  // "25,000", not "0 10,00020,000"), so labels never overlap and no gridline is left unlabelled. Labels and gridlines
+  // come from one tick list (statsAxis, statsTickRefs) and thin by one rule, so they stay together. Measured in the
+  // viewer's font; run when Stats is drawn, on a resize, after a late font, when the supplement opens and when a chart
+  // switches between Records and Share. A chart that is not drawn (the closed supplement) is left until it is.
+  function statsFitAxes(root) {
+    const shown = (tick) => window.getComputedStyle?.(tick)?.visibility !== "hidden";
+    for (const chart of root?.querySelectorAll?.(".stats-chart") || []) {
+      const axes = [...chart.querySelectorAll(".stats-chart-axis .stats-axis-ticks")].filter((axis) => axis.getClientRects?.().length);
+      if (!axes.length) continue;
+      delete chart.dataset.axisEnds;
+      const touch = axes.some((axis) => {
+        const boxes = [...axis.children].filter(shown).map((tick) => tick.getBoundingClientRect());
+        return boxes.some((box, index) => index > 0 && box.left < boxes[index - 1].right + 6);
+      });
+      if (touch) chart.dataset.axisEnds = "1";
     }
   }
 
@@ -8887,6 +8910,7 @@
     statsFitValueColumns($("statsCharts"));
     statsFitDatabaseTables($("statsCharts"));
     statsFitSegmentLabels($("statsCharts"));
+    statsFitAxes($("statsCharts"));
     statsWatchMapDots($("statsCharts"));
     statsWatchYearLabels($("statsCharts"));
     // A font that finishes loading after Stats is drawn changes these widths: fit them again then (once per page).
@@ -8894,7 +8918,7 @@
       statsRefitOnFonts = true;
       document.fonts.addEventListener("loadingdone", () => {
         const root = $("statsCharts");
-        if (root?.isConnected) { statsFitValueColumns(root); statsFitDatabaseTables(root); statsFitSegmentLabels(root); statsPlaceYearLabels(root); }
+        if (root?.isConnected) { statsFitValueColumns(root); statsFitDatabaseTables(root); statsFitSegmentLabels(root); statsFitAxes(root); statsPlaceYearLabels(root); }
       });
     }
     // A window that changes width changes the room of Corrections by cause and database's table (once per page).
@@ -8918,6 +8942,7 @@
           if (root?.isConnected) {
             statsFitDatabaseTables(root);
             statsFitSegmentLabels(root);
+            statsFitAxes(root);
             if (typeof ResizeObserver !== "function") { statsPlaceMapDots(root); statsPlaceYearLabels(root); }
           }
         });
@@ -8930,7 +8955,7 @@
       statsRefitOnNarrow = true;
       narrow.addEventListener("change", () => {
         const root = $("statsCharts");
-        if (root?.isConnected) statsFitValueColumns(root);
+        if (root?.isConnected) { statsFitValueColumns(root); statsFitAxes(root); }
       });
     }
   }
@@ -16501,6 +16526,7 @@
       statsDatabaseLeadHtml,
       statsDatabaseDifferRule,
       statsFitSegmentLabels,
+      statsFitAxes,
       auditFacts,
       reviewGlanceText,
       statsSuperscriptsHtml,
