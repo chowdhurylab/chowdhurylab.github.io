@@ -1718,14 +1718,14 @@ assert.equal(
     identity_resolution_state: "accession_resolved",
     sequence_source: "uniprot_ec_organism_unique",
   }),
-  "UniProt entry inferred from EC number and organism",
+  "UniProt accession inferred from EC number and organism",
 );
 assert.equal(
   api.identityResolutionLabel({
     identity_resolution_state: "accession_resolved",
     sequence_source: "uniprot_accession",
   }),
-  "UniProt entry",
+  "UniProt accession",
 );
 assert.equal(
   api.identityResolutionLabel({
@@ -1767,9 +1767,9 @@ assert.match(missingDetailConfidenceHtml, /\(inferred from EC number and organis
   assert.match(wildHtml, /<dt>Sequence<\/dt><dd><span class="reveal-line"><span class="reveal-summary">4 aa<\/span>/, "a wild-type record's sequence is its Sequence");
   assert.doesNotMatch(wildHtml, /Sequence note|UniProt canonical sequence/);
   assert.match(api.proteinSection({}, { identity_resolution_state: "sequence_resolved_no_accession", sequence: "MAAA" }),
-    /<dt>UniProt<\/dt><dd>Sequence known, no UniProt entry<\/dd>/);
+    /<dt>UniProt<\/dt><dd>Sequence known, no UniProt accession<\/dd>/);
   assert.match(api.proteinSection({}, { identity_resolution_state: "candidate_pool", uniprot_candidate_ids: ["P1", "P2"] }),
-    /<dt>UniProt<\/dt><dd>Several possible UniProt entries<div class="reference-list">/);
+    /<dt>UniProt<\/dt><dd>Several possible UniProt accessions<div class="reference-list">/);
   const unmatched = api.proteinSection({ mutation_signature: "R269A/N270A" }, { identity_resolution_state: "identity_unresolved",
     sequence_source: "manual_literature_uniprot_resolution",
     sequence_variant_note: "Resolved sequence already matches the mutant residue(s), so it is treated as a source-provided variant sequence." });
@@ -4691,7 +4691,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.match(html, /EC 1\.1\.1\.1 \(from the databases; not in the paper\)/);
   assert.match(html, /All values confirmed\. The AI check also removed EC 1\.1\.1\.1 \(not printed in the paper; the EC shown comes from the enzyme databases\)\.<\/dd>/);
   assert.match(removedShown({ primary_uniprot_id: "A0A5H2WVH6" }),
-    /The AI check also removed EC 1\.1\.1\.1 \(not printed in the paper; the EC shown comes from the UniProt entry A0A5H2WVH6\)\.<\/dd>/);
+    /The AI check also removed EC 1\.1\.1\.1 \(not printed in the paper; the EC shown comes from UniProt A0A5H2WVH6\)\.<\/dd>/);
   assert.match(removedShown({ primary_uniprot_id: null }), /The AI check also removed EC 1\.1\.1\.1 \(not printed in the paper\)\.<\/dd>/);
   // CatLog's words for a field the reader left empty ("set to") or the check emptied ("left blank") read as actions too.
   html = render([line("kcat", "corrected: pH left blank; EC set to 3.2.1.23; temperature left blank; protein IDs corrected"),
