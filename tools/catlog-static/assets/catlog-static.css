@@ -269,8 +269,8 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
    row: the four key numbers, each label over its number and one short line of context under it, then, behind one thin
    rule, the parameters (each name over its count, one line under them). Type set in columns, not tiles: no rule
    between the key numbers. They lead by size, weight and tabular figures, each in the colour its meaning has across
-   the site (Records the page's ink, Accepted its status navy with the status dot, Read from the paper the darker BPG
-   cyan, Human-checked the darker BPG green with the tick). The line above says what CatLog is and ends with the
+   the site (Records the page's ink, Accepted its status navy, Read from the paper the darker BPG cyan, Human-checked
+   the darker BPG green with the tick; round 17: no dot or square on the labels). The line above says what CatLog is and ends with the
    snapshot date. One layout from 1024px up (nothing wraps or moves as the window widens or the filters change), two
    rows on tablets, a 2 x 2 grid on phones. */
 .snapshot-band { position:relative; min-width:0; border-bottom:1px solid var(--line); background:var(--bg); padding:6px var(--gutter) }
@@ -606,9 +606,9 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
 /* Active filters: Undo first (dimmed with nothing to undo: it keeps its place however many chips there are, so pressing
    it again never lands on a chip or Clear all), then one removable chip each and Clear all. A chip is plain (round 14:
    a tint, a tinted line and a 3px coloured stripe showed one colour three times, a template look): a 1px hairline on
-   white, its words ("Source: Read from the paper") and, where its option has one, the option's own mark in its meaning
-   colour (a status dot, human-checked's tick, Read from the paper's cyan square, a database result's square, a
-   caution's "!"). The tone-* classes below colour the sidebar's group dots only. */
+   white, its words ("Source: Read from the paper") and, where its option has one, the option's own words or mark in its
+   meaning colour (a review result's word and Read from the paper's words in their text shades, human-checked's tick, a
+   database result's square, a caution's "!"). The tone-* classes below colour the sidebar's group dots only. */
 .active-filters { display:flex; flex-wrap:wrap; min-width:0; align-items:center; gap:6px var(--sp-2) }
 /* A group's colour (--group), for the dot beside its title in the sidebar. */
 .tone-source { --group:var(--fg-source) }
@@ -747,10 +747,11 @@ tbody tr.selected .row-arrow { color:var(--accent) }
 .primary-cell strong { color:var(--accent); font-weight:500 }
 /* A variant's line under the name, never clipped by it; the name then keeps one line, so every row keeps one height.
    Phones show it on its own line under the name (td.c-form, hidden in the table). Round 17 (the user: the boxed code
-   was hard to understand): plain words, no box, "variant" muted and the mutation in the darker grey of secondary text,
-   12/16px (the old tag's 16px box), a long list cut with "…" (the title and the record give it whole, with the
-   substitutions in words). */
-.enzyme-form { display:inline-block; max-width:100%; overflow:hidden; color:var(--text-2); font-size:var(--fs-12); font-weight:400; line-height:var(--lh-12); text-overflow:ellipsis; white-space:nowrap; vertical-align:top }
+   was hard to understand): plain words, no box, "variant" muted and the mutation in the darker grey of secondary text
+   with tabular figures, 12/16px (the old tag's 16px box), a long list cut with "…" (the title and the record give it
+   whole, with the substitutions in words). */
+.enzyme-form { display:inline-block; max-width:100%; overflow:hidden; color:var(--text-2); font-size:var(--fs-12); font-weight:400; font-variant-numeric:tabular-nums lining-nums; line-height:var(--lh-12); text-overflow:ellipsis; white-space:nowrap; vertical-align:top }
+/* "variant" muted, and "variant, not specified" muted whole (it names no mutation). */
 .enzyme-form .form-word { color:var(--muted) }
 .primary-cell .enzyme-form { display:block; width:max-content; margin-top:2px }
 .clamp-2.has-form { max-height:17px; -webkit-line-clamp:1 }
@@ -868,7 +869,9 @@ body.detail-open .detail-panel { display:block }
 .detail-top h2.quiet-focus:focus-visible { outline:none }
 .detail-top p { margin:0; color:var(--text-2); font-size:var(--fs-13); line-height:var(--lh-13); overflow-wrap:break-word }
 .detail-form { display:inline-block; max-width:100% }
-.detail-subtitle code.mutation { color:var(--text); font:var(--fs-12)/var(--lh-12) var(--font-mono); overflow-wrap:anywhere }
+/* The variant as the table sets it (round 17): the mutation plain in --text-2 with tabular figures, its substitutions in
+   words muted and in brackets ("Variant E124Q (Glu124 → Gln)"); the list wraps after a "/" (<wbr>) or between words. */
+.detail-subtitle .mutation { color:var(--text-2); font-variant-numeric:tabular-nums lining-nums; overflow-wrap:anywhere }
 .detail-subtitle .mutation-words { color:var(--muted) }
 .detail-top p.detail-substrate { display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow:hidden; color:var(--text) }
 .detail-substrate > span:first-child { color:var(--muted) }
@@ -1183,10 +1186,8 @@ p.cmp-note { padding-left:16px }
    "Read from the paper" took two lines and its 75,000 stood 18px below 99.9%): each item's label and number are two rows
    of the band (a subgrid), so a row's labels end together and its numbers start together. */
 .stats-totals .stats-totals-main > .stats-total { display:grid; grid-row:span 2; grid-template-rows:subgrid; row-gap:0; align-content:start }
-/* As on Browse's counts band: the labels muted, the meaning colour on a mark before the label (Accepted's dot, Read
-   from the paper's cyan square) and on the number. */
-.stats-totals-main .stats-total:is([data-total="accepted"], [data-total="catlog"]) dt::before { content:""; display:inline-block; width:8px; height:8px; margin-right:6px; border-radius:50%; background:var(--st-accepted); vertical-align:0 }
-.stats-totals-main .stats-total[data-total="catlog"] dt::before { border-radius:1px; background:var(--src-paper); box-shadow:inset 0 0 0 1px var(--src-paper-ring) }
+/* As on Browse's counts band: the labels muted and the meaning colour on the number (round 17, "words, not shapes": no
+   dot before Accepted, no square before Read from the paper). */
 /* A linked number: the whole item is its target. */
 a.stats-total-value { text-decoration:none }
 a.stats-total-value::after { content:""; position:absolute; inset:0; border-radius:var(--radius) }
@@ -2455,8 +2456,8 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
 /* Guide: short and plain (round 14, the user: "still so verbose, AI-ish, confusing"). A newcomer reads in a minute what
    CatLog is, how to read a record and what each label means. One column up to 1000px; prose keeps to 68ch. A calm,
    editorial look: hairlines, no boxes round the prose, no icons, no tinted washes or shadows; the pictures (the four
-   steps, the numbered record, the legend) reuse the page's own components (status dot, tags, values table, filter chips,
-   database squares), so their colours follow the tokens. Every rule is scoped to .guide-view, so it wins over the older
+   steps, the numbered record, the legend) reuse the page's own components (status words, tags, values table, filter
+   chips, database squares), so their colours follow the tokens. Every rule is scoped to .guide-view, so it wins over the older
    Guide rules above. */
 /* Round 15 polish: the Guide sits in Stats' and Team's 1200px container with their 24px gutters, so a view's title keeps
    its place when the tabs change (the Guide's had stood 76px further right at 1440px); its content keeps to 1000px at the

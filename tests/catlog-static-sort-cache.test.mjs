@@ -1597,20 +1597,29 @@ assert.equal(
 );
 assert.match(
   api.enzymeFormHtml({ sequence_variant_status: "variant" }),
-  />variant, not specified</,
-  "the table marker should identify an unspecified variant",
+  /<span class="enzyme-form" title="Variant, not specified"><span class="form-word">variant, not specified<\/span><\/span>/,
+  "the table marker should identify an unspecified variant, all muted",
 );
 // Round 17 (the user: the bare boxed code was hard to understand): the table says "variant D102E", its title the
 // substitution in words where it parses; a signature that says what it is in words stands alone.
 assert.match(api.enzymeFormHtml({ mutation_signature: "D102E", wild_type: false }),
-  /<span class="enzyme-form" title="Variant D102E: Asp102 → Glu"><span class="form-word">variant<\/span> D102E<\/span>/,
+  /<span class="enzyme-form" title="Variant D102E: Asp102 → Glu"><span class="form-word">variant<\/span> <span class="form-mutation">D102E<\/span><\/span>/,
   "the table says it is a variant");
-assert.match(api.enzymeFormHtml({ mutation_signature: "P161S/S336A" }), /title="Variant P161S\/S336A: Pro161 → Ser, Ser336 → Ala">.*> P161S\/S336A</);
-assert.match(api.enzymeFormHtml({ mutation_signature: "Δ74-80" }), /title="Variant Δ74-80"><span class="form-word">variant<\/span> Δ74-80</);
+assert.match(api.enzymeFormHtml({ mutation_signature: "P161S/S336A" }), /title="Variant P161S\/S336A: Pro161 → Ser, Ser336 → Ala">.*>P161S\/S336A</);
+assert.match(api.enzymeFormHtml({ mutation_signature: "Δ74-80" }), /title="Variant Δ74-80"><span class="form-word">variant<\/span> <span class="form-mutation">Δ74-80</);
 assert.match(api.enzymeFormHtml({ mutation_signature: "deletion mutant" }), /<span class="enzyme-form" title="Variant deletion mutant">deletion mutant<\/span>/);
 assert.match(api.enzymeFormHtml({ mutation_signature: "L169S/L176S (sol-hMGL)" }), /title="Variant L169S\/L176S \(sol-hMGL\): Leu169 → Ser, Leu176 → Ser"><span class="form-word">variant<\/span> /);
-assert.deepEqual(["E124Q", "W88*", "E124Q/D269E/E273D", "D76G/K102T (M2)", "E124Q/Δ18", "FrdC R28N", "A12A", "e124q", "D92N (large) + E122G"].map(api.mutationWords),
-  ["Glu124 → Gln", "Trp88 → stop", "Glu124 → Gln, Asp269 → Glu, Glu273 → Asp", "Asp76 → Gly, Lys102 → Thr", "", "", "", "", ""]);
+// A signature that starts with a substitution keeps "variant" whatever its bracketed name says.
+assert.match(api.enzymeFormHtml({ mutation_signature: "L386Q/G417R/V482G (variant L9)" }),
+  /title="Variant L386Q\/G417R\/V482G \(variant L9\): Leu386 → Gln, Gly417 → Arg, Val482 → Gly"><span class="form-word">variant<\/span> <span class="form-mutation">L386Q\/G417R\/V482G \(variant L9\)</);
+assert.match(api.enzymeFormHtml({ mutation_signature: "V162A/H208Y (7D5 chimera)" }), /><span class="form-word">variant<\/span> /);
+assert.match(api.enzymeFormHtml({ mutation_signature: "E124Q (apo form)" }), /><span class="form-word">variant<\/span> <span class="form-mutation">E124Q \(apo form\)</);
+assert.match(api.enzymeFormHtml({ mutation_signature: "R4 mutant (E37K/V160A)" }), /<span class="enzyme-form" title="Variant R4 mutant \(E37K\/V160A\)">R4 mutant \(E37K\/V160A\)<\/span>/);
+// Parts split at "/", ",", ";", "+" or a space; a position starts with 1-9.
+assert.deepEqual(["E124Q", "W88*", "E124Q/D269E/E273D", "D76G/K102T (M2)", "E124Q, D269E", "E124Q + D269E", "E124Q;D269E", "E124Q D269E",
+  "E124Q/Δ18", "FrdC R28N", "A12A", "e124q", "D92N (large) + E122G", "A0G", "E124Q/", ""].map(api.mutationWords),
+  ["Glu124 → Gln", "Trp88 → stop", "Glu124 → Gln, Asp269 → Glu, Glu273 → Asp", "Asp76 → Gly, Lys102 → Thr", "Glu124 → Gln, Asp269 → Glu",
+    "Glu124 → Gln, Asp269 → Glu", "Glu124 → Gln, Asp269 → Glu", "Glu124 → Gln, Asp269 → Glu", "", "", "", "", "", "", "", ""]);
 assert.equal(api.enzymeFormHtml({ wild_type: true }), "", "wild type shows nothing");
 assert.equal(api.enzymeFormHtml({}), "", "a record that does not say shows nothing");
 assert.equal(api.enzymeFormLabel({}, { showUnknown: true }), "Not recorded");
@@ -3593,7 +3602,7 @@ function row(overrides = {}) {
   assert.equal(api.rowStatusLabel(row({ verification_status: "disputed" })), "Disputed");
   assert.equal(api.rowStatusLabel(row({ verification_status: "corrected" }), { exact: true }), "Accepted");
   // The badge: review result and tags as its accessible name; the meaning (never the full method) in its title. A record
-  // not yet re-read is tagged "not re-read" where one read from the paper says "from paper", read out in full.
+  // not yet re-read is tagged "not re-read" where one read from the paper says "from paper", each read out in full.
   const badge = api.statusBadge(row({ verification_status: "corrected" }));
   assert.match(badge, /aria-label="Accepted, Not yet re-read, BRENDA, corrected"/);
   assert.match(badge, /<span class="state-tags"><span class="state-tag">not re-read<\/span><span class="state-tag">BRENDA<\/span><span class="state-tag">corrected<\/span><\/span>/);
@@ -3601,7 +3610,7 @@ function row(overrides = {}) {
   assert.match(api.statusBadge(prepared), /class="state-badge unresolved"[^>]*title="Not checked \(Not reviewed\): A database record with no PMID or DOI, so it cannot be checked against a paper\."[^>]*aria-label="Not checked, Not yet re-read, BRENDA"/);
   assert.match(api.statusBadge(row({ verification_status: "disputed" })), /class="state-badge disputed"[^>]*>.*Disputed</);
   const paperBadge = api.statusBadge(row({ source_db: "primary_paper_direct", enzyme_label_source: "explicit_enzyme_name" }));
-  assert.match(paperBadge, /title="Read from the paper by an AI model; a second, separate AI check compared each value with the paper\." aria-label="Accepted, from paper"/);
+  assert.match(paperBadge, /title="Read from the paper by an AI model; a second, separate AI check compared each value with the paper\." aria-label="Accepted, Read from the paper"/);
   assert.match(paperBadge, /<span class="state-tags"><span class="state-tag source-paper">from paper<\/span><\/span>/);
   assert.doesNotMatch(paperBadge, /src-mark/);
   assert.doesNotMatch(paperBadge, /not re-read|Not yet re-read/);
@@ -4285,7 +4294,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
     ],
   });
   const html = element("detailContent").innerHTML;
-  assert.match(html, /<p class="detail-subtitle">EC 1\.4\.1\.20 &middot; <i>Bacillus sphaericus<\/i> &middot; <span class="detail-form">Variant <code class="mutation">N145A<\/code><span class="mutation-words">: Asn145 → Ala<\/span><\/span><\/p>/);
+  assert.match(html, /<p class="detail-subtitle">EC 1\.4\.1\.20 &middot; <i>Bacillus sphaericus<\/i> &middot; <span class="detail-form">Variant&nbsp;<span class="mutation">N145A<\/span><span class="mutation-words"> \(Asn145&nbsp;→&nbsp;Ala\)<\/span><\/span><\/p>/);
   assert.match(html, /<p class="detail-substrate"><span>Substrate:<\/span> <span class="detail-substrate-name">3-phenyl-2-oxopropanoate<\/span><\/p>/);
   assert.match(html, /<span class="detail-status-word">Accepted<\/span><span class="detail-status-source">from paper<\/span>/);
   assert.match(html, /<p class="detail-key"><span class="visually-hidden">Record ID <\/span><code id="detailRecordKey">v2-structure<\/code>.*data-copy-text="[^"]*#record=v2-structure" data-copy-label="Copy link">Copy link<\/button><\/p>/);
@@ -4357,7 +4366,7 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.doesNotMatch(html, /converted by code|<ul class="value-notes">/);
   assert.match(html, /<p class="detail-subtitle">EC 2\.3\.1\.183 &middot; Organism<\/p>/);
   const badge = api.statusBadge(v2Summary);
-  assert.match(badge, /aria-label="Accepted, from paper"/);
+  assert.match(badge, /aria-label="Accepted, Read from the paper"/);
   assert.match(badge, /title="Read from the paper by an AI model; a second, separate AI check compared each value with the paper\."/);
   assert.match(api.statusBadge(row({ verification_status: "corrected" })), /aria-label="Accepted, Not yet re-read, BRENDA, corrected"/);
   // A unit in CatLog's own words reads as the page writes units, whether the exponent was typed with a caret or a hyphen.
