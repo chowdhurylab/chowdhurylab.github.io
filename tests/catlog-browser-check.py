@@ -3525,6 +3525,9 @@ def check_filters(driver, browser, url, route_label):
         if overview:
             assert summary() == f"{overview['from_paper']['records']:,} records", summary()
         assert first_tags() and all(tag == "from paper" for tag in first_tags()), first_tags()
+        # Read out in full, as Not yet re-read is: "Accepted, Read from the paper".
+        names = driver.execute_script("return [...document.querySelectorAll('#recordsBody tr[data-key] .state-badge')].map(e => e.getAttribute('aria-label'))")
+        assert names and all(", Read from the paper" in name and "from paper," not in name and not name.endswith(", from paper") for name in names), names
         assert chip_keys() == ["source:paper"]
         open_page(base + "#browse?source=skid")
         assert driver.execute_script("return document.querySelector('input[name=\"sourceMode\"][value=\"databases\"]').checked")
@@ -3566,17 +3569,41 @@ def check_filters(driver, browser, url, route_label):
                 const form = row.querySelector('.primary-cell > .enzyme-form');
                 const name = row.querySelector('.primary-cell > .clamp-2');
                 const style = form && getComputedStyle(form);
-                return {text: form ? form.textContent : null, title: form ? form.title : null,
+                return {text: form ? form.textContent : null, title: form ? form.title : null, key: row.dataset.key,
                         boxed: style ? parseFloat(style.borderTopWidth) > 0 || style.backgroundColor !== 'rgba(0, 0, 0, 0)' : null,
+                        figures: style ? style.fontVariantNumeric : null,
                         below: form ? form.getBoundingClientRect().top >= name.getBoundingClientRect().bottom - 1 : false,
                         height: Math.round(row.getBoundingClientRect().height)};
             });
         """)
-        assert forms and all(item["text"] and item["below"] and not item["boxed"] and item["title"].startswith("Variant") for item in forms), forms[:3]
+        assert forms and all(item["text"] and item["below"] and not item["boxed"] and item["title"].startswith("Variant")
+                             and "tabular-nums" in (item["figures"] or "") for item in forms), forms[:3]
         substitution = re.compile(r"^variant ([A-Z])(\d+)([A-Z])$")
         assert all(item["title"].startswith(f"Variant {item['text'][8:]}: ") and "\u2192" in item["title"]
                    for item in forms if (match := substitution.match(item["text"])) and match.group(1) != match.group(3)), forms[:3]
         assert len({item["height"] for item in forms}) == 1, {item["height"] for item in forms}
+        # The record's header says it the same way: "Variant E124Q (Glu124 → Gln)", the mutation plain (not monospace,
+        # tabular figures) in the subtitle's grey, the words muted in brackets, "Variant" kept with the mutation.
+        single = next((item for item in forms if (match := substitution.match(item["text"])) and match.group(1) != match.group(3)), None)
+        if single:
+            driver.get("about:blank")
+            driver.get(base + f"#record={single['key']}")
+            wait.until(lambda d: d.execute_script("return Boolean(document.querySelector('#detailContent .detail-form .mutation'))"))
+            header = driver.execute_script("""
+                const form = document.querySelector('#detailContent .detail-form');
+                const mutation = form.querySelector('.mutation'), words = form.querySelector('.mutation-words');
+                const subtitle = getComputedStyle(form.closest('.detail-subtitle'));
+                return {text: form.textContent.replace(/\\u00a0/g, ' '), tag: mutation.tagName,
+                        family: getComputedStyle(mutation).fontFamily, subtitleFamily: subtitle.fontFamily,
+                        figures: getComputedStyle(mutation).fontVariantNumeric, colour: getComputedStyle(mutation).color,
+                        subtitleColour: subtitle.color, words: words ? getComputedStyle(words).color : null,
+                        nbsp: form.textContent.startsWith('Variant\\u00a0')};
+            """)
+            assert (header["text"] == f"Variant {single['text'][8:]} ({single['title'].split(': ', 1)[1]})" and header["tag"] == "SPAN"
+                    and header["family"] == header["subtitleFamily"] and "tabular-nums" in header["figures"]
+                    and header["colour"] == header["subtitleColour"] and header["words"] and header["words"] != header["colour"]
+                    and header["nbsp"]), (single, header)
+            open_page(base + "#browse?variant=variant")
         driver.find_element(By.CSS_SELECTOR, "#activeFilters [data-filter-clear]").click()
         wait.until(lambda d: not fragment())
 
@@ -3698,7 +3725,7 @@ CHIP_COLOURS_JS = """
                                         shown: dot.getBoundingClientRect().width === 8})),
                 // a review result's words in their colours (round 17: no dot before them)
                 states: [...chip.querySelectorAll('.chip-state')].map(e => getComputedStyle(e).color),
-                stateDots: [...chip.querySelectorAll('.chip-state')].filter(e => getComputedStyle(e, '::before').content !== 'none').length,
+                stateDots: [...chip.querySelectorAll('.chip-state')].filter(e => !['none', 'normal'].includes(getComputedStyle(e, '::before').content)).length,
                 // the option's own words or mark: a review result's words, Read from the paper's words in the darker cyan,
                 // human-checked's tick, a caution's "!", a database result's square, each in its colour (none for Not yet
                 // re-read, the enzyme fields and the measurement)
@@ -4233,7 +4260,9 @@ def check_layout(driver, browser, url, route_label):
             probe.remove();
             return result;
         """)
-        assert set(marks["labels"]) == {marks["muted"]} and marks["dot"] == marks["square"] == "none" and marks["tick"] == marks["want"], marks
+        # (Safari may give "normal" for a pseudo-element with no content.)
+        assert (set(marks["labels"]) == {marks["muted"]} and {marks["dot"], marks["square"]} <= {"none", "normal"}
+                and marks["tick"] == marks["want"]), marks
         assert len({colours[key][0] for key in ("records", "accepted", "paper", "checked")}) == 4, colours
         assert colours["shadow"] == "none" and colours["wash"] == "none" and colours["border"] == "1px" and colours["line"][0] == colours["line"][1], colours
         # Type set in columns, not tiles (round 15): one thin rule, before the parameters; none between the key numbers.
@@ -5537,7 +5566,7 @@ def check_record_panel(driver, browser, url, route_label):
                             const tops = tags.map(tag => tag.getBoundingClientRect().top);
                             // A "·" before a tag that starts a line has no room left of it inside the line's clipped box.
                             const dotStarts = tags.filter((tag, i) => i > 0 && tops[i] > tops[i - 1] + 1
-                                && getComputedStyle(tag, '::before').content !== 'none'
+                                && !['none', 'normal'].includes(getComputedStyle(tag, '::before').content)
                                 && tag.getBoundingClientRect().left - clipLeft > 1).map(tag => tag.textContent);
                             const dotEnds = tags.filter(tag => !['none', 'normal'].includes(getComputedStyle(tag, '::after').content)).map(tag => tag.textContent);
                             const result = {lines: new Set(tops.map(Math.round)).size, dotStarts, dotEnds, text: line.textContent};
@@ -6415,6 +6444,11 @@ def check(driver, browser, url):
         band_links = {item.get_attribute("data-total"): urlsplit(item.find_element(By.CSS_SELECTOR, "a.stats-total-value").get_attribute("href")).fragment
                       for item in driver.find_elements(By.CSS_SELECTOR, ".stats-totals-main .stats-total") if item.find_elements(By.CSS_SELECTOR, "a")}
         assert band_links.get("accepted") == "browse?status=accepted" and band_links.get("catlog") == "browse?source=paper", band_links
+        # No dot before Accepted, no square before Read from the paper (round 17, "words, not shapes", as on Browse's
+        # band): the colour is on the number. Safari may give "normal" for a pseudo-element with no content.
+        band_marks = driver.execute_script("""return [...document.querySelectorAll('.stats-totals-main .stats-total dt')]
+            .map(dt => getComputedStyle(dt, '::before').content)""")
+        assert band_marks and all(mark in ("none", "normal") for mark in band_marks), band_marks
         if browser == "chrome":
             # Under the pointer the flat tint darkens the item: its label and note step up to --text-2
             # (muted there measured 4.46:1), and go back once the pointer leaves.

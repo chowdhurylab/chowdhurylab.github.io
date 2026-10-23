@@ -1844,12 +1844,14 @@
   const AMINO_ACIDS = { A: "Ala", R: "Arg", N: "Asn", D: "Asp", C: "Cys", Q: "Gln", E: "Glu", G: "Gly", H: "His", I: "Ile",
     L: "Leu", K: "Lys", M: "Met", F: "Phe", P: "Pro", S: "Ser", T: "Thr", W: "Trp", Y: "Tyr", V: "Val" };
   // A signature's substitutions in words, only where every part is a clean one-letter substitution ("E124Q" -> "Glu124 →
-  // Gln"; "P161S/S336A" -> "Pro161 → Ser, Ser336 → Ala"; "W88*" -> "Trp88 → stop"), a name in brackets after them aside
-  // ("D76G/K102T (M2)"); anything else (a deletion, a chimera, a subunit's name, a described form) gives "".
+  // Gln"; "P161S/S336A" or "P161S, S336A" -> "Pro161 → Ser, Ser336 → Ala"; "W88*" -> "Trp88 → stop"), parts split at
+  // "/", ",", ";", "+" or a space, one name in brackets after them aside ("D76G/K102T (M2)"); anything else (a deletion,
+  // a chimera, a subunit's name, a described form) gives "".
   function mutationWords(signature) {
     const list = String(signature || "").trim().replace(/\s+\([^()]*\)$/, "");
-    const words = list.split("/").map((part) => {
-      const match = part.trim().match(/^([ACDEFGHIKLMNPQRSTVWY])(\d+)([ACDEFGHIKLMNPQRSTVWY*])$/);
+    if (!list) return "";
+    const words = list.split(/\s*[/,;+]\s*|\s+/).map((part) => {
+      const match = part.match(/^([ACDEFGHIKLMNPQRSTVWY])([1-9]\d{0,4})([ACDEFGHIKLMNPQRSTVWY*])$/);
       if (!match || match[1] === match[3]) return "";
       return `${AMINO_ACIDS[match[1]]}${match[2]} → ${match[3] === "*" ? "stop" : AMINO_ACIDS[match[3]]}`;
     });
@@ -1858,13 +1860,17 @@
 
   // The table's variant line under the enzyme name (round 17; the user: the bare boxed code was hard to understand):
   // "variant E124Q" in muted text, several mutations as the paper lists them, a long list cut with "…"; a signature that
-  // says what it is ("deletion mutant", "chimera 1", "truncated enzyme", "N-domain (...)") stands alone; "variant, not
-  // specified" without one; nothing for wild type. Its title gives the whole signature and the substitutions in words.
+  // says what it is ("deletion mutant", "chimera 1", "truncated enzyme", "R4 mutant (E37K/...)") stands alone, unless
+  // it starts with a substitution ("L386Q/G417R/V482G (variant L9)" still reads "variant L386Q/..."); "variant, not
+  // specified" without one, all muted; nothing for wild type. Its title gives the whole signature and the substitutions
+  // in words.
   const SELF_DESCRIBED_FORM = /\b(?:mutants?|variants?|chimer\w*|truncat\w*|deletion|deleted|insertions?|inserted|fusion|isoform|form|domain|evolvant|heteromer|substituted|lacking|fragment)\b/i;
+  const LEADING_SUBSTITUTION = /^[ACDEFGHIKLMNPQRSTVWY][1-9]\d{0,4}[ACDEFGHIKLMNPQRSTVWY*](?![\w-])/;
   function enzymeFormDisplay(row) {
     const signature = mutationSignature(row);
     if (!enzymeFormText(row)) return "";
-    return signature && !SELF_DESCRIBED_FORM.test(signature) ? `variant ${signature}` : enzymeFormText(row);
+    const standsAlone = SELF_DESCRIBED_FORM.test(signature) && !LEADING_SUBSTITUTION.test(signature);
+    return signature && !standsAlone ? `variant ${signature}` : enzymeFormText(row);
   }
 
   function enzymeFormTitle(row) {
@@ -1877,9 +1883,10 @@
   function enzymeFormHtml(row, { className = "enzyme-form" } = {}) {
     const text = enzymeFormDisplay(row);
     if (!text) return "";
-    const inner = text.startsWith("variant ") && mutationSignature(row)
-      ? `<span class="form-word">variant</span> ${escapePublic(text.slice(8))}`
-      : escapePublic(text);
+    const signature = mutationSignature(row);
+    const inner = text.startsWith("variant ") && signature
+      ? `<span class="form-word">variant</span> <span class="form-mutation">${escapePublic(text.slice(8))}</span>`
+      : (signature ? escapePublic(text) : `<span class="form-word">${escapePublic(text)}</span>`);
     return `<span class="${className}" title="${escapePublic(enzymeFormTitle(row))}">${inner}</span>`;
   }
 
@@ -2262,8 +2269,8 @@
   // One badge for the table: the review result as a word in its colour (round 17: no dot), human-checked's green check
   // right after it, then whole-word tags: what happened to the record (from paper, in its dark cyan, or not re-read and
   // its source: BRENDA, ...), then corrected, no paper linked. The tag line is always present, so every badge has the
-  // same height. Its title says what the result means for this record; its accessible name is the words alone
-  // ("Accepted, from paper", "Accepted, Not yet re-read, BRENDA, human-checked").
+  // same height. Its title says what the result means for this record; its accessible name is the words alone, each
+  // source in full ("Accepted, Read from the paper", "Accepted, Not yet re-read, BRENDA, human-checked").
   function statusBadge(row) {
     const config = stateConfig(row._recordState || recordStateForRow(row));
     const isCorrected = row.verification_status === "corrected";
@@ -2309,8 +2316,8 @@
     // human-checked is a green check right after the review result ("Accepted ✓"), in every width, so the tag line's "…"
     // and an open record never cut or hide it; the badge's title and accessible name say the word.
     const checkHtml = checked ? `<span class="state-check" role="img" aria-label="human-checked">${CHECK_ICON_HTML}</span>` : "";
-    const name = [label, ...tags.map((tag) => (tag === SOURCE_DATABASES_TAG ? SOURCE_DATABASES_LABEL : tag)),
-      checked ? "human-checked" : ""].filter(Boolean).join(", ");
+    const fullTag = { [SOURCE_CATLOG_TAG]: SOURCE_CATLOG_LABEL, [SOURCE_DATABASES_TAG]: SOURCE_DATABASES_LABEL };
+    const name = [label, ...tags.map((tag) => fullTag[tag] || tag), checked ? "human-checked" : ""].filter(Boolean).join(", ");
     return `<span class="state-badge ${className}" data-status="${escapeHtml(row.verification_status || "")}" title="${escapeHtml(fullDescription)}" aria-label="${escapeHtml(name)}"><span class="state-label">${escapeHtml(label)}${checkHtml}</span><span class="state-tags">${tagsHtml}</span></span>`;
   }
 
@@ -13515,17 +13522,20 @@
     return match ? `<i>${escapePublic(match[1])}</i>${escapePublic(match[2])}` : escapePublic(text);
   }
 
-  // The form as the header names it: "Wild type", "Variant H150A: His150 → Ala" (the mutation in mono; up to three
-  // substitutions also in words, where they parse, as the table's title says them; a longer list's words in its title)
-  // or "Variant, not specified"; nothing for a record that does not say.
+  // The form as the header names it: "Wild type", "Variant H150A (His150 → Ala)" (the mutation as the table sets it,
+  // plain --text-2 with tabular figures; up to three substitutions also in words, muted and in brackets, where they
+  // parse; a longer list's words in its title, "Variant ...: ...", as the table's) or "Variant, not specified"; nothing
+  // for a record that does not say. "Variant" keeps to the first mutation (a no-break space), a list wraps after a "/"
+  // or between words and each substitution's words stay whole, so a long list never breaks inside a mutation.
   const DETAIL_MUTATION_WORDS = 3;
   function detailFormHtml(row) {
     const signature = mutationSignature(row);
     if (signature) {
       const words = mutationWords(signature);
       const shown = words && words.split(", ").length <= DETAIL_MUTATION_WORDS;
-      return `<span class="detail-form">Variant <code class="mutation"${words && !shown ? ` title="${escapePublic(words)}"` : ""}>${escapePublic(signature)}</code>${
-        shown ? `<span class="mutation-words">: ${escapePublic(words)}</span>` : ""}</span>`;
+      const title = words && !shown ? ` title="${escapePublic(`Variant ${signature}: ${words}`)}"` : "";
+      return `<span class="detail-form">Variant&nbsp;<span class="mutation"${title}>${escapePublic(signature).replace(/\//g, "/<wbr>")}</span>${
+        shown ? `<span class="mutation-words"> (${escapePublic(words).replace(/ → /g, "&nbsp;→&nbsp;")})</span>` : ""}</span>`;
     }
     const label = enzymeFormLabel(row);
     if (label === "Variant (unspecified)") return "Variant, not specified";
