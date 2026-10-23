@@ -7027,11 +7027,15 @@
     const reader = papers ? statsCount(exposed.reader, papers) : null;
     const checker = papers ? statsCount(exposed.checker_only, papers) : null;
     if (!papers || reader === null || checker === null || reader + checker !== papers) return null;
-    const sent = statsCount(exposed.reread_blind, papers);
+    // (round 17 fix pass: a re-read count that is given but not a whole number of these papers, more than them, is no
+    // count, null, so the page states neither that the papers were sent back nor that their values stay; a done count
+    // that is missing or not whole is null too, so the page says only that they were sent back)
+    const given = exposed.reread_blind !== undefined && exposed.reread_blind !== null;
+    const sent = given ? statsCount(exposed.reread_blind, papers) : 0;
     const done = sent ? statsCount(exposed.reread_blind_done, sent) : null;
     const reads = sent ? statsCount(exposed.reread_blind_read, sent) : null;
     const checks = sent ? statsCount(exposed.reread_blind_verify, sent) : null;
-    return { papers, reader, checker, sent: sent || 0, done, span: statsDaySpan(exposed.first, exposed.last),
+    return { papers, reader, checker, sent, done, span: statsDaySpan(exposed.first, exposed.last),
       on: /^\d{4}-\d{2}-\d{2}$/.test(String(exposed.reread_blind_on || "")) ? formatDate(exposed.reread_blind_on) : "",
       how: reads !== null && checks !== null && reads + checks === sent ? { reads, checks } : null };
   }
@@ -7040,11 +7044,14 @@
     const facts = statsExposureFacts(quality);
     if (!facts) return "";
     const { papers, sent, done, span } = facts;
-    const first = `CatLog’s agents should work without database values but saw them, or the earlier version’s files, on ${formatInteger(papers)} ${papers === 1 ? "paper" : "papers"}${span ? ` (${span.replace(" and ", " to ")})` : ""}.`;
+    const first = `CatLog reads without database values; on ${formatInteger(papers)} ${papers === 1 ? "paper" : "papers"}${span ? ` (${span.replace(" and ", " to ")})` : ""} its agents saw them or the earlier version’s files.`;
+    if (sent === null) return first;
     const them = sent === papers ? (sent === 1 ? "It" : sent === 2 ? "Both" : `All ${formatInteger(sent)}`) : formatInteger(sent);
+    const sentBack = `${them} ${sent === 1 ? "was" : "were"} sent back to be read or checked again without them`;
     const second = !sent ? "Their values stay in CatLog and in the comparison with the databases."
       : done === sent ? `${them} ${sent === 1 ? "has" : "have"} since been read or checked again without them.`
-        : `${them} ${sent === 1 ? "was" : "were"} sent back to be read or checked again without them; ${done ? `${formatInteger(done)} ${done === 1 ? "is" : "are"} done so far` : "none is done yet"}.`;
+        : done === null ? `${sentBack}.`
+          : `${sentBack}; ${done ? `${formatInteger(done)} ${done === 1 ? "is" : "are"} done so far` : "none is done yet"}.`;
     return `${first} ${second}`;
   }
 
@@ -7056,7 +7063,7 @@
     const { papers, reader, checker, sent, on, how } = facts;
     const who = reader && checker ? `the reading agent saw them on ${formatInteger(reader)} and only a checking agent on ${formatInteger(checker)}`
       : reader ? "the reading agent saw them on each" : "only a checking agent saw them on each";
-    const rest = papers - sent;
+    const rest = papers - (sent || 0);
     return [`Papers with database values in view: ${who}.`,
       sent ? `${formatInteger(sent)} ${sent === 1 ? "was" : "were"} sent back${on ? ` on ${on}` : ""}${how ? `, ${formatInteger(how.reads)} to be read and ${formatInteger(how.checks)} to be checked again` : ""}${rest ? `; the other ${formatInteger(rest)} ${rest === 1 ? "was" : "were"} not sent back` : ""}.` : ""]
       .filter(Boolean).join(" ");
@@ -7072,7 +7079,7 @@
   // not fit its route is left out.
   const STATS_ERROR_ROUTES = [
     ["audit", "AI audit"],
-    ["sweep", "Searches for an error an audit or check had found"],
+    ["sweep", "Wider searches after an audit or check found an error"],
     ["unit_fix", "Unit misprinted in the paper, corrected"],
     ["difference_check", "Check of a database difference against the paper"],
   ];
