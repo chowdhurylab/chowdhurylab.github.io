@@ -170,7 +170,8 @@ for (const descriptor of [publishedManifest.enriched_download, publishedManifest
 
 for (const [pageHtml, publicPath] of [[indexHtml, "catlog-static/"], [stableAliasHtml, "catlog-latest.html"]]) {
   assert.doesNotMatch(pageHtml, /<meta http-equiv=/);
-  assert.ok(pageHtml.includes("A dash, used only in table cells, means no value."));
+  // (round 17: said once, in the marks legend; Units no longer repeats it)
+  assert.ok(!pageHtml.includes("A dash, used only in table cells, means no value."));
   assert.ok(pageHtml.includes("<dd>No value (table cells only).</dd>"), "the Guide's marks legend says what a dash is");
   assert.doesNotMatch(pageHtml, /c-temp|c-ph|value="temperature"|value="ph"/, "the table shows no temperature or pH and does not sort by them");
   // (round 14, the user: a short Guide: a record's own words for a missing detail need no gloss there)
@@ -3693,12 +3694,12 @@ function row(overrides = {}) {
   assert.equal(element("comparisonDataButton").getAttribute("download"), "catlog-2026-10-12-database-comparison.csv.gz");
   assert.equal(element("guideComparisonLink").getAttribute("download"), "catlog-2026-10-12-database-comparison.csv.gz");
   // Each file's facts line ends with its format (round 14): CSV (gzip) here, JSON Lines (gzip) for Full data and Table.
-  assert.equal(element("comparisonDataDescription").textContent, "Values read from the paper, one row per database listing the paper\n295,792 rows · 5.2 MB · CSV (gzip)");
+  assert.equal(element("comparisonDataDescription").textContent, "Values read from the paper, one line per value and database\n295,792 lines · 5.2 MB · CSV (gzip)");
   delete runtimeManifest.database_comparison_download;
   api.renderDownloadMetadata();
   assert.equal(element("comparisonDataButton").hidden, true);
   assert.equal(element("guideComparisonDownload").hidden, true);
-  assert.equal(element("comparisonDataDescription").textContent, "Values read from the paper, one row per database listing the paper\nCSV (gzip)");
+  assert.equal(element("comparisonDataDescription").textContent, "Values read from the paper, one line per value and database\nCSV (gzip)");
   if (savedComparison) runtimeManifest.database_comparison_download = savedComparison;
   assert.equal(element("guideSourceId").textContent, "14ffa6600b");
   assert.match(element("guideCitationLine").textContent, /^CatLog snapshot 2026-10-12 \(data ID 14ffa6600b\), Chowdhury Lab, /);

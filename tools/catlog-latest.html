@@ -69,7 +69,7 @@ JSON Lines (gzip)</span>
               </a>
               <a id="comparisonDataButton" href="#" download="catlog-database-comparison.csv.gz" hidden>
                 <strong>Compared with databases</strong>
-                <span id="comparisonDataDescription">Values read from the paper, one row per database listing the paper
+                <span id="comparisonDataDescription">Values read from the paper, one line per value and database
 CSV (gzip)</span>
               </a>
               <a
@@ -662,7 +662,6 @@ JSON</span>
                 <div><dt>&times;&nbsp;10<sup>n</sup></dt><dd>From 100,000, below 0.001, and from 1,000 when trailing zeros are not figures (3.5&nbsp;&times;&nbsp;10<sup>4</sup>, not 35000).</dd></div>
                 <div><dt>Digits</dt><dd>Values read from the paper keep its significant figures; the downloads keep every stored digit.</dd></div>
                 <div><dt>T and pH</dt><dd>In the record and the downloads, not as table columns.</dd></div>
-                <div><dt>Missing</dt><dd>A dash, used only in table cells, means no value.</dd></div>
                 <div><dt>Other units</dt><dd>A few records not yet <span class="nowrap">re-read</span> keep another unit (min<sup>&minus;1</sup>, mg/mL) or <em>no unit</em>.</dd></div>
               </dl>
             </details>
@@ -694,9 +693,9 @@ JSON</span>
             </dl>
             <details class="guide-ref guide-cite" id="guide-cite">
               <summary><h3 id="guide-citation-title">More on citing</h3><span class="guide-ref-gist">One value, the Data ID, CatLog-27k</span></summary>
-              <p>For one value, add its record ID. Keep the file you used: IDs of records read from the paper can change, and older snapshots leave this site.</p>
-              <p>The Data ID is the first 10 characters of the SHA-256 of the decompressed Full data file: <code>gunzip -c <span id="guideDataIdFile">catlog-enriched.jsonl.gz</span> | shasum -a 256</code>.</p>
-              <p>CatLog grew out of CatLog-27k, the training set of the <a href="https://doi.org/10.1093/pnasnexus/pgag309" target="_blank" rel="noopener noreferrer">CatRange paper (PNAS Nexus)</a>.</p>
+              <p>For one value, add its record ID and keep the file you used: IDs of records read from the paper can change, and older snapshots leave this site.</p>
+              <p>The Data ID is the first 10 characters of the SHA-256 of the decompressed Full data file (<code>gunzip -c <span id="guideDataIdFile">catlog-enriched.jsonl.gz</span> | shasum -a 256</code>).</p>
+              <p>CatLog grew out of CatLog-27k, the <a href="https://doi.org/10.1093/pnasnexus/pgag309" target="_blank" rel="noopener noreferrer">CatRange paper</a>&rsquo;s training set.</p>
             </details>
             <details class="guide-ref guide-sources" id="guide-sources">
               <summary><h3 id="guide-sources-title">Sources and their licenses</h3><span class="guide-ref-gist">Cite any database whose records you use</span></summary>
