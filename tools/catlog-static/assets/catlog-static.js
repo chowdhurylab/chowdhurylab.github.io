@@ -5742,7 +5742,7 @@
     // Beside the histogram (round 17: bars, no table), the median range by how many substrates a panel tested, each a
     // bar from 1-fold on the histogram's log axis of folds, its median and panels beside it.
     const decades = Math.max(1, Math.ceil(Math.log10(Math.max(...groups.map((item) => item.median))) - 1e-9));
-    const foldTicks = Array.from({ length: decades + 1 }, (_value, index) => `<span style="left:${+(index / decades * 100).toFixed(3)}%">${escapeHtml(`${formatInteger(10 ** index)}×`)}</span>`).join("");
+    const foldTicks = Array.from({ length: decades + 1 }, (_value, index) => `<span style="left:${+(index / decades * 100).toFixed(4)}%">${escapeHtml(`${formatInteger(10 ** index)}×`)}</span>`).join("");
     const byTested = statsBarChart({ key: "substrate-range", scale: decades, step: 1,
       rows: groups.map((item) => ({ key: `tested-${item.from}`, count: item.panels, label: escapeHtml(`${tested(item)} ${item.to === item.from && item.from === 1 ? "substrate" : "substrates"}`),
         segments: [{ part: "catlog", count: Math.log10(item.median), title: `${tested(item)} substrates tested: median range ${statsFoldText(item.median)} over ${panelWord(item.panels)}` }],
@@ -6502,7 +6502,7 @@
     const disputedV2 = v2 ? (v2.disputed ? `a value disputed in ${records(v2.disputed)}` : v2.values ? `none of their ${formatInteger(v2.values)} values disputed` : "no value disputed") : "";
     const v2Ways = v2?.split ? `${formatInteger(v2.random)} drawn at random${v2.picked ? `, then ${formatInteger(v2.picked)} picked as hard cases` : ""}` : "";
     const v2Head = v2 ? `${records(v2.entries)} people checked${v2.papers ? ` (${papers(v2.papers, v2.free)})` : ""}${v2Ways ? `, ${v2Ways}` : ""}; ${disputedV2}` : "";
-    const panel = (key, name, head, chart, keyHtml) => `<div class="stats-units-panel" data-panel="${key}">
+    const panel = (key, name, head, chart, keyHtml) => `<div class="stats-units-panel" data-units="${key}">
         <p class="stats-units-title"><strong>${escapeHtml(name)}</strong> <span>${head}</span></p>
         <div class="stats-units-body"><div class="stats-units-chart">${chart}</div>${keyHtml}</div></div>`;
     const panels = [

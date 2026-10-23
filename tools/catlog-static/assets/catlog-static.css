@@ -1803,7 +1803,7 @@ a.stats-total-value:focus-visible { outline:0 }
 /* A segment's own share (round 17): 12px ink on the bar's 60% fill, centred; hidden where it does not fit. */
 .stats-seg-label { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; overflow:hidden; color:var(--text); font-size:var(--fs-12); line-height:1; white-space:nowrap; pointer-events:none }
 .stats-seg-label.is-hidden { visibility:hidden }
-.stats-fold-bars { max-width:760px; margin-top:32px }
+.stats-fold-bars { margin-top:32px }
 .stats-fold-bars .stats-chart-percent { --label-w:minmax(96px,200px) }
 .stats-chart[data-chart="between-papers"] .stats-chart-rows { gap:4px }
 .stats-chart[data-chart="between-papers"] .stats-chart-row[data-row$="-all"]:not(:first-child) { margin-top:10px }
