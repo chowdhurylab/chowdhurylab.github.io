@@ -293,7 +293,7 @@ def check_guide(driver, wait):
             .map(row => [row.querySelector('dt').textContent.trim(), row.querySelector('dd').textContent.trim()]));
     """)
     if isinstance(from_paper, int):
-        assert f"{from_paper:,} records in this snapshot" in source_rows.get("Read from the paper", ""), source_rows
+        assert f"{from_paper:,} records" in source_rows.get("Read from the paper", ""), source_rows
         assert "CC BY 4.0" in source_rows["Read from the paper"]
         if "Earlier paper extractions" in source_rows:
             assert "as published (see paper)" in source_rows["Earlier paper extractions"]

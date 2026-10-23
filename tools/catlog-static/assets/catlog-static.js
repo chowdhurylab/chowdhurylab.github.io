@@ -1184,15 +1184,15 @@
     const total = formatCount(manifest.total_rows || 0);
     const enrichedSize = formatFileSize(manifest.enriched_download?.size_bytes);
     const tableSize = formatFileSize(manifest.table_download?.size_bytes);
-    // What a file holds, then its rows and size on a line of their own (the menu's spans keep the line break), so a
-    // separator never starts a line.
+    // What a file holds, then its records and size on a line of their own (the menu's spans keep the line break), so a
+    // separator never starts a line. (round 17: records, the site's counting word, never rows)
     const describe = (text, ...facts) => typographicText([text, facts.filter(Boolean).join(" · ")].filter(Boolean).join("\n"));
     // Each file says its format on its facts line (round 14: "Table" read like a spreadsheet; both are gzip JSON Lines).
     if ($("enrichedDataDescription")) {
-      $("enrichedDataDescription").textContent = describe("Every field, with sequences, SMILES and paper links", `${total} rows`, enrichedSize, "JSON Lines (gzip)");
+      $("enrichedDataDescription").textContent = describe("Every field, with sequences, SMILES and paper links", `${total} records`, enrichedSize, "JSON Lines (gzip)");
     }
     if ($("tableIndexDescription")) {
-      $("tableIndexDescription").textContent = describe("The table’s columns; no sequences, SMILES or paper links", `${total} rows`, tableSize, "JSON Lines (gzip)");
+      $("tableIndexDescription").textContent = describe("The table’s columns; no sequences, SMILES or paper links", `${total} records`, tableSize, "JSON Lines (gzip)");
     }
     if ($("datasetNotesLink")) {
       $("datasetNotesLink").href = datasetNotesHref();
@@ -1210,8 +1210,8 @@
     }
     if ($("comparisonDataDescription")) {
       const rows = statsCount(comparison?.rows);
-      $("comparisonDataDescription").textContent = describe("Values read from the paper, one row per database listing the paper",
-        rows ? `${formatInteger(rows)} rows` : "", comparisonPath ? formatFileSize(comparison.size_bytes) : "", "CSV (gzip)");
+      $("comparisonDataDescription").textContent = describe("Values read from the paper, one line per value and database",
+        rows ? `${formatInteger(rows)} lines` : "", comparisonPath ? formatFileSize(comparison.size_bytes) : "", "CSV (gzip)");
     }
     const snapshotDate = manifest.generated_at ? formatDate(manifest.generated_at) : EMPTY_VALUE;
     const sourceId = shortHash(manifest.content_sha256 || manifest.source_sha256);
@@ -14761,7 +14761,7 @@
     const guideList = $("guideSourceList");
     if (guideList) {
       guideList.innerHTML = sources.map((item) => {
-        const rowCount = item.row_count == null || item.row_count === "" ? "" : `${formatInteger(item.row_count)} records in this snapshot`;
+        const rowCount = item.row_count == null || item.row_count === "" ? "" : `${formatInteger(item.row_count)} ${Number(item.row_count) === 1 ? "record" : "records"}`;
         const license = item.licenseText
           ? escapeHtml(item.licenseText)
           : (item.key === "primary_paper_direct"
