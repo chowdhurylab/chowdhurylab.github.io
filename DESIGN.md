@@ -164,9 +164,9 @@ S. Supplementary figures (round 14, the user: "not every figure has to be shown 
    - Wild type and variants: two panels, all records by enzyme form and the variant records read from the paper by kind
      of change, both on a 0-100% axis (were Tables S8 and S9).
    - The typical wild-type enzyme: a dot plot, a panel per parameter on its own log axis, the median dot and middle-80%
-     line of the wild-type records (as Values by enzyme class draws them), and on the kcat/Km panel the average enzyme of
-     Bar-Even et al. 2011 as an open diamond at about 10⁵ M⁻¹ s⁻¹, its name the DOI link; each panel names its papers and
-     enzymes.
+     line of the wild-type records (as Values by enzyme class draws them), and on the kcat/Km line the average enzyme of
+     Bar-Even et al. 2011 as an open ink diamond at about 10⁵ M⁻¹ s⁻¹, named in the legend above the panels with its DOI
+     link (a row of its own left a phone's plot under 120px); each panel names its papers and enzymes.
    - Units as printed: three panels, a parameter each, the printed units as cyan bars of that parameter's values.
    - Cautions on values: a tan bar per caution, each name a Browse link; No cautions, most records, is a link in the
      caption, so its bar does not make the others slivers.
