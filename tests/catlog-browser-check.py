@@ -6751,8 +6751,10 @@ def check(driver, browser, url):
         assert "Human-checked" not in headline and "Read from the paper" not in headline
         assert not driver.find_elements(By.CSS_SELECTOR, ".stats-range")
     for heading in driver.find_elements(By.CSS_SELECTOR, "#statsCharts h2, #statsCharts h3"):
-        section = heading.find_element(By.XPATH, "..")
-        # (a table counts: Quality's checks are a table since round 14)
+        # A heading inside a <summary> (the supplement's, round 17) heads the disclosure around it, not the summary's
+        # toggle words; every other heading heads its parent.
+        in_summary = heading.find_elements(By.XPATH, "ancestor::summary")
+        section = heading.find_element(By.XPATH, "ancestor::*[self::section or self::details][1]" if in_summary else "..")
         assert section.find_elements(By.CSS_SELECTOR, "li, figure, p, table tbody tr"), f"Empty Stats section: {heading.text}"
     # Figures and tables are numbered in reading order, each with one caption and no data line: the snapshot, its Data ID
     # and the counting rules are said once, in How these numbers are counted, which closes the page.
