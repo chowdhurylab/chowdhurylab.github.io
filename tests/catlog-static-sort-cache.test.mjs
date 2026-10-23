@@ -1520,7 +1520,9 @@ assert.match(guideHtml, /<dt><span class="state-tag">not <span class="nowrap">re
   assert.match(row[1], /<span class="guide-row-span gr-values-span" aria-hidden="true"><span>3 values<\/span><\/span>/);
   assert.match(row[1], /<span class="guide-row-span gr-record-span" aria-hidden="true"><span>1 record<\/span><\/span>/);
   assert.deepEqual([...row[1].matchAll(/<span class="guide-row-cell gr-(kcat|km|eff) num">/g)].map((match) => match[1]), ["kcat", "km", "eff"]);
-  assert.match(row[1], /<span class="state-badge accepted" data-status="verified"><span class="state-label">Accepted<\/span><span class="state-tags"><span class="state-tag"><span class="src-mark" aria-hidden="true"><\/span>from paper<\/span><span class="state-tag human-checked">/);
+  // The row's badge is the table's (round 17's look): the word, human-checked's green check after it, "from paper" below.
+  assert.match(row[1], /<span class="state-badge accepted" data-status="verified" aria-label="Accepted, Read from the paper, human-checked"><span class="state-label">Accepted<span class="state-check" role="img" aria-label="human-checked"><svg class="check-icon"[^>]*>[\s\S]*?<\/svg><\/span><\/span><span class="state-tags"><span class="state-tag source-paper">from paper<\/span><\/span><\/span>/);
+  assert.doesNotMatch(row[1], /src-mark/);
   const terms = Object.fromEntries([...words.match(/<dl class="guide-term-list guide-words-list">([\s\S]*?)<\/dl>/)[1]
     .matchAll(/<dt>([^<]*)<\/dt><dd>([\s\S]*?)<\/dd>/g)].map(([, term, text]) => [term, text.replace(/<[^>]+>/g, "")]));
   assert.deepEqual(Object.keys(terms), ["Record", "Value", "Paper"]);
@@ -7888,7 +7890,7 @@ for (const hash of ["#stats", "#guide", "#guide-units"]) {
   assert.match(element("cautionChecklist").innerHTML, /value="none" \/>\s*<span><span class="option-mark option-mark-none" aria-hidden="true"><\/span>No cautions<\/span>/);
   // A review result is its word in its colour (round 17: no dot).
   assert.match(element("statusChecklist").innerHTML, /value="curation_pending" checked \/>\s*<span><span class="state-word review">Not confirmed<\/span><\/span>/);
-  // No help text in view (the user, 2026-10-18): the notes of Measurement type and Wild type or variant are behind their
+  // No help text in view (the user, 2026-10-18): the notes of Parameter and Wild type or variant are behind their
   // "?", the cautions' definitions behind Cautions' "?" (Km and kcat keep their capitals after the dash).
   assert.doesNotMatch(element("measurementChecklist").innerHTML + element("variantChecklist").innerHTML, /filter-note|<p/);
   assert.equal(element("aboutMeasurement").innerHTML, "<p>Records that give the value; ticking several shows records with all of them.</p>");
