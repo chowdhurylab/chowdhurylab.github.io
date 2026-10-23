@@ -441,7 +441,8 @@ its accessible description; no figure or table has a data line. The parts' figur
 - Enzyme classes (no class colour: its bars wear review-result and Read from the paper colours, so a class colour
   beside them would mean a second thing; the class colours are keyed in Values by enzyme class and kcat against Km):
   records bars (light) with the accepted drawn over them and the records read from the paper as a
-  stripe of Read from the paper's colour (--src-paper) inside the accepted bar, set off from its fill by a 1px white gap above and below, so it
+  stripe of Read from the paper's colour (--src-paper) inside the accepted bar, a 4px band through its middle (round 17 fix
+  pass: thin, so the accepted bar keeps Accepted's navy), set off from its fill by a 1px white gap above and below, so it
   parts from it by more than lightness, in grey print too (`ec_classes[].from_paper`; the legend's swatch is an
   accepted swatch with the stripe through it, named Read from the paper); a nonzero accepted or read-from-the-paper
   count draws at least 2px wide; each label gives records, accepted, then read from the paper (--src-paper), each

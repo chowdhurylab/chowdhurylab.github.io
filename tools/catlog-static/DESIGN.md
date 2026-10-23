@@ -1818,7 +1818,9 @@ tools/site_patches/20261023-site-round17-brief.md, section 5.
   follow-up audits", statsAuditSplit, when the two make it); Values and Papers beside; All, each value once, set off by a
   hairline and 600. Names up to 320px, the figure to 920px.
 - Review result: statsStatusBar(..., { stripe }) draws Accepted's records read from the paper as a stripe through its
-  part (the Enzyme classes stripe); its labels are a grid of columns as wide as the parts (minmax(0, share fr)), each
+  part (the Enzyme classes stripe: a 4px band through the bar's middle between 1px white gaps, so Accepted keeps its navy;
+  fix pass: a 10px stripe through the 20px bar had read as cyan; the swatch under the label and in the legend is an
+  accepted swatch with a 2px band); its labels are a grid of columns as wide as the parts (minmax(0, share fr)), each
   under its part with a 6px tick up to the bar: name (a Browse link), records, share; Accepted's records read from the
   paper and Not checked's two kinds (zero-count kinds left out) in 12px under them; a result under a tenth of the records
   on its own line under the bar's end with its swatch. Accepted's other parts are its title and the figure's rule; the
