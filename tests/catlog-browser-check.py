@@ -296,7 +296,7 @@ def check_guide(driver, wait):
         assert f"{from_paper:,} records" in source_rows.get("Read from the paper", ""), source_rows
         assert "CC BY 4.0" in source_rows["Read from the paper"]
         if "Earlier paper extractions" in source_rows:
-            assert "as published (see paper)" in source_rows["Earlier paper extractions"]
+            assert "as published (see paper)" in source_rows["Earlier paper extractions"].lower()
     # Every database's license is said one way under "Sources and their licenses" (round 17: the section names it, so no
     # "License:" before each), a database without one "See the source's terms".
     for name, text in source_rows.items():
