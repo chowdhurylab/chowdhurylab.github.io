@@ -5084,7 +5084,7 @@
       body: `<div class="stats-ranges stats-folds">${panels.join("")}</div>`,
       // (no claim about which residues: no field marks a residue as catalytic)
       caption: "Each variant read from the paper against its paper’s wild type; papers choose which residues to change.",
-      rules: `These are not a random sample of mutations. ${formatInteger(variants)} ${variants === 1 ? "variant record" : "variant records"}${distinct ? ` (${formatInteger(distinct)} ${distinct === 1 ? "variant" : "variants"})` : ""}${papers ? ` from ${formatInteger(papers)} ${papers === 1 ? "paper" : "papers"}` : ""}. A variant record is paired only when its paper gives exactly one wild-type record for ${same}${left.length ? ` (${statsListText(left)} are left out)` : ""}. Each bar is a quarter of a power of ten; the bar at the line holds changes under 1.33-fold either way and the end bars hold the rest. Values without a recorded unit, or in another unit, are left out.`,
+      rules: `${formatInteger(variants)} ${variants === 1 ? "variant record" : "variant records"}${distinct ? ` (${formatInteger(distinct)} ${distinct === 1 ? "variant" : "variants"})` : ""}${papers ? ` from ${formatInteger(papers)} ${papers === 1 ? "paper" : "papers"}` : ""}. A variant record is paired only when its paper gives exactly one wild-type record for ${same}${left.length ? ` (${statsListText(left)} are left out)` : ""}. Each bar is a quarter of a power of ten; the bar at the line holds changes under 1.33-fold either way and the end bars hold the rest. Values without a recorded unit, or in another unit, are left out. They are not a random sample of mutations.`,
       after: `<p class="stats-note"><a class="stats-link" href="${escapeHtml(statsBrowseHref({ source: "paper", variant: "variant" }))}">Variants read from the paper</a> in Browse</p>`,
     };
   }
@@ -6459,13 +6459,13 @@
       values: statsCount(review.values), free: review.scope === "papers free to read" };
   }
 
-  // What a check of the paper found of the disputed values, as the key line's tail: "; a check found all 3 as printed in
-  // the paper" (round 16b's reviewDisputedText, shortened); "" when the check is not counted.
+  // What a check of the paper found of the disputed values: "a check found all 3 as printed in the paper" (round 16b's
+  // reviewDisputedText, shortened); "" when the check is not counted.
   function reviewAsPrintedTail(facts) {
     const { disputed, asPrinted } = facts;
     if (!disputed || !asPrinted) return "";
-    if (asPrinted === disputed) return `; a check found ${disputed === 1 ? "it" : disputed === 2 ? "both" : `all ${formatInteger(disputed)}`} as printed in the paper`;
-    return `; a check found ${formatInteger(asPrinted)} of them as printed in the paper`;
+    if (asPrinted === disputed) return `a check found ${disputed === 1 ? "it" : disputed === 2 ? "both" : `all ${formatInteger(disputed)}`} as printed in the paper`;
+    return `a check found ${formatInteger(asPrinted)} of them as printed in the paper`;
   }
 
   // Figure: Human review. Panel one, the earlier version's records people checked: no value disputed, a value disputed,
@@ -6483,8 +6483,8 @@
     const earlier = [
       { key: "undisputed", part: "human", count: review.undisputed, tip: `${records(review.undisputed)} with no value disputed`,
         keyHtml: `<b>${formatInteger(review.undisputed)}</b> no value disputed` },
-      { key: "disputed", part: "disputed", count: review.disputed, tip: `${records(review.disputed)} with a value disputed${reviewAsPrintedTail(review)}`,
-        keyHtml: `<b>${formatInteger(review.disputed)}</b> with a value disputed${escapeHtml(reviewAsPrintedTail(review))}` },
+      { key: "disputed", part: "disputed", count: review.disputed, tip: `${records(review.disputed)} with a value disputed${reviewAsPrintedTail(review) ? ` (${reviewAsPrintedTail(review)})` : ""}`,
+        keyHtml: `<b>${formatInteger(review.disputed)}</b> with a value disputed${reviewAsPrintedTail(review) ? `; ${escapeHtml(reviewAsPrintedTail(review))}` : ""}` },
       { key: "no-paper", part: "not-reviewed", open: true, start: "gap", count: review.unchecked || 0,
         tip: `${records(review.unchecked || 0)} with no PMID or DOI, so not checked against a paper`,
         keyHtml: `<b>${formatInteger(review.unchecked || 0)}</b> with no PMID or DOI, so not checked against a paper` },
@@ -8627,7 +8627,7 @@
         ${ruleRow("Main source", "Where a record came from: CatLog’s reading of the paper, one database or several merged into one record.")}
         ${ruleRow(escapeHtml(SOURCE_CATLOG_LABEL), `Records ${escapeHtml(v2Sentence.charAt(0).toLowerCase() + v2Sentence.slice(1))}`)}
         ${ruleRow(escapeHtml(SOURCE_DATABASES_LABEL), `All other records: ${escapeHtml(SOURCE_DATABASES_HELP)}`)}` : ""}
-        ${reviewRules ? ruleRow("Human review", metricWordsHtml(escapeHtml(reviewRules))) : ""}
+        ${reviewRules && !reviewFigure ? ruleRow("Human review", metricWordsHtml(escapeHtml(reviewRules))) : ""}
         ${compares || databases.length ? ruleRow("Compared with databases", escapeHtml(`Numbers are compared within the same paper and parameter. Papers count when at least one of their values was compared. Shares are given only for ${formatInteger(STATS_RATE_BASE)} values or more.`)) : ""}
       </dl>${figureRules.length ? `<dl class="stats-method-figures">${figureRules.map(([term, title, rules, rulesHtml]) => ruleRow(term, `<span class="stats-method-title">${title}.</span> ${escapeHtml(rules)}${rulesHtml}`)).join("")}</dl>` : ""}</details>`);
     $("statsCharts").innerHTML = keepReRead(statsSuperscriptsHtml(sections.join("")));
@@ -15937,10 +15937,17 @@
       statsFitValueColumns,
       statsOpenMethodForPrint,
       statsCloseMethodAfterPrint,
-      statsReviewHtml,
-      statsChecksHtml,
-      statsErrorsHtml,
+      statsReviewFigure,
+      statsChecksFigure,
+      statsErrorsFigure,
       statsExposureText,
+      statsExposureRule,
+      statsUnitGridSvg,
+      fromPaperReviewFacts,
+      statsShareAxis,
+      statsDatabaseLeadHtml,
+      statsDatabaseDifferRule,
+      statsFitSegmentLabels,
       auditFacts,
       reviewGlanceText,
       statsSuperscriptsHtml,
