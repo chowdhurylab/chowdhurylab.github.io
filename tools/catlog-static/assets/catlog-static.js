@@ -4140,80 +4140,108 @@
 
   // Supplementary figures and tables (round 14, the user: "not every figure has to be shown like that (and tables,
   // right?)"): the figures and tables that do not tell the main story, at the end of the page, numbered S1, S2 ... apart
-  // for figures and tables ("Figure S3", "Table S2"), one closed line each (its number and title, a heading in its
-  // summary) that opens the figure under it. Each has its own address, #stats-s3 for Figure S3 and #stats-table-s2 for
-  // Table S2, which opens it (statsAddressTarget).
+  // for figures and tables ("Figure S3", "Table S2"). Round 17 (the user, 2026-10-23: "they should click on Supplementary
+  // figures and tables and all of them open, not one click per figure"): the whole supplement is one disclosure, closed
+  // until its title is clicked, and inside it every item is drawn open, its heading (number and title) over its figure.
+  // Each item has its own address, #stats-s3 for Figure S3 and #stats-table-s2 for Table S2, which opens the supplement
+  // at it (statsAddressTarget); its number in the heading links there, so the address can be copied and sent.
   function statsSupplementAddress(kind, number) {
     return kind === "Table" ? `stats-table-s${number}` : `stats-s${number}`;
   }
 
   function statsSupplementItemHtml(item, kind, number) {
     const label = `${kind} S${number}`;
-    return `<details class="stats-supp-item" id="${statsSupplementAddress(kind, number)}" data-supp="${escapeHtml(item.key)}">
-      <summary><h4 id="${item.id}" class="stats-supp-title"><span class="stats-supp-number">${label}</span> <span class="stats-supp-name">${item.title}</span></h4></summary>
-      <div class="stats-supp-body">${statsFigureHtml({ ...item, label, heading: false })}</div></details>`;
+    const address = statsSupplementAddress(kind, number);
+    return `<div class="stats-supp-item${item.wide ? " stats-wide" : ""}" id="${address}" data-supp="${escapeHtml(item.key)}">
+      <h4 id="${item.id}" class="stats-supp-title"><a class="stats-supp-number" href="#${address}">${label}</a> <span class="stats-supp-name">${item.title}</span></h4>
+      ${statsFigureHtml({ ...item, label, heading: false })}</div>`;
   }
 
   const STATS_SUPPLEMENT_TITLE = "Supplementary figures and tables";
+  // The supplement's title says what it holds: "Supplementary figures" when every item is a figure (round 17: its
+  // tables became figures), "Supplementary figures and tables" while it has a table.
+  function statsSupplementTitle(tables) {
+    return tables ? STATS_SUPPLEMENT_TITLE : "Supplementary figures";
+  }
+  // "22 figures", "20 figures and 2 tables": the supplement's closed line.
+  function statsSupplementCountText(figures, tables) {
+    return statsListText([figures ? statsNoun(figures, "figure") : "", tables ? statsNoun(tables, "table") : ""].filter(Boolean));
+  }
   // The groups the supplement lists its items under, in the main parts' words and order.
   const STATS_SUPPLEMENT_GROUPS = [["quality", "Quality"], ["catalog", "What is in the catalog"], ["biology", "Organisms, enzymes and variants"], ["values", "Values"], ["databases", "Compared with databases"]];
   // Addresses of parts the supplement took over (round 14): #stats-biology opens What is in the catalog (its enzyme
-  // classes), #stats-cautions the Cautions table.
+  // classes), #stats-cautions the Cautions figure. Round 17 turned the supplement's tables into figures and so renumbered
+  // it: an address of the live round 16b page that no item has now (#stats-table-s4) opens the item it named then, by the
+  // item's key (data-supp); a number an item still has opens that item.
   const STATS_ADDRESS_ALIASES = { biology: "catalog", cautions: "cautions" };
+  const STATS_SUPPLEMENT_OLD_ADDRESSES = {
+    s1: "versions", s2: "values-per-paper", s3: "papers-per-parameter", s4: "substitutions", s5: "class-values", s6: "conditions",
+    s7: "kcat-temperature", s8: "km-size", s9: "db-classes", s10: "db-sources", s11: "earlier-corrections", s12: "replaced",
+    "table-s1": "review-kinds", "table-s2": "review-match", "table-s3": "contents", "table-s4": "organisms", "table-s5": "ec-numbers",
+    "table-s6": "organisms", "table-s7": "ec-numbers", "table-s8": "forms", "table-s9": "forms", "table-s10": "typical",
+    "table-s11": "printed-units", "table-s12": "cautions", "table-s13": "db-paired", "table-s14": "db-causes",
+  };
 
   // The element an address on Stats names (#stats-quality, #stats-s3), or null: a part, a supplement item, or the part or
-  // item an older address names (STATS_ADDRESS_ALIASES). A supplement item, or anything inside one, opens.
+  // item an older address names (STATS_ADDRESS_ALIASES, STATS_SUPPLEMENT_OLD_ADDRESSES). The supplement opens when the
+  // address names it or anything in it.
   function statsAddressTarget(hash) {
     const id = String(hash || "").replace(/^#/, "");
     if (!/^stats-[a-z0-9-]+$/.test(id)) return null;
     let target = document.getElementById(id);
     if (!target) {
-      const alias = STATS_ADDRESS_ALIASES[id.slice("stats-".length)];
-      target = alias ? document.getElementById(`stats-${alias}`) || document.querySelector?.(`.stats-supp-item[data-supp="${alias}"]`) || null : null;
+      const name = id.slice("stats-".length);
+      const alias = STATS_ADDRESS_ALIASES[name];
+      const item = STATS_SUPPLEMENT_OLD_ADDRESSES[name];
+      target = (alias ? document.getElementById(`stats-${alias}`) || document.querySelector?.(`.stats-supp-item[data-supp="${alias}"]`) : null)
+        || (item ? document.querySelector?.(`.stats-supp-item[data-supp="${item}"]`) : null) || null;
     }
+    const supplement = target?.classList?.contains("stats-supp") ? target.querySelector?.(".stats-supp-all") : null;
+    if (supplement && "open" in supplement) supplement.open = true;
     for (let node = target; node && node.id !== "statsView"; node = node.parentElement) {
-      if (node.tagName === "DETAILS" && "open" in node && node.classList?.contains("stats-supp-item")) node.open = true;
+      if (node.tagName === "DETAILS" && "open" in node && node.classList?.contains("stats-supp-all")) node.open = true;
     }
     return target;
   }
 
-  // The heading a followed Stats address focuses: a part's title, or a supplement item's summary (which opens it again
-  // with Enter or Space).
+  // The heading a followed Stats address focuses: a part's title, the supplement's summary (which closes it again with
+  // Enter or Space) or a supplement item's heading.
   function statsAddressHeading(target) {
-    if (target?.classList?.contains("stats-supp-item")) return target.querySelector?.("summary") || null;
+    if (target?.classList?.contains("stats-supp")) return target.querySelector?.(".stats-supp-all > summary") || null;
+    if (target?.classList?.contains("stats-supp-item")) return target.querySelector?.(".stats-supp-title") || null;
     return target?.querySelector?.(".stats-part-title") || null;
   }
 
-  // The address of a supplement item a visitor opens is its own (#stats-table-s4), set in place (replaceState: no history
-  // entry, no scroll); closing the item the address names gives back the address it replaced (the page's own, or the
-  // item opened before it while that one is still open; else #stats-supplement). Only a visitor's own toggle (a click
-  // on, or Enter or Space in, its summary: data-user-toggle) moves the address: printing, an address that opens an item
-  // and a script that opens them all leave it alone.
-  function statsSupplementAddressFollows(item) {
-    if (!item?.dataset?.userToggle) return;
-    delete item.dataset.userToggle;
-    if (!item.id || item.dataset.printOpened || typeof history === "undefined" || !history.replaceState) return;
+  // Opening the supplement puts its address in the address bar (#stats-supplement), set in place (replaceState: no
+  // history entry, no scroll), so the page opens with it open again; closing it gives back the address it replaced (the
+  // page's own Stats address when that one named the supplement or an item in it). Only a visitor's own toggle (a click
+  // on, or Enter or Space in, its summary: data-user-toggle) moves the address: printing, an address that opens it and a
+  // script that opens it leave the address alone.
+  function statsSupplementAddressFollows(supplement) {
+    if (!supplement?.dataset?.userToggle) return;
+    delete supplement.dataset.userToggle;
+    if (supplement.dataset.printOpened || typeof history === "undefined" || !history.replaceState) return;
     const url = new URL(window.location.href);
-    const own = `#${item.id}`;
-    if (item.open) {
-      if (url.hash === own) return;
-      item.dataset.addressBefore = url.hash;
+    const own = "#stats-supplement";
+    const inside = (hash) => hash === own || /^#stats-(?:table-)?s\d+$/.test(hash);
+    if (supplement.open) {
+      if (inside(url.hash)) return;
+      supplement.dataset.addressBefore = url.hash;
       url.hash = own;
     } else {
-      if (url.hash !== own) return;
-      const back = item.dataset.addressBefore ?? "#stats-supplement";
-      delete item.dataset.addressBefore;
-      const backItem = /^#stats-(?:table-)?s\d+$/.test(back) ? document.getElementById?.(back.slice(1)) : null;
-      url.hash = backItem && !backItem.open ? "#stats-supplement" : back;
+      if (!inside(url.hash)) return;
+      const back = supplement.dataset.addressBefore ?? "";
+      delete supplement.dataset.addressBefore;
+      url.hash = inside(back) ? viewUrl("stats").hash : back;
     }
     try {
       history.replaceState(history.state, "", url.href);
     } catch (error) {
-      // (a sandboxed frame can refuse it; the item stays open)
+      // (a sandboxed frame can refuse it; the supplement stays open)
     }
   }
 
-  // A supplement item drawn closed has no layout: its widths are fitted once it opens.
+  // The supplement drawn closed has no layout: its widths are fitted once it opens.
   function statsFitOpened(item) {
     if (!item?.open) return;
     statsFitValueColumns(item);
@@ -4444,18 +4472,18 @@
     }
   }
 
-  // How these numbers are counted (the one place the Data ID and the counting rules are said) and the supplement's items
-  // print open: opened for printing when closed, then closed again.
+  // How these numbers are counted (the one place the Data ID and the counting rules are said) and the supplement print
+  // open: opened for printing when closed, then closed again.
   function statsOpenMethodForPrint() {
-    for (const method of document.querySelectorAll?.(".stats-method:not([open]), .stats-supp-item:not([open])") || []) {
+    for (const method of document.querySelectorAll?.(".stats-method:not([open]), .stats-supp-all:not([open])") || []) {
       method.dataset.printOpened = "1";
       method.open = true;
-      if (method.classList?.contains("stats-supp-item")) statsFitOpened(method);
+      if (method.classList?.contains("stats-supp-all")) statsFitOpened(method);
     }
   }
 
   function statsCloseMethodAfterPrint() {
-    for (const method of document.querySelectorAll?.(".stats-method[data-print-opened], .stats-supp-item[data-print-opened]") || []) {
+    for (const method of document.querySelectorAll?.(".stats-method[data-print-opened], .stats-supp-all[data-print-opened]") || []) {
       delete method.dataset.printOpened;
       method.open = false;
     }
@@ -5499,7 +5527,7 @@
     const topRows = top.map((item) => `<tr><th scope="row">${escapeHtml(`${STATS_RESIDUE_NAMES[item.from]} → ${STATS_RESIDUE_NAMES[item.to]}`)}</th><td class="stats-num">${formatInteger(item.count)}</td><td class="stats-num stats-muted">${escapeHtml(statsShare(item.count, variants))}</td></tr>`).join("");
     const description = `Single substitutions of ${variantWord(variants)} read from the paper, by wild-type and new residue; most often to ${STATS_RESIDUE_NAMES[commonest.residue]} (${statsShare(commonest.count, variants)}). Commonest: ${top.map((item) => `${pair(item.from, item.to)} ${formatInteger(item.count)}`).join("; ")}.`;
     return {
-      id: "statsSubstitutionsTitle", key: "substitutions", title: "Single substitutions",
+      id: "statsSubstitutionsTitle", key: "substitutions", title: "Single substitutions", wide: true,
       body: `<ul class="stats-legend stats-map-legend"><li><i class="stats-map-key-cells" aria-hidden="true"></i><span>Variants per cell, 1 to ${formatInteger(highest)}</span></li></ul>
         <div class="stats-subs">
           <div class="stats-subs-frame">
@@ -8041,16 +8069,16 @@
     view.addEventListener("focusin", (event) => (markOf(event.target) ? enter(event.target) : leave()));
     view.addEventListener("focusout", leave);
     view.addEventListener("scroll", scrolled, { passive: true });
-    // A supplement item fits its widths when it opens (toggle does not bubble: caught on its way down), and the address
-    // follows it (round 14: an open item can be copied and sent as its own address).
+    // The supplement fits its widths when it opens (toggle does not bubble: caught on its way down), and the address
+    // follows it (#stats-supplement while it is open).
     view.addEventListener("toggle", (event) => {
-      if (!event.target?.classList?.contains("stats-supp-item")) return;
+      if (!event.target?.classList?.contains("stats-supp-all")) return;
       statsFitOpened(event.target);
       statsSupplementAddressFollows(event.target);
     }, true);
     view.addEventListener("click", (event) => {
-      // (a summary's click, Enter or Space included, toggles its item next: the address follows that toggle)
-      const summary = event.target?.closest?.(".stats-supp-item > summary");
+      // (a summary's click, Enter or Space included, toggles the supplement next: the address follows that toggle)
+      const summary = event.target?.closest?.(".stats-supp-all > summary");
       if (summary && view.contains(summary)) summary.parentElement.dataset.userToggle = "1";
       const button = event.target?.closest?.("[data-stats-mode]");
       if (button) statsSwitchMode(button);
@@ -8592,20 +8620,28 @@
         ? `<div class="stats-stack${item.wide ? " stats-wide" : ""}">${item.stack.map(html).join("")}</div>` : html(item)));
       return statsPartHtml(index + 2, part.key, part.title, blocks, { intro: part.intro || "" });
     });
-    // Supplementary figures and tables: its groups, each a list of closed items.
-    // Within a group the figures come first, then the tables, each in reading order (round 14: Figure S7 had stood after
-    // two tables), so the numbers run in the order the list shows them.
+    // Supplementary figures and tables: one disclosure (round 17: one click opens them all), its groups inside, each a
+    // grid of open items as the main parts lay theirs out (two to a row from 1280px, a wide one or an odd one out taking
+    // the row). Within a group the figures come first, then any table, each in reading order (round 14: Figure S7 had
+    // stood after two tables), so the numbers run in the order the page shows them.
     const supplementGroups = STATS_SUPPLEMENT_GROUPS.map(([key, title]) => ({ key, title, items: supplement.filter((item) => item.group === key)
       .map((item, index) => [item, index]).sort(([a, i], [b, j]) => ((a.kind || "Figure") === "Table") - ((b.kind || "Figure") === "Table") || i - j)
       .map(([item]) => item) }))
       .filter((group) => group.items.length);
+    const supplementTables = supplement.filter((item) => item.kind === "Table").length;
+    const supplementTitle = statsSupplementTitle(supplementTables);
     if (supplementGroups.length) {
       const groupId = (key) => `statsSupplement${key.charAt(0).toUpperCase()}${key.slice(1)}Title`;
+      for (const group of supplementGroups) {
+        const halves = group.items.filter((item) => !item.wide);
+        if (halves.length % 2) halves[halves.length - 1].wide = true;
+      }
+      const count = statsSupplementCountText(supplement.length - supplementTables, supplementTables);
       sections.push(`<section class="stats-part stats-supp" id="stats-supplement" data-part="supplement" aria-labelledby="statsPartSupplementTitle">
-      <h2 id="statsPartSupplementTitle" class="stats-part-title"><span class="stats-part-number" aria-hidden="true">S</span><span>${escapeHtml(STATS_SUPPLEMENT_TITLE)}</span></h2>
-      ${supplementGroups.map((group) => `<section class="stats-supp-group" aria-labelledby="${groupId(group.key)}">
+      <details class="stats-supp-all"><summary><h2 id="statsPartSupplementTitle" class="stats-part-title"><span class="stats-part-number" aria-hidden="true">S</span><span>${escapeHtml(supplementTitle)}</span></h2><span class="stats-supp-toggle"><span class="stats-supp-show">Show all ${escapeHtml(count)}</span><span class="stats-supp-hide">Hide</span></span></summary>
+      <div class="stats-supp-content">${supplementGroups.map((group) => `<section class="stats-supp-group" aria-labelledby="${groupId(group.key)}">
         <h3 id="${groupId(group.key)}" class="stats-supp-group-title">${escapeHtml(group.title)}</h3>${supplementIntro[group.key] || ""}
-        <div class="stats-supp-list">${group.items.map(supplementItem).join("")}</div></section>`).join("")}</section>`);
+        <div class="stats-part-grid stats-supp-list">${group.items.map(supplementItem).join("")}</div></section>`).join("")}</div></details></section>`);
     }
     // The human review stands in Quality now; an older page with a slot above the counts leaves it empty.
     if ($("statsLead")) {
@@ -8638,7 +8674,7 @@
     if (contentsLine) {
       const entries = [{ number: 1, key: "glance", title: "At a glance" },
         ...parts.filter((part) => part.items.length).map((part, index) => ({ number: index + 2, key: part.key, title: part.title })),
-        ...(supplementGroups.length ? [{ number: "S", key: "supplement", title: STATS_SUPPLEMENT_TITLE }] : [])];
+        ...(supplementGroups.length ? [{ number: "S", key: "supplement", title: supplementTitle }] : [])];
       contentsLine.innerHTML = `<span class="stats-contents-title">On this page</span><ul>${entries.map((entry) =>
         `<li><a href="#stats-${escapeHtml(entry.key)}"><span class="stats-contents-number" aria-hidden="true">${entry.number}</span> ${escapeHtml(entry.title)}</a></li>`).join("")}</ul>`;
       contentsLine.hidden = false;

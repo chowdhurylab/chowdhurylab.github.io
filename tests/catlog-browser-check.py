@@ -1476,13 +1476,14 @@ def with_class_figure(titles, driver):
     return titles
 
 
-# Supplementary figures and tables (round 14): each item is closed (one line) until opened, and a closed item has no
-# layout. open_stats_supplement opens every item (or closes them) and waits two frames, so the page has fitted the opened
-# figures' value columns (it does on each item's toggle).
+# Supplementary figures and tables (round 14; round 17: one disclosure, its items all open inside it): closed until its
+# title is clicked, and a closed supplement has no layout. open_stats_supplement opens it (or closes it) and waits two
+# frames, so the page has fitted the opened figures' value columns (it does on the supplement's toggle).
 SUPPLEMENT_OPEN_JS = """
-    const items = [...document.querySelectorAll('#statsCharts .stats-supp-item')];
-    items.forEach((item) => { item.open = arguments[0]; });
-    return new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(() => done(items.length))));
+    const all = [...document.querySelectorAll('#statsCharts .stats-supp-all')];
+    all.forEach((item) => { item.open = arguments[0]; });
+    const items = document.querySelectorAll('#statsCharts .stats-supp-item').length;
+    return new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(() => done(items))));
 """
 
 
@@ -6577,25 +6578,32 @@ def check(driver, browser, url):
         for series in ("", "S"):
             numbers = [int(match) for match in re.findall(kind + " " + series + r"(\d+)\.", captions_text)]
             assert numbers == list(range(1, len(numbers) + 1)), f"{kind} {series} numbers: {numbers}"
-    # The supplement: each item's number in its summary is its caption's, and its address names it (#stats-s3 for
-    # Figure S3, #stats-table-s2 for Table S2).
+    # The supplement: each item's number in its heading is its caption's and links to its own address, which names it
+    # (#stats-s3 for Figure S3, #stats-table-s2 for Table S2); no item has a disclosure of its own (round 17).
     items = driver.execute_script("""return [...document.querySelectorAll('#statsCharts .stats-supp-item')].map((item) => [item.id,
-        item.querySelector('summary .stats-supp-number').textContent, item.querySelector('figcaption strong').textContent])""")
-    for identifier, number, caption_number in items:
+        item.querySelector('.stats-supp-title .stats-supp-number').textContent, item.querySelector('figcaption strong').textContent,
+        item.querySelector('.stats-supp-title .stats-supp-number').getAttribute('href')])""")
+    for identifier, number, caption_number, href in items:
         kind, _space, label = number.partition(" ")
-        assert caption_number == f"{number}." and identifier == ("stats-table-" if kind == "Table" else "stats-") + label.lower(), (identifier, number, caption_number)
-    # An item a visitor opens puts its own address in the address bar (round 14: an open item can be copied and sent);
-    # closing it gives back the address from before. (Its summary is centred before the click, for Safari.)
+        assert caption_number == f"{number}." and identifier == ("stats-table-" if kind == "Table" else "stats-") + label.lower() \
+            and href == f"#{identifier}", (identifier, number, caption_number, href)
+    assert not driver.find_elements(By.CSS_SELECTOR, "#statsCharts .stats-supp-all details.stats-supp-item, #statsCharts .stats-supp-item details")
+    # One click on the supplement's title opens all of it and puts its address in the address bar (#stats-supplement);
+    # a second click closes it and gives back the address from before. (Its summary is centred before the click, for
+    # Safari.)
     if items:
         address = driver.execute_script("return location.href")
         before = driver.execute_script("return location.hash")
-        summary = driver.find_element(By.CSS_SELECTOR, f"#{items[-1][0]} > summary")
+        summary = driver.find_element(By.CSS_SELECTOR, "#stats-supplement .stats-supp-all > summary")
         was_open = driver.execute_script("return arguments[0].parentElement.open", summary)
         if was_open:
             driver.execute_script("arguments[0].parentElement.open = false", summary)
         driver.execute_script("arguments[0].scrollIntoView({block: 'center'})", summary)
         summary.click()
-        WebDriverWait(driver, 10).until(lambda d: d.execute_script("return location.hash") == f"#{items[-1][0]}")
+        WebDriverWait(driver, 10).until(lambda d: d.execute_script("return location.hash") == "#stats-supplement"
+                                        and d.execute_script("return arguments[0].parentElement.open", summary))
+        assert driver.execute_script("return [...document.querySelectorAll('#statsCharts .stats-supp-item')].every((item) => item.getClientRects().length > 0)"), \
+            "One click shows every supplement item"
         summary.click()
         WebDriverWait(driver, 10).until(lambda d: d.execute_script("return location.hash") == before)
         if was_open:
@@ -6667,8 +6675,8 @@ def check(driver, browser, url):
     capture("stats-desktop")
     driver.execute_script("document.querySelector('#statsView').scrollTop=0")
     for element in driver.find_elements(By.CSS_SELECTOR, "#statsView details > summary"):
-        # a disclosure inside a closed supplement item (Table S1's Sequence fields) shows once its item is open
-        driver.execute_script("const item = arguments[0].parentElement.parentElement?.closest('.stats-supp-item'); if (item) item.open = true;", element)
+        # a disclosure inside the closed supplement shows once the supplement is open
+        driver.execute_script("const item = arguments[0].parentElement.parentElement?.closest('.stats-supp-all'); if (item) item.open = true;", element)
         driver.execute_script("arguments[0].scrollIntoView({block: 'center'})", element)
         parent = element.find_element(By.XPATH, "..")
         was_open = parent.get_attribute("open") is not None
@@ -6693,7 +6701,7 @@ def check(driver, browser, url):
     # A linked Stats count is the number of records its link opens: the most common organism (with its strains),
     # BRENDA (records merged from several databases count under each), the records read from the paper by CatLog and
     # the earlier paper extractions.
-    # (the tables in the supplement are opened first: a closed item's links cannot be clicked)
+    # (the supplement is opened first: a closed supplement's links cannot be clicked)
     open_stats_supplement(driver)
     for selector in (".stats-section[aria-labelledby='statsOrganismsTitle'] tr[data-stat-key]",
                      ".stats-section[aria-labelledby='statsV2OrganismsTitle'] tr[data-stat-key]",
@@ -6920,7 +6928,7 @@ def check(driver, browser, url):
             if driver.find_elements(By.CSS_SELECTOR, selector):
                 driver.execute_script("document.querySelector(arguments[0]).scrollIntoView()", selector)
                 capture(label)
-        # (a supplement item opened by a click puts its own address in the bar: the clean address is put back after)
+        # (the supplement opened by a click puts its own address in the bar: the clean address is put back after)
         address = driver.execute_script("return location.href")
         for element in driver.find_elements(By.CSS_SELECTOR, "#statsView details > summary"):
             driver.execute_script("arguments[0].scrollIntoView({block: 'center'})", element)
