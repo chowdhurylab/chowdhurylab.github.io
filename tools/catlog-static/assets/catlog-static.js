@@ -5271,7 +5271,7 @@
     // CatLog's values counted in its total only: papers with neither a PubMed year nor one from BRENDA.
     const totalOnly = data.undated ? `${valuesText(data.undated)} from papers with no publication year ${data.undated === 1 ? "counts" : "count"} only in the total` : "";
     return {
-      id: "statsYearsTitle", key: "publication-years", title: "CatLog and BRENDA by publication year", wide: true,
+      id: "statsYearsTitle", key: "publication-years", title: "Values per publication year", wide: true,
       body: `<p class="stats-years-note">CatLog on ${escapeHtml(formatDate(data.asOf))}: ${valuesText(data.values)} from ${papersText(data.papers)}${papersBeside ? `<span class="stats-years-papers"> ${escapeHtml(papersBeside)}</span>` : ""}</p>
         <ul class="stats-legend stats-years-key">${key}</ul>
         <div class="stats-years">
@@ -6293,7 +6293,7 @@
     const wrong = compared ? statsCount(quality.wrong_v1, compared) : null;
     const labels = compared ? statsCount(quality.label_or_annotation_v1, compared) : null;
     if (!compared || wrong === null || labels === null) return "";
-    return `In entries from the earlier version, ${formatInteger(wrong)} of ${formatInteger(compared)} values reviewers compared had a wrong number or unit (${qualityShare(compared - wrong, compared)} correct), and ${formatInteger(labels)} had a wrong enzyme, organism, substrate, variant or protein label.`;
+    return `In records from the earlier version, ${formatInteger(wrong)} of ${formatInteger(compared)} values reviewers compared had a wrong number or unit (${qualityShare(compared - wrong, compared)} correct), and ${formatInteger(labels)} had a wrong enzyme, organism, substrate, variant or protein label.`;
   }
 
   // The Guide's Human review item: the review in full (the entries whose value the reviewer could not find, values
@@ -6317,13 +6317,10 @@
   }
 
   // At a glance's Human review note (round 14: the headline is stated once, there): one line, as the other three notes
-  // (fix pass after round 16b: the gloss and the entries without a paper had made it a paragraph of three to seven lines
-  // in a headline cell), saying what the share counts: "no value disputed, 2,601 of 2,604". The word "entries" is
-  // Quality's first, where its gloss stands; the item's title says it in full (reviewGlanceTitle). An older snapshot
-  // (no counts over the entries with a paper) keeps the entries whose value the reviewer could not find beside the share
-  // (the user, 2026-10-15): "no value disputed, 2,767 of 2,770; 153 (5.5%) not found in the paper".
-  // The gloss of "entries" where Stats first uses the word (round 16b), Quality's lead.
-  const REVIEW_ENTRIES_GLOSS = "each a record as reviewers saw it";
+  // (fix pass after round 16b), saying what the share counts: "no value disputed, 2,601 of 2,604"; the item's title says
+  // it in full (reviewGlanceTitle). An older snapshot (no counts over the records with a paper) keeps the records whose
+  // value the reviewer could not find beside the share (the user, 2026-10-15): "no value disputed, 2,767 of 2,770; 153
+  // (5.5%) not found in the paper".
   function reviewGlanceText(facts) {
     const base = `no value disputed, ${formatInteger(facts.undisputed)} of ${formatInteger(facts.entries)}`;
     if (facts.unchecked !== null && facts.unchecked !== undefined) return base;
@@ -6332,57 +6329,153 @@
     return `${base}${notFound}`;
   }
 
-  // The headline cell's title, in full: "No value disputed in 2,601 of the 2,604 entries from CatLog’s earlier version
-  // that people checked against a paper; 166 more had no paper."
+  // The headline cell's title, in full (round 17's words: records people checked, never entries): "No value disputed in
+  // 2,601 of the 2,604 records from CatLog’s earlier version that people checked against a paper; 166 more had no paper."
   function reviewGlanceTitle(facts) {
     const one = facts.entries === 1;
     const checked = facts.unchecked !== null && facts.unchecked !== undefined
-      ? `${one ? "entry" : "entries"} from CatLog’s earlier version that people checked against a paper${facts.unchecked ? `; ${formatInteger(facts.unchecked)} more had no paper` : ""}`
-      : `${one ? "entry" : "entries"} from CatLog’s earlier version that people checked`;
+      ? `${one ? "record" : "records"} from CatLog’s earlier version that people checked against a paper${facts.unchecked ? `; ${formatInteger(facts.unchecked)} more had no paper` : ""}`
+      : `${one ? "record" : "records"} from CatLog’s earlier version that people checked`;
     return `No value disputed in ${formatInteger(facts.undisputed)} of the ${formatInteger(facts.entries)} ${checked}.`;
   }
 
-  // Quality's Human review (round 14: no second big number; At a glance gives the headline): one sentence, who checked
-  // what and what a check of the paper found of the disputed values, then the verdicts in a small table. A snapshot
-  // without the reviewers' own counts gives the match read from the paper again in words instead. Null with neither.
-  // What the review counts is said once, under How these numbers are counted; the kinds of disagreement and the match
-  // are the supplement's (statsReviewKindsTable, statsReviewMatchTable).
-  function statsReviewHtml(overview) {
+  // Quality (round 17, the user, 2026-10-23: "after the first box it should be the quality thing, with figures to
+  // understand it, not all those tables"): three figures, Human review, Checks on the values and Errors found in CatLog,
+  // each drawn only when its counts hold together; what each counts stands under its number in How these numbers are
+  // counted.
+  //
+  // Human review as a unit chart: one square per record people checked, 100 to a row on a wide screen and 50 on a phone
+  // (one 6px pitch: a 5px square and a 1px gap), so that 3 disputed among 2,604 can be seen and the 99 records read from
+  // the paper stand at their true size beside them. Runs of squares in reading order: a run with `start: "row"` begins a
+  // new row, `start: "gap"` leaves a blank row first. Each run is one path (a square per subpath), lit with its key line
+  // (data-hl) and carrying its tooltip line; an open run draws outlined squares (Not checked's slate: a record with no
+  // PMID or DOI, as Browse calls it).
+  const STATS_UNIT_PITCH = 6;
+  const STATS_UNIT_COLUMNS = { wide: 100, narrow: 50 };
+  function statsUnitGridSvg(runs, columns, { label, layout }) {
+    let column = 0;
+    let row = 0;
+    let drawn = false;
+    const paths = runs.map((run) => {
+      if (!(run.count > 0)) return "";
+      if (drawn && run.start && column) {
+        row += 1;
+        column = 0;
+      }
+      if (drawn && run.start === "gap") row += 1;
+      const inset = run.open ? 0.5 : 0;
+      const square = run.open ? "h4v4h-4z" : "h5v5h-5z";
+      let path = "";
+      for (let index = 0; index < run.count; index += 1) {
+        if (column === columns) {
+          row += 1;
+          column = 0;
+        }
+        path += index && column ? `m${STATS_UNIT_PITCH} 0${square}` : `M${column * STATS_UNIT_PITCH + inset} ${row * STATS_UNIT_PITCH + inset}${square}`;
+        column += 1;
+      }
+      drawn = true;
+      return `<path class="stats-unit stats-part-${run.part}${run.open ? " is-open" : ""}" d="${path}" data-hl="${escapeHtml(run.key)}" data-tip="${escapeHtml(run.tip)}"/>`;
+    }).join("");
+    const width = columns * STATS_UNIT_PITCH - 1;
+    const height = (row + 1) * STATS_UNIT_PITCH - 1;
+    return `<svg class="stats-units-svg is-${layout}" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}" role="img" aria-label="${escapeHtml(label)}" focusable="false">${paths}</svg>`;
+  }
+
+  // The review of records read from the paper (quality.review.v2) as counts: the records drawn at random and picked as
+  // hard cases (when catlog-v2 counts them apart), the disputed among each, the papers, whether they are free to read and
+  // the values; null when they do not hold together.
+  function fromPaperReviewFacts(review) {
+    const entries = statsCount(review?.entries);
+    if (!entries) return null;
+    const random = statsCount(review.entries_random, entries);
+    const picked = statsCount(review.entries_picked, entries);
+    const split = random !== null && picked !== null && random + picked === entries && review.value_correct_basis === "random sample";
+    const randomDisputed = split ? statsCount(review.value_disputed, random) : null;
+    const pickedDisputed = split ? statsCount(review.picked_value_disputed ?? 0, picked) : null;
+    const disputed = split ? (randomDisputed === null || pickedDisputed === null ? null : randomDisputed + pickedDisputed) : statsCount(review.value_disputed, entries);
+    if (disputed === null) return null;
+    return { entries, disputed, split, random, picked, randomDisputed, pickedDisputed, papers: statsCount(review.papers),
+      values: statsCount(review.values), free: review.scope === "papers free to read" };
+  }
+
+  // What a check of the paper found of the disputed values, as the key line's tail: "; a check found all 3 as printed in
+  // the paper" (round 16b's reviewDisputedText, shortened); "" when the check is not counted.
+  function reviewAsPrintedTail(facts) {
+    const { disputed, asPrinted } = facts;
+    if (!disputed || !asPrinted) return "";
+    if (asPrinted === disputed) return `; a check found ${disputed === 1 ? "it" : disputed === 2 ? "both" : `all ${formatInteger(disputed)}`} as printed in the paper`;
+    return `; a check found ${formatInteger(asPrinted)} of them as printed in the paper`;
+  }
+
+  // Figure: Human review. Panel one, the earlier version's records people checked: no value disputed, a value disputed,
+  // then (a blank row apart) those with no paper, which could not be checked; panel two, the records read from the paper
+  // people checked, drawn at random and picked as hard cases (a row apart); under them, the records in Browse with the
+  // human-checked tag and why they are fewer. A snapshot without the reviewers' own counts gives no figure (Quality then
+  // says the match read from the paper again in words, statsReviewFallbackHtml).
+  function statsReviewFigure(overview, { humanChecked = null, humanValues = null } = {}) {
     const quality = overview?.quality || {};
     const review = reviewFacts(quality.review?.v1);
-    const match = v2MatchFacts(quality);
-    if (!review && !match) return "";
-    const words = (text) => metricWordsHtml(escapeHtml(text));
-    const links = `<p class="stats-lead-links"><a class="stats-guide-link" href="${escapeHtml(viewUrl("guide-method").href)}">How CatLog reads and checks values <span aria-hidden="true">→</span></a><a class="stats-guide-link" href="${escapeHtml(viewUrl("team").href)}">People behind CatLog <span aria-hidden="true">→</span></a></p>`;
-    const section = (body) => `<section class="stats-section stats-lead stats-wide" aria-labelledby="statsReviewTitle" data-figure="review">
-      <h3 id="statsReviewTitle" class="stats-fig-title">Human review</h3>${body}${links}</section>`;
-    if (!review) {
-      const earlier = v1ComparedText(quality);
-      return section(`<p class="stats-lead-sentence">${escapeHtml(v2MatchSentence(match))}</p>${earlier ? `<p class="stats-lead-note">${escapeHtml(earlier)}</p>` : ""}`);
-    }
-    const after = reviewDisputedText(review);
-    // with the entries a reviewer could not check said (round 16b): "People checked 2,770 entries from the earlier version
-    // (431 papers), each a record as reviewers saw it; 166 had no paper and could not be checked. A check of the paper
-    // found all 3 disputed values ..."; the gloss of "entries" (round 16b) stands here, Stats' first use of the word (the
-    // band's note says only "no value disputed, 2,601 of 2,604").
-    const base = `People checked ${reviewBaseText(review)}, ${REVIEW_ENTRIES_GLOSS}`;
-    const sentence = review.unchecked
-      ? `${base}; ${formatInteger(review.unchecked)} had no paper and could not be checked.${after ? ` ${after}` : ""}`
-      : `${base}${after ? `; ${after.charAt(0).toLowerCase()}${after.slice(1)}` : "."}`;
-    const row = (label, count, { sub = 0, title = "" } = {}) => `<tr${sub ? ` class="stats-row-sub${sub > 1 ? " stats-row-sub2" : ""}"` : ""}><th scope="row"${title ? ` title="${escapeHtml(title)}"` : ""}>${words(label)}</th><td class="stats-num">${formatInteger(count)}</td><td class="stats-num stats-muted">${escapeHtml(qualityShare(count, review.entries))}</td></tr>`;
-    const noted = [
-      review.missing !== null ? row("Value missing", review.missing, { sub: 1, title: "The paper prints a value the entry lacked" }) : "",
-      review.other !== null ? row("Other disagreement", review.other, { sub: 1 }) : "",
-      review.other !== null && review.notFound !== null ? row("of them, value not found in the paper", review.notFound, { sub: 2 }) : "",
+    if (!review) return null;
+    const v2 = fromPaperReviewFacts(quality.review?.v2);
+    const records = (n) => `${formatInteger(n)} ${n === 1 ? "record" : "records"}`;
+    const papers = (n, free = false) => `${formatInteger(n)} ${free ? "free-to-read " : ""}${n === 1 ? "paper" : "papers"}`;
+    const earlier = [
+      { key: "undisputed", part: "human", count: review.undisputed, tip: `${records(review.undisputed)} with no value disputed`,
+        keyHtml: `<b>${formatInteger(review.undisputed)}</b> no value disputed` },
+      { key: "disputed", part: "disputed", count: review.disputed, tip: `${records(review.disputed)} with a value disputed${reviewAsPrintedTail(review)}`,
+        keyHtml: `<b>${formatInteger(review.disputed)}</b> with a value disputed${escapeHtml(reviewAsPrintedTail(review))}` },
+      { key: "no-paper", part: "not-reviewed", open: true, start: "gap", count: review.unchecked || 0,
+        tip: `${records(review.unchecked || 0)} with no PMID or DOI, so not checked against a paper`,
+        keyHtml: `<b>${formatInteger(review.unchecked || 0)}</b> with no PMID or DOI, so not checked against a paper` },
+    ];
+    const v2Runs = !v2 ? [] : v2.split
+      ? [{ key: "v2-undisputed", part: "human", count: v2.random - v2.randomDisputed, tip: `${records(v2.random - v2.randomDisputed)} drawn at random, no value disputed` },
+        { key: "v2-disputed", part: "disputed", count: v2.randomDisputed, tip: `${records(v2.randomDisputed)} drawn at random, a value disputed` },
+        { key: "v2-undisputed", part: "human", start: "row", count: v2.picked - v2.pickedDisputed, tip: `${records(v2.picked - v2.pickedDisputed)} picked as hard cases, no value disputed` },
+        { key: "v2-disputed", part: "disputed", count: v2.pickedDisputed, tip: `${records(v2.pickedDisputed)} picked as hard cases, a value disputed` }]
+      : [{ key: "v2-undisputed", part: "human", count: v2.entries - v2.disputed, tip: `${records(v2.entries - v2.disputed)} with no value disputed` },
+        { key: "v2-disputed", part: "disputed", count: v2.disputed, tip: `${records(v2.disputed)} with a value disputed` }];
+    const keyLine = (run) => `<li data-hl="${escapeHtml(run.key)}"><i class="stats-unit-swatch stats-part-${run.part}${run.open ? " is-open" : ""}" aria-hidden="true"></i><span>${run.keyHtml}</span></li>`;
+    const grids = (runs, label) => Object.entries(STATS_UNIT_COLUMNS).map(([layout, columns]) => statsUnitGridSvg(runs, columns, { label, layout })).join("");
+    const earlierLabel = `Human review of CatLog’s earlier version: ${records(review.all)} people checked${review.papers ? `, from ${papers(review.papers)}` : ""}. ${earlier.filter((run) => run.count).map((run) => run.tip).join("; ")}.`;
+    const disputedV2 = v2 ? (v2.disputed ? `a value disputed in ${records(v2.disputed)}` : v2.values ? `none of their ${formatInteger(v2.values)} values disputed` : "no value disputed") : "";
+    const v2Ways = v2?.split ? `${formatInteger(v2.random)} drawn at random${v2.picked ? `, then ${formatInteger(v2.picked)} picked as hard cases` : ""}` : "";
+    const v2Head = v2 ? `${records(v2.entries)} people checked${v2.papers ? ` (${papers(v2.papers, v2.free)})` : ""}${v2Ways ? `, ${v2Ways}` : ""}; ${disputedV2}` : "";
+    const panel = (key, name, head, chart, keyHtml) => `<div class="stats-units-panel" data-panel="${key}">
+        <p class="stats-units-title"><strong>${escapeHtml(name)}</strong> <span>${head}</span></p>
+        <div class="stats-units-body"><div class="stats-units-chart">${chart}</div>${keyHtml}</div></div>`;
+    const panels = [
+      panel("earlier", "CatLog’s earlier version", `${escapeHtml(`${records(review.all)} people checked`)}${review.papers ? ` <span class="nowrap">(${escapeHtml(papers(review.papers))})</span>` : ""}`,
+        grids(earlier, earlierLabel), `<ul class="stats-units-key">${earlier.filter((run) => run.count).map(keyLine).join("")}</ul>`),
+      v2 ? panel("from-paper", SOURCE_CATLOG_LABEL, escapeHtml(v2Head), grids(v2Runs, `Human review of records read from the paper: ${v2Head}.`), "") : "",
     ].join("");
-    const v2Line = reviewFromPaperText(quality.review?.v2);
-    return section(`<p class="stats-lead-sentence">${keepReviewBase(escapeHtml(sentence), review)}</p>
-      <table class="stats-table stats-review-table">
-        <thead><tr><th scope="col">Verdict</th><th scope="col" class="stats-num">Entries</th><th scope="col" class="stats-num">Share</th></tr></thead>
-        <tbody>${row("No value disputed", review.undisputed)}${row("A value disputed", review.disputed)}${noted
-          ? `<tr class="stats-row-group"><th scope="rowgroup" colspan="3">Also noted, with either verdict</th></tr>${noted}` : ""}</tbody></table>
-      ${review.unchecked ? `<p class="stats-note stats-review-base">${escapeHtml(`Shares are of the ${formatInteger(review.entries)} ${review.entries === 1 ? "entry" : "entries"} with a paper.`)}</p>` : ""}
-      ${v2Line ? `<p class="stats-lead-note" data-note="from-paper-review">${escapeHtml(v2Line)}</p>` : ""}`);
+    const tagged = statsHumanCheckedFoot(humanChecked, humanValues);
+    return {
+      id: "statsReviewTitle", key: "review", title: "Human review", wide: true, className: "stats-review-section",
+      body: `<div class="stats-units">${panels}</div>${tagged}`,
+      caption: "Each square is one record people checked.",
+      rules: reviewRulesText(overview),
+    };
+  }
+
+  // The records in Browse with the human-checked tag, under Human review (round 17's words: say in a few words why two
+  // counts of records differ): fewer than people checked, as the tag needs the record accepted and every value it shows
+  // approved. "" without the count.
+  function statsHumanCheckedFoot(humanChecked, humanValues = null) {
+    if (humanChecked === null) return "";
+    return `<p class="stats-units-foot" data-note="human-checked">In Browse, <a class="stats-link" href="${escapeHtml(statsBrowseHref({ checked: "1" }))}">${formatInteger(humanChecked)} ${humanChecked === 1 ? "record carries" : "records carry"}</a> the human-checked tag${humanValues !== null ? ` (${formatInteger(humanValues)} ${humanValues === 1 ? "value" : "values"})` : ""}: accepted, with every value shown approved by a reviewer.</p>`;
+  }
+
+  // Without the reviewers' own counts (an older snapshot): the match read from the paper again, or what reviewers found
+  // in the earlier version's records, in words; "" with neither.
+  function statsReviewFallbackHtml(overview) {
+    const quality = overview?.quality || {};
+    if (reviewFacts(quality.review?.v1)) return "";
+    const match = v2MatchFacts(quality);
+    const earlier = v1ComparedText(quality);
+    const text = [match ? v2MatchSentence(match) : "", earlier].filter(Boolean).join(" ");
+    return text ? `<p class="stats-part-lead" data-lead="review">${metricWordsHtml(escapeHtml(text))}</p>` : "";
   }
 
   // Supplement, Quality: the review's flags by kind (values missing, and the other disagreements, most first), with what
@@ -6448,12 +6541,6 @@
     return `Comparing them found ${what} in CatLog${since}.`;
   }
 
-  // Quality's Checks on the values (round 14: a table, not three cards with big numbers): each check, what it covered
-  // and what it found; each row says its own base, so the three counts are never read as one set. No bar (fix pass after
-  // round 16b: the small meters stood 300px from their numbers, said nothing the Result does not, and the audit's 98.9%
-  // drew as a full bar). Round 16b: the audit's share with its 95% interval and the two papers most of its wrong
-  // values sit in; human-checked records with their values beside them (one record holds up to three values); the
-  // papers read or checked with database values in view, under the table (statsExposureText).
   // What the second AI check found of the values read from the paper (overview.from_paper.values and checks, counted at
   // stage time from each value's proof line; fix pass after round 16b: the row had given its method, "Every value
   // compared with the paper", where the others give a result); null when the counts do not add up.
@@ -6466,57 +6553,104 @@
     return { values, confirmed, corrected, other };
   }
 
-  // The audit row (round 16b fix pass, catlog-v2 from 2026-10-22): "6,477 values drawn at random" | "6,449 kept, 28
-  // removed as wrong (0.4%; 95% interval 0.30–0.62%), as of Oct 21, 2026. Follow-up audits of whole papers and of values a
-  // check had questioned checked 188 more values and removed 46, counted under Errors found in CatLog." The two-papers
-  // sentence only when catlog-v2 gives audit_wrong_top2; an older snapshot's audit is said as before.
-  function statsChecksHtml({ fromPaper, papersRead, audit, humanChecked, humanValues = null, marked, compared, exposure = "", secondCheck = null, errorsShown = false }) {
-    const auditShare = audit?.wrong ? `${qualityShare(audit.wrong, audit.values)}${audit.ci ? `; 95% interval ${audit.ci[0]}–${audit.ci[1]}%` : ""}` : "";
-    const auditPapers = audit?.top2 ? ` ${formatInteger(audit.top2)} of the ${formatInteger(audit.wrong)} are in two papers.` : "";
-    const followUp = audit?.followUp?.values
-      ? ` Follow-up audits of whole papers and of values a check had questioned checked ${formatInteger(audit.followUp.values)} more ${audit.followUp.values === 1 ? "value" : "values"} and removed ${audit.followUp.wrong ? formatInteger(audit.followUp.wrong) : "none"}${audit.followUp.wrong && errorsShown ? ", counted under Errors found in CatLog" : ""}.` : "";
-    const rows = [
-      fromPaper ? { key: "second_check", name: "Second AI check",
-        covered: secondCheck
-          ? `${formatInteger(secondCheck.values)} values in <a class="stats-link" href="${escapeHtml(statsBrowseHref({ source: "paper" }))}">${formatInteger(fromPaper)}</a> records${papersRead !== null ? ` (${formatInteger(papersRead)} papers)` : ""}`
-          : `<a class="stats-link" href="${escapeHtml(statsBrowseHref({ source: "paper" }))}">${formatInteger(fromPaper)}</a> records${papersRead !== null ? ` from ${formatInteger(papersRead)} papers` : ""}`,
-        result: secondCheck
-          ? `${formatInteger(secondCheck.confirmed)} values confirmed, ${formatInteger(secondCheck.corrected)} corrected (${qualityShare(secondCheck.corrected, secondCheck.values)})${secondCheck.other ? `, ${formatInteger(secondCheck.other)} with no result recorded` : ""}; values it rejected are left out`
-          : "Every value compared with the paper" } : null,
-      audit ? { key: "audit", name: "AI audits", covered: `${formatInteger(audit.values)} values${audit.random ? " drawn at random" : ""}`,
-        result: `${audit.wrong ? `${formatInteger(audit.values - audit.wrong)} kept, ${formatInteger(audit.wrong)} removed as wrong (${auditShare})` : "None was wrong"}${audit.date ? `, as of ${audit.date}` : ""}${(audit.wrong && auditPapers) || followUp ? "." : ""}${audit.wrong ? auditPapers : ""}${followUp}` } : null,
-      compared ? { key: "review", name: "Human review", covered: `${formatInteger(compared.values)} values${compared.papers ? ` on ${formatInteger(compared.papers)} ${compared.papers === 1 ? "paper" : "papers"}` : ""}`,
-        result: `${formatInteger(compared.wrong)} with a wrong number or unit (${qualityShare(compared.values - compared.wrong, compared.values)} correct), ${formatInteger(compared.labels)} with a wrong label` } : null,
-      humanChecked !== null ? { key: "human_checked", name: "Human-checked",
-        // (fix pass after round 16b: "judged" and "approved" said what they count; a record is human-checked only when
-        // it is accepted and a reviewer approved every value it shows, so its share is not the review's 99.9%)
-        covered: marked !== null && marked >= humanChecked ? `${formatInteger(marked)} ${marked === 1 ? "record" : "records"} with a reviewer’s verdict` : "accepted records",
-        result: `<a class="stats-link" href="${escapeHtml(statsBrowseHref({ checked: "1" }))}">${formatInteger(humanChecked)}</a>${marked ? ` (${escapeHtml(qualityShare(humanChecked, marked))})` : ""} accepted with every value approved${humanValues !== null ? ` (${formatInteger(humanValues)} ${humanValues === 1 ? "value" : "values"})` : ""}`,
-        resultHtml: true, title: HUMAN_CHECKED_DESCRIPTION } : null,
-    ].filter(Boolean);
-    if (!rows.length) return "";
-    return `<section class="stats-section stats-checks-section stats-wide" aria-labelledby="statsChecksTitle" data-figure="checks">
-      <h3 id="statsChecksTitle" class="stats-fig-title">Checks on the values</h3>
-      <table class="stats-table stats-checks-table">
-        <thead><tr><th scope="col">Check</th><th scope="col">Covered</th><th scope="col">Result</th></tr></thead>
-        <tbody>${rows.map((row) => `<tr data-check="${row.key}"${row.title ? ` title="${escapeHtml(row.title)}"` : ""}>
-          <th scope="row">${escapeHtml(row.name)}</th><td class="stats-check-covered">${row.covered}</td>
-          <td class="stats-check-result">${row.resultHtml ? row.result : metricWordsHtml(escapeHtml(row.result))}</td></tr>`).join("")}</tbody></table>${exposure
-        ? `<p class="stats-note stats-exposure" data-note="exposure">${escapeHtml(exposure)}</p>` : ""}</section>`;
+  // A share of values with the precision of its 95% interval: "0.43%" beside "0.30–0.62%", else one decimal.
+  function statsShareDigits(part, whole, digits = 1) {
+    const percent = part / whole * 100;
+    if (percent > 0 && percent < 10 ** -digits) return `<${(10 ** -digits).toFixed(digits)}%`;
+    return `${percent.toFixed(digits)}%`;
   }
 
-  // How the human-review counts relate (fix pass after round 16b: entries, records and values had stood side by side with
-  // nothing joining them): " Of the 2,005 records with a reviewer’s verdict, the other 284 have a value not approved or
-  // are not accepted. The human review counts entries, earlier records as reviewers saw them, with no value disputed,
-  // and Approved values read from the paper again counts approved values one by one, also on a record with another value
-  // not approved; a record counts here only when every value it shows was approved." "" without the counts.
+  // The axis of a small share with its interval: the first of 0.5, 1, 2, 5 ... 100% that leaves a fifth of room above
+  // the interval's top, with four or five ticks.
+  const STATS_SHARE_AXES = [[0.5, 0.1], [1, 0.25], [2, 0.5], [5, 1], [10, 2.5], [20, 5], [50, 10], [100, 25]];
+  function statsShareAxis(top) {
+    return STATS_SHARE_AXES.find(([max]) => max >= top * 1.2) || STATS_SHARE_AXES[STATS_SHARE_AXES.length - 1];
+  }
+
+  // Figure: Checks on the values (round 17: no table). The second AI check, every value read from the paper as one 100%
+  // bar, confirmed (Read from the paper's cyan) and corrected (a correction's red), each labelled under its end; the
+  // random AI audit as its share removed as wrong on a small axis, the dot at the share and its 95% interval drawn as a
+  // line with end ticks. The papers read or checked with database values in view stand under the figure in two
+  // sentences (statsExposureText); the method's detail is the figure's rule.
+  function statsChecksFigure({ fromPaper, papersRead, secondCheck = null, audit = null, exposure = "", errorsShown = false }) {
+    const panels = [];
+    const panel = (key, name, covered, body) => `<div class="stats-check-panel" data-check="${key}">
+        <p class="stats-check-name">${escapeHtml(name)}</p><p class="stats-check-covered">${covered}</p>${body}</div>`;
+    if (fromPaper) {
+      const records = `<a class="stats-link" href="${escapeHtml(statsBrowseHref({ source: "paper" }))}">${formatInteger(fromPaper)} records</a>`;
+      const from = papersRead !== null ? ` from ${formatInteger(papersRead)} ${papersRead === 1 ? "paper" : "papers"}` : "";
+      if (secondCheck) {
+        const parts = [
+          { key: "confirmed", part: "catlog", count: secondCheck.confirmed, words: "confirmed" },
+          { key: "corrected", part: "corrects", count: secondCheck.corrected, words: "corrected" },
+          { key: "other", part: "neutral", count: secondCheck.other, words: "with no result recorded" },
+        ].filter((item) => item.count > 0);
+        const label = (item) => `${formatInteger(item.count)} ${item.words} (${statsShare(item.count, secondCheck.values)})`;
+        let left = 0;
+        const segments = parts.map((item, index) => {
+          const width = item.count / secondCheck.values * 100;
+          const html = `<span class="stats-seg stats-part-${item.part}${index === 0 ? " is-start" : ""}${index === parts.length - 1 ? " is-end" : ""}" style="left:${+left.toFixed(4)}%;width:${+width.toFixed(4)}%" data-hl="${item.key}" data-tip="${escapeHtml(`Second AI check: ${label(item)}`)}"></span>`;
+          left += width;
+          return html;
+        }).join("");
+        const labels = parts.map((item, index) => `<span class="stats-check-label${index === 0 ? " is-first" : ""}" data-hl="${item.key}"><b>${formatInteger(item.count)}</b> ${escapeHtml(item.words)} <span class="stats-muted">${escapeHtml(statsShare(item.count, secondCheck.values))}</span></span>`).join("");
+        panels.push(panel("second_check", "Second AI check", `${formatInteger(secondCheck.values)} values in ${records}${from}`,
+          `<div class="stats-track stats-check-bar" role="img" aria-label="${escapeHtml(`Second AI check of ${formatInteger(secondCheck.values)} values: ${parts.map(label).join(", ")}.`)}">${segments}</div>
+          <div class="stats-check-labels">${labels}</div>`));
+      } else {
+        panels.push(panel("second_check", "Second AI check", `${records}${from}`, `<p class="stats-check-result">Every value compared with the paper.</p>`));
+      }
+    }
+    if (audit) {
+      const kept = audit.values - audit.wrong;
+      const covered = `${formatInteger(audit.values)} values${audit.random ? " drawn at random" : ""}: ${formatInteger(kept)} kept, ${audit.wrong ? `${formatInteger(audit.wrong)} removed as wrong` : "none wrong"}`;
+      let body = "";
+      if (audit.wrong) {
+        const digits = audit.ci ? Math.max(1, ...audit.ci.map((end) => (String(end).split(".")[1] || "").length)) : 1;
+        const share = audit.wrong / audit.values * 100;
+        const [max, step] = statsShareAxis(audit.ci ? Number(audit.ci[1]) : share);
+        const at = (value) => +Math.min(100, Math.max(0, value / max * 100)).toFixed(3);
+        const shareText = statsShareDigits(audit.wrong, audit.values, digits);
+        const ticks = [];
+        for (let value = 0; value <= max + step / 2; value += step) ticks.push(`<span style="left:${at(value)}%">${escapeHtml(`${+value.toFixed(2)}%`)}</span>`);
+        const ci = audit.ci ? `<i class="stats-ci-line" style="left:${at(Number(audit.ci[0]))}%;width:${+(at(Number(audit.ci[1])) - at(Number(audit.ci[0]))).toFixed(3)}%"></i>` : "";
+        const words = `Share removed as wrong: ${shareText} (${formatInteger(audit.wrong)} of ${formatInteger(audit.values)})${audit.ci ? `; 95% interval ${audit.ci[0]}–${audit.ci[1]}%` : ""}.`;
+        body = `<div class="stats-ci" role="img" aria-label="${escapeHtml(words)}" data-tip="${escapeHtml(words)}">
+          <div class="stats-ci-plot">${ci}<i class="stats-ci-dot" style="left:${at(share)}%"></i><span class="stats-ci-value" style="left:${at(share)}%">${escapeHtml(shareText)}</span></div>
+          <div class="stats-ci-axis" aria-hidden="true">${ticks.join("")}</div>
+          <p class="stats-ci-title" aria-hidden="true">${audit.ci ? `Share removed as wrong, with its 95% interval (${escapeHtml(audit.ci[0])}–${escapeHtml(audit.ci[1])}%)` : "Share removed as wrong"}</p></div>`;
+      }
+      panels.push(panel("audit", audit.random ? "AI audit of a random sample" : "AI audits", escapeHtml(covered), body));
+    }
+    if (!panels.length) return null;
+    const rules = [
+      secondCheck ? "Second AI check: every value read from the paper, each compared with the paper by a second, separate AI check; values it rejected are left out of CatLog and of these counts." : "",
+      audit ? `AI audit: ${audit.random ? "values drawn at random from those read from the paper, each" : "values"} re-checked against the paper by audit agents${audit.date ? `, as of ${audit.date}` : ""}; a value found wrong is removed.${audit.ci ? " The 95% interval is the Wilson interval of the share removed." : ""}` : "",
+      audit?.top2 ? `${formatInteger(audit.top2)} of the ${formatInteger(audit.wrong)} values removed are in two papers.` : "",
+      audit?.followUp?.values ? `Follow-up audits of whole papers and of values a check had questioned checked ${formatInteger(audit.followUp.values)} more ${audit.followUp.values === 1 ? "value" : "values"} and removed ${audit.followUp.wrong ? formatInteger(audit.followUp.wrong) : "none"}${audit.followUp.wrong && errorsShown ? "; Errors found in CatLog counts them under AI audit" : ""}.` : "",
+    ].filter(Boolean).join(" ");
+    return {
+      id: "statsChecksTitle", key: "checks", title: "Checks on the values", wide: true, className: "stats-checks-section",
+      body: `<div class="stats-checks">${panels.join("")}</div>`,
+      caption: secondCheck && audit ? "A second, separate AI check compared every value with its paper; audit agents re-checked values drawn at random."
+        : audit ? "Audit agents re-checked values against their papers." : "A second, separate AI check compared every value with its paper.",
+      rules,
+      after: exposure ? `<p class="stats-note stats-exposure" data-note="exposure">${escapeHtml(exposure)}</p>` : "",
+    };
+  }
+
+  // How the human-review counts relate (fix pass after round 16b; round 17's words: records, never entries): " Of the
+  // 2,131 records with a reviewer’s verdict in Browse, the other 290 have a value not approved or are not accepted. The
+  // review counts records as reviewers saw them in the earlier version, by whether a value was disputed, and Approved
+  // values read from the paper again counts approved values one by one; the tag needs every value a record shows
+  // approved." "" without the counts.
   function statsHumanCheckedBridge(humanChecked, marked, review, match) {
     if (humanChecked === null || marked === null || marked < humanChecked) return "";
     const other = marked - humanChecked;
-    const rest = other ? ` Of the ${formatInteger(marked)} records with a reviewer’s verdict, the other ${formatInteger(other)} ${other === 1 ? "has a value not approved or is" : "have a value not approved or are"} not accepted.` : "";
-    const counts = [review ? "the human review counts entries, earlier records as reviewers saw them, with no value disputed" : "",
-      match ? `${review ? "" : "the "}Approved values read from the paper again counts approved values one by one, also on a record with another value not approved` : ""].filter(Boolean);
-    const joined = counts.length ? ` ${counts.join(", and ").replace(/^./, (letter) => letter.toUpperCase())}; a record counts here only when every value it shows was approved.` : "";
+    const rest = other ? ` Of the ${formatInteger(marked)} records with a reviewer’s verdict in Browse, the other ${formatInteger(other)} ${other === 1 ? "has a value not approved or is" : "have a value not approved or are"} not accepted.` : "";
+    const counts = [review ? "the review counts records as reviewers saw them in the earlier version, by whether a value was disputed" : "",
+      match ? `${review ? "" : "the "}Approved values read from the paper again counts approved values one by one` : ""].filter(Boolean);
+    const joined = counts.length ? ` ${counts.join(", and ").replace(/^./, (letter) => letter.toUpperCase())}; the tag needs every value a record shows approved.` : "";
     return `${rest}${joined}`;
   }
 
@@ -6529,39 +6663,50 @@
     return String(first).slice(0, 4) === year && a.endsWith(`, ${year}`) ? `${a.slice(0, -`, ${year}`.length)} and ${b}` : `${a} and ${b}`;
   }
 
-  // The papers read or checked with database values in view (overview.quality.exposed, catlog-v2 from 2026-10-21;
-  // round 16b, item 1 of its publication review: "reading or checking agent", reader and checker only apart, and the
-  // blind re-reading they were sent back to). The fix pass after round 16b says first why it matters, keeps the subject
-  // whole, says what became of every paper (the ones not sent back too) and that their values stay meanwhile:
-  // "CatLog’s reading and checking agents are meant to work without database values, so that agreement with the
-  // databases is a fair test. Between Oct 9 and Oct 21, 2026, agents saw such values, or files of CatLog’s earlier
-  // version, on 309 papers: the reading agent on 173 and only a checking agent on 136. 303 of them were sent back on Oct
-  // 21, 2026 to be read or checked again without them (none finished yet); the other 6 have not been sent back. Until
-  // then their values stay in CatLog and in the comparison with the databases." "" without the counts, or when they do
-  // not add up.
-  function statsExposureText(quality) {
+  // The papers read or checked with database values in view (overview.quality.exposed, catlog-v2 from 2026-10-21), in two
+  // plain sentences under Checks on the values (round 17: "one or two plain sentences with the blind re-read's state from
+  // data"): why it matters and how many papers, then where the reading again stands, from reread_blind and
+  // reread_blind_done (sent back, none or some done; all done). The split between reading and checking agents and the
+  // papers not sent back are the figure's rule (statsExposureRule). "" without the counts, or when they do not add up.
+  function statsExposureFacts(quality) {
     const exposed = quality?.exposed;
     const papers = statsCount(exposed?.papers);
     const reader = papers ? statsCount(exposed.reader, papers) : null;
     const checker = papers ? statsCount(exposed.checker_only, papers) : null;
-    if (!papers || reader === null || checker === null || reader + checker !== papers) return "";
-    const span = statsDaySpan(exposed.first, exposed.last);
-    const why = "CatLog’s reading and checking agents are meant to work without database values, so that agreement with the databases is a fair test.";
-    const who = reader && checker ? `the reading agent on ${formatInteger(reader)} and only a checking agent on ${formatInteger(checker)}`
-      : reader ? "the reading agent on each" : "only a checking agent on each";
-    const saw = `${span ? `Between ${span}, agents` : "Agents"} saw such values, or files of CatLog’s earlier version, on ${formatInteger(papers)} ${papers === 1 ? "paper" : "papers"}: ${who}.`;
+    if (!papers || reader === null || checker === null || reader + checker !== papers) return null;
     const sent = statsCount(exposed.reread_blind, papers);
     const done = sent ? statsCount(exposed.reread_blind_done, sent) : null;
-    const on = /^\d{4}-\d{2}-\d{2}$/.test(String(exposed.reread_blind_on || "")) ? formatDate(exposed.reread_blind_on) : "";
     const reads = sent ? statsCount(exposed.reread_blind_read, sent) : null;
     const checks = sent ? statsCount(exposed.reread_blind_verify, sent) : null;
-    const how = reads !== null && checks !== null && reads + checks === sent ? `${formatInteger(reads)} to be read and ${formatInteger(checks)} to be checked` : "";
-    const state = done === null ? "" : done ? `${formatInteger(done)} ${done === 1 ? "is" : "are"} done` : "none finished yet";
-    const rest = papers - (sent || 0);
-    const again = sent && on
-      ? ` ${formatInteger(sent)} of them ${sent === 1 ? "was" : "were"} sent back on ${on} to be read or checked again without them${[how, state].filter(Boolean).length ? ` (${[how, state].filter(Boolean).join("; ")})` : ""}${rest ? `; the other ${formatInteger(rest)} ${rest === 1 ? "has" : "have"} not been sent back` : ""}.${done === sent ? "" : " Until then their values stay in CatLog and in the comparison with the databases."}`
-      : " Their values stay in CatLog and in the comparison with the databases.";
-    return `${why} ${saw}${again}`;
+    return { papers, reader, checker, sent: sent || 0, done, span: statsDaySpan(exposed.first, exposed.last),
+      on: /^\d{4}-\d{2}-\d{2}$/.test(String(exposed.reread_blind_on || "")) ? formatDate(exposed.reread_blind_on) : "",
+      how: reads !== null && checks !== null && reads + checks === sent ? { reads, checks } : null };
+  }
+
+  function statsExposureText(quality) {
+    const facts = statsExposureFacts(quality);
+    if (!facts) return "";
+    const { papers, sent, done, span } = facts;
+    const first = `CatLog’s agents are meant to read and check without database values, but ${span ? `between ${span} ` : ""}they saw such values, or files of its earlier version, on ${formatInteger(papers)} ${papers === 1 ? "paper" : "papers"}.`;
+    const them = sent === papers ? (sent === 1 ? "It" : sent === 2 ? "Both" : `All ${formatInteger(sent)}`) : `${formatInteger(sent)} of them`;
+    const second = !sent ? "Their values stay in CatLog and in the comparison with the databases."
+      : done === sent ? `${them} ${sent === 1 ? "has" : "have"} since been read or checked again with no database values in view.`
+        : `${them} ${sent === 1 ? "was" : "were"} sent back to be read or checked again with no database values in view (${done ? `${formatInteger(done)} done so far` : "none done yet"}); until then their values stay in CatLog.`;
+    return `${first} ${second}`;
+  }
+
+  // The rest of it, under Checks on the values' number in How these numbers are counted: which agent saw the values, when
+  // the papers were sent back, how many to be read and to be checked, and the papers not sent back.
+  function statsExposureRule(quality) {
+    const facts = statsExposureFacts(quality);
+    if (!facts) return "";
+    const { papers, reader, checker, sent, on, how } = facts;
+    const who = reader && checker ? `the reading agent saw them on ${formatInteger(reader)} and only a checking agent on ${formatInteger(checker)}`
+      : reader ? "the reading agent saw them on each" : "only a checking agent saw them on each";
+    const rest = papers - sent;
+    return [`Papers with database values in view: ${who}.`,
+      sent ? `${formatInteger(sent)} ${sent === 1 ? "was" : "were"} sent back${on ? ` on ${on}` : ""}${how ? `, ${formatInteger(how.reads)} to be read and ${formatInteger(how.checks)} to be checked again` : ""}${rest ? `; the other ${formatInteger(rest)} ${rest === 1 ? "was" : "were"} not sent back` : ""}.` : ""]
+      .filter(Boolean).join(" ");
   }
 
   // CatLog's own errors found so far, by every route (overview.quality.catlog_errors, catlog-v2 from 2026-10-21; round
@@ -6601,46 +6746,87 @@
     }
     return "";
   }
-  function statsErrorsHtml(quality) {
+  // The parts of a route's bar, when catlog-v2 counts them and they make the route's values exactly: the sweep's kinds,
+  // and what became of the values a database check found wrong; else one part.
+  function statsErrorParts(key, route, values) {
+    const whole = (list) => (list.every(([, count]) => count !== null) && list.reduce((sum, [, count]) => sum + count, 0) === values
+      ? list.filter(([, count]) => count > 0) : null);
+    if (key === "sweep") {
+      return whole([["reprinted from an earlier paper", statsCount(route.reprinted ?? 0, values)],
+        ["per-product (partial) rate constants", statsCount(route.partial_constant ?? 0, values)],
+        ["others", route.other === undefined ? null : statsCount(route.other, values)]]);
+    }
+    if (key === "difference_check" && route.removed !== undefined) {
+      const removed = statsCount(route.removed, values);
+      const corrected = statsCount(route.corrected ?? 0, values);
+      return removed === null || corrected === null || removed + corrected > values ? null
+        : whole([["corrected", corrected], ["removed", removed], ["awaiting a further check", values - removed - corrected]]);
+    }
+    return null;
+  }
+
+  // The audit route's values, split as the random audit and its follow-ups found them, when the two make it exactly:
+  // "28 in the random audit, 46 in follow-up audits"; "" otherwise.
+  function statsAuditSplit(audit, values) {
+    const random = audit?.random ? audit.wrong : null;
+    const followUp = audit?.followUp?.wrong ?? null;
+    return random !== null && followUp !== null && random + followUp === values && random && followUp
+      ? `${formatInteger(random)} in the random audit, ${formatInteger(followUp)} in follow-up audits` : "";
+  }
+
+  // Figure: Errors found in CatLog (round 17: bars, not a table), one bar per way an error was found, split into its
+  // kinds where catlog-v2 counts them, then All with each value once, set off by a hairline; each with its values and
+  // papers. Neutral bars: the counts carry no meaning colour. Null when the counts do not hold together (a route above
+  // All, a count that is not whole).
+  function statsErrorsFigure(quality, audit = null) {
     const errors = quality?.catlog_errors;
     const all = statsCount(errors?.all?.values);
     const allPapers = all ? statsCount(errors.all.papers, all) : null;
-    if (!all || allPapers === null) return "";
-    const rows = [];
+    if (!all || allPapers === null) return null;
+    const routes = [];
     for (const [key, name] of STATS_ERROR_ROUTES) {
       const values = statsCount(errors[key]?.values, all);
       const papers = values ? statsCount(errors[key].papers, Math.min(values, allPapers)) : null;
-      if (values === null) return "";
+      if (values === null) return null;
       if (!values || papers === null) continue;
-      rows.push({ key, name, values, papers, note: statsErrorKinds(key, errors[key], values) });
+      const note = key === "audit" ? statsAuditSplit(audit, values) : statsErrorKinds(key, errors[key], values);
+      routes.push({ key, name, values, papers, note, parts: statsErrorParts(key, errors[key], values) });
     }
-    if (!rows.length) return "";
-    const row = (item, total = false) => `<tr data-route="${item.key}"${total ? ' class="stats-errors-all"' : ""}>
-      <th scope="row">${escapeHtml(item.name)}${item.note ? `<small>${escapeHtml(item.note)}</small>` : ""}</th>
-      <td class="stats-num">${formatInteger(item.values)}</td><td class="stats-num">${formatInteger(item.papers)}</td></tr>`;
-    return `<section class="stats-section stats-checks-section stats-errors-section stats-wide" aria-labelledby="statsErrorsTitle" data-figure="errors">
-      <h3 id="statsErrorsTitle" class="stats-fig-title">Errors found in CatLog</h3>
-      <table class="stats-table stats-checks-table stats-errors-table">
-        <thead><tr><th scope="col">How it was found</th><th scope="col" class="stats-num">Values</th><th scope="col" class="stats-num">Papers</th></tr></thead>
-        <tbody>${rows.map((item) => row(item)).join("")}${row({ key: "all", name: "All, each value once", values: all, papers: allPapers }, true)}</tbody></table>
-      <p class="stats-note">${escapeHtml("Values CatLog held that a check later found wrong; a value found in more than one way counts once in All.")}</p></section>`;
+    if (!routes.length) return null;
+    const { max, step } = statsNiceScale(all);
+    const valuesText = (n) => `${formatInteger(n)} ${n === 1 ? "value" : "values"}`;
+    const papersText = (n) => `${formatInteger(n)} ${n === 1 ? "paper" : "papers"}`;
+    const rows = [...routes, { key: "all", name: "All, each value once", values: all, papers: allPapers, note: "", parts: null }].map((item) => ({
+      key: item.key, count: item.values, label: escapeHtml(item.name), note: item.note ? escapeHtml(item.note) : "",
+      segments: (item.parts || [["", item.values]]).map(([kind, count]) => ({ part: "neutral", count,
+        title: `${item.name}${kind ? `, ${kind}` : ""}: ${valuesText(count)}` })),
+      parts: [{ text: formatInteger(item.values) }, { text: formatInteger(item.papers), className: "stats-muted" }],
+      text: `${item.name}: ${valuesText(item.values)} in ${papersText(item.papers)}${item.note ? ` (${item.note})` : ""}.`,
+    }));
+    return {
+      id: "statsErrorsTitle", key: "errors", title: "Errors found in CatLog", wide: true, className: "stats-narrow stats-errors-section",
+      body: statsBarChart({ key: "errors", rows, scale: max, step, axis: statsAxis(max, step), valueHeads: ["Values", "Papers"] }),
+      caption: "Values CatLog held that a later check found wrong, by how they were found.",
+      rules: "A value found in more than one way counts under each, and once in All.",
+    };
   }
 
-  // What the lead's numbers count, said once under How these numbers are counted: the date they were counted and the
-  // definitions. "" without a lead.
+  // What the human review counts, said once under its figure's number in How these numbers are counted: the date it was
+  // counted and the definitions (round 17's words: a reviewed record, never an entry). "" without the review or the match.
   function reviewRulesText(overview) {
     const quality = overview?.quality || {};
     const review = reviewFacts(quality.review?.v1);
     const match = v2MatchFacts(quality);
     if (!review && !match) return "";
     const asOf = statsAsOf(quality);
+    const v2 = fromPaperReviewFacts(quality.review?.v2);
     return [
       asOf ? `Counted ${asOf}.` : "",
-      review ? "From the reviewers’ own files: each entry a reviewer checked counts once, by its final verdict." : "",
-      review?.unchecked ? "An entry with no PMID or DOI could not be checked against a paper, so the shares leave it out." : "",
-      review ? `No value disputed: no reviewer disputed the entry’s ${REVIEW_VALUES} number or unit.` : "",
-      review && review.notFound !== null ? "Could not find the value: the reviewer could not find the entry’s value in the paper (one kind of other disagreement)." : "",
-      review && review.missing !== null ? "Values missing: the reviewer says the paper prints a value the entry lacks." : "",
+      review ? "From the reviewers’ own files: each record a reviewer checked counts once, by its final verdict, as reviewers saw it in CatLog’s earlier version." : "",
+      review?.unchecked ? "A record with no PMID or DOI could not be checked against a paper, so the review’s share leaves it out." : "",
+      review ? `No value disputed: no reviewer disputed the record’s ${REVIEW_VALUES} number or unit.` : "",
+      review && review.missing !== null ? "Values missing (the paper prints a value the record lacks) and other disagreements are counted by kind in the supplement." : "",
+      v2?.split ? `Records read from the paper: ${formatInteger(v2.random)} drawn at random${v2.picked ? ` and ${formatInteger(v2.picked)} picked as hard cases` : ""}${v2.free ? ", from papers free to read" : ""}.` : "",
       match ? "Approved values: kcat, Km and printed kcat/Km values a reviewer approved without objection." : "",
       match ? "The same value: the same paper, metric, protein, variant and substrate, and a value within 2%." : "",
     ].filter(Boolean).join(" ");
@@ -7890,29 +8076,26 @@
     // `stack` puts two in one column) or ready blocks (`html`).
     const parts = [];
 
-    // 2. Quality (round 14: one answer and two small tables, no number from At a glance again): the human review's
-    // verdicts, then the checks every value or a sample of them gets, each row with its own base. The review's flags by
-    // kind and the match read from the paper again are the supplement's (its Quality group).
+    // 2. Quality (round 17: figures, no tables): Human review, Checks on the values (with the papers read or checked
+    // with database values in view under it) and Errors found in CatLog; the review's share is At a glance's alone. The
+    // review's flags by kind and the match read from the paper again are the supplement's (its Quality group).
     const audit = auditFacts(overview);
     const marked = statsCount(overview?.human_marked, total);
-    const reviewHtml = statsReviewHtml(overview);
-    // Without the review, the share correct of every value reviewers compared on the earlier version's entries, never
-    // without the label errors beside it.
-    const reviewedValues = reviewHtml ? null : statsCount(quality.compared_values_v1);
-    const comparedWrong = reviewedValues ? statsCount(quality.wrong_v1, reviewedValues) : null;
-    const labelErrors = reviewedValues ? statsCount(quality.label_or_annotation_v1, reviewedValues) : null;
-    const compared = reviewedValues && comparedWrong !== null && labelErrors !== null
-      ? { values: reviewedValues, wrong: comparedWrong, labels: labelErrors, papers: statsCount(quality.compared_papers_v1) } : null;
     const humanValues = humanChecked !== null ? statsCount(overview?.human_checked_values) : null;
-    const errorsTable = statsErrorsHtml(quality);
-    const checksHtml = statsChecksHtml({ fromPaper, papersRead, audit, humanChecked, humanValues, marked, compared,
-      exposure: statsExposureText(quality), secondCheck: secondCheckFacts(overview?.from_paper), errorsShown: Boolean(errorsTable) });
-    const errorsHtml = checksHtml ? errorsTable : "";
-    const quality_ = [reviewHtml, checksHtml, errorsHtml].filter(Boolean).map((html) => ({ html }));
-    if (checksHtml && !reviewHtml) {
-      quality_.push({ html: `<p class="stats-lead-links"><a class="stats-guide-link" href="${escapeHtml(viewUrl("guide-method").href)}">How CatLog reads and checks values <span aria-hidden="true">→</span></a></p>` });
+    const reviewFigure = statsReviewFigure(overview, { humanChecked, humanValues });
+    const errorsFigure = statsErrorsFigure(quality, audit);
+    const checksFigure = statsChecksFigure({ fromPaper, papersRead, audit, secondCheck: secondCheckFacts(overview?.from_paper),
+      exposure: statsExposureText(quality), errorsShown: Boolean(errorsFigure) });
+    if (checksFigure) {
+      checksFigure.rules = [checksFigure.rules, statsExposureRule(quality)].filter(Boolean).join(" ");
+      if (!reviewFigure) checksFigure.after += statsHumanCheckedFoot(humanChecked, humanValues);
     }
-    if (quality_.length) parts.push({ key: "quality", title: "Quality", items: quality_ });
+    const quality_ = [reviewFigure, checksFigure, checksFigure ? errorsFigure : null].filter(Boolean);
+    const reviewFallback = statsReviewFallbackHtml(overview);
+    if (quality_.length || reviewFallback) {
+      quality_.push({ html: `<p class="stats-lead-links stats-wide"><a class="stats-guide-link" href="${escapeHtml(viewUrl("guide-method").href)}">How CatLog reads and checks values <span aria-hidden="true">→</span></a><a class="stats-guide-link" href="${escapeHtml(viewUrl("team").href)}">People behind CatLog <span aria-hidden="true">→</span></a></p>` });
+      parts.push({ key: "quality", title: "Quality", items: quality_, intro: reviewFallback });
+    }
 
     // The supplement (round 14): figures and tables that do not tell the main story, by group (STATS_SUPPLEMENT_GROUPS),
     // in reading order; drawn at the end of the page, after the main parts.
@@ -8055,10 +8238,6 @@
       content.push({ id: "statsSourcesTitle", key: "main-source", className: "stats-sources-section", title: "Source", body: byDatabase,
         caption: "Records per source, as Browse counts them." });
     }
-    // CatLog and BRENDA by publication year (round 16): the values CatLog has read against BRENDA's, year by year, when
-    // the manifest gives them (summary.publication_years); before the enzyme classes.
-    const yearsFigure = statsPublicationYearsFigure(summary.publication_years);
-    if (yearsFigure) content.push(yearsFigure);
 
     // Records read from the paper and those not yet re-read, by review result (read from the paper: the main source
     // "catlog"; not yet re-read: every other record).
@@ -8302,6 +8481,12 @@
         intro: comparedValues ? statsDatabaseLeadHtml(comparison, comparedValues) + statsFactorOnlyNoteHtml(comparison) : compares ? caveat : "" });
     }
     const supplementIntro = { databases: !databases.length && compares ? caveat : "" };
+
+    // 6. CatLog and BRENDA by publication year (round 16; round 17, the user: "the CatLog and BRENDA plot should come
+    // later"): the values CatLog has read against BRENDA's, year by year, when the manifest gives them
+    // (summary.publication_years), the last main part.
+    const yearsFigure = statsPublicationYearsFigure(summary.publication_years);
+    if (yearsFigure) parts.push({ key: "years", title: "CatLog and BRENDA by publication year", items: [yearsFigure] });
 
     // Number the parts from 2 and the figures and tables in reading order (Figures and Tables apart), then the
     // supplement's apart (Figure S1, Table S1 ...); half-width items stand two to a row and an odd one out takes the row.
