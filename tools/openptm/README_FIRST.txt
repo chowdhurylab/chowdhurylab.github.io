@@ -52,10 +52,10 @@ Design update, 20 October
 
 Included in this release
 - 111 operational PTM families in the original audit.
-- 27,165 site records and 14,429 function/regulation records.
+- 27,165 site records and 14,431 function/regulation records.
 - 63 source summaries: six original comparisons and 57 later additions.
-- 254 selected paper comparisons, containing 314 measurement entries from
-  93 primary papers across 88 families with numeric measurements; 23 gaps.
+- 256 selected paper comparisons, containing 316 measurement entries from
+  94 primary papers across 89 families with numeric measurements; 22 gaps.
 - 69 selected disease-study connections.
 - All nine original audit worksheets, with source records and methods.
 
@@ -64,6 +64,34 @@ overlap and must not be summed as unique biological sites. The 111 families
 are a defined working set, not a universal count of all PTMs. Paper comparisons
 are selected examples, not a systematic review. Upper bounds, uncertainty,
 study conditions and source links are retained in the record details.
+
+Paper reading, round 45
+- Three previously unread papers received selected reads for diphthamide,
+  protein-bound selenium and MIO formation, outside round 44's main subjects.
+  One supporting document was also checked in selected sections. A fourth
+  paper remains access-held and is not counted as an original body read.
+- Added two Arabidopsis comparisons from one paper: programmed reporter
+  frameshifting increased by 47% in dph1-1 and 39% in dph1-2 relative to WT.
+  These are relative increases, not absolute or global translation-error rates.
+- Antibody and mass-spectrometry evidence supports loss of eEF2 diphthamide
+  in genotype-matched seedlings. The reporter used protoplasts from older
+  plants; modification occupancy in those reporter samples was not measured.
+  DPH1 disruption and the different sample contexts prevent an isolated
+  PTM-effect interpretation. The records retain these limits prominently.
+- The reported n=3 refers to independently transfected protoplast aliquots,
+  not three independent plants. No numerical SD, absolute baseline or extra
+  independent-study count was reconstructed from the printed percentages.
+- The selenium paper reports substrate kinetics without a verified numerical
+  modified/unmodified target comparison. The MIO paper's deficient controls
+  are qualitatively inactive; other variant values are not MIO-state effects.
+  Neither contributes numbers. No inactive statement was converted to zero.
+- Totals: 256 comparisons, 316 entries, 94 numerical papers, 89 numerical
+  families and 22 remaining gaps. Diphthamide gains numerical coverage.
+  Prior records, interface and the original August audit workbook are preserved.
+- Numerical source: https://doi.org/10.1038/s41467-022-31712-7
+  Other originals: https://doi.org/10.1271/bbb.100847
+  and https://doi.org/10.1002/cctc.201800258
+  Access-held: https://doi.org/10.1002/cbic.202400016
 
 Paper reading, round 44
 - Added one EF-P comparison with seven source-printed wild-type/K32A
@@ -689,7 +717,7 @@ exports, not the current website dataset. They are retained for old links.
 
 Release checksums (SHA-256)
 index.html
-9ed7b7a8a1d3e444623b39f9a614f511a26b22bd3e999b88793906a3c73952cd
+e18459d3a33ac6938c3291877b91c864bf45f4565415538c059b74a8e9c13819
 PTM_family_database_audit_final_2026-08-14.xlsx
 ddaa9ec6227fcfdaa12bb1a4a99ffaf7d28adb7c701f4ce8a7815038bbe81a8a
 
