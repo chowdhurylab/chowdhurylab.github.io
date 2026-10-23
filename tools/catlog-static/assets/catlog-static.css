@@ -1278,9 +1278,13 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-heat-cell .stats-link { color:var(--text) }
 .stats-table.stats-heat-table .stats-heat-total { font-weight:600 }
 .stats-table.stats-heat-table tfoot :is(th, td) { border-top:1px solid var(--line); font-weight:600 }
-/* The typical wild-type enzyme: the average enzyme of Bar-Even et al. as an open diamond on the kcat/Km axis. */
-.stats-ridge-diamond { position:absolute; top:50%; width:9px; height:9px; margin:-5px 0 0 -5px; border:1.5px solid var(--text); background:var(--bg); transform:rotate(45deg) }
-.stats-typical .stats-ridge-label { overflow:visible }
+/* The typical wild-type enzyme: the average enzyme of Bar-Even et al. as an open ink diamond on the kcat/Km line, above
+   the range and the median (no data colour: a published reference, not a count), named in the legend with the range. */
+.stats-ridge-diamond { position:absolute; top:50%; z-index:3; width:9px; height:9px; margin:-4.5px 0 0 -4.5px; box-sizing:border-box; border:1.5px solid var(--text); background:var(--bg); transform:rotate(45deg) }
+.stats-typical-key-diamond { display:inline-block; flex:0 0 9px; width:9px; height:9px; margin:3px 2px 0; box-sizing:border-box; border:1.5px solid var(--text); background:var(--bg); transform:rotate(45deg) }
+.stats-typical-key-range { position:relative; display:inline-block; flex:0 0 22px; width:22px; height:9px; margin-top:3px }
+.stats-typical-key-range::before { content:""; position:absolute; left:0; right:0; top:3px; height:3px; border-radius:2px; background:color-mix(in srgb, var(--src-paper) 55%, var(--text)) }
+.stats-typical-key-range::after { content:""; position:absolute; left:6.5px; top:0; width:9px; height:9px; box-sizing:border-box; border-radius:50%; background:var(--bg); box-shadow:inset 0 0 0 2px color-mix(in srgb, var(--src-paper) 55%, var(--text)) }
 /* Single substitutions: a 20 x 20 grid of grey cells, shaded as the kcat against Km map, one-letter residues along the
    top (new) and left (wild type); beside it the facts and the commonest substitutions (under it below 1024px). */
 .stats-subs { display:grid; grid-template-columns:minmax(0,440px) minmax(240px,1fr); gap:24px 48px; align-items:start }

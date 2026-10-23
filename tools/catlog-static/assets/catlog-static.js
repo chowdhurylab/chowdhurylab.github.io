@@ -6047,8 +6047,9 @@
 
   // (round 17, the user: tables to figures) a dot plot, a panel per parameter on its own log axis of whole decades: the
   // median (dot) and middle 80% (line, the 10th to the 90th percentile) of the wild-type records read from the paper, as
-  // Values by enzyme class draws them, and on the kcat/Km panel the average enzyme of Bar-Even et al. 2011 as an open
-  // diamond at about 10⁵ M⁻¹ s⁻¹ (10² mM⁻¹ s⁻¹), its source a link. Each panel names its records' papers and enzymes.
+  // Values by enzyme class draws them, and on the kcat/Km line the average enzyme of Bar-Even et al. 2011 as an open
+  // diamond at about 10⁵ M⁻¹ s⁻¹ (10² mM⁻¹ s⁻¹), named with its link in the legend above the panels (a row of its own
+  // left a phone's plot under 120px). Each panel names its records' papers and enzymes.
   function statsTypicalFigure(typical) {
     const metrics = STATS_METRICS.filter((metric) => {
       const item = typical?.[metric.key];
@@ -6057,7 +6058,9 @@
     });
     if (!metrics.length) return null;
     const reference = 10 ** (STATS_BAR_EVEN.log10KcatOverKm - 3);
-    const referenceText = `${STATS_BAR_EVEN.name}, average enzyme: about ${statsPowerOfTen(STATS_BAR_EVEN.log10KcatOverKm)} M⁻¹ s⁻¹ (${statsPowerOfTen(STATS_BAR_EVEN.log10KcatOverKm - 3)} mM⁻¹ s⁻¹)`;
+    // (no-break spaces, so a phone line never ends between the number and its unit)
+    const referenceWords = `about\u00a0${statsPowerOfTen(STATS_BAR_EVEN.log10KcatOverKm)}\u00a0M⁻¹\u00a0s⁻¹`;
+    const withReference = metrics.some((metric) => metric.key === "kcat_over_km");
     const panels = metrics.map((metric) => {
       const item = typical[metric.key];
       const ref = metric.key === "kcat_over_km" ? reference : null;
@@ -6065,30 +6068,24 @@
       const to = Math.max(Math.ceil(Math.log10(Math.max(item.p90, ref ?? 0)) - 1e-9), from + 2);
       const position = (value) => +Math.max(0, Math.min(100, (Math.log10(value) - from) / (to - from) * 100)).toFixed(3);
       const words = STATS_METRIC_WORDS[metric.key];
-      const tip = `${words}, wild type: median ${statsRangeNumber(item.median, { figures: 2 })} ${metric.unit}, middle 80% ${statsRangeNumber(item.p10, { figures: 2 })} to ${statsRangeNumber(item.p90, { figures: 2 })}; ${statsUsedText(item.n, item.papers, item.enzymes)}`;
-      const rows = [`<li class="stats-ridge-row" data-stat-key="typical_${metric.key}" data-count="${item.n}" data-tip="${escapeHtml(tip)}">
-          <span class="stats-ridge-label">CatLog</span>
-          <span class="stats-ridge-plot" role="img" aria-label="${escapeHtml(tip)}"><span class="stats-ridge-range" style="left:${position(item.p10)}%;width:${+Math.max(position(item.p90) - position(item.p10), 0.5).toFixed(3)}%"></span><i class="stats-ridge-median" style="left:${position(item.median)}%"></i></span>
-          <span class="stats-ridge-value">${statsRangeNumber(item.median, { html: true, figures: 2 })}</span>
-          <span class="stats-ridge-n">${formatInteger(item.n)}</span></li>`];
-      if (ref) {
-        rows.push(`<li class="stats-ridge-row stats-ridge-reference" data-tip="${escapeHtml(referenceText)}">
-          <span class="stats-ridge-label"><a class="stats-ref-link" href="${escapeHtml(STATS_BAR_EVEN.href)}" target="_blank" rel="noreferrer">${escapeHtml(STATS_BAR_EVEN.name)}</a></span>
-          <span class="stats-ridge-plot" role="img" aria-label="${escapeHtml(referenceText)}"><i class="stats-ridge-diamond" style="left:${position(ref)}%"></i></span>
-          <span class="stats-ridge-value">≈ ${statsPowerOfTen(STATS_BAR_EVEN.log10KcatOverKm - 3)}</span>
-          <span class="stats-ridge-n" aria-hidden="true"></span></li>`);
-      }
-      return `<div class="stats-ridges stats-medians stats-typical" data-typical="${metric.key}" data-count="${item.n}" style="--ridge-label:${ref ? "max-content" : "minmax(0,5em)"};--ridge-n:calc(${formatInteger(item.n).length}ch + 4px)">
+      const tip = `${words}, wild type: median ${statsRangeNumber(item.median, { figures: 2 })} ${metric.unit}, middle 80% ${statsRangeNumber(item.p10, { figures: 2 })} to ${statsRangeNumber(item.p90, { figures: 2 })}; ${statsUsedText(item.n, item.papers, item.enzymes)}${ref ? `; ${STATS_BAR_EVEN.name}, average enzyme: ${referenceWords}` : ""}`;
+      return `<div class="stats-ridges stats-medians stats-typical" data-typical="${metric.key}" data-count="${item.n}" style="--ridge-label:minmax(0,4.5em);--ridge-n:calc(${formatInteger(item.n).length}ch + 4px)">
         <p class="stats-ridges-title"><span>${metric.html} <span class="stats-muted nowrap">(${escapeHtml(metric.unit)})</span></span><span class="stats-ridges-head">Median</span><span class="stats-ridges-head">n</span></p>
-        <ol class="stats-ridge-rows">${rows.join("")}</ol>
+        <ol class="stats-ridge-rows"><li class="stats-ridge-row" data-stat-key="typical_${metric.key}" data-count="${item.n}" data-tip="${escapeHtml(tip)}">
+          <span class="stats-ridge-label">CatLog</span>
+          <span class="stats-ridge-plot" role="img" aria-label="${escapeHtml(tip)}"><span class="stats-ridge-range" style="left:${position(item.p10)}%;width:${+Math.max(position(item.p90) - position(item.p10), 0.5).toFixed(3)}%"></span><i class="stats-ridge-median" style="left:${position(item.median)}%"></i>${ref ? `<i class="stats-ridge-diamond" style="left:${position(ref)}%"></i>` : ""}</span>
+          <span class="stats-ridge-value">${statsRangeNumber(item.median, { html: true, figures: 2 })}</span>
+          <span class="stats-ridge-n">${formatInteger(item.n)}</span></li></ol>
         <div class="stats-ridge-axis" aria-hidden="true"><span></span><span class="stats-ridge-ticks">${statsDecadeTicks(from, to)}</span><span></span><span></span></div>
         <p class="stats-range-count">${escapeHtml(`${statsNoun(item.papers, "paper")}, ${statsNoun(item.enzymes, "enzyme")}`)}</p>
       </div>`;
     });
+    const legend = `<ul class="stats-legend stats-typical-legend"><li><i class="stats-typical-key-range" aria-hidden="true"></i><span>Wild-type records read from the paper: median and middle 80%</span></li>${withReference
+      ? `<li><i class="stats-typical-key-diamond" aria-hidden="true"></i><span>Average enzyme of <a class="stats-ref-link" href="${escapeHtml(STATS_BAR_EVEN.href)}" target="_blank" rel="noreferrer">${escapeHtml(STATS_BAR_EVEN.name)}</a>, ${referenceWords}</span></li>` : ""}</ul>`;
     return {
       id: "statsTypicalTitle", key: "typical", title: "The typical wild-type enzyme", wide: true,
-      body: `<div class="stats-ridge-panels stats-typical-panels">${panels.join("")}</div>`,
-      caption: escapeHtml(`Median and middle 80% of each parameter over the wild-type records read from the paper, beside the average enzyme of ${STATS_BAR_EVEN.name}.`),
+      body: `${legend}<div class="stats-ridge-panels stats-typical-panels">${panels.join("")}</div>`,
+      caption: escapeHtml(`Median and middle 80% of each parameter over the wild-type records read from the paper${withReference ? `, beside the average enzyme of ${STATS_BAR_EVEN.name}` : ""}.`),
       rules: `Each wild-type record with the parameter in the unit CatLog stores counts once, a kcat/Km calculated as kcat ÷ Km included; CatLog counts every substrate and assay a paper reports, not one value per enzyme. The middle 80% runs from the 10th to the 90th percentile. ${STATS_BAR_EVEN.name} (Biochemistry 50:4402–4410) give the average enzyme’s kcat/Km as about ${statsPowerOfTen(STATS_BAR_EVEN.log10KcatOverKm)} M⁻¹ s⁻¹ (${statsPowerOfTen(STATS_BAR_EVEN.log10KcatOverKm - 3)} mM⁻¹ s⁻¹), the open diamond.`,
     };
   }
