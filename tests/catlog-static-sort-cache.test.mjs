@@ -2327,7 +2327,7 @@ function row(overrides = {}) {
   // (no second big number: At a glance gives the share, round 14)
   assert.doesNotMatch(lead, /stats-lead-figure|<strong>/);
   // The other values, each kind counted (the user's sentence, 2026-10-15), only when the kinds add up to them.
-  assert.match(lead, /<p class="stats-part-lead" data-lead="review">Where CatLog has <span class="nowrap">re-read<\/span> a paper the reviewers checked, its value matches the approved value for 2,232 of 2,489 \(89\.7%\)\. Of the other 257, AI agents checked 152 against the paper: 16 are the same value under another name, 109 are values the paper supports as CatLog reads them \(the earlier entry’s number or label was wrong\), 3 differ by rounding and 24 are left out by CatLog’s reading rules \(a reprint, a Hill fit\); none is a CatLog error\. 105 are still to check\.<\/p>/);
+  assert.match(lead, /<p class="stats-part-lead" data-lead="review">Where CatLog has <span class="nowrap">re-read<\/span> a paper the reviewers checked, its value matches the approved value for 2,232 of 2,489 \(89\.7%\)\. Of the other 257, AI agents checked 152 against the paper: 16 are the same value under another name, 109 are values the paper supports as CatLog reads them \(the earlier record’s number or label was wrong\), 3 differ by rounding and 24 are left out by CatLog’s reading rules \(a reprint, a Hill fit\); none is a CatLog error\. 105 are still to check\.<\/p>/);
   assert.match(element("statsCharts").innerHTML, /<p class="stats-lead-links stats-wide"><a class="stats-guide-link" href="https:\/\/example\.test\/tools\/catlog-latest\.html#guide-method">How CatLog reads and checks values/);
   assert.doesNotMatch(lead, /independent|AI run|Claude|Codex|first comparison|blind|95% range/);
   assert.doesNotMatch(element("statsCharts").innerHTML, /data-check="agreement"/, "The match is the lead's, not repeated in the checks");
@@ -2351,7 +2351,7 @@ function row(overrides = {}) {
   assert.match(lead, /<b>3<\/b> with a value disputed; a check found all 3 as printed in the paper/);
   assert.doesNotMatch(lead.replace(/<a [^>]*>[\s\S]*?<\/a>/g, ""), /(?<![\w/>])(?:kcat|Km)(?![\w])/, "No plain kcat or Km in the lead's text");
   lead = metricPlain(lead);
-  // The user's words (2026-10-15): "Human review", 99.9%, no value disputed on 2,671 of 2,674 entries from the earlier
+  // The user's words (2026-10-15): "Human review", 99.9%, no value disputed on 2,671 of 2,674 records from the earlier
   // version (408 papers); the sentence under it says the disputed values as printed and the entries whose value the
   // reviewer could not find, never the base again.
   assert.match(lead, /<h3 id="statsReviewTitle" class="stats-fig-title">Human review<\/h3>/);
@@ -2369,7 +2369,7 @@ function row(overrides = {}) {
   assert.equal(api.reviewFacts({ ...checkable, entries_without_paper: 3 }).unchecked, null);
   // The review in one sentence says every entry checked, those without a paper and the share over the others.
   assert.equal(api.reviewSentence(api.reviewFacts({ ...checkable, value_disputed_checked_as_printed: 1, checkable: { ...checkable.checkable, value_disputed_checked_as_printed: 1 } })),
-    "Human reviewers checked 10 entries from the earlier version (4 papers); 2 had no paper and could not be checked, and no value was disputed on 7 of the 8 that could (87.5%); a check of the paper found the disputed value printed as the entry gives it.");
+    "Human reviewers checked 10 records from the earlier version (4 papers); 2 had no paper and could not be checked, and no value was disputed on 7 of the 8 that could (87.5%); a check of the paper found the disputed value printed as the record gives it.");
   assert.equal(api.reviewFacts({ ...checkable, checkable: { entries: "8" } }).share, "90.0%");
   // Quality draws the review as one square per record people checked (round 17: a unit chart, no table), 100 to a row
   // on a wide screen and 50 on a phone, its key the counts in words; the not-found records are the supplement's.
@@ -2423,29 +2423,29 @@ function row(overrides = {}) {
   // round 16b), the phrase in full for its label.
   api.renderTeam();
   const teamHtml = element("teamFigure").innerHTML;
-  assert.equal((teamHtml.match(/aria-label="Human check: no value disputed on 2,671 of 2,674 entries \(99\.9%\) from the earlier version, 1 human-checked record"/g) || []).length, 2);
+  assert.equal((teamHtml.match(/aria-label="Human check: no value disputed on 2,671 of 2,674 records \(99\.9%\) from the earlier version, 1 human-checked record"/g) || []).length, 2);
   const humanLines = (layout) => [...teamHtml.match(new RegExp(`class="team-loop team-loop-${layout}"[\\s\\S]*?</svg>`))[0]
     .match(/data-station="human"[\s\S]*?<\/g>/)[0].matchAll(/class="team-station-number"[^>]*>([^<]*)</g)].map((match) => match[1]);
-  assert.deepEqual(humanLines("wide"), ["99.9% of 2,674 entries undisputed", "1 human-checked record"]);
+  assert.deepEqual(humanLines("wide"), ["99.9% of 2,674 records undisputed", "1 human-checked record"]);
   // The upright loop's lines keep within its 23 characters, broken where the phrase reads on.
-  assert.deepEqual(humanLines("narrow"), ["99.9% undisputed", "of 2,674 entries", "1 human-checked record"]);
+  assert.deepEqual(humanLines("narrow"), ["99.9% undisputed", "of 2,674 records", "1 human-checked record"]);
   assert.doesNotMatch(teamHtml.replace(/<[^>]*>/g, " "), /\bv[12]\b/);
   assert.doesNotMatch(teamHtml, /first comparison|blind|95% range/);
   // No dispute, a dispute only partly checked against the paper, and a review of records read from the paper.
   assert.equal(api.reviewSentence(api.reviewFacts({ entries: 10, value_disputed: 0 })),
-    "Human reviewers checked 10 entries from the earlier version: no value disputed on 10 of them (100.0%).");
+    "Human reviewers checked 10 records from the earlier version: no value disputed on 10 of them (100.0%).");
   assert.equal(api.reviewSentence(api.reviewFacts({ entries: 10, papers: 1, value_disputed: 2, value_disputed_checked_as_printed: 1 })),
-    "Human reviewers checked 10 entries from the earlier version (1 paper): no value disputed on 8 of them (80.0%); a check of the paper found 1 of the 2 disputed values printed as the entry gives it.");
+    "Human reviewers checked 10 records from the earlier version (1 paper): no value disputed on 8 of them (80.0%); a check of the paper found 1 of the 2 disputed values printed as the record gives it.");
   assert.equal(api.reviewSentence(api.reviewFacts({ entries: 10000, papers: 40, value_disputed: 1, value_disputed_checked_as_printed: 1 }), { fromPaper: true }),
-    "Human reviewers checked 10,000 records read from the paper (40 papers): no value disputed on 9,999 of them (>99.9%); a check of the paper found the disputed value printed as the entry gives it.");
+    "Human reviewers checked 10,000 records read from the paper (40 papers): no value disputed on 9,999 of them (>99.9%); a check of the paper found the disputed value printed as the record gives it.");
   // The disputed values and the entries whose value the reviewer could not find, on their own (under a lead that already
   // says the headline).
   assert.equal(api.reviewDisputedText(api.reviewFacts({ entries: 10, papers: 1, value_disputed: 2, value_disputed_checked_as_printed: 1 })),
-    "A check of the paper found 1 of the 2 disputed values printed as the entry gives it.");
+    "A check of the paper found 1 of the 2 disputed values printed as the record gives it.");
   assert.equal(api.reviewDisputedText(api.reviewFacts({ entries: 10, value_disputed: 0 })), "No value was disputed.");
   assert.equal(api.reviewDisputedText(api.reviewFacts({ entries: 10, value_disputed: 2 })), "");
   assert.equal(api.reviewNotFoundText(api.reviewFacts({ entries: 200, value_disputed: 0, other_disputed: 20, other_by_kind: { "could not find the value": 7, DOI: 1 } })),
-    "In 7 entries (3.5%) the reviewer could not find the value in the paper.");
+    "In 7 records (3.5%) the reviewer could not find the value in the paper.");
   assert.equal(api.reviewNotFoundText(api.reviewFacts({ entries: 200, value_disputed: 0, other_disputed: 20, other_by_kind: { DOI: 1 } })), "");
   runtimeManifest.summary.overview = { ...overview, quality: { ...reviewQuality, review: { v1: reviewV1,
     v2: { entries: 40, papers: 3, value_disputed: 1, value_disputed_checked_as_printed: 0 } } } };
@@ -2783,7 +2783,7 @@ function row(overrides = {}) {
   assert.deepEqual(withOut((data) => { data.values.kcat.confirmed = "34186"; }), ["db-found", "db-sources", "db-paired", "db-causes", "earlier-corrections", "replaced"]);
   // Without the values' counts there is no lead, but the figures that compare values still get the caveat once.
   assert.equal(plain(databaseSection().match(/<p class="stats-part-lead"[\s\S]*?<\/p>/)[0]),
-    "A different number can mean a different measurement; it does not by itself mean a database is wrong.");
+    "A different number can belong to another record of the paper; it does not by itself mean a database is wrong.");
   assert.deepEqual(withOut((data) => { data.values.all.confirmed += 1; }).slice(0, 2), ["db-found", "db-sources"], "Parameters that do not add up to all");
   assert.deepEqual(withOut((data) => { delete data.values_by_database; }), ["db-values", "db-found", "db-causes", "earlier-corrections", "replaced"]);
   assert.deepEqual(withOut((data) => { delete data.corrections.by_cause_database; }), ["db-values", "db-found", "db-sources", "db-paired", "earlier-corrections", "replaced"]);

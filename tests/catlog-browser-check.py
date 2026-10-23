@@ -1237,7 +1237,7 @@ def check_review_headline(driver, browser, url):
             driver.get("about:blank")
             driver.get(url + "#team")
             station = wait.until(lambda d: d.find_element(By.CSS_SELECTOR, f"svg.team-loop-{layout} [data-station='human']"))
-            assert "no value disputed on 2,671 of 2,674 entries (99.9%) from the earlier version" in station.get_attribute("aria-label"), station.get_attribute("aria-label")
+            assert "no value disputed on 2,671 of 2,674 records (99.9%) from the earlier version" in station.get_attribute("aria-label"), station.get_attribute("aria-label")
             assert driver.execute_script(TEAM_TEXT_APART, layout), f"Team's {layout} loop: station texts overlap"
     finally:
         driver.execute_cdp_cmd("Emulation.clearDeviceMetricsOverride", {})
@@ -1392,7 +1392,7 @@ def check_quality_round16b(driver, browser, url):
             driver.get("about:blank")
             driver.get(url + "#team")
             station = wait.until(lambda d: d.find_element(By.CSS_SELECTOR, f"svg.team-loop-{layout} [data-station='human']"))
-            assert "no value disputed on 2,601 of 2,604 entries (99.9%) from the earlier version" in station.get_attribute("aria-label"), station.get_attribute("aria-label")
+            assert "no value disputed on 2,601 of 2,604 records (99.9%) from the earlier version" in station.get_attribute("aria-label"), station.get_attribute("aria-label")
             assert driver.execute_script(TEAM_TEXT_APART, layout), f"Team's {layout} loop: station texts overlap"
     finally:
         driver.execute_cdp_cmd("Emulation.clearDeviceMetricsOverride", {})
@@ -5839,7 +5839,7 @@ def database_names_problems(state):
 
 
 def check_database_caution(state):
-    """The caption's caution ("A different number can mean a different measurement; ...") shows under the notes as one
+    """The caption's caution ("A different number can belong to another record of the paper; ...") shows under the notes as one
     line only on a record with a Different number (the user, 2026-10-15: not on every record); the "?" box says it only
     when that line does not, so the record says it once (the reviewer saw it twice with the box open)."""
     differs = any(note["word"].startswith("Different number") for note in state["notes"])

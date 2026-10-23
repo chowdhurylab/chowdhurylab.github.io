@@ -6311,7 +6311,7 @@
     return {
       what: fromPaper
         ? `${formatInteger(count)} ${one ? "record" : "records"} read from the paper`
-        : `${formatInteger(count)} ${one ? "entry" : "entries"} from the earlier version`,
+        : `${formatInteger(count)} ${one ? "record" : "records"} from the earlier version`,
       papers: facts.papers ? `(${formatInteger(facts.papers)} ${facts.papers === 1 ? "paper" : "papers"})` : "",
     };
   }
@@ -6358,10 +6358,10 @@
     const { disputed, asPrinted } = facts;
     if (!disputed) return "No value was disputed.";
     if (asPrinted === disputed) {
-      return disputed === 1 ? "A check of the paper found the disputed value printed as the entry gives it."
-        : `A check of the paper found all ${formatInteger(disputed)} disputed values printed as the entry gives them.`;
+      return disputed === 1 ? "A check of the paper found the disputed value printed as the record gives it."
+        : `A check of the paper found all ${formatInteger(disputed)} disputed values printed as the record gives them.`;
     }
-    return asPrinted ? `A check of the paper found ${formatInteger(asPrinted)} of the ${formatInteger(disputed)} disputed values printed as the entry gives ${asPrinted === 1 ? "it" : "them"}.` : "";
+    return asPrinted ? `A check of the paper found ${formatInteger(asPrinted)} of the ${formatInteger(disputed)} disputed values printed as the record gives ${asPrinted === 1 ? "it" : "them"}.` : "";
   }
 
   // The review in one sentence: "Human reviewers checked 2,770 entries from the earlier version (431 papers): no value
@@ -6408,7 +6408,7 @@
   }
 
   function entriesText(count, entries) {
-    return `${formatInteger(count)} ${count === 1 ? "entry" : "entries"} (${qualityShare(count, entries)})`;
+    return `${formatInteger(count)} ${count === 1 ? "record" : "records"} (${qualityShare(count, entries)})`;
   }
 
   // "In 153 entries (5.5%) the reviewer could not find the value in the paper." (the user, 2026-10-15: said with the
@@ -6427,9 +6427,9 @@
     if (facts.missing === null || (counted && !facts.missing)) return "";
     const stated = statsCount(agreement?.stated_values);
     const has = stated ? statsCount(agreement.stated_values_catlog_has, stated) : null;
-    const missing = counted ? "the paper prints a value the entry lacked, most often the kcat"
+    const missing = counted ? "the paper prints a value the record lacked, most often the kcat"
       : facts.missing ? `${entriesText(facts.missing, facts.entries)} lacked a value the paper prints, most often the kcat`
-        : "no entry lacked a value the paper prints";
+        : "no record lacked a value the paper prints";
     return `${missing}${has !== null ? `. CatLog has since read ${formatInteger(has)} of the ${formatInteger(stated)} values the reviewers named` : ""}`;
   }
 
@@ -6450,7 +6450,7 @@
   // The parts are said only when each is a whole count and they add up to the values that differ. Null without the match.
   const V2_DIFFER_PARTS = [
     ["differ_same_value_other_name", (n) => `${formatInteger(n)} ${n === 1 ? "is" : "are"} the same value under another name`],
-    ["differ_catlog_right", (n) => `${formatInteger(n)} ${n === 1 ? "is a value" : "are values"} the paper supports as CatLog reads ${n === 1 ? "it" : "them"} (the earlier entry’s number or label was wrong)`],
+    ["differ_catlog_right", (n) => `${formatInteger(n)} ${n === 1 ? "is a value" : "are values"} the paper supports as CatLog reads ${n === 1 ? "it" : "them"} (the earlier record’s number or label was wrong)`],
     ["differ_rounding", (n) => `${formatInteger(n)} ${n === 1 ? "differs" : "differ"} by rounding`],
     ["differ_not_comparable", (n) => `${formatInteger(n)} ${n === 1 ? "is" : "are"} left out by CatLog’s reading rules (a reprint, a Hill fit)`],
     ["differ_not_adjudicated", (n) => `${formatInteger(n)} ${n === 1 ? "is" : "are"} not yet checked`],
@@ -7417,7 +7417,7 @@
   // their names are comparedDatabases' (the comparison's own list, else the databases its counts name, else six).
   // Nothing here assumes how many databases there are.
   // The second and third sentences of every part-7 caption (the record's "?" box says the last).
-  const STATS_DATABASE_CAPTION = "Numbers compared for the same paper. A different number can mean a different measurement; it does not by itself mean a database is wrong.";
+  const STATS_DATABASE_CAPTION = "Numbers compared for the same paper. A different number can belong to another record of the paper; it does not by itself mean a database is wrong.";
   // Stats says the caveat once, at the end of part 7's lead, not under every figure.
   const STATS_DATABASE_CAVEAT = STATS_DATABASE_CAPTION.replace(/^[^.]*\.\s*/, "");
   // Shares are printed only on a base of this many values; below it, counts alone.
@@ -7449,7 +7449,7 @@
     { part: "corrects", db: "corrects", label: "Corrects a value", kinds: ["corrected"],
       title: "The database lists another number for this value; CatLog’s value is the one the paper prints." },
     { part: "differs", label: "Different number", kinds: ["differs", ...FACTOR_ONLY_STATUSES, "other_number", "another_measurement"],
-      title: "The database lists another number for this value, or a number a check against the paper found to be another measurement." },
+      title: "The database lists another number for this value, or a number a check against the paper found to belong to another record of the paper." },
     // One database's own words (it lists ...), never the Why not listed labels (the Guide, Browse), which say what all
     // the databases list and count other values.
     // (round 14: no third cyan tint) other values only in cyan hatching, none of this parameter a light cyan, a value in
@@ -9021,7 +9021,7 @@
     const quality = overview?.quality || {};
     const review = reviewFacts(quality.review?.v1);
     if (review) {
-      const entries = `${formatInteger(review.entries)} ${review.entries === 1 ? "entry" : "entries"}`;
+      const entries = `${formatInteger(review.entries)} ${review.entries === 1 ? "record" : "records"}`;
       const of = `${formatInteger(review.undisputed)} of ${entries}`;
       // Drawn in one short line on the wide loop and two on the upright one (fix pass after round 16b: three and five
       // lines inside the loop, at 375px running into AI audit); the label keeps the phrase in full.
