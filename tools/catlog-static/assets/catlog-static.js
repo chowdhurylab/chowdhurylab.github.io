@@ -2815,7 +2815,7 @@
 
   // Every column header sorts (round 17, the user: "like Excel"): a first click sorts the column's natural way, a second
   // click the opposite way. A sort key names the column and its direction: the column's own key is its natural order
-  // (names A to Z, EC 1 to 7, values high to low, Review result accepted first) and `reverse` the opposite; records
+  // (names A to Z, EC 1 to 7, values high to low, Review result accepted first) and its reverseKey the opposite; records
   // without the value stay last both ways. Review result's natural order is the default, so it needs no key in the
   // address. Phones show cards without headers: a column menu and a direction toggle (Sort ↑) stand in for them.
   const SORT_COLUMNS = {
