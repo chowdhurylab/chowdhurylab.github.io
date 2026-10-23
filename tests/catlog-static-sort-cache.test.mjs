@@ -4999,7 +4999,9 @@ assert.doesNotMatch(referenceHtml, /undefined|NaN|null/);
   assert.doesNotMatch(html, /<dt>Cause<\/dt>/, "the line's own cause part says it");
   for (const [code, said] of [["power_of_ten", "BRENDA lists 15 mM⁻¹ s⁻¹, 10× higher."], ["printed_number_unit_not_applied", "SABIO-RK lists 32 mM: the printed number in mM."],
     ["time_factor", "BRENDA and OED list 1,260 s⁻¹ = the printed 21 × 60."], ["time_factor", "BRENDA lists 100 mM⁻¹ s⁻¹ (60× CatLog's value)."],
-    ["different_measurement", "BRENDA lists 0.02 mM⁻¹ s⁻¹ for another measurement in this paper (checked against the paper)."]]) {
+    ["different_measurement", "BRENDA lists 0.02 mM⁻¹ s⁻¹ for another measurement in this paper (checked against the paper)."],
+    // (round 17: catlog-v2's line says "another record of this paper"; an older snapshot's "another measurement" still works)
+    ["different_measurement", "BRENDA lists 0.02 mM⁻¹ s⁻¹ for another record of this paper (found by an AI check of the paper)."]]) {
     html = render(v2Summary, v2Detail([line("kcat", { database_status: "corrected", database_line: said, database_cause: code, database_sources: ["BRENDA"] })]));
     assert.doesNotMatch(html, /<dt>Cause<\/dt>/, said);
   }
