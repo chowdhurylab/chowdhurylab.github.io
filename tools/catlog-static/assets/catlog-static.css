@@ -1274,8 +1274,15 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-panel-title { display:flex; flex-wrap:wrap; align-items:baseline; gap:0 8px; margin:0 0 12px; color:var(--text); font-size:var(--fs-14); font-weight:600; line-height:var(--lh-14) }
 .stats-panel-count { color:var(--muted); font-size:var(--fs-12); font-weight:400; line-height:var(--lh-12) }
 .stats-subs-top-title { margin-top:var(--sp-4) }
-/* short names (units, substitutions) keep their bars long: the name column is as wide as its longest name */
-.stats-supp .stats-chart:is([data-chart^="units-"], [data-chart="substitutions-top"]):not(.stats-chart-percent) { --label-w:max-content }
+/* Short names (units, substitutions) keep their bars long: the name column is as wide as the chart's longest name (at most
+   40% of the chart). It is one column for every row, the axis and the value headings (a subgrid of the chart's grid), so
+   every bar of a chart starts at one x and ends at its axis's 100% (a max-content column per row had set each bar
+   apart). Phones put each name above its bar, as every chart does there. */
+@media (min-width: 641px) {
+  .stats-supp .stats-chart:is([data-chart^="units-"], [data-chart="substitutions-top"]):not(.stats-chart-percent) { display:grid; grid-template-columns:fit-content(40%) minmax(0,1fr) var(--value-w,96px); column-gap:12px }
+  .stats-supp .stats-chart:is([data-chart^="units-"], [data-chart="substitutions-top"]):not(.stats-chart-percent) > * { grid-column:1 / -1 }
+  .stats-supp .stats-chart:is([data-chart^="units-"], [data-chart="substitutions-top"]):not(.stats-chart-percent) :is(.stats-chart-rows, .stats-chart-row, .stats-chart-axis, .stats-chart-head) { grid-column:1 / -1; grid-template-columns:subgrid; column-gap:12px }
+}
 /* Paired values by database: a dot plot, a red dot where CatLog's number corrects and a brown square where it differs,
    both opaque marks (a correction is opaque red), each with a 1px white keyline so two that meet stay apart; the All row
    stands under a hairline. */
