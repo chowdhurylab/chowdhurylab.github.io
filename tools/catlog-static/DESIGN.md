@@ -1216,24 +1216,17 @@ Database attribution belongs in Guide and dataset notes, not the Browse footer.
 
 One page from the snapshot manifest (never the record index) in numbered parts, each with one plain heading:
 1 At a glance (the headline band, the page's focal point: a plain white card with a 1px --line hairline, no glow, halo, wash or motion (round 14); 40px key numbers in the counts band's meaning colours (28px on phones, growing with the window from 721px to 30px at 1023px and on to 40px at 1200px, never smaller on a wider window, so a wide font keeps a six-digit count inside its column), then 20px scope counts),
-2 Quality (round 14: the review's 99.9% is At a glance's alone, with one line as the other notes have, "no value
-disputed, 2,601 of 2,604" (fix pass after round 16b: the gloss and the entries without a paper had made a three- to
-seven-line paragraph of a headline cell; the item's title says it in full, and Quality's lead says the rest; an older
-snapshot: "no value disputed, 2,767 of 2,770; 153 (5.5%) not found in the paper"); each item's label and number are two
-rows of the band (a subgrid), so the numbers of a row start at one height whatever label wraps); here no second big number and no dashboard cards: Human
-review in one sentence over a small table of its verdicts, then Checks on the values as a table of the checks, each row
-with what it covered and what it found (no meter since the fix pass after round 16b: the shares are in the words; on a
-phone each check is stacked, its name over the two), then Errors found in CatLog (round 16b), the three tables at one
-measure (640px at most); the review's flags by kind and the reviewers' approved values read from the paper again are the supplement's
-Quality tables), 3 What is in the catalog (the review results as one 100% bar over their legend
-table (fix pass after round 16b; a donut until then), records by main source with a Records | Share switch, then CatLog and BRENDA by publication year (round 16, when
-the manifest has summary.publication_years), then the enzyme classes with accepted and read-from-the-paper records), 4 Values (value ranges on one log axis per parameter; then, from the records read from
-the paper, Between papers (round 16) after the ranges, kcat against Km as a density map with lines of equal kcat/Km, the
-diffusion limit and each class's median, Substrate specificity (round 16), and variants against their wild type of the
-same paper, enzyme, substrate, pH and temperature), 5 Compared with databases
-(from the manifest's database comparison: a two-sentence lead that says once that a different number can mean a different
-measurement, and (round 16b) how the corrections were found and that they are a lower bound, values against the
-databases, corrections by cause), then S Supplementary figures (round 14; round 17: one click opens all of it, and its
+2 Quality (round 17: three numbered figures, no table: Human review as one square per record people checked, Checks on
+the values as a bar and an interval, Errors found in CatLog as bars; "Round 17 Stats" below), 3 What is in the catalog
+(Review result, its 100% bar with its labels under it, beside Records by main source with a Records | Share switch, then
+the enzyme classes with accepted and read-from-the-paper records), 4 Values (value ranges on one log axis per
+parameter; then, from the records read from the paper, Between papers with its bars of pairs within 2-fold and 10-fold,
+all and at the same temperature and pH, kcat against Km as a density map with lines of equal kcat/Km, the diffusion
+limit and each class's median, its class medians a dot plot beside it, Substrate specificity with its median range by
+substrates tested as bars, and variants against their wild type of the same paper, enzyme, substrate, pH and
+temperature), 5 Compared with databases (from the manifest's database comparison: a one-sentence lead, values against
+the databases with each share on its bar, corrections by cause and how found), 6 CatLog and BRENDA by publication year
+(round 17: the last main part), then S Supplementary figures (round 14; round 17: one click opens all of it, and its
 tables are figures, "Stats supplement (round 17)" below): every other figure, numbered apart (Figure S1), in five groups
 (Quality; What is in the catalog; Organisms, enzymes and variants, called Biology until round 14's polish; Values;
 Compared with databases), each item open inside the one closed supplement, with its own address (#stats-s3) that opens

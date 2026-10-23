@@ -1925,10 +1925,11 @@ function row(overrides = {}) {
   // An older manifest: no overview. Stats shows what the manifest has, without empty sections.
   api.renderStats();
   assert.deepEqual(readBreakdown(), {
-    accepted: 3, manual_review_required: 1, not_verified: 1, unverified: 1, mathematically_inferred: 0, disputed: 1,
+    accepted: 3, manual_review_required: 1, not_verified: 1, unverified: 1, disputed: 1,
     kcat: 5, km: 6, kcat_over_km: 2, sequence: 4, wild_type_sequence: 3, variant_sequence: 1, smiles: 5,
-  }, "Stats uses the manifest's counts; Unverified and Not reviewed sit under Not checked");
-  assert.deepEqual(headings(), ["Review result", "Source"]);
+  }, "Stats uses the manifest's counts; Unverified sits under Not checked (a kind with no records has no label)");
+  // (round 17: no Source figure without its counts, rather than a figure saying so)
+  assert.deepEqual(headings(), ["Review result"]);
   assert.deepEqual(supplementTitles(), ["Figure S1 What the records contain"]);
   // Numbered parts with one plain heading each; a part without its numbers is left out and the rest stay in order; the
   // supplement ends the page, named for what it holds (round 17: its tables are figures now).
@@ -1983,8 +1984,8 @@ function row(overrides = {}) {
   assert.match(element("statsCharts").innerHTML, /<section class="stats-part stats-supp" id="stats-supplement" data-part="supplement" aria-labelledby="statsPartSupplementTitle">\s*<details class="stats-supp-all"><summary><h2 id="statsPartSupplementTitle" class="stats-part-title"><span class="stats-part-number" aria-hidden="true">S<\/span><span>Supplementary figures<\/span><\/h2><span class="stats-supp-toggle"><span class="stats-supp-show">Show all 1 figure<\/span><span class="stats-supp-hide">Hide<\/span><\/span><\/summary>/);
   assert.match(element("statsCharts").innerHTML, /<div class="stats-supp-item stats-wide" id="stats-s1" data-supp="contents">\s*<h4 id="statsContentsTitle" class="stats-supp-title"><a class="stats-supp-number" href="#stats-s1">Figure S1<\/a> <span class="stats-supp-name">What the records contain<\/span><\/h4>\s*<section class="stats-section stats-figure-section stats-wide" aria-labelledby="statsContentsTitle" data-figure="contents">\s*<figure/);
   assert.doesNotMatch(element("statsCharts").innerHTML, /<details class="stats-supp-all"[^>]* open|<details class="stats-supp-item/);
-  // The review result is one 100% bar (the one partition that is a true whole) over its legend table (fix pass after
-  // round 16b: a donut with the total in its hole); Accepted is split in the rows under it.
+  // The review result is one 100% bar (the one partition that is a true whole) with its labels under it (round 17: no
+  // legend table); Accepted's parts are its label's title and the figure's rule.
   assert.match(element("statsCharts").innerHTML, /<div class="stats-status-layout"><div class="stats-track stats-status-bar" role="img" aria-label="Review result of all records: 6 records\. Accepted 3 \(50\.0%\); Not confirmed 1 \(16\.7%\); Not checked \(Unverified\) 1 \(16\.7%\); Disputed 1 \(16\.7%\)\.">/);
   // Each segment has one fill (its colour at 60%, from the stylesheet), no gradient, and lights with its table row.
   assert.match(element("statsCharts").innerHTML, /<span class="stats-seg stats-part-unverified" style="left:66\.6667%;width:16\.6667%" data-hl="unverified" data-tip="Not checked \(Unverified\): 1 \(16\.7%\)"><\/span>/);
@@ -2125,7 +2126,7 @@ function row(overrides = {}) {
   assert.match(methodHtml(), /<dt>Figure 3<\/dt><dd><span class="stats-method-title">Records by main source\.<\/span> A merged record counts once here, under Several databases\./);
   // The supplement's rules stand under their own numbers, after the main figures'.
   assert.match(methodHtml(), /<dt>Figure S2<\/dt><dd><span class="stats-method-title">What the records contain\.<\/span> 1 kcat\/Km values were calculated as kcat ÷ Km/);
-  assert.match(methodHtml(), /<dt>Shares<\/dt><dd>In Figures 1, S2 and S6 a share is of all records;/);
+  assert.match(methodHtml(), /<dt>Shares<\/dt><dd>In Figures 2, S2 and S6 a share is of all records;/);
   // The numbers come from the snapshot's Full data download and, where the page has them, the human-review results and
   // the AI audit records (dated where they are shown).
   assert.match(methodHtml(), /<dt>Snapshot<\/dt><dd>[^<]*Counted from this snapshot’s Full data download and the human-review results\.<\/dd>/);
@@ -2370,16 +2371,23 @@ function row(overrides = {}) {
   assert.equal(api.reviewSentence(api.reviewFacts({ ...checkable, value_disputed_checked_as_printed: 1, checkable: { ...checkable.checkable, value_disputed_checked_as_printed: 1 } })),
     "Human reviewers checked 10 entries from the earlier version (4 papers); 2 had no paper and could not be checked, and no value was disputed on 7 of the 8 that could (87.5%); a check of the paper found the disputed value printed as the entry gives it.");
   assert.equal(api.reviewFacts({ ...checkable, checkable: { entries: "8" } }).share, "90.0%");
-  // Quality says it once more only as one sentence and a table of the verdicts; the not-found entries are a table row.
-  assert.doesNotMatch(lead, /stats-lead-figure|<strong>|could not find the value in the paper\./);
-  assert.match(lead, /<p class="stats-lead-sentence">People checked 2,674 entries from the earlier version <span class="nowrap">\(408 papers\)<\/span>, each a record as reviewers saw it; a check of the paper found all 3 disputed values printed as the entry gives them\.<\/p>/);
-  assert.doesNotMatch(lead, /values correct|A reviewer disputed/);
-  const verdicts = [...lead.matchAll(/<tr(?: class="([^"]*)")?><th scope="row"[^>]*>([^<]*)<\/th><td class="stats-num">([\d,]+)<\/td><td class="stats-num stats-muted">([^<]*)<\/td><\/tr>/g)]
-    .map(([, cls, label, count, share]) => [cls || "", label, count, share]);
-  assert.deepEqual(verdicts, [["", "No value disputed", "2,671", "99.9%"], ["", "A value disputed", "3", "0.1%"],
-    ["stats-row-sub", "Value missing", "31", "1.2%"], ["stats-row-sub", "Other disagreement", "177", "6.6%"],
-    ["stats-row-sub stats-row-sub2", "of them, value not found in the paper", "153", "5.7%"]]);
-  assert.match(lead, /<tr class="stats-row-group"><th scope="rowgroup" colspan="3">Also noted, with either verdict<\/th><\/tr>/);
+  // Quality draws the review as one square per record people checked (round 17: a unit chart, no table), 100 to a row
+  // on a wide screen and 50 on a phone, its key the counts in words; the not-found records are the supplement's.
+  assert.doesNotMatch(lead, /<table|stats-lead-figure|<strong>[^<]*<\/strong>\s*<span>[\d,]+%|could not find the value in the paper\./);
+  assert.deepEqual([...lead.matchAll(/<li data-hl="([^"]+)"><i class="stats-unit-swatch stats-part-([a-z-]+)[^"]*" aria-hidden="true"><\/i><span>([\s\S]*?)<\/span><\/li>/g)]
+    .map(([, key, part, text]) => `${key} ${part} ${text}`), ["undisputed human <b>2,671</b> no value disputed",
+    "disputed disputed <b>3</b> with a value disputed; a check found all 3 as printed in the paper"]);
+  for (const [layout, columns, rows] of [["wide", 100, 27], ["narrow", 50, 54]]) {
+    const svg = lead.match(new RegExp(`<svg class="stats-units-svg is-${layout}" viewBox="0 0 (\\d+) (\\d+)"[\\s\\S]*?</svg>`));
+    assert.deepEqual([Number(svg[1]), Number(svg[2])], [columns * 6 - 1, rows * 6 - 1], `${layout}: ${columns} squares to a row`);
+    assert.equal((svg[0].match(/h5v5h-5z/g) || []).length, 2674, `${layout}: one square per record`);
+    assert.match(svg[0], /<path class="stats-unit stats-part-disputed" d="(?:M426 156|M126 318)h5v5h-5zm6 0h5v5h-5zm6 0h5v5h-5z" data-hl="disputed"/, "the 3 disputed right after the 2,671");
+  }
+  assert.match(lead, /<strong>Figure 1\.<\/strong> Each square is one record people checked\./);
+  assert.match(lead, /<p class="stats-units-foot" data-note="human-checked"><a class="stats-link" href="[^"]*#browse\?checked=1">1 record<\/a> in Browse carries the human-checked tag: accepted, every value shown approved\.<\/p>/);
+  // No disputed value and no record without a paper: green squares only; records without a paper are open squares.
+  assert.equal(api.statsUnitGridSvg([{ key: "a", part: "human", count: 3, tip: "a" }, { key: "b", part: "not-reviewed", open: true, start: "gap", count: 2, tip: "b" }], 2, { label: "x", layout: "wide" }),
+    '<svg class="stats-units-svg is-wide" viewBox="0 0 11 23" width="11" height="23" role="img" aria-label="x" focusable="false"><path class="stats-unit stats-part-human" d="M0 0h5v5h-5zm6 0h5v5h-5zM0 6h5v5h-5z" data-hl="a" data-tip="a"/><path class="stats-unit stats-part-not-reviewed is-open" d="M0.5 18.5h4v4h-4zm6 0h4v4h-4z" data-hl="b" data-tip="b"/></svg>');
   // The flags by kind and the match read from the paper again are the supplement's Quality figures (round 14; bar charts
   // since round 17).
   const qualitySupplement = element("statsCharts").innerHTML.match(/<section class="stats-supp-group" aria-labelledby="statsSupplementQualityTitle">[\s\S]*?(?=<section class="stats-supp-group"|$)/)?.[0] || "";
@@ -2655,7 +2663,8 @@ function row(overrides = {}) {
   assert.match(found, /<span title="A decimal point or exponent slip\.">Decimal slip<\/span>/);
   // Its title names both splits; the caption says each value counts once (Table 9 counts one per database).
   assert.match(found, /<h3 id="statsDbFoundTitle" class="stats-fig-title">Corrections by cause and how found<\/h3>/);
-  assert.match(plain(found), /The 1,548 values that correct a database’s number, each counted once\./);
+  assert.match(plain(found), /Figure \d+\. Values that correct a database’s number, each counted once\./);
+  assert.match(methodHtml(), /Corrections by cause and how found\.<\/span> 1,548 values correct a database’s number, each counted once\./);
   // Corrections by cause and database (round 17: a heat map): a row per database, a column per cause family, each cell
   // grey by its count, then each database's total; All counts each value once; on phones a line each.
   const causes = figureHtml("db-causes");
@@ -2734,7 +2743,7 @@ function row(overrides = {}) {
   runtimeManifest.summary.database_comparison.values_by_database.UniProt = { same: 10, value_absent: 3, paper_absent: 126938 };
   api.renderStats();
   assert.deepEqual([...figureHtml("db-sources").matchAll(/data-row="([^"]+)"/g)].map((match) => match[1]), ["db_uniprot", "db_brenda", "db_strenda"]);
-  assert.match(plain(figureHtml("db-values")), /compared with UniProt, BRENDA and STRENDA DB\./);
+  assert.match(methodHtml(), /Values compared with databases\.<\/span> Compared with UniProt, BRENDA and STRENDA DB\./);
   assert.match(figureHtml("db-causes"), /<tr data-stat-key="db_uniprot"><th scope="row"><span class="nowrap">UniProt<\/span><\/th><td class="stats-num stats-heat-cell" data-count="0"><span class="stats-muted">0<\/span>/);
   assert.doesNotMatch(figureHtml("db-sources"), /lists none of these papers/);
   // A database that lists none of the papers read is named under the figure and the table, not given an empty bar or a
@@ -2810,7 +2819,7 @@ function row(overrides = {}) {
   assert.deepEqual([...figureHtml("db-found").matchAll(/data-row="([^"]+)" data-count="(\d+)"/g)].map((match) => [match[1], Number(match[2])]),
     [["unit", 1063], ["decimal", 86], ["elsewhere", 51], ["misprint", 91]]);
   assert.match(figureHtml("db-found"), /data-tip="Unit or scale, Exact factor found automatically: 635"/);
-  assert.match(plain(figureHtml("db-found")), /The 1,291 values that correct a database’s number, each counted once\./);
+  assert.match(methodHtml(), /Corrections by cause and how found\.<\/span> 1,291 values correct a database’s number, each counted once\./);
   assert.match(methodHtml(), /Corrections by cause and database\.<\/span> 257 values a database lists at an exact factor, not yet checked against the paper, are Different number, left out of All; the rows per database still hold them\.<\/dd>/);
   // With the overview's split of those values by parameter and database (counted from the Full data), the figures and
   // tables count them under Different number too, as the lead does, and the note goes.
@@ -2824,7 +2833,7 @@ function row(overrides = {}) {
     assert.match(figureHtml("db-values"), /kcat, Corrects a value: 271\b/);
     assert.match(figureHtml("db-values"), /kcat, Different number: 326\b/);
     assert.match(figureHtml("db-paired"), /data-row="db_brenda"[\s\S]*?>956</);
-    assert.match(plain(databaseSection().match(/<p class="stats-part-lead"[\s\S]*?<\/p>/)[0]), /Of the other 2,599, 1,291 correct a database’s number/);
+    assert.match(methodHtml(), /Corrects a value: 1,291 values correct a database’s number/);
     // A split that does not add up to the comparison's count is not used: the note stays.
     runtimeManifest.summary.overview = { ...before, database_factor_only: { values: 250, by_parameter: { Km: 250 }, by_database: {} } };
     withOut((data) => { data.corrections.by_cause_found_by = { power_of_ten: { factor_cross_checked: 300, factor_only: 257 }, unit_not_converted: { paper_check: 126 } }; });
@@ -2910,7 +2919,8 @@ function row(overrides = {}) {
   assert.match(chart, /#browse\?variant=wild">Wild type/);
   assert.match(chart, /#browse\?caution=differs"/);
   assert.match(chart, /#browse\?caution=none" data-stat-key="caution_none" data-count="\d+">/);
-  assert.match(chart, /data-stat-key="source_catlog" data-count="2"[\s\S]*?#browse\?source=paper">Read from the paper<\/a>/);
+  // (round 17: the counts as Browse gives them, a merged record under each database, are Records by main source's rule)
+  assert.match(methodHtml(), /Records by main source\.<\/span> A merged record counts once here, under Several databases\. The Share view draws each bar at full width\. In Browse, a record merged from several databases counts under each of them: Read from the paper 2, BRENDA 3, Open Enzyme Database \(OED\) 1\.<\/dd>/);
   assert.doesNotMatch(chart, /source_paper_earlier/, "No earlier paper extractions here");
   assert.doesNotMatch(chart, /source=other/, "Other has no single Browse filter");
   assert.doesNotMatch(chart + element("statsTotals").innerHTML, /earlier catalog|old catalog/i, "Records are named by what happened to them");
@@ -3064,7 +3074,7 @@ function row(overrides = {}) {
     assert.deepEqual(supplementTitles(), ["Figure S1 Read from the paper and not yet re-read", "Figure S2 Values per paper",
       "Figure S3 What the records contain", "Figure S4 Most common organisms", "Figure S5 Most common EC numbers",
       "Figure S6 Wild type and variants", "Figure S7 Values by enzyme class", "Figure S8 Cautions on values"]);
-    assert.deepEqual([...more.matchAll(/<strong>Figure (S?\d+)\.<\/strong>/g)].map((match) => match[1]), ["1", "2", "3", "4", "S1", "S2", "S3", "S4", "S5", "S6", "S7", "S8"]);
+    assert.deepEqual([...more.matchAll(/<strong>Figure (S?\d+)\.<\/strong>/g)].map((match) => match[1]), ["1", "2", "3", "4", "5", "S1", "S2", "S3", "S4", "S5", "S6", "S7", "S8"]);
     assert.doesNotMatch(more, /<strong>Table S\d+\.<\/strong>/, "The supplement has no tables (round 17)");
     more.match(/<span class="stats-fig-caption">[\s\S]*?<\/span>(?=<\/figcaption>)/g).forEach(assertPlainCaption);
     assert.doesNotMatch(more, /NaN|Infinity|undefined/);
@@ -3352,7 +3362,7 @@ function row(overrides = {}) {
     const at = (title) => supplement.findIndex((item) => item.endsWith(title));
     assert.ok(at("kcat and assay temperature") >= 0 && at("Km and substrate size") === at("kcat and assay temperature") + 1, supplement.join(" | "));
     assert.ok(/^Figure S\d+ The typical wild-type enzyme$/.test(supplement[at("The typical wild-type enzyme")]), supplement.join(" | "));
-    assert.match(methodHtml(), /<span class="stats-method-title">Between papers\.<\/span> Each paper’s value is the median of its records for that enzyme and substrate \(matched by structure, else by name\), whatever their conditions, a kcat\/Km calculated as kcat ÷ Km included; a pair of papers counts once per enzyme, substrate and parameter\./);
+    assert.match(methodHtml(), /<span class="stats-method-title">Between papers\.<\/span> 12 records, 4 papers and 2 enzymes\. An enzyme is one UniProt accession; constructs differ between papers too\. Each paper’s value is the median of its records for that enzyme and substrate \(matched by structure, else by name\), whatever their conditions, a kcat\/Km calculated as kcat ÷ Km included; a pair of papers counts once per enzyme, substrate and parameter\./);
     assert.match(methodHtml(), /<span class="stats-method-title">The typical wild-type enzyme\.<\/span>/);
     assert.doesNotMatch(element("statsCharts").innerHTML, /NaN|Infinity|undefined/);
     runtimeManifest.summary.overview = overview;
@@ -3519,7 +3529,7 @@ function row(overrides = {}) {
       "Figure S3 What the records contain", "Figure S4 Most common organisms", "Figure S5 Most common EC numbers",
       "Figure S6 Wild type and variants", "Figure S7 Single substitutions", "Figure S8 Units as printed", "Figure S9 Cautions on values"]);
     assert.match(methodHtml(), /<dt>Figure S7<\/dt><dd><span class="stats-method-title">Single substitutions\.<\/span> A variant is one paper’s mutation of one enzyme/);
-    assert.match(methodHtml(), /<dt>Shares<\/dt><dd>In Figures 1, S3 and S9 a share is of all records;/);
+    assert.match(methodHtml(), /<dt>Shares<\/dt><dd>In Figures 2, S3 and S9 a share is of all records;/);
     element("statsCharts").innerHTML.match(/<span class="stats-fig-caption">[\s\S]*?<\/span>(?=<\/figcaption>)/g).forEach(assertPlainCaption);
     assert.doesNotMatch(element("statsCharts").innerHTML, /NaN|Infinity|undefined/);
     runtimeManifest.summary.overview = overview;
@@ -3795,9 +3805,9 @@ function row(overrides = {}) {
   } };
   api.renderStats();
   assert.deepEqual(readBreakdown(), {
-    accepted: 2, manual_review_required: 1, not_verified: 0, unverified: 0, mathematically_inferred: 0, disputed: 1, sequence: 4,
+    accepted: 2, manual_review_required: 1, disputed: 1, sequence: 4,
     wild_type_sequence: 3, variant_sequence: 1,
-  }, "Stats works before the index arrives; a count above the total is not drawn");
+  }, "Stats works before the index arrives; a count above the total is not drawn (a result with no records has no label)");
   runtimeManifest.summary.distributions.source_db = [
     { label: "brenda", count: 2 }, { label: "sabio_rk", count: 1 }, { label: "brenda;uniprot", count: 1 },
   ];
