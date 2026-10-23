@@ -165,16 +165,18 @@ S. Supplementary figures (round 14, the user: "not every figure has to be shown 
    One click opens everything: inside, five groups (Quality; What is in the catalog; Organisms, enzymes and variants;
    Values; Compared with databases), each a grid of open items laid out as the main parts' (two to a row from 1024px, a
    wide figure or an odd one out taking the row, one per row below 1024px), no disclosure in any item. An item is a
-   div.stats-supp-item with its own address as its id (#stats-s3 for Figure S3; #stats-table-s2 for a Table S2), its
+   div.stats-supp-item with its own address by its key as its id (#stats-supp-printed-units for Units as printed; never
+   its number, which follows the items the snapshot has: a data update that drops one would move every later address), its
    heading (h4, under the group's h3) its number, a muted link to that address, and its title, then the figure with its
    caption "Figure S1. ..." (one sentence; what a mark means beyond it is the figure's rule in How these numbers are
    counted). Numbers run in the order the page shows them; a figure the snapshot cannot draw takes no number.
    Addresses: #stats-supplement and any item's address open the supplement (statsAddressTarget) and scroll to what they
    name, also when the page opens there; a followed link focuses the supplement's summary (Enter or Space closes it) or
    the item's heading. The live round 16b numbering (11 figures, 14 tables) is kept as an alias map,
-   STATS_SUPPLEMENT_OLD_ADDRESSES (#stats-table-s4, the most common organisms, opens that figure today, by the item's key
-   in data-supp): an old address that no item has now opens the item it named; a number an item still has opens that
-   item. The older #stats-biology opens What is in the catalog and #stats-cautions the Cautions figure. A visitor's own
+   STATS_SUPPLEMENT_OLD_ADDRESSES: every numbered address (#stats-s1 to #stats-s12, #stats-table-s1 to #stats-table-s14)
+   opens the item it named on that page, by the item's key in data-supp, whatever number the item has now (#stats-s3,
+   papers by parameter, is Figure S5 today; #stats-table-s4, the most common organisms, a figure); a number that page
+   never had, or an item this snapshot lacks, opens the supplement. The older #stats-biology opens What is in the catalog and #stats-cautions the Cautions figure. A visitor's own
    click on the summary puts #stats-supplement in the address bar in place (replaceState) and closing it gives back the
    address from before; a number link pushes the item's address. The supplement fits its value columns and tables when
    it opens (statsFitOpened on its toggle); on paper it prints open (beforeprint and the print stylesheet, its Show

@@ -772,8 +772,8 @@
 
   // A Guide section's own address (#guide-units, ...) opens the Guide at that section.
   const GUIDE_SECTION_HASH = /^#guide-[a-z-]+$/;
-  // A Stats part's address (#stats-quality, from the page's On this page line), or a supplement item's (#stats-s3,
-  // #stats-table-s2): Stats, opened at that part or item.
+  // A Stats part's address (#stats-quality, from the page's On this page line), or a supplement item's
+  // (#stats-supp-versions; the live round 16b page's #stats-s3, #stats-table-s2): Stats, opened at that part or item.
   const STATS_SECTION_HASH = /^#stats-[a-z0-9-]+$/;
 
   // A Guide section's heading: the one the section is labelled by, or the target itself when it is a heading
@@ -864,7 +864,7 @@
       window.requestAnimationFrame?.(() => guideSection.scrollIntoView?.({ block: "start" }));
     }
     // A part's address (#stats-quality) shows that part of Stats, also when the page opens at it; a supplement item's
-    // (#stats-s3) opens the item.
+    // (#stats-supp-versions, or an older #stats-s3) opens the item.
     const statsSection = statsOpen && STATS_SECTION_HASH.test(window.location.hash)
       ? statsAddressTarget(window.location.hash)
       : null;
@@ -4210,15 +4210,18 @@
   // for figures and tables ("Figure S3", "Table S2"). Round 17 (the user, 2026-10-23: "they should click on Supplementary
   // figures and tables and all of them open, not one click per figure"): the whole supplement is one disclosure, closed
   // until its title is clicked, and inside it every item is drawn open, its heading (number and title) over its figure.
-  // Each item has its own address, #stats-s3 for Figure S3 and #stats-table-s2 for Table S2, which opens the supplement
-  // at it (statsAddressTarget); its number in the heading links there, so the address can be copied and sent.
-  function statsSupplementAddress(kind, number) {
-    return kind === "Table" ? `stats-table-s${number}` : `stats-s${number}`;
+  // Each item has its own address by its key, #stats-supp-printed-units for Units as printed, which opens the supplement
+  // at it (statsAddressTarget); its number in the heading links there, so the address can be copied and sent. The
+  // address never holds the item's number: the numbers follow which items the snapshot has, so a data update that drops
+  // one would move every later address (round 17 fix pass: #stats-s3 of the live round 16b page had come to open
+  // another figure).
+  function statsSupplementAddress(key) {
+    return `stats-supp-${key}`;
   }
 
   function statsSupplementItemHtml(item, kind, number) {
     const label = `${kind} S${number}`;
-    const address = statsSupplementAddress(kind, number);
+    const address = statsSupplementAddress(item.key);
     return `<div class="stats-supp-item${item.wide ? " stats-wide" : ""}" id="${address}" data-supp="${escapeHtml(item.key)}">
       <h4 id="${item.id}" class="stats-supp-title"><a class="stats-supp-number" href="#${address}">${label}</a> <span class="stats-supp-name">${item.title}</span></h4>
       ${statsFigureHtml({ ...item, label, heading: false })}</div>`;
@@ -4238,8 +4241,9 @@
   const STATS_SUPPLEMENT_GROUPS = [["quality", "Quality"], ["catalog", "What is in the catalog"], ["biology", "Organisms, enzymes and variants"], ["values", "Values"], ["databases", "Compared with databases"]];
   // Addresses of parts the supplement took over (round 14): #stats-biology opens What is in the catalog (its enzyme
   // classes), #stats-cautions the Cautions figure. Round 17 turned the supplement's tables into figures and so renumbered
-  // it: an address of the live round 16b page that no item has now (#stats-table-s4) opens the item it named then, by the
-  // item's key (data-supp); a number an item still has opens that item.
+  // it: a numbered address (#stats-s3, #stats-table-s4) is the live round 16b page's and opens the item it named then, by
+  // the item's key (data-supp), whatever number that item has now; a number that page never had, or an item this snapshot
+  // does not have, opens the supplement.
   const STATS_ADDRESS_ALIASES = { biology: "catalog", cautions: "cautions" };
   const STATS_SUPPLEMENT_OLD_ADDRESSES = {
     s1: "versions", s2: "values-per-paper", s3: "papers-per-parameter", s4: "substitutions", s5: "class-values", s6: "conditions",
@@ -4249,19 +4253,23 @@
     "table-s11": "printed-units", "table-s12": "cautions", "table-s13": "db-paired", "table-s14": "db-causes",
   };
 
-  // The element an address on Stats names (#stats-quality, #stats-s3), or null: a part, a supplement item, or the part or
+  // The element an address on Stats names (#stats-quality, #stats-supp-versions), or null: a part, a supplement item, or the part or
   // item an older address names (STATS_ADDRESS_ALIASES, STATS_SUPPLEMENT_OLD_ADDRESSES). The supplement opens when the
   // address names it or anything in it.
   function statsAddressTarget(hash) {
     const id = String(hash || "").replace(/^#/, "");
     if (!/^stats-[a-z0-9-]+$/.test(id)) return null;
-    let target = document.getElementById(id);
-    if (!target) {
-      const name = id.slice("stats-".length);
-      const alias = STATS_ADDRESS_ALIASES[name];
-      const item = STATS_SUPPLEMENT_OLD_ADDRESSES[name];
-      target = (alias ? document.getElementById(`stats-${alias}`) || document.querySelector?.(`.stats-supp-item[data-supp="${alias}"]`) : null)
-        || (item ? document.querySelector?.(`.stats-supp-item[data-supp="${item}"]`) : null) || null;
+    const name = id.slice("stats-".length);
+    let target = null;
+    if (/^(?:table-)?s\d+$/.test(name)) {
+      const item = Object.prototype.hasOwnProperty.call(STATS_SUPPLEMENT_OLD_ADDRESSES, name) ? STATS_SUPPLEMENT_OLD_ADDRESSES[name] : "";
+      target = (item ? document.querySelector?.(`.stats-supp-item[data-supp="${item}"]`) : null) || document.getElementById("stats-supplement") || null;
+    } else {
+      target = document.getElementById(id);
+      const alias = Object.prototype.hasOwnProperty.call(STATS_ADDRESS_ALIASES, name) ? STATS_ADDRESS_ALIASES[name] : "";
+      if (!target && alias) {
+        target = document.getElementById(`stats-${alias}`) || document.querySelector?.(`.stats-supp-item[data-supp="${alias}"]`) || null;
+      }
     }
     const supplement = target?.classList?.contains("stats-supp") ? target.querySelector?.(".stats-supp-all") : null;
     if (supplement && "open" in supplement) supplement.open = true;
@@ -4290,7 +4298,7 @@
     if (supplement.dataset.printOpened || typeof history === "undefined" || !history.replaceState) return;
     const url = new URL(window.location.href);
     const own = "#stats-supplement";
-    const inside = (hash) => hash === own || /^#stats-(?:table-)?s\d+$/.test(hash);
+    const inside = (hash) => hash === own || /^#stats-(?:(?:table-)?s\d+|supp-[a-z0-9-]+)$/.test(hash);
     if (supplement.open) {
       if (inside(url.hash)) return;
       supplement.dataset.addressBefore = url.hash;
@@ -15998,7 +16006,7 @@
       // A link to a Guide section (#guide-method from Stats, a record or the filters; the Guide's own contents) opens it
       // in this page with focus on the section's heading, so the next Tab goes on from there, not from the link left behind.
       // The same for a Stats part (#stats-quality, from Stats' own On this page line): its heading takes the focus; a
-      // supplement item (#stats-s3) opens, with the focus on its summary.
+      // supplement item (#stats-supp-versions, or an older #stats-s3) opens, with the focus on its summary.
       const statsSection = STATS_SECTION_HASH.test(target.hash) ? statsAddressTarget(target.hash) : null;
       const section = GUIDE_SECTION_HASH.test(target.hash) ? document.getElementById(target.hash.slice(1)) : statsSection;
       if (section) {
