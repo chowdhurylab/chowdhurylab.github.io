@@ -5387,10 +5387,13 @@ def check_layout(driver, browser, url, route_label):
                 const box = selector => card.querySelector(selector).getBoundingClientRect();
                 return {name: box('td.c-enzyme').bottom, form: [box('td.c-form').top, box('td.c-form').bottom],
                         organism: box('td.c-organism').top, substrate: box('td.c-substrate .clamp-2').bottom,
-                        note: box('td.c-substrate .condition-note').top};
+                        note: box('td.c-substrate .condition-note').top,
+                        afterName: card.querySelector('td.c-enzyme').nextElementSibling.className};
             """)
+            # (the variant's cell follows the name's, so a screen reader reads it there too, not after the substrate)
             assert order and order["name"] <= order["form"][0] + 1 and order["form"][1] <= order["organism"] + 1 and (
-                order["substrate"] <= order["note"] + 1), f"At 320px a card reads name, variant, organism · substrate, note: {order}"
+                order["substrate"] <= order["note"] + 1) and order["afterName"] == "c-form", (
+                f"At 320px a card reads name, variant, organism · substrate, note: {order}")
             # With nothing to show, the notice's long "Remove Organism: ... (N records)" button wraps inside the table
             # area (it once ran past the right edge at 320px, its end cut off); the table does not scroll sideways.
             driver.get("about:blank")

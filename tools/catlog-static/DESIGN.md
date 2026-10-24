@@ -1887,3 +1887,6 @@ tools/site_patches/20261023-site-round17-brief.md, section 5.
 - Export follows the order and filters the table is about to show: each filter pass (applyFilters) is kept in
   state.filterPass while it runs, and an export started meanwhile (right after a header sort, whose cooperative sort
   takes 0.2-0.5 s on 186k records, or a ticked filter) waits for it before reading the results.
+- A phone card's variant cell (td.c-form, hidden in the table) follows the name's cell in the row, so a screen reader
+  reads the variant right after the name, where the card shows it (flex order places it; WCAG 1.3.2), as the table's
+  name cell reads its own variant line.

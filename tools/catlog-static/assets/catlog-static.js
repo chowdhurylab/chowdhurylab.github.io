@@ -11392,15 +11392,17 @@
       const substrateNote = substrateNoteHtml(row, lookAlikes, flags);
       const enzymeName = row.enzyme_display_name || "Name not recorded";
       // A variant's mutation has its own line, never clipped: the name keeps one line beside it (rows stay one height).
+      // A phone card shows it under the name from its own cell (td.c-form, hidden in the table), which follows the name's
+      // cell so a screen reader reads it there too (round 17 fix pass: it was read after the substrate).
       const enzymeForm = enzymeFormHtml(row);
       const enzymeTitle = [enzymeName, enzymeFormDisplay(row)].filter(Boolean).join(" · ");
       return `
       <tr data-key="${escapeHtml(row.record_key)}" class="${row.record_key === state.selectedKey ? "selected" : ""}" tabindex="${row.record_key === activeRowKey ? "0" : "-1"}" aria-selected="${row.record_key === state.selectedKey ? "true" : "false"}">
         <td class="c-enzyme primary-cell"><span class="clamp-2${enzymeForm ? " has-form" : ""}" title="${escapePublic(enzymeTitle)}"><strong>${nameHtml(enzymeName)}</strong></span>${enzymeForm}</td>
+        ${enzymeForm ? `<td class="c-form">${enzymeFormHtml(row, { className: "enzyme-form card-form" })}</td>` : ""}
         <td class="c-ec"><span class="clamp-2"${String(row.ec_number || "").includes(" ") ? ` title="${escapeHtml(row.ec_number)}"` : ""}>${escapeHtml(row.ec_number || EMPTY_VALUE)}</span></td>
         <td class="c-organism"><span class="clamp-2" title="${escapePublic(recordedName(row.organism))}">${nameHtml(recordedName(row.organism) || EMPTY_VALUE)}</span></td>
         <td class="c-substrate${substrateNote ? " has-note" : ""}"><span class="clamp-2" title="${escapePublic(recordedName(row.substrate_name))}">${nameHtml(recordedName(row.substrate_name) || EMPTY_VALUE)}</span>${substrateNote}</td>
-        ${enzymeForm ? `<td class="c-form">${enzymeFormHtml(row, { className: "enzyme-form card-form" })}</td>` : ""}
         <td class="c-kcat num">${CARD_VALUE_LABELS.kcat}<span class="metric-with-note"${valueTitle(row, "kcat")}>${metricDisplayWithUnitHtml(row, "kcat", { table: true })}${valueFlagBadgeHtml(flags, "kcat", row)}</span></td>
         <td class="c-km num">${CARD_VALUE_LABELS.km}<span class="metric-with-note"${valueTitle(row, "km")}>${metricDisplayWithUnitHtml(row, "km", { table: true })}${valueFlagBadgeHtml(flags, "km", row)}</span></td>
         <td class="c-eff num">${CARD_VALUE_LABELS.kcat_over_km}<span class="metric-with-note"${valueTitle(row, "kcat_over_km")}>${metricDisplayWithUnitHtml(row, "kcat_over_km", { table: true })}${efficiencyOriginHtml(row, { short: true })}${valueFlagBadgeHtml(flags, "kcat_over_km", row)}</span></td>
