@@ -817,6 +817,7 @@
     } else if (statsOpen) {
       // The window may have changed width while Stats was hidden (its table and axes are measured only while shown).
       statsFitDatabaseTables($("statsCharts"));
+      statsFitStatusLabels($("statsCharts"));
       statsFitAxes($("statsCharts"));
     }
     // The Team page too: drawn from the manifest the first time it is shown.
@@ -4554,6 +4555,27 @@
         return boxes.some((box, index) => index > 0 && box.left < boxes[index - 1].right + 6);
       });
       if (touch) chart.dataset.axisEnds = "1";
+    }
+  }
+
+  // Review result's labels stand in columns as wide as the bar's parts only where every column holds its lines (name,
+  // records and share, then its kinds, each on one line, inside the column's room: its width less the 8px gap before the
+  // next column, or up to the bar's end for the column at the end); on phones, and wherever a part is too narrow for its
+  // words (a wide font; a data update that shrinks a result), they are a key under the bar instead (is-key: a line per
+  // result). Measured in the viewer's font; run when Stats is drawn or shown again, on a resize and after a late font.
+  // Labels that are not drawn are left as they are until they are.
+  function statsFitStatusLabels(root) {
+    const phone = window.matchMedia?.("(max-width: 640px)")?.matches;
+    for (const labels of root?.querySelectorAll?.(".stats-status-labels") || []) {
+      if (!labels.getClientRects?.().length) continue;
+      labels.classList.remove("is-key");
+      const end = labels.getBoundingClientRect().right;
+      const cramped = phone || [...labels.children].filter((label) => label.classList.contains("stats-status-label")).some((label) => {
+        const box = label.getBoundingClientRect();
+        const room = box.right >= end - 1 ? box.width : label.clientWidth - (parseFloat(window.getComputedStyle?.(label)?.paddingRight || "") || 0);
+        return [...label.children].some((line) => line.scrollWidth > room + 1);
+      });
+      if (cramped) labels.classList.add("is-key");
     }
   }
 
@@ -8548,8 +8570,10 @@
       label: item.sub && notCheckedGroup ? `${notCheckedGroup.label} (${item.label})` : item.label, count: item.count }));
     // Round 17 (the user: tables into figures): the bar's own labels, no legend table. Under each result's part of the bar
     // its name (a link into Browse), records and share, the column as wide as the part; a result under a tenth of the
-    // records has no room there and stands on a line of its own under the bar's end. Accepted's records read from the
-    // paper are a stripe through its part (as Enzyme classes draws them) and a line under its label; Not checked names its
+    // records has no room there and stands on a line of its own under the bar's end. On phones (640px and less), and
+    // wherever a column cannot hold its lines on one line each (statsFitStatusLabels), the labels are a key under the bar
+    // instead, a line per result (swatch, name, records and share) with its kinds indented under it: columns as wide as
+    // the parts broke "Not / reviewed / 3,333" word by word on phones. Accepted's records read from the paper are a stripe through its part (as Enzyme classes draws them) and a line under its label; Not checked names its
     // two kinds. Each label's definition is its title, its exact counts the part's tooltip line; Accepted's other parts
     // (as printed, after a correction, on a reviewer's approval) are its title and the figure's rule.
     const groupParts = statusItems.filter((item) => item.sub && !item.detail).map((item) => item.value).join(" ");
@@ -8565,11 +8589,13 @@
       }
       return "";
     };
+    // (a label under its part has no swatch: the part above it is its key; on phones, where the labels are a key list
+    // under the bar, each shows its swatch, stats-status-key)
     const statusLabel = (item, minor = false) => `<span class="stats-status-label${minor ? " is-minor" : ""}" data-stat-key="${item.value}" data-count="${item.count}" data-hl="${item.group ? groupParts : item.value}"${item.note ? ` title="${escapeHtml(item.note)}"` : ""}>
-        <span class="stats-status-name">${minor ? `<i class="stats-swatch stats-part-${item.part}" aria-hidden="true"></i>` : ""}${statusName(item)}</span>
+        <span class="stats-status-name"><i class="stats-swatch stats-part-${item.part}${minor ? "" : " stats-status-key"}" aria-hidden="true"></i>${statusName(item)}</span>
         <span class="stats-status-count">${formatInteger(item.count)} <span class="stats-muted">${escapeHtml(statsShare(item.count, total))}</span></span>${minor ? "" : statusSubs(item)}</span>`;
     const minors = tops.filter((item) => item.count / total < minorShare);
-    const statusLabels = tops.length ? `<div class="stats-status-labels" style="grid-template-columns:${tops.map((item) => `minmax(0,${+(item.count / total * 100).toFixed(3)}fr)`).join(" ")}">
+    const statusLabels = tops.length ? `<div class="stats-status-labels${window.matchMedia?.("(max-width: 640px)")?.matches ? " is-key" : ""}" style="grid-template-columns:${tops.map((item) => `minmax(0,${+(item.count / total * 100).toFixed(3)}fr)`).join(" ")}">
         ${tops.map((item) => (item.count / total < minorShare ? "<span></span>" : statusLabel(item))).join("")}
         ${minors.length ? `<span class="stats-status-minor">${minors.map((item) => statusLabel(item, true)).join("")}</span>` : ""}</div>` : "";
     const stripe = fromPaperAccepted ? { count: fromPaperAccepted, label: `Accepted, ${SOURCE_CATLOG_LABEL.toLowerCase()}`, key: "accepted" } : null;
@@ -8931,6 +8957,7 @@
     }
     statsFitValueColumns($("statsCharts"));
     statsFitDatabaseTables($("statsCharts"));
+    statsFitStatusLabels($("statsCharts"));
     statsFitSegmentLabels($("statsCharts"));
     statsFitAxes($("statsCharts"));
     statsWatchMapDots($("statsCharts"));
@@ -8940,7 +8967,7 @@
       statsRefitOnFonts = true;
       document.fonts.addEventListener("loadingdone", () => {
         const root = $("statsCharts");
-        if (root?.isConnected) { statsFitValueColumns(root); statsFitDatabaseTables(root); statsFitSegmentLabels(root); statsFitAxes(root); statsPlaceYearLabels(root); }
+        if (root?.isConnected) { statsFitValueColumns(root); statsFitDatabaseTables(root); statsFitStatusLabels(root); statsFitSegmentLabels(root); statsFitAxes(root); statsPlaceYearLabels(root); }
       });
     }
     // A window that changes width changes the room of Corrections by cause and database's table (once per page).
@@ -8963,6 +8990,7 @@
           const root = $("statsCharts");
           if (root?.isConnected) {
             statsFitDatabaseTables(root);
+            statsFitStatusLabels(root);
             statsFitSegmentLabels(root);
             statsFitAxes(root);
             if (typeof ResizeObserver !== "function") { statsPlaceMapDots(root); statsPlaceYearLabels(root); }

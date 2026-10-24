@@ -1822,8 +1822,16 @@ tools/site_patches/20261023-site-round17-brief.md, section 5.
   fix pass: a 10px stripe through the 20px bar had read as cyan; the swatch under the label and in the legend is an
   accepted swatch with a 2px band); its labels are a grid of columns as wide as the parts (minmax(0, share fr)), each
   under its part with a 6px tick up to the bar: name (a Browse link), records, share; Accepted's records read from the
-  paper and Not checked's two kinds (zero-count kinds left out) in 12px under them; a result under a tenth of the records
-  on its own line under the bar's end with its swatch. Accepted's other parts are its title and the figure's rule; the
+  paper and Not checked's two kinds (zero-count kinds left out) in 12px under them, each line on one line; a result under
+  a tenth of the records on its own line under the bar's end with its swatch. Fix pass: on phones, and wherever a column
+  cannot hold its lines inside its room (its width less the 8px gap, or up to the bar's end for the last column:
+  statsFitStatusLabels, measured on drawing, a resize, a late font and Stats shown again; a wide font, or a data update
+  that shrinks a result), the labels are a key under the bar instead (.stats-status-labels.is-key): a line per result,
+  its swatch (.stats-status-key), name, then records and share at the right, its kinds indented 16px under it, the
+  minor results in order with them. Columns as wide as the parts had broken "Not / reviewed / 3,333" word by word at
+  375px. In the system font the columns hold from 641px; in DejaVu Sans Review result's 560px column from 1280px is a
+  key (Not reviewed 3,333 needs 134px of Not checked's 130). The browser check: STATS_STATUS_KEY_JS (every line in its
+  column or a key with name and count on one line; a key on phones), the label-start check in columns only. Accepted's other parts are its title and the figure's rule; the
   fields saved in records that are not accepted are a table in the rule (rulesHtml: figure rules may carry HTML).
 - Records by main source: the counts as Browse gives them (a merged record under each database) are its rule.
 - Between papers: the histograms keep their heading and count line; the facts row and the same-conditions table give

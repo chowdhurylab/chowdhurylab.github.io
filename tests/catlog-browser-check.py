@@ -1545,6 +1545,34 @@ STATS_CLASS_NAMES_CUT_JS = """
 """
 
 
+# Review result's labels (round 17 fix pass): in columns under the bar's parts, every line of a label (name, records and
+# share, each kind) fits its column on one line; where one would not (phones always, a narrow part or a wide font:
+# statsFitStatusLabels) they are a key (is-key), a line per result with its name and count side by side. Returns the
+# labels that break, two frames after the call (the page fits them on a resize in the next frame).
+STATS_STATUS_KEY_JS = """
+    const broken = () => {
+        const phone = matchMedia('(max-width: 640px)').matches;
+        const labels = document.querySelector('.stats-status-section .stats-status-labels');
+        if (!labels || !labels.getClientRects().length) return ['no labels drawn'];
+        const key = labels.classList.contains('is-key');
+        if (phone && !key) return ['not a key on a phone'];
+        return [...labels.querySelectorAll('.stats-status-label, .stats-status-sub')]
+            .filter((label) => label.getClientRects().length).filter((label) => {
+                if (label.classList.contains('stats-status-sub')) return label.getBoundingClientRect().height > 20;
+                const name = label.querySelector('.stats-status-name').getBoundingClientRect();
+                const count = label.querySelector('.stats-status-count').getBoundingClientRect();
+                // (in columns a line ends inside its column, 8px before the next one, or by the bar's end)
+                const box = label.getBoundingClientRect(), end = labels.getBoundingClientRect().right;
+                const room = box.right >= end - 1 ? box.right : box.right - parseFloat(getComputedStyle(label).paddingRight);
+                return name.height > 24 || count.height > 24
+                    || (!key && [...label.children].some((line) => box.left + line.scrollWidth > room + 1))
+                    || (key && Math.abs(name.bottom - count.bottom) > 3);
+            }).map((label) => `${key ? 'key' : 'columns'} ${label.dataset.statKey || label.dataset.part}: ${label.innerText.replace(/\\s+/g, ' ')}`);
+    };
+    return new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(() => done(broken()))));
+"""
+
+
 def check_stats_contents(driver, width):
     """On this page, under the Stats title: the parts as their headings number them, each a link to its own address
     (#stats-<key>); the line fits the window, wrapping between parts only; following the last link scrolls that part to
@@ -6589,13 +6617,17 @@ def check(driver, browser, url):
     assert "Not confirmed" in pending_row.text and "Checks pending" not in pending_row.text
     accepted_row = driver.find_element(By.CSS_SELECTOR, '.stats-status-section .stats-status-label[data-stat-key="accepted"]')
     assert f"{accepted / total * 100:.1f}%" in accepted_row.text
-    # Each label stands under its own part of the bar: it starts where its segment starts (within a pixel).
+    # Each label stands under its own part of the bar: it starts where its segment starts (within a pixel). Where a
+    # column cannot hold its lines in this font the labels are a key instead (statsFitStatusLabels), each with its swatch.
     starts = driver.execute_script("""const section = document.querySelector('.stats-status-section');
         const segs = [...section.querySelectorAll('.stats-status-bar .stats-seg[data-hl]:not(.stats-part-catlog-mark)')];
+        if (section.querySelector('.stats-status-labels.is-key')) return [...section.querySelectorAll('.stats-status-key')].map(swatch => swatch.getClientRects().length ? 0 : -1);
         return [...section.querySelectorAll('.stats-status-labels > .stats-status-label')].map(label => {
             const keys = label.dataset.hl.split(' '); const seg = segs.find(s => keys.includes(s.dataset.hl));
             return seg ? Math.abs(label.getBoundingClientRect().left - seg.getBoundingClientRect().left) : -1; });""")
     assert starts and all(0 <= gap <= 1.5 for gap in starts), starts
+    broken = driver.execute_script(STATS_STATUS_KEY_JS)
+    assert not broken, f"Review result's labels keep each line in its column, or are a key: {broken}"
     # Accepted's parts are its label's title in words.
     accepted_split = accepted_row.get_attribute("title") or ""
     assert f"{expected.get('corrected', 0):,} after a correction" in accepted_split
@@ -7085,6 +7117,8 @@ def check(driver, browser, url):
         assert driver.execute_script(STATS_AXIS_EVEN), f"Axis labels sit unevenly or touch at {width}px"
         cut = driver.execute_script(STATS_CLASS_NAMES_CUT_JS)
         assert not cut, f"Class medians' names are cut at {width}px: {cut}"
+        broken = driver.execute_script(STATS_STATUS_KEY_JS)
+        assert not broken, f"Review result's labels keep each name and count on one line at {width}px: {broken}"
         spacing = driver.execute_script("""
             // 16px bars 8px apart: rows whose name fits on one line are exactly as tall as their bar.
             const gaps = [];
@@ -7148,6 +7182,12 @@ def check(driver, browser, url):
             });
         """), "Bars of one chart share one scale on phones"
         assert driver.execute_script(STATS_AXIS_EVEN), "Axis labels sit unevenly or touch on phones"
+        # Review result's labels are a key under the bar on phones: a line per result, its name and count side by side,
+        # each kind on a line of its own (round 17 fix pass: "Not / reviewed / 3,333").
+        broken = driver.execute_script(STATS_STATUS_KEY_JS)
+        assert not broken, f"Review result's labels are a key on phones, a line each: {broken}"
+        assert driver.execute_script("""return [...document.querySelectorAll('.stats-status-section .stats-status-key')]
+            .every((swatch) => swatch.getClientRects().length > 0)"""), "On phones each result in the key shows its swatch"
         assert driver.execute_script("""
             // A legend name that wraps keeps its count right after its last line, not pushed to the far edge.
             return [...document.querySelectorAll('.stats-legend li')].filter(item => item.querySelector('.stats-legend-count')).every(item => {
