@@ -6867,19 +6867,21 @@ assert.doesNotMatch(detailFalseKiHtml, /<i>K<\/i><sub>i<\/sub>/);
   }
   // The "?" names the databases compared, from the manifest (here none listed or counted: the six fallback names).
   assert.match(element("aboutDatabases").innerHTML, /with what <span class="nowrap">BRENDA<\/span>, <span class="nowrap">SABIO-RK<\/span>, <span class="nowrap">OED<\/span>, <span class="nowrap">SKiD<\/span>, <span class="nowrap">STRENDA DB<\/span> and <span class="nowrap">UniProt<\/span> list for that paper/, "each name kept whole on one line");
-  assert.match(element("aboutDatabases").innerHTML, /<strong>Every value<\/strong> \(under Not in the databases\) — no compared database lists any value of the record\./);
+  // Each option a term (its name, the result it is under in plain type) and its words under it, no dash.
+  assert.match(element("aboutDatabases").innerHTML, /<dt>Every value <span class="about-under">\(under Not in the databases\)<\/span><\/dt><dd>No compared database lists any value of the record\.<\/dd>/);
+  assert.doesNotMatch(element("aboutDatabases").innerHTML, / — /);
   assert.doesNotMatch(element("aboutDatabases").innerHTML, /\.\./);
   // How values are paired, in words the options below do not contradict (Same, other label: another substrate, variant
   // or organism).
   assert.match(element("aboutDatabases").innerHTML, /list for that paper, matched by substrate,\s+variant and organism\.<\/p>/);
   // The caveat once, under Different number only.
   assert.equal((element("aboutDatabases").innerHTML.match(/does not by itself mean a database is wrong/g) || []).length, 1);
-  assert.match(element("aboutDatabases").innerHTML, /<strong>Different number<\/strong> — a database lists another number [^<]*it does not by itself mean a database is wrong\.<\/p>/);
+  assert.match(element("aboutDatabases").innerHTML, /<dt>Different number<\/dt><dd>A database lists another number [^<]*it does not by itself mean a database is wrong\.<\/dd>/);
   assert.doesNotMatch(element("aboutDatabases").innerHTML, /\(same substrate/);
   // "re-read" never breaks at its hyphen in the box (Corrected earlier's "Records not yet re-read whose ..."), and no
   // definition repeats a colon after its name's.
-  assert.match(element("aboutDatabases").innerHTML, /<strong>Corrected earlier<\/strong> — records not yet <span class="nowrap">re-read<\/span> whose values /);
-  assert.doesNotMatch(element("aboutDatabases").innerHTML, /<\/strong>[^<]*: [^<]*: /);
+  assert.match(element("aboutDatabases").innerHTML, /<dt>Corrected earlier<\/dt><dd>Records not yet <span class="nowrap">re-read<\/span> whose values /);
+  assert.doesNotMatch(element("aboutDatabases").innerHTML, /<dd>[^<]*: [^<]*: /);
   assert.doesNotMatch(element("aboutDatabases").innerHTML.replace(/<span class="nowrap">re-read<\/span>/g, ""), /re-read/);
   // Counts on the test snapshot (bundle-20261013-135809's record index, 174,246 records: how many records carry each
   // database_summary number) equal the manifest's keys: records_with_kind for the first four, records.every_value_new and
@@ -8098,15 +8100,18 @@ for (const hash of ["#stats", "#guide", "#guide-units"]) {
   assert.equal(element("aboutMeasurement").innerHTML, "<p>Records that give the value; ticking several shows records with all of them.</p>");
   assert.match(element("aboutVariant").innerHTML, /<p id="variantNoneNote" hidden><span data-count="variant:none">/);
   const aboutCautions = element("aboutCautions").innerHTML;
-  assert.match(aboutCautions, /<strong><i>k<\/i><sub>cat<\/sub>\/<i>K<\/i><sub>m<\/sub> mismatch<\/strong> — the printed or listed kcat\/Km differs from kcat ÷ Km\.<\/p>/);
-  assert.match(aboutCautions, /<strong>Unit or magnitude error<\/strong> — Km above 10 M or below 1 nM, /);
-  assert.match(aboutCautions, /<strong>No cautions<\/strong> — records without any caution\.<\/p>/);
+  // A term list (round 17 fix pass: no "Name — words"), kcat and Km set as the table sets them.
+  assert.match(aboutCautions, /<dt><i>k<\/i><sub>cat<\/sub>\/<i>K<\/i><sub>m<\/sub> mismatch<\/dt><dd>The printed or listed <i>k<\/i><sub>cat<\/sub>\/<i>K<\/i><sub>m<\/sub> differs from <i>k<\/i><sub>cat<\/sub> ÷ <i>K<\/i><sub>m<\/sub>\.<\/dd>/);
+  assert.match(aboutCautions, /<dt>Unit or magnitude error<\/dt><dd><i>K<\/i><sub>m<\/sub> above 10 M or below 1 nM, /);
+  assert.match(aboutCautions, /<dt>No cautions<\/dt><dd>Records without any caution\.<\/dd>/);
   assert.match(aboutCautions, /href="#guide-cautions">Cautions in the Guide/);
-  assert.equal((aboutCautions.match(/<p>/g) || []).length, 6);
+  assert.equal((aboutCautions.match(/<dt>/g) || []).length, 5);
+  assert.equal((aboutCautions.match(/<p>/g) || []).length, 1);
+  assert.doesNotMatch(aboutCautions, / — /);
   // What each label means: the earlier version is named only here, in the help (only part of its entries were checked
   // against their papers).
-  assert.match(element("aboutSource").innerHTML, /<strong>Read from the paper<\/strong> — by an AI model; a second, separate AI check compared each value with the paper\./);
-  assert.match(element("aboutSource").innerHTML, /<strong>Not yet re-read<\/strong> — from CatLog’s earlier version, built from the enzyme databases and partly checked against the papers; replaced when CatLog reads the paper\./);
+  assert.match(element("aboutSource").innerHTML, /<dt><span class="source-word">Read from the paper<\/span><\/dt><dd>By an AI model; a second, separate AI check compared each value with the paper\.<\/dd>/);
+  assert.match(element("aboutSource").innerHTML, /<dt>Not yet re-read<\/dt><dd>From CatLog’s earlier version, built from the enzyme databases and partly checked against the papers; replaced when CatLog reads the paper\.<\/dd>/);
   assert.match(source, /<label class="check-row radio-row" title="From CatLog’s earlier version, built from the enzyme databases and partly checked/);
   assert.match(element("aboutSource").innerHTML, /href="#guide-method"/);
   const status = element("statusChecklist").innerHTML;
@@ -8115,17 +8120,18 @@ for (const hash of ["#stats", "#guide", "#guide-units"]) {
   // The Review result "?" is a short line per result and for human-checked, then the Guide (the tags are defined there),
   // so the box never pushes the options out of view.
   const aboutStatus = element("aboutStatus").innerHTML;
-  // "Accepted — read from the paper ...": one dash, no colon, the line in lower case after it.
-  assert.match(aboutStatus, /<strong>Accepted<\/strong> — read from the paper by CatLog/);
-  assert.match(aboutStatus, /<strong>Not confirmed<\/strong> — the earlier automated review left a question open\./);
-  assert.match(aboutStatus, /<strong>Not checked<\/strong> — no review result\./);
-  assert.match(aboutStatus, /<strong>Disputed<\/strong> — a check found a problem; not accepted\./);
-  assert.match(aboutStatus, /<strong>human-checked<\/strong> — a human reviewer approved every kcat and Km shown/);
-  assert.doesNotMatch(aboutStatus, /<\/strong>: /, "no result reads 'Accepted: Passed review:'");
-  assert.match(aboutStatus, /<strong>human-checked<\/strong> — a human reviewer approved every kcat and Km shown; the kcat\/Km was approved too or agrees with kcat ÷ Km\./);
+  // A term list, as the Guide's (round 17 fix pass: "Accepted — ..." read as a run of dashes): each result in its
+  // colour, human-checked with its check, the words under it in sentence case with kcat and Km in italics.
+  assert.match(aboutStatus, /<dt><span class="state-word accepted">Accepted<\/span><\/dt><dd>Read from the paper by CatLog/);
+  assert.match(aboutStatus, /<dt><span class="state-word review">Not confirmed<\/span><\/dt><dd>The earlier automated review left a question open\.<\/dd>/);
+  assert.match(aboutStatus, /<dt><span class="state-word unresolved">Not checked<\/span><\/dt><dd>No review result\.<\/dd>/);
+  assert.match(aboutStatus, /<dt><span class="state-word disputed">Disputed<\/span><\/dt><dd>A check found a problem; not accepted\.<\/dd>/);
+  assert.match(aboutStatus, /<dt><span class="human-checked-word">[\s\S]*?human-checked<\/span><\/dt><dd>A human reviewer approved every <i>k<\/i><sub>cat<\/sub> and <i>K<\/i><sub>m<\/sub> shown; the <i>k<\/i><sub>cat<\/sub>\/<i>K<\/i><sub>m<\/sub> was approved too or agrees with <i>k<\/i><sub>cat<\/sub> ÷ <i>K<\/i><sub>m<\/sub>\.<\/dd>/);
+  assert.doesNotMatch(aboutStatus, / — |<\/dt>[^<]*: /, "no dash list and no result reads 'Accepted: Passed review:'");
   assert.match(aboutStatus, /href="#guide-status">Review result and tags in the Guide/);
-  assert.doesNotMatch(aboutStatus, /Tags<\/p>|earlier extraction|no paper linked|from paper<\/strong>/);
-  assert.equal((aboutStatus.match(/<p>/g) || []).length, 6);
+  assert.doesNotMatch(aboutStatus, /Tags<\/p>|earlier extraction|no paper linked|from paper<\/dt>/);
+  assert.equal((aboutStatus.match(/<dt>/g) || []).length, 5);
+  assert.equal((aboutStatus.match(/<p>/g) || []).length, 1);
 }
 // The page's own plural possessives are written with ’ (fix pass after round 16b), as escapeHtml sets a singular's; a
 // chemical prime and a quoted phrase in the data keep theirs. Stats sets an exponent in text with <sup>, never inside a

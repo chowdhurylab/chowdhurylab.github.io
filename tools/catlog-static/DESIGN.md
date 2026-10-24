@@ -287,11 +287,12 @@ human-checked" sits under Accepted (shown as the green "✓ human-checked" tag, 
 out "Only human-checked"; a wide font in the 256px sidebar breaks it after the
 hyphen, never into its count), and ticking it ticks Accepted;
 its count waits for the review marks; unticking Accepted unticks it; its "?" gives
-the four results and human-checked in one short sentence each, "Accepted — read
-from the paper by CatLog, ...", a dash after the result and the sentence in lower case after it, never
-"Accepted: Read from the paper:"; every group's "?" (Source, Compared with databases, Cautions too) gives a name, a dash
-and its definition this way, the definition in lower case unless it starts with a name such as Km or CatLog
-(aboutDefinition; round 14) (each option's
+the four results and human-checked in one short sentence each as a term list, as the Guide's: each result in its
+colour (human-checked with its check) on its own line, its sentence under it in sentence case, kcat and Km in italics
+with subscripts (aboutTermsHtml, aboutWordsHtml; round 17 fix pass: "Accepted — read from the paper ..." read as a run
+of em dashes, round 14's tell), never "Accepted: Read from the paper:"; every group's "?" (Source, with Read from the
+paper in its colour; Compared with databases, a nested option's parent in plain type after its name; Cautions) gives
+its names and definitions this way (each option's
 title has the full definition) with a link to the Guide's #guide-status, where
 the tags are defined, so the box stays small and the options stay in view); then one "More filters" disclosure, closed
 at rest, holding the specialist groups, first Source (round 14, the user 2026-10-20: "the filter section source can go
@@ -339,7 +340,7 @@ name kept whole on one line) and gives each option's definition. In the phone sh
 db=corrects,differs,other_label,not_listed,all_not_listed,all_same,earlier; earlier addresses keep their records:
 adds is not_listed, new is all_not_listed (with not_listed) and same is all_same), Cautions (grouped as the "!" notes, each caution after the
 table's tan "!" disc (No cautions none, its words in line), the title with no dot (round 15 polish: a lone tan dot had
-hung off it in the gutter, read as an "active" sign, whatever was chosen); its "?" gives each caution's definition, the option's title, "label — definition"
+hung off it in the gutter, read as an "active" sign, whatever was chosen); its "?" gives each caution's definition, the option's title, as a term list
 as Review result's does, and links to the Guide's #guide-cautions) and Source database (the databases of Not yet re-read: BRENDA, SABIO-RK, the Open Enzyme Database as "OED", the table's
 tag, read out and on hover in full, UniProt, SKiD, STRENDA DB, earlier paper extractions, shown as "Earlier extractions",
 the table's tag, and read out in full, so a wide font keeps it on one line at 256px, and Source not recorded; ticking one
