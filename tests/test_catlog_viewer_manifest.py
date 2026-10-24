@@ -182,6 +182,21 @@ class ViewerManifestTests(unittest.TestCase):
         self.assertEqual(BUILD.sort_text("-"), "-")
         self.assertEqual(BUILD.sort_text(None), "")
 
+    def test_default_order_puts_disputed_after_not_checked(self):
+        # Review result's order (the page's stateRanks): Accepted, Not confirmed, Not checked, Disputed, so the reverse
+        # order starts with the disputed records instead of hiding them among the Not checked ones by name.
+        rows = [
+            self.table_row("disputed-a", verification_status="disputed", enzyme_display_name="aldolase"),
+            self.table_row("unverified-z", verification_status="unverified", enzyme_display_name="zymase"),
+            self.table_row("pending", verification_status="manual_review_required", enzyme_display_name="lipase"),
+            self.table_row("not-reviewed-b", verification_status="not_reviewed", enzyme_display_name="beta-lactamase"),
+            self.table_row("verified", verification_status="verified", enzyme_display_name="urease"),
+        ]
+        _, _, encoded = self.build_rows(rows)
+        self.assertEqual([values[0] for values in encoded],
+                         ["verified", "pending", "not-reviewed-b", "unverified-z", "disputed-a"])
+        self.assertEqual(BUILD.STATE_RANK["disputed"], 3)
+
     def test_condition_note_is_optional_and_read_when_present(self):
         # The exporter adds condition_note to the Table rows of records read by CatLog that read the same as a sibling
         # (website plan P12); it may sit anywhere among the keys, and most rows have none.

@@ -2592,8 +2592,8 @@
     state.recordsGeneration += 1;
     state.filterRunId += 1;
     state.sortCache.clear();
-    // Disputed sorts with Not checked, as the index's Review-status order has it.
-    const stateRanks = { accepted: 0, curation_pending: 1, not_verified: 2, disputed: 2 };
+    // Review result's order, as the index's Review-status order has it: Accepted, Not confirmed, Not checked, Disputed.
+    const stateRanks = { accepted: 0, curation_pending: 1, not_verified: 2, disputed: 3 };
     const unitKeys = new Map();
     state.records.forEach((row, index) => {
       row._loadIndex = index;
@@ -2904,7 +2904,7 @@
   // without the value stay last both ways. Review result's natural order is the default, so it needs no key in the
   // address. Phones show cards without headers: a column menu and a direction toggle (Sort ↑) stand in for them.
   const SORT_COLUMNS = {
-    evidence: { name: "Review result", natural: "accepted first", reverse: "not checked first", reverseKey: "evidence_desc", naturalAria: "ascending" },
+    evidence: { name: "Review result", natural: "accepted first", reverse: "disputed first", reverseKey: "evidence_desc", naturalAria: "ascending" },
     enzyme: { name: "Enzyme", natural: "A to Z", reverse: "Z to A", reverseKey: "enzyme_desc", naturalAria: "ascending" },
     ec_number: { name: "EC number", natural: "1 to 7", reverse: "7 to 1", reverseKey: "ec_number_desc", naturalAria: "ascending" },
     organism: { name: "Organism", natural: "A to Z", reverse: "Z to A", reverseKey: "organism_desc", naturalAria: "ascending" },
@@ -10914,7 +10914,7 @@
       kcat_over_km: numericDesc("kcat_over_km"),
       kcat_over_km_asc: numericAsc("kcat_over_km"),
       evidence: (a, b) => (a._stateRank - b._stateRank) || (a._tierRank - b._tierRank) || byName(a, b),
-      // Review result the other way (Not checked and Disputed first, accepted read from the paper last); the names
+      // Review result the other way (Disputed first, then Not checked, accepted read from the paper last); the names
       // within each result stay A to Z.
       evidence_desc: (a, b) => (b._stateRank - a._stateRank) || (b._tierRank - a._tierRank) || byName(a, b),
     };
