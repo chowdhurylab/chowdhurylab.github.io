@@ -1864,3 +1864,7 @@ tools/site_patches/20261023-site-round17-brief.md, section 5.
   page turn, a resize, the sidebar and a record opening or closing refit as before.
 - The phone's Sort toggle is named "Sort: reverse the order (now …)", its visible word first (WCAG 2.5.3); its title
   keeps "Reverse the order (now …)".
+- A variant line cannot wrap as a name does, so the Enzyme column makes room for its widest one, up to 24 characters
+  ("variant A41P/H101Y/H236K"), as for a word of a name (formLineWidth): its starting width, its one-line width and its
+  longest word all include it, and a sort keeps it (keepColumnWidths). A longer list still ends in "…" with the whole
+  list in its title and the record.

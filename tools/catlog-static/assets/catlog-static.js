@@ -11454,6 +11454,21 @@
     return Math.max(0, ...String(text.textContent || "").split(/\s+|(?<=[-,/])/).map((word) => fitTextContext.measureText(word).width));
   }
 
+  // The widest variant line under the enzyme names ("variant L158A/N159C/I160V"), at most about 24 characters: the
+  // Enzyme column makes room for it as for a word of a name (round 17 fix pass: the lines were cut while Organism and
+  // Substrate had room to spare); a longer list still ends in "…", its title holding it whole. Read while the table
+  // measures (table.measuring lets the line take its natural width).
+  const FORM_LINE_CH = 24;
+  function formLineWidth(cells) {
+    const forms = cells.map((cell) => cell.querySelector(".enzyme-form")).filter(Boolean);
+    if (!forms.length) return 0;
+    fitTextContext ??= document.createElement("canvas").getContext("2d");
+    const font = window.getComputedStyle(forms[0]);
+    fitTextContext.font = font.font || `${font.fontStyle} ${font.fontWeight} ${font.fontSize} ${font.fontFamily}`;
+    const cap = fitTextContext.measureText("0".repeat(FORM_LINE_CH)).width;
+    return Math.min(cap, Math.max(...forms.map((form) => form.getBoundingClientRect().width)));
+  }
+
   // Every refit (new rows, the human-review marks widening Status, a record opening or closing, the sidebar, a resize)
   // also updates the sideways-scroll cues: the sticky Enzyme column, the edge shadows and the scroll buttons.
   function fitTableColumns() {
@@ -11526,7 +11541,8 @@
       columns.forEach((column) => {
         if (column.shrink) {
           column.words = column.cells.map((cell) => widestWordWidth(cell.firstElementChild || cell));
-          column.word = Math.max(column.min, Math.min(column.cap, Math.ceil(Math.max(...column.words) + column.padding)));
+          const form = column.key === "enzyme" ? formLineWidth(column.cells) : 0;
+          column.word = Math.max(column.min, Math.min(column.cap, Math.ceil(Math.max(...column.words, form) + column.padding)));
           return;
         }
         const contents = column.cells.map((cell) => cell.querySelector(":scope > :not(.card-label)"));
@@ -11725,13 +11741,18 @@
       const widest = Math.max(natural[natural.length - 1], header);
       const content = column.shrink === 1 ? natural[Math.floor((natural.length - 1) * 0.75)] : widest;
       const min = narrow ? column.narrowMin : column.min;
-      // Each name's longest word (a name column only), and the narrowest the column can be without breaking one.
+      // Each name's longest word (a name column only), and the narrowest the column can be without breaking one; Enzyme
+      // also as wide as its variant lines (formLineWidth).
       const cellWords = column.shrink ? cells.map((cell) => widestWordWidth(cell.firstElementChild || cell)) : [];
-      const wordWidth = column.shrink ? Math.ceil(Math.max(...cellWords) + padding) : min;
+      const form = column.key === "enzyme" ? formLineWidth(cells) : 0;
+      const wordWidth = column.shrink ? Math.ceil(Math.max(...cellWords, form) + padding) : min;
       let width = Math.max(min, Math.min(column.cap, Math.ceil(content + padding)));
       if (docked && column.shrink) width = Math.max(width, Math.min(column.cap, wordWidth));
+      // A variant line cannot wrap as a name does: Enzyme starts as wide as it, as wide as a word (the steps below still
+      // narrow it when the table has no room).
+      if (form) width = Math.max(width, Math.min(column.cap, Math.ceil(form + padding)));
       // A name column's width with every name on one line, and the narrowest that breaks no word.
-      const oneLine = Math.max(width, Math.min(column.cap * FIT_ONE_LINE_LIMIT, Math.ceil(widest + padding)));
+      const oneLine = Math.max(width, Math.min(column.cap * FIT_ONE_LINE_LIMIT, Math.ceil(Math.max(widest, form) + padding)));
       const words = column.shrink ? Math.min(width, wordWidth) : min;
       // Review result gives way last, down to the review result's word and its human-checked check (or its header): its
       // tag line then ends in "…".

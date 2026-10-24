@@ -736,6 +736,7 @@ th.sortable:hover:not([aria-sort]) .sort-button:enabled .sort-icon { visibility:
 /* While the script measures each cell's natural width (one layout,never painted). */
 table.measuring .sort-button { width:max-content }
 table.measuring .clamp-2 { display:inline-block; max-width:none; white-space:nowrap }
+table.measuring .primary-cell .enzyme-form { max-width:none }
 table.measuring .metric-with-note { flex-wrap:nowrap; max-width:none }
 table.measuring .state-badge { display:inline-grid; max-width:none }
 table.measuring .state-tags { max-width:none; overflow:visible }
