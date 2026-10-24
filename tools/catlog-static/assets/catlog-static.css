@@ -2189,9 +2189,11 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
 @media (max-width: 1439px) { :root { --sidebar-w:256px; --panel-w:440px } }
 
 /* A record open on desktop: EC and the arrow give way; Status stays, with the first tag of its source line (from
-   paper, not re-read) and without the other tags. */
+   paper, not re-read) and without the other tags. The sorted column always stays (the table's data-sorted, set with
+   the headers' aria-sort), so its arrow shows the order (round 17 fix pass: sorted by EC, nothing showed it); from
+   1440px Organism gives way for a sorted EC instead. */
 @media (min-width: 1024px) {
-  body.detail-open :is(.col-ec,.col-open,.c-ec,.c-open) { display:none }
+  body.detail-open :is(.col-open,.c-open), body.detail-open table:not([data-sorted="ec"]) :is(.col-ec,.c-ec) { display:none }
   body.detail-open #recordsBody .state-tag:not(:first-child) { display:none }
   /* With nothing in it to show (no chip, no count other than the page range), the title row takes no room (fix pass
      after round 16b: beside a record at 1024px its visually hidden lines kept a 30px row and a 45px empty band above
@@ -2202,7 +2204,10 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
    names and kcat, Km and kcat/Km stay in view (fix pass after round 16b: at 1024px the 536px pane cut kcat/Km at its
    edge, and at 1280px in a wide font seven rows read only "rat 17beta-hydroxysteroid…"). */
 @media (min-width: 1024px) and (max-width: 1439px) {
-  body.detail-open :is(.col-organism,.c-organism) { display:none }
+  body.detail-open table:not([data-sorted="organism"]) :is(.col-organism,.c-organism) { display:none }
+}
+@media (min-width: 1440px) {
+  body.detail-open table[data-sorted="ec"] :is(.col-organism,.c-organism) { display:none }
 }
 
 @media (max-width: 1180px) {

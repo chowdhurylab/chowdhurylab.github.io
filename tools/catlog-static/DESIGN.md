@@ -739,7 +739,8 @@ downloads keep every stored digit).
 Every column fits in about 910px of table; a table with less room (beside the
 sidebar or a record, or on a tablet) has tighter cells and then scrolls sideways
 with the enzyme name kept in view. Table headers are 12px/600 --text-2 (units
-12px --muted under them), cells 13px, enzyme names 13px/500, rows 44px (a variant's 12/16px line and a condition note's 16px line add no height). With a record open, EC and the arrow give way; Review result
+12px --muted under them), cells 13px, enzyme names 13px/500, rows 44px (a variant's 12/16px line and a condition note's 16px line add no height). With a record open, EC and the arrow give way (but never the sorted column:
+a sorted EC stays, and from 1440px Organism gives way for it); Review result
 stays with its source line (the other tags give way) and human-checked as the check after "Accepted". On phones (640px and below) the page scrolls
 as a whole (2026-10-15: the pinned header, counts band and toolbar had left 1.5-2.5 cards in view, kept Safari's toolbars
 from collapsing and put the pager below an iPhone SE's window): the list is as tall as its cards, the pager sticks to the
@@ -1879,3 +1880,7 @@ tools/site_patches/20261023-site-round17-brief.md, section 5.
   span; VoiceOver and NVDA's browse mode skipped them, and the aria-hidden number with them), in the table, the record
   and the Guide; CSS-drawn separators and marks ("·" between tags, the phone card's "·", the "!" of a flag and a chip,
   the ↗ after a reference link) have empty alt text (content:"…" / ""), so readers skip them.
+- Beside a record the sorted column stays in view with its arrow: the table's data-sorted (ec, organism, kcat, ...),
+  set with the headers' aria-sort (syncSortHeaders), keeps EC or Organism from giving way when it is the sorted one;
+  from 1440px Organism gives way for a sorted EC instead (below 1440px both give way otherwise, so a sorted one is shown
+  as the only extra column).
