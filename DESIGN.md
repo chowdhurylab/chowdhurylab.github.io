@@ -136,7 +136,9 @@ each, so the legend table keeps its room beside the donut), one below. Figures a
 3. What is in the catalog: Review result beside Records by main source, then Enzyme classes. Review result (round 17:
    no legend table) is the 100% bar with its labels under it, a column per result as wide as its part (name, records,
    share; Accepted's records read from the paper as a stripe through its part and a line under its label, Not checked's
-   two kinds under it; a result under a tenth of the records on a line of its own under the bar's end); Accepted's other
+   two kinds under it; a result under a tenth of the records on a line of its own under the bar's end; on phones, and
+   wherever a column cannot hold its lines one line each in the viewer's font, a key under the bar instead: a line per
+   result with its swatch, name, records and share, its kinds indented under it); Accepted's other
    parts are its title and the rule, and the fields saved in records that are not accepted a table in the rule.
 4. Values: Value ranges, Between papers, kcat against Km, Substrate specificity and Variants against their wild type.
    Round 17, no table: Between papers' same-temperature-and-pH table is 100% bars under its histograms, each parameter's

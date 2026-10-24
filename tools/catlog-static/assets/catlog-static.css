@@ -1615,19 +1615,31 @@ a.stats-total-value:focus-visible { outline:0 }
    other segments. */
 .stats-status-layout { display:flex; flex-direction:column; gap:10px; max-width:760px }
 /* Review result's labels (round 17: on the figure, no legend table): a column under each result's part of the bar, as
-   wide as the part, its name, records and share, then its parts in 12px; a result too small for a column stands right
-   under the bar's end with its swatch. */
+   wide as the part, its name, records and share, then its parts in 12px, each on one line; a result too small for a
+   column stands right under the bar's end with its swatch. Where a column cannot hold its lines (phones; a narrow part
+   or a wide font: statsFitStatusLabels, measured) the labels are a key under the bar instead (is-key): a line per
+   result, its swatch, name, records and share, its kinds indented under it, the minor results in order with them
+   (round 17 fix pass: columns as wide as the parts broke "Not / reviewed / 3,333" word by word on phones). */
 .stats-status-labels { display:grid; column-gap:0; row-gap:8px; font-size:var(--fs-13); line-height:var(--lh-13) }
 .stats-status-label { position:relative; display:flex; flex-direction:column; gap:2px; min-width:0; padding-right:8px }
 .stats-status-label:not(.is-minor)::before { content:""; position:absolute; left:0; top:-10px; height:6px; border-left:1px solid var(--line-strong) }
-.stats-status-name { display:flex; align-items:baseline; gap:6px; font-weight:600 }
+.stats-status-name { display:flex; align-items:baseline; gap:6px; font-weight:600; white-space:nowrap }
 .stats-status-name .stats-swatch { align-self:center }
-.stats-status-count { color:var(--text) }
-.stats-status-sub { display:flex; align-items:flex-start; gap:6px; margin-top:2px; color:var(--text-2); font-size:var(--fs-12); line-height:var(--lh-12) }
+.stats-status-count { color:var(--text); white-space:nowrap }
+.stats-status-sub { display:flex; align-items:flex-start; gap:6px; margin-top:2px; color:var(--text-2); font-size:var(--fs-12); line-height:var(--lh-12); white-space:nowrap }
 .stats-status-sub > .stats-swatch { margin-top:3px }
+.stats-status-key { display:none }
 .stats-status-minor { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:4px 16px; grid-column:1 / -1 }
 .stats-status-label.is-minor { flex-direction:row; align-items:baseline; gap:6px; padding:0; border:0 }
 .stats-status-label.is-minor .stats-status-name { font-weight:600 }
+.stats-status-labels.is-key { display:flex; flex-direction:column; gap:6px }
+.stats-status-labels.is-key > span:empty { display:none }
+.stats-status-labels.is-key .stats-status-minor { display:contents }
+.stats-status-labels.is-key .stats-status-label { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:baseline; column-gap:12px; row-gap:2px; padding:0 }
+.stats-status-labels.is-key .stats-status-label::before { display:none }
+.stats-status-labels.is-key .stats-status-name { white-space:normal }
+.stats-status-labels.is-key .stats-status-key { display:inline-block }
+.stats-status-labels.is-key .stats-status-sub { grid-column:1 / -1; margin:0; padding-left:16px; white-space:normal }
 .stats-status-bar { height:20px }
 .stats-status-bar .stats-seg.is-active { box-shadow:inset 0 0 0 2px var(--part-line, var(--part)) }
 .stats-fig.has-active .stats-status-bar .stats-seg[data-hl]:not(.is-active) { opacity:0.42 }
