@@ -4581,6 +4581,34 @@ def check_layout(driver, browser, url, route_label):
         click_header("c-organism", "organism")
         assert driver.execute_script(first_number) == 1, driver.find_element(By.ID, "pageLabel").text
         results["header-sort"] = {"steps": len(walk) + 2, "first_enzymes": enzymes[:2]}
+        # A sort keeps the columns' widths as far as it can (keepColumnWidths), so a second click where the first one was
+        # sorts the same column the other way: a name, EC, and kcat (whose new page widens the value columns after it).
+        spots = {}
+        for cell, first, second in (("c-ec", "ec_number", "ec_number_desc"), ("c-substrate", "substrate", "substrate_desc"),
+                                    ("c-kcat", "kcat", "kcat_asc")):
+            open_page()
+            wait.until(lambda d: not d.find_element(By.ID, "sortSelect").get_attribute("disabled"))
+            spot = driver.execute_script("""
+                const r = document.querySelector(`#recordTableWrap thead th.${arguments[0]}`).getBoundingClientRect();
+                return [Math.round(r.left + r.width / 2), Math.round(r.top + r.height / 2)];
+            """, cell)
+            for sort in (first, second):
+                # The heading under the spot, and the spot's offset from that heading's centre (pointer offsets count
+                # from an element's centre).
+                under = driver.execute_script("""
+                    const th = document.elementFromPoint(arguments[0], arguments[1])?.closest('th');
+                    if (!th) return null;
+                    const r = th.getBoundingClientRect();
+                    return {cell: th.className.split(' ')[0], dx: Math.round(arguments[0] - r.left - r.width / 2),
+                            dy: Math.round(arguments[1] - r.top - r.height / 2)};
+                """, *spot)
+                assert under and under["cell"] == cell, f"The spot first clicked on {cell} is still on it before {sort}: {under}"
+                heading = driver.find_element(By.CSS_SELECTOR, f"#recordTableWrap thead th.{cell}")
+                ActionChains(driver).move_to_element_with_offset(heading, under["dx"], under["dy"]).click().perform()
+                wait.until(lambda d: header_state()["hash"] == f"#browse?sort={sort}"
+                           and not d.find_elements(By.CSS_SELECTOR, "#recordsBody tr.skeleton-row"))
+            spots[cell] = spot
+        results["header-sort-spot"] = spots
         # The license and how to cite, said once: one quiet line in the footer bar between Records per page and the page
         # range, linking to the Guide's Licence and citation; not shown where the bar has no room for it (phones, a table
         # beside an open record at 1024px).

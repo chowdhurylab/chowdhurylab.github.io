@@ -1850,3 +1850,13 @@ tools/site_patches/20261023-site-round17-brief.md, section 5.
 - mutationWords(signature, row) gives no words for codes that are not substitutions: a list that gives one position two
   different wild-type residues ("M6P/M1P/G1P/G6P", "K2H/H2P"), and, where the enzyme or substrate name says "phosph",
   a list of sugar-phosphate-shaped codes only ("G6P", "G1P/F6P"); the code still shows as printed.
+- A header sort keeps the columns where they are (keepColumnWidths), so a second click where the first one was sorts
+  the same column the other way: the new page is laid out from the widths of the table's last fit (state.columnAnchor),
+  and only the room it needs moves, from the name columns down to their longest word. Columns at or before the sorted
+  one take it from the names before it (the sorted column's right edge stays); those after it from the names after it
+  and the sorted name's right part (it keeps over half its width). Short of room, a value takes its widest number (a
+  note such as "calc." goes under it), Review result's tags end in "…" down to its review word, and what is still
+  missing moves the sorted column left. A number never breaks. The heading's centre just clicked stays on the sorted
+  column (else the widths on screen are the start, else the table refits); a table that already scrolls sideways
+  (beside a record at 1024px) grows wider and scrolls so the sorted heading stays on screen. Filters, the page size, a
+  page turn, a resize, the sidebar and a record opening or closing refit as before.
