@@ -11,11 +11,13 @@ import math
 import os
 from pathlib import Path
 import re
+import sys
 import threading
 import time
 import urllib.request
 from urllib.parse import parse_qsl, quote, unquote_plus, urlencode, urljoin, urlsplit, urlunsplit
 
+import urllib3
 from selenium import webdriver
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.actions.action_builder import ActionBuilder
@@ -50,6 +52,41 @@ def cache_tagged(url, release):
     parts = urlsplit(url)
     query = [(key, value) for key, value in parse_qsl(parts.query, keep_blank_values=True) if key != "nocache"]
     return urlunsplit(parts._replace(query=urlencode([*query, ("nocache", release)])))
+
+
+# Safari's driver sometimes stops answering altogether (GitHub's macOS runner, 2026-10-16..24: about 1 Safari job in 5,
+# during a full Browse load at a different address each time, while the same page passes on a rerun). The hung command
+# fails after the client timeout (120 s), and urllib3 tries every GET and DELETE 4 times, so the failure screenshots and
+# quit after it took 26 minutes more.
+def exception_chain(error):
+    seen = set()
+    while error is not None and id(error) not in seen:
+        seen.add(id(error))
+        yield error
+        error = error.__cause__ or error.__context__
+
+
+def driver_stalled(error):
+    """urllib3 gave up waiting for the driver (a read timeout, or its retries ran out) somewhere in the error's chain.
+    Selenium's TimeoutException (a page state not reached while the driver answered) and AssertionError are not stalls."""
+    return any(isinstance(link, (urllib3.exceptions.ReadTimeoutError, urllib3.exceptions.MaxRetryError))
+               for link in exception_chain(error))
+
+
+def stop_waiting_on(driver):
+    """Later commands on a stalled session (finally clauses, quit) give up after a few seconds instead of 4 x 120 s."""
+    config = getattr(driver.command_executor, "_client_config", None)  # (this session's own; selenium 4.49 reads it per request)
+    if config is not None:
+        config.timeout = 3
+
+
+def failure_shot(driver, path):
+    """The failure screenshot, from an except clause; skipped when the driver stalled, since it would not answer either."""
+    if driver_stalled(sys.exc_info()[1]):
+        stop_waiting_on(driver)
+        print(f"{path.name} skipped: the browser's driver stopped answering", flush=True)
+    else:
+        driver.save_screenshot(str(path))
 
 
 def check_browse_assets(driver, url):
@@ -582,7 +619,7 @@ def check_browse(driver, browser, url, route_label):
         assert driver.find_element(By.ID, "catalogView").is_displayed()
         assert driver.find_element(By.ID, "browseButton").get_attribute("aria-current") == "page"
     except Exception:
-        driver.save_screenshot(str(OUTPUT / f"{browser}-{route_label}-desktop-1440x1000-failure.png"))
+        failure_shot(driver, OUTPUT / f"{browser}-{route_label}-desktop-1440x1000-failure.png")
         raise
 
     # Keep the real Blob and object URL, suppress only the anchor's download
@@ -834,7 +871,7 @@ def check_browse(driver, browser, url, route_label):
                 "selected_record_key": selected_key, "selected_identity": selected_key,
                 "page_download_identities": page_ids, "screenshots": screenshots, "passed": True}
     except Exception:
-        driver.save_screenshot(str(OUTPUT / f"{browser}-{route_label}-{viewport}-failure.png"))
+        failure_shot(driver, OUTPUT / f"{browser}-{route_label}-{viewport}-failure.png")
         raise
     finally:
         driver.execute_script("""
@@ -859,7 +896,7 @@ def check_browse(driver, browser, url, route_label):
         assert re.fullmatch(r"Data ID [0-9a-f]{10}", driver.find_element(By.ID, "snapshotDate").get_attribute("title") or "")
         human_checked = check_human_checked(driver, url)
     except Exception:
-        driver.save_screenshot(str(OUTPUT / f"{browser}-{route_label}-human-checked-failure.png"))
+        failure_shot(driver, OUTPUT / f"{browser}-{route_label}-human-checked-failure.png")
         raise
     return {"url": url, "route": route_label, "total": total,
             "source_sha256": manifest["source_sha256"], "asset_sha256": asset_hashes,
@@ -3758,7 +3795,7 @@ def check_filters(driver, browser, url, route_label):
         # keyboard, keeps its place and is dimmed when there is nothing left to undo.
         undo_results = check_chip_colours_and_undo(driver, browser, base, wait, open_page, chip_keys, fragment)
     except Exception:
-        driver.save_screenshot(str(OUTPUT / f"{browser}-{route_label}-filters-failure.png"))
+        failure_shot(driver, OUTPUT / f"{browser}-{route_label}-filters-failure.png")
         raise
     return {"route": route_label, "human_checked": checked, "database_counts": database_results and database_results.get("counts"),
             "chips_undo": undo_results,
@@ -5532,7 +5569,7 @@ def check_layout(driver, browser, url, route_label):
                     f"At {width}px ({address}) the Sort menu fits: {sort}")
             results["phone-320-toolbar"] = True
     except Exception:
-        driver.save_screenshot(str(OUTPUT / f"{browser}-{route_label}-layout-failure.png"))
+        failure_shot(driver, OUTPUT / f"{browser}-{route_label}-layout-failure.png")
         raise
     finally:
         driver.execute_script("try { localStorage.removeItem('catlog.filtersCollapsed'); } catch (e) {}")
@@ -6008,7 +6045,7 @@ def check_record_panel(driver, browser, url, route_label):
         results.update(check_record_marks_and_paper_link(driver, browser, base, wait))
         results.update(check_record_databases(driver, browser, base, wait))
     except Exception:
-        driver.save_screenshot(str(OUTPUT / f"{browser}-{route_label}-record-panel-failure.png"))
+        failure_shot(driver, OUTPUT / f"{browser}-{route_label}-record-panel-failure.png")
         raise
     return {"route": route_label, "checked": results, "passed": True}
 
@@ -7365,7 +7402,7 @@ def main():
         print(json.dumps(result))
     except Exception:
         if driver:
-            driver.save_screenshot(str(OUTPUT / f"{args.browser}-failure.png"))
+            failure_shot(driver, OUTPUT / f"{args.browser}-failure.png")
         raise
     finally:
         if driver:
