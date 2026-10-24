@@ -1884,3 +1884,6 @@ tools/site_patches/20261023-site-round17-brief.md, section 5.
   set with the headers' aria-sort (syncSortHeaders), keeps EC or Organism from giving way when it is the sorted one;
   from 1440px Organism gives way for a sorted EC instead (below 1440px both give way otherwise, so a sorted one is shown
   as the only extra column).
+- Export follows the order and filters the table is about to show: each filter pass (applyFilters) is kept in
+  state.filterPass while it runs, and an export started meanwhile (right after a header sort, whose cooperative sort
+  takes 0.2-0.5 s on 186k records, or a ticked filter) waits for it before reading the results.
