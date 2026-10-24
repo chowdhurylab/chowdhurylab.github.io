@@ -4702,6 +4702,26 @@ def check_layout(driver, browser, url, route_label):
         wait.until(lambda d: not detail_open() and is_open())
         assert box(".filter-column")["width"] == 256
         results["record-1280"] = True
+        # Beside a record the sorted column stays in view with its arrow (round 17 fix pass: sorted by EC, the column EC
+        # gives way to a record was hidden and nothing showed the order): from 1440px Organism gives way instead.
+        for width, sort, hidden in ((1280, "ec_number", "c-organism"), (1280, "organism", "c-ec"), (1440, "ec_number", "c-organism")):
+            set_browse_viewport(driver, browser, width, 900)
+            open_page(f"#browse?sort={sort}")
+            driver.find_element(By.CSS_SELECTOR, "#recordsBody tr[data-key] .primary-cell").click()
+            wait.until(lambda d: detail_open())
+            shown = driver.execute_script("""
+                const table = document.querySelector('#recordTableWrap table');
+                const sorted = table.querySelector('thead th[aria-sort]');
+                return {sorted: sorted && sorted.className.split(' ')[0], shown: Boolean(sorted && sorted.getClientRects().length),
+                        arrow: Boolean(sorted && getComputedStyle(sorted.querySelector('.sort-icon')).visibility === 'visible'),
+                        hidden: getComputedStyle(table.querySelector(`thead th.${arguments[0]}`)).display === 'none'};
+            """, hidden)
+            assert shown["shown"] and shown["arrow"] and shown["hidden"], (
+                f"At {width}px sorted by {sort}, the sorted column stays beside a record: {shown}")
+            ActionChains(driver).send_keys(Keys.ESCAPE).perform()
+            wait.until(lambda d: not detail_open())
+        set_browse_viewport(driver, browser, 1280, 900)
+        results["record-sorted-column"] = True
         # With two filters on and a record open at 1280, the chips share the toolbar's one row while they fit beside
         # Export and Sort (48px, Clear all last); a wider font puts them, with Clear all, on the full width under it.
         # Never a chip cut, over the toolbar or Clear all alone on a line.

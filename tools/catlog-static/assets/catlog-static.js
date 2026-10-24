@@ -2964,6 +2964,10 @@
   function syncSortHeaders() {
     const { column, reversed } = sortParts(currentSort());
     const loading = !state.sortAvailable;
+    // The table names its sorted column (data-sorted: ec, organism, ...), so a record opening beside it keeps that
+    // column in view (the stylesheet hides EC and, below 1440px, Organism otherwise).
+    const table = $("recordTableWrap")?.querySelector?.("table");
+    if (table?.dataset) table.dataset.sorted = "";
     document.querySelectorAll?.(".sort-button").forEach((button) => {
       const key = button.dataset.sort;
       const info = SORT_COLUMNS[key];
@@ -2974,6 +2978,7 @@
       th.dataset.sortNatural = info.naturalAria;
       if (active) th.setAttribute("aria-sort", reversed ? opposite : info.naturalAria);
       else th.removeAttribute("aria-sort");
+      if (active && table?.dataset) table.dataset.sorted = (String(th.className).match(/\bc-([a-z]+)/) || [])[1] || "";
       button.title = loading ? SORT_LOADING_TITLE : `Sort by ${info.name}, ${active && !reversed ? info.reverse : info.natural}`;
     });
     const select = $("sortSelect");
