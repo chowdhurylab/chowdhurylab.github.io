@@ -1,7 +1,7 @@
 openPTM
 
 Website: https://chowdhurylab.github.io/tools/openptm/
-Release: 2026-10-22
+Release: 2026-10-24
 
 Browse measurements, statistics, PTM families, sites, disease studies and the guide. The page contains its data,
 styles and scripts; it does not need external fonts or JavaScript libraries.
@@ -64,6 +64,26 @@ overlap and must not be summed as unique biological sites. The 111 families
 are a defined working set, not a universal count of all PTMs. Paper comparisons
 are selected examples, not a systematic review. Upper bounds, uncertainty,
 study conditions and source links are retained in the record details.
+
+Paper reading, round 47 — 24 October 2026
+- Read selected Results, Discussion and table/caption sections in two
+  previously unread Lactococcus lactis papers on cell-wall anchoring,
+  outside round 45's main subjects. Two additional papers remain access-held
+  and receive no original-body reading credit.
+- The surface-properties paper compares strains and protein expression.
+  The PrtP adhesion paper compares anchored active/inactive protein and a
+  control without PrtP. Their numbers do not establish a comparison between
+  target-protein anchoring states, so no numerical records were added.
+- The Urm1 and itaconate-profiling leads await accessible original text.
+  Metadata and abstracts alone do not establish numerical target function;
+  this does not mean the inaccessible papers lack suitable measurements.
+- Totals remain 258 comparisons, 319 measurement entries, 95 numerical papers,
+  90 of 111 families with numerical data and 21 remaining gaps. The website
+  data, interface and original August audit workbook are unchanged.
+- Read sources: https://doi.org/10.3389/fmicb.2017.01691
+  https://doi.org/10.1186/1471-2180-7-36
+  Access-held: https://doi.org/10.1074/jbc.275.11.7462
+  https://doi.org/10.1021/jacs.6c10764
 
 Paper reading, round 46
 - Added two cellular comparisons with three measurements from a previously
