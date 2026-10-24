@@ -9742,11 +9742,16 @@
   // The checklists are built once (so a ticked box keeps its focus); their counts follow the loaded records.
   let filterChecklistsBuilt = false;
 
-  // A definition after its name in a group's "?": "Name — definition", the definition in lower case after the dash
-  // unless it starts with a name (Km, kcat, CatLog, UniProt ...), as every group's "?" says it.
-  function aboutDefinition(text) {
+  // A group's "?" defines its options as a term list, as the Guide does: each name on its own line (a review result or
+  // a source in its colour), its words under it in sentence case, kcat and Km set as the table sets them (round 17 fix
+  // pass: "Name — words" read as a run of dashes, with kcat and Km in plain type).
+  function aboutTermsHtml(terms) {
+    return `<dl class="about-terms">${terms.map(({ term, words }) => `<div><dt>${term}</dt><dd>${words}</dd></div>`).join("")}</dl>`;
+  }
+
+  function aboutWordsHtml(text) {
     const value = String(text || "");
-    return /^(?:Km|kcat|CatLog)\b|^[A-Z][A-Z0-9]/.test(value) ? value : `${value.charAt(0).toLowerCase()}${value.slice(1)}`;
+    return kineticWordsHtml(escapeHtml(`${value.charAt(0).toUpperCase()}${value.slice(1)}`));
   }
 
   function setupFilters() {
@@ -9768,11 +9773,15 @@
         label: "Only human-checked", title: HUMAN_CHECKED_DESCRIPTION, count: "checked", className: "human-checked nested",
       }) : "")).join("");
       if ($("aboutStatus")) {
-        // "Accepted — passed review: ...": the result, a dash, then its line (never "Accepted: Passed review:").
-        const aboutLine = (label, text) => `<p><strong>${escapeHtml(label)}</strong> — ${escapeHtml(`${text.charAt(0).toLowerCase()}${text.slice(1)}`)}</p>`;
+        // Each result in its colour, then human-checked with its check, as the options show them.
         $("aboutStatus").innerHTML = `
-          ${recordStates.map((item) => aboutLine(item.label, stateShortDescription(item.value))).join("")}
-          ${aboutLine("human-checked", HUMAN_CHECKED_DESCRIPTION)}
+          ${aboutTermsHtml([
+            ...recordStates.map((item) => ({
+              term: `<span class="state-word ${item.className}">${escapeHtml(item.label)}</span>`,
+              words: aboutWordsHtml(stateShortDescription(item.value)),
+            })),
+            { term: `<span class="human-checked-word">${CHECK_ICON_HTML}human-checked</span>`, words: aboutWordsHtml(HUMAN_CHECKED_DESCRIPTION) },
+          ])}
           <p><a href="#guide-status">Review result and tags in the Guide<span aria-hidden="true">&nbsp;&rarr;</span></a></p>`;
       }
       // No help text in view (the user, 2026-10-18: "too many options and a bit confusing"): each group's notes are
@@ -9808,10 +9817,13 @@
         $("aboutDatabases").innerHTML = `
           <p>CatLog compares each value read from a paper with what ${names} list for that paper, matched by substrate,
             variant and organism.</p>
-          ${databaseFilters.map((item) => `<p><strong>${escapeHtml(item.parent ? item.label.charAt(0).toUpperCase() + item.label.slice(1) : item.label)}</strong>${
-            item.parent ? ` (under ${escapeHtml(DATABASE_RESULT_NAMES[item.parent])})` : ""} — ${
+          ${aboutTermsHtml(databaseFilters.map((item) => ({
+            term: `${escapeHtml(item.parent ? item.label.charAt(0).toUpperCase() + item.label.slice(1) : item.label)}${
+              item.parent ? ` <span class="about-under">(under ${escapeHtml(DATABASE_RESULT_NAMES[item.parent])})</span>` : ""}`,
             // ("re-read" never breaks at its hyphen, as in Stats and the Guide)
-            escapeHtml(aboutDefinition(item.title)).replace(/\bre-read\b/g, '<span class="nowrap">re-read</span>')}${item.value === "differs" ? ` ${escapeHtml(DATABASE_COMPARED_CAPTION)}` : ""}</p>`).join("")}`;
+            words: `${aboutWordsHtml(item.title).replace(/\bre-read\b/g, '<span class="nowrap">re-read</span>')}${
+              item.value === "differs" ? ` ${escapeHtml(DATABASE_COMPARED_CAPTION)}` : ""}`,
+          })))}`;
       }
       if ($("cautionChecklist")) {
         // Each caution its "!", as the table, the record and its chip show it; No cautions none, its words in line.
@@ -9821,10 +9833,10 @@
         })).join("");
       }
       if ($("aboutCautions")) {
-        // Each caution's definition (its option's title), "label — definition" as in Review result's "?".
-        $("aboutCautions").innerHTML = cautionFilters.map((item) => `<p><strong>${item.labelHtml || escapeHtml(item.label)}</strong> — ${
-          escapeHtml(aboutDefinition(item.title))}.</p>`).join("")
-          + `<p><a href="#guide-cautions">Cautions in the Guide<span aria-hidden="true">&nbsp;&rarr;</span></a></p>`;
+        // Each caution's definition (its option's title), as in Review result's "?".
+        $("aboutCautions").innerHTML = aboutTermsHtml(cautionFilters.map((item) => ({
+          term: item.labelHtml || escapeHtml(item.label), words: `${aboutWordsHtml(item.title)}.`,
+        }))) + `<p><a href="#guide-cautions">Cautions in the Guide<span aria-hidden="true">&nbsp;&rarr;</span></a></p>`;
       }
       // Source: the three choices, the first group under More filters (Read from the paper in its dark cyan, as its tag);
       // the databases of Not yet re-read are their own group there too (Source database), and ticking one selects Not
@@ -9844,8 +9856,11 @@
         })).join("");
       }
       if ($("aboutSource")) {
-        $("aboutSource").innerHTML = sourceModes.filter((item) => item.help).map((item) => `
-          <p><strong>${escapeHtml(item.label)}</strong> — ${escapeHtml(item.help)}</p>`).join("") + `
+        // Read from the paper in its colour, as its option shows it.
+        $("aboutSource").innerHTML = aboutTermsHtml(sourceModes.filter((item) => item.help).map((item) => ({
+          term: item.value === "paper" ? `<span class="source-word">${escapeHtml(item.label)}</span>` : escapeHtml(item.label),
+          words: aboutWordsHtml(item.help),
+        }))) + `
           <p><a href="#guide-method">How CatLog reads and checks values<span aria-hidden="true">&nbsp;&rarr;</span></a></p>`;
       }
       if ($("aboutSourceDatabases")) {
