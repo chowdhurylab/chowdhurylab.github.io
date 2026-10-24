@@ -5108,7 +5108,7 @@ def check_layout(driver, browser, url, route_label):
             """)
             tops = [toolbar["filters"], toolbar["export"], toolbar["sort"], toolbar["toggle"]]
             assert (max(tops) - min(tops) <= 2 and toolbar["width"] >= 108 and toolbar["toggleWidth"] >= 20
-                    and toolbar["name"] == "Sort by" and toolbar["toggleName"].startswith("Reverse the order")
+                    and toolbar["name"] == "Sort by" and toolbar["toggleName"].startswith("Sort: reverse the order (now ")
                     and not toolbar["scroll"]), f"At 320px the toolbar is one row: {toolbar}"
             # The links out never run into the brand (a wide font puts them on two lines instead).
             brand, links = box(".brand-lockup strong"), box(".external-nav")

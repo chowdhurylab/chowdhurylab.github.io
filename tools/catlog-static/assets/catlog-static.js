@@ -2981,7 +2981,8 @@
       const opposite = info.naturalAria === "ascending" ? "descending" : "ascending";
       toggle.dataset.direction = reversed ? opposite : info.naturalAria;
       const words = `Reverse the order (now ${reversed ? info.reverse : info.natural})`;
-      toggle.setAttribute("aria-label", words);
+      // Its name starts with its visible word, so "click Sort" reaches it by voice (WCAG 2.5.3).
+      toggle.setAttribute("aria-label", `Sort: ${words[0].toLowerCase()}${words.slice(1)}`);
       toggle.title = loading ? SORT_LOADING_TITLE : words;
     }
   }
