@@ -1860,3 +1860,5 @@ tools/site_patches/20261023-site-round17-brief.md, section 5.
   column (else the widths on screen are the start, else the table refits); a table that already scrolls sideways
   (beside a record at 1024px) grows wider and scrolls so the sorted heading stays on screen. Filters, the page size, a
   page turn, a resize, the sidebar and a record opening or closing refit as before.
+- The phone's Sort toggle is named "Sort: reverse the order (now …)", its visible word first (WCAG 2.5.3); its title
+  keeps "Reverse the order (now …)".
