@@ -11355,10 +11355,10 @@
       const enzymeTitle = [enzymeName, enzymeFormDisplay(row)].filter(Boolean).join(" · ");
       return `
       <tr data-key="${escapeHtml(row.record_key)}" class="${row.record_key === state.selectedKey ? "selected" : ""}" tabindex="${row.record_key === activeRowKey ? "0" : "-1"}" aria-selected="${row.record_key === state.selectedKey ? "true" : "false"}">
-        <td class="c-enzyme primary-cell"><span class="clamp-2${enzymeForm ? " has-form" : ""}" title="${escapePublic(enzymeTitle)}"><strong>${escapePublic(enzymeName)}</strong></span>${enzymeForm}</td>
+        <td class="c-enzyme primary-cell"><span class="clamp-2${enzymeForm ? " has-form" : ""}" title="${escapePublic(enzymeTitle)}"><strong>${nameHtml(enzymeName)}</strong></span>${enzymeForm}</td>
         <td class="c-ec"><span class="clamp-2"${String(row.ec_number || "").includes(" ") ? ` title="${escapeHtml(row.ec_number)}"` : ""}>${escapeHtml(row.ec_number || EMPTY_VALUE)}</span></td>
-        <td class="c-organism"><span class="clamp-2" title="${escapePublic(recordedName(row.organism))}">${escapePublic(recordedName(row.organism) || EMPTY_VALUE)}</span></td>
-        <td class="c-substrate${substrateNote ? " has-note" : ""}"><span class="clamp-2" title="${escapePublic(recordedName(row.substrate_name))}">${escapePublic(recordedName(row.substrate_name) || EMPTY_VALUE)}</span>${substrateNote}</td>
+        <td class="c-organism"><span class="clamp-2" title="${escapePublic(recordedName(row.organism))}">${nameHtml(recordedName(row.organism) || EMPTY_VALUE)}</span></td>
+        <td class="c-substrate${substrateNote ? " has-note" : ""}"><span class="clamp-2" title="${escapePublic(recordedName(row.substrate_name))}">${nameHtml(recordedName(row.substrate_name) || EMPTY_VALUE)}</span>${substrateNote}</td>
         ${enzymeForm ? `<td class="c-form">${enzymeFormHtml(row, { className: "enzyme-form card-form" })}</td>` : ""}
         <td class="c-kcat num">${CARD_VALUE_LABELS.kcat}<span class="metric-with-note"${valueTitle(row, "kcat")}>${metricDisplayWithUnitHtml(row, "kcat", { table: true })}${valueFlagBadgeHtml(flags, "kcat", row)}</span></td>
         <td class="c-km num">${CARD_VALUE_LABELS.km}<span class="metric-with-note"${valueTitle(row, "km")}>${metricDisplayWithUnitHtml(row, "km", { table: true })}${valueFlagBadgeHtml(flags, "km", row)}</span></td>
@@ -11443,15 +11443,42 @@
   const FIT_ONE_LINE_LIMIT = 2;
   let fitTextContext = null;
 
-  // The widest word of a name, so a narrow window breaks names between words before it breaks a word.
-  function widestWordWidth(element) {
+  // A locant that begins a word ("4-", "2,4-", "3'-", "L-") keeps to it in the table's names (nameHtml), so a narrow
+  // column never leaves "4-" alone on a line (round 17 fix pass: "4-" / "Aminoacetophe…").
+  const LEADING_LOCANT = /^(?:\d+(?:[,'′]\d+)*['′]*|[A-Za-z])-(?=[^\s-])/;
+  // A name's words as a line can break it: at spaces and after a hyphen, comma or slash, but not after a leading locant.
+  function nameWords(text) {
+    return String(text || "").split(/\s+/).flatMap((word) => {
+      const locant = word.match(LEADING_LOCANT)?.[0] || "";
+      const parts = word.slice(locant.length).split(/(?<=[-,/])/);
+      parts[0] = locant + parts[0];
+      return parts;
+    }).filter(Boolean);
+  }
+
+  // A name's text for the table: its words as nameWords breaks them (a leading locant and the letter after it held
+  // together by a span, so copying and searching keep the plain hyphen).
+  function nameHtml(value) {
+    return publicText(value).split(/(\s+)/).map((word) => {
+      const locant = word.match(LEADING_LOCANT)?.[0];
+      if (!locant) return escapeHtml(word);
+      const glued = locant + String.fromCodePoint(word.codePointAt(locant.length));
+      return `<span class="locant">${escapeHtml(glued)}</span>${escapeHtml(word.slice(glued.length))}`;
+    }).join("");
+  }
+
+  // The widest word of a name, so a narrow window breaks names between words before it breaks a word; with capitalized,
+  // the widest word that begins with a capital (after its locant): browsers do not hyphenate those (Chrome), so a
+  // column narrower than one breaks it anywhere ("Acetylcyclohexan" / "e").
+  function widestWordWidth(element, capitalized = false) {
     fitTextContext ??= document.createElement("canvas").getContext("2d");
     const text = element.querySelector("strong") || element;
     // The font from its parts: the computed shorthand can be empty (then the canvas would measure 10px sans-serif).
     const font = window.getComputedStyle(text);
     fitTextContext.font = font.font || `${font.fontStyle} ${font.fontWeight} ${font.fontSize} ${font.fontFamily}`;
-    // A line can also break after a hyphen, comma or slash, so a chemical name's parts count as its words.
-    return Math.max(0, ...String(text.textContent || "").split(/\s+|(?<=[-,/])/).map((word) => fitTextContext.measureText(word).width));
+    const words = nameWords(text.textContent)
+      .filter((word) => !capitalized || /^\p{Lu}/u.test(word.slice(word.match(LEADING_LOCANT)?.[0].length || 0)));
+    return Math.max(0, ...words.map((word) => fitTextContext.measureText(word).width));
   }
 
   // The widest variant line under the enzyme names ("variant L158A/N159C/I160V"), at most about 24 characters: the
@@ -11744,6 +11771,7 @@
       // Each name's longest word (a name column only), and the narrowest the column can be without breaking one; Enzyme
       // also as wide as its variant lines (formLineWidth).
       const cellWords = column.shrink ? cells.map((cell) => widestWordWidth(cell.firstElementChild || cell)) : [];
+      const capital = column.shrink ? Math.ceil(Math.max(0, ...cells.map((cell) => widestWordWidth(cell.firstElementChild || cell, true))) + padding) : 0;
       const form = column.key === "enzyme" ? formLineWidth(cells) : 0;
       const wordWidth = column.shrink ? Math.ceil(Math.max(...cellWords, form) + padding) : min;
       let width = Math.max(min, Math.min(column.cap, Math.ceil(content + padding)));
@@ -11757,7 +11785,7 @@
       // Review result gives way last, down to the review result's word and its human-checked check (or its header): its
       // tag line then ends in "…".
       const floor = column.key === "state" ? statusFloor(table, cells, min, padding) : 0;
-      return { ...column, min, width, oneLine, words, cells, cellWords, padding, floor };
+      return { ...column, min, width, oneLine, words, capital, cells, cellWords, padding, floor };
     });
     table.classList.remove("measuring");
     const arrow = visible(cols.open) ? parseFloat(style(cols.open).width) || 24 : 0;
@@ -11791,6 +11819,9 @@
         const share = Math.min(1, excess / slack);
         columns.forEach((column) => { column.width = Math.floor(column.width - share * Math.max(0, column.width - target(column))); });
       }
+      // A table that scrolls anyway gives a name room for its longest capitalized word, which would otherwise break
+      // anywhere, a letter alone on the next line (round 17 fix pass: "Acetylcyclohexan" / "e" beside a record at 1024px).
+      if (!giveWay) shrinkable.forEach((column) => { column.width = Math.max(column.width, Math.min(column.cap, column.capital)); });
     }
     const names = widths.filter((column) => column.shrink === 1);
     if (available > total() && names.length) {
@@ -16280,6 +16311,8 @@
       publicLoadMessage,
       enzymeFormLabel,
       enzymeFormHtml,
+      nameHtml,
+      nameWords,
       mutationWords,
       mutationSignature,
       enzymeFormText,

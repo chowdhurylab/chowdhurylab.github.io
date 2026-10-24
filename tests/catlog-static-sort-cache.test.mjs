@@ -1660,6 +1660,17 @@ assert.equal(api.mutationWords("E4P/Y56S/F66N", phosphoglucomutase), "Glu4 → P
 assert.equal(api.mutationWords("G6P", { enzyme_display_name: "lysozyme", substrate_name: "peptidoglycan" }), "Gly6 → Pro", "a phosphate-shaped code elsewhere keeps its words");
 assert.equal(api.mutationWords("T7P", { enzyme_display_name: "SULT1A3", substrate_name: "acetaminophen" }), "Thr7 → Pro");
 assert.equal(api.mutationWords("E124Q/E124Q"), "Glu124 → Gln, Glu124 → Gln", "one position with one wild-type residue is fine");
+// A locant that begins a word keeps to it in the table's names (round 17 fix pass: "4-" alone on a line): a span holds it
+// with the next letter, the text itself unchanged; the column fitting measures the word whole.
+assert.equal(api.nameHtml("4-Aminoacetophenone"), '<span class="locant">4-A</span>minoacetophenone');
+assert.equal(api.nameHtml("Coenzyme A; 2,4-Pentanedione & L-Tryptophan"),
+  'Coenzyme A; <span class="locant">2,4-P</span>entanedione &amp; <span class="locant">L-T</span>ryptophan');
+assert.equal(api.nameHtml("S-Adenosyl-L-methionine"), '<span class="locant">S-A</span>denosyl-L-methionine');
+assert.equal(api.nameHtml("beta-D-galacturonate"), "beta-D-galacturonate", "a word before its hyphen is not a locant");
+assert.equal(api.nameHtml("3'-phosphoadenylyl sulfate"), '<span class="locant">3&#39;-p</span>hosphoadenylyl sulfate');
+assert.equal(api.nameHtml("Mg-"), "Mg-");
+assert.equal(JSON.stringify(api.nameWords("4-hydroxyacetophenone monooxygenase")), JSON.stringify(["4-hydroxyacetophenone", "monooxygenase"]));
+assert.equal(JSON.stringify(api.nameWords("S-Adenosyl-L-methionine; ATP")), JSON.stringify(["S-Adenosyl-", "L-", "methionine;", "ATP"]));
 assert.equal(api.enzymeFormHtml({ wild_type: true }), "", "wild type shows nothing");
 assert.equal(api.enzymeFormHtml({}), "", "a record that does not say shows nothing");
 assert.equal(api.enzymeFormLabel({}, { showUnknown: true }), "Not recorded");

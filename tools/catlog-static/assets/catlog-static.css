@@ -732,7 +732,10 @@ th.sortable:hover:not([aria-sort]) .sort-button:enabled .sort-icon { visibility:
    column is hyphenated (.hyphenate, set by the script that fits the columns), because hyphens:auto would also split
    words that fit on the next line; a break inside a word is the last resort. SMILES and sequences may break anywhere. */
 .clamp-2 { display:-webkit-box; max-height:34px; overflow:hidden; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow-wrap:break-word; white-space:normal }
-.clamp-2.hyphenate { -webkit-hyphens:auto; hyphens:auto }
+/* A hyphenated word keeps at least 3 letters on each side and 7 in all (round 17 fix pass: no "…n-" / "e"); a locant
+   that begins a word keeps to it ("4-Aminoacetophenone", .locant, set by the script). */
+.clamp-2.hyphenate { -webkit-hyphens:auto; hyphens:auto; hyphenate-limit-chars:7 3 3; -webkit-hyphenate-limit-before:3; -webkit-hyphenate-limit-after:3 }
+.locant { white-space:nowrap }
 /* While the script measures each cell's natural width (one layout,never painted). */
 table.measuring .sort-button { width:max-content }
 table.measuring .clamp-2 { display:inline-block; max-width:none; white-space:nowrap }
