@@ -123,13 +123,14 @@
   // convenience: storage may be unavailable).
   const FILTERS_COLLAPSED_STORAGE_KEY = "catlog.filtersCollapsed";
   const DETAIL_INERT_SELECTOR = [
+    "#mainSiteNote",
     ".app-header",
     "#catalogLoadProgress",
     "#searchSuggestions",
     "#catalogView > .snapshot-band",
     ".workbench > :not(.detail-panel)",
   ].join(", ");
-  const FILTER_INERT_SELECTOR = ".app-header, #catalogLoadProgress, #catalogView > .snapshot-band, .table-panel, .detail-panel";
+  const FILTER_INERT_SELECTOR = "#mainSiteNote, .app-header, #catalogLoadProgress, #catalogView > .snapshot-band, .table-panel, .detail-panel";
 
   // Review result: the four words the filter, the badges, the definitions, the Guide and Stats use. The address keys
   // stay (status=accepted,curation_pending,not_verified,disputed). Not checked holds Unverified, Not reviewed and any
