@@ -1840,7 +1840,13 @@ tools/site_patches/20261023-site-round17-brief.md, section 5.
   minor results in order with them. Columns as wide as the parts had broken "Not / reviewed / 3,333" word by word at
   375px. In the system font the columns hold from 641px; in DejaVu Sans Review result's 560px column from 1280px is a
   key (Not reviewed 3,333 needs 134px of Not checked's 130). The browser check: STATS_STATUS_KEY_JS (every line in its
-  column or a key with name and count on one line; a key on phones), the label-start check in columns only. Accepted's other parts are its title and the figure's rule; the
+  column or a key with name and count on one line; a key on phones), the label-start check in columns only.
+  Accepted's other parts are its title and the figure's rule (fix pass: where its 1,166 after a correction and the 1,165
+  records Corrections on records not yet re-read counts differ, the rule says why, statsCorrectedEarlierText: that figure
+  counts the records not yet re-read that list a change, whatever their review result, "1,157 of the 1,166 accepted after
+  a correction, and 8 with another review result" from overview.earlier_corrections.corrected, counted by
+  build-catlog-followup-summary.py since the fix pass; without that count only what the figure counts; nothing when the
+  counts and records agree; no rule names a figure's number, so its fallback caption says "Review result counts ..."); the
   fields saved in records that are not accepted are a table in the rule (rulesHtml: figure rules may carry HTML).
 - Records by main source: the counts as Browse gives them (a merged record under each database) are its rule.
 - Between papers: the histograms keep their heading and count line; the facts row and the same-conditions table give

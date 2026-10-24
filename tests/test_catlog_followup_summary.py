@@ -296,6 +296,14 @@ class OverviewTests(unittest.TestCase):
             "km": {"rounding": 0, "different": 1, "magnitude": 1, "added": 0},
             "kcat_over_km": {"rounding": 1, "different": 0, "magnitude": 0, "added": 0}})
         self.assertEqual(earlier["before_listed"], [2, 3])
+        # Of the records that list a change, those accepted after a correction (Review result's count of those may
+        # differ: a record with another result can list a change too).
+        self.assertEqual(earlier["corrected"], 1)
+        rows[2]["corrections"] = [{"field": "kcat", "before": 1.0, "after": 1.04, "kind": "rounding"}]
+        with tempfile.TemporaryDirectory() as directory:
+            manifest, path, marks_path = self.write_fixture(directory, rows, {})
+            earlier = followup.build_overview(manifest, path, marks_path)["earlier_corrections"]
+        self.assertEqual((earlier["records"], earlier["corrected"]), (2, 1))
         # Without any list there is no figure to draw: the key is left out.
         with tempfile.TemporaryDirectory() as directory:
             manifest, path, marks_path = self.write_fixture(directory, overview_rows(), {})

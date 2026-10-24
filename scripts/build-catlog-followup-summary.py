@@ -529,14 +529,17 @@ def most_common(spellings):
 # changes of the four kinds the figure draws (more digits or rounding, a different number, unit or magnitude, added);
 # every other change (another field, or another kind) is counted apart; and of the changed values (those with a value
 # before), how many had before the change a number a database lists for that paper (the item names it: "listed").
-# A record read from the paper carries no such list.
+# A record read from the paper carries no such list. `corrected`: how many of the records that list a change are accepted
+# after a correction (Review result's "after a correction"): the two counts are of sets that mostly overlap (a record
+# accepted after a correction may list no change, a record with another result may list one), so Stats says why they
+# differ (round 17 fix pass: 1,166 after a correction against 1,165 records listing a change, 1,157 of them both).
 CORRECTION_FIELDS = ("kcat", "km", "kcat_over_km")
 CORRECTION_KINDS = ("rounding", "different", "magnitude", "added")
 CORRECTION_CHANGED = ("rounding", "different", "magnitude")
 
 
 def new_earlier_corrections():
-    return {"records": 0, "items": 0,
+    return {"records": 0, "corrected": 0, "items": 0,
             "values": {field: dict.fromkeys(CORRECTION_KINDS, 0) for field in CORRECTION_FIELDS},
             "other_items": 0, "before_listed": [0, 0]}
 
@@ -547,6 +550,7 @@ def add_earlier_corrections(counts, row):
     if not items:
         return
     counts["records"] += 1
+    counts["corrected"] += row.get("verification_status") == "corrected"
     counts["items"] += len(items)
     for item in items:
         field, kind = item.get("field"), item.get("kind")
