@@ -390,6 +390,7 @@ const databaseInputs = ["corrects", "differs", "other_label", "not_listed", "all
   value, type: "checkbox", name: "database", checked: false,
 }));
 const detailBackgroundSelector = [
+  "#mainSiteNote",
   ".app-header",
   "#catalogLoadProgress",
   "#searchSuggestions",
@@ -397,7 +398,7 @@ const detailBackgroundSelector = [
   ".workbench > :not(.detail-panel)",
 ].join(", ");
 const detailBackgroundElements = [makeElement("header"), makeElement("table")];
-const filterBackgroundSelector = ".app-header, #catalogLoadProgress, #catalogView > .snapshot-band, .table-panel, .detail-panel";
+const filterBackgroundSelector = "#mainSiteNote, .app-header, #catalogLoadProgress, #catalogView > .snapshot-band, .table-panel, .detail-panel";
 const document = {
   baseURI: "https://example.test/catlog/",
   currentScript: {
