@@ -501,9 +501,9 @@ a chip's tooltip names its whole filter); on phones a
 Filters button opens the sheet and the chips go under the toolbar (Filters,
 Export and Sort stay on one row: phones show cards without column headers, so a "Sort ↑" toggle, a tap reversing the
 order, and a menu of the columns stand in for them; below 360px "Sort" is read out but not shown (its arrow stays, a
-20px target), Export drops its chevron and the buttons and gaps are narrower, and to 389px with a filter on (the
-Filters count) the buttons are narrower and "Sort" gives way to its arrow too, so the menu shows "Review result"
-whole). A selected
+20px target), Export drops its chevron and the buttons and gaps are narrower, and "Sort" gives way to its arrow to
+389px, and with a filter on (the Filters count) to 409px with the buttons narrower too, so the menu shows "Review
+result" whole in Linux's DejaVu Sans as well). A selected
 record is a column right of the table from 1024px (440px, 480px from 1440px) and
 a full-height dialog below. Never put details below the table or cover desktop
 measurement columns. Keep 25 rows per page,

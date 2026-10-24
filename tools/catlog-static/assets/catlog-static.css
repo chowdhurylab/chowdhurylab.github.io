@@ -2357,8 +2357,8 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
   /* The chips row never grows past its row (a long chip ends in "…"): the table's box no longer clips it on phones. */
   #activeFilters { max-width:100%; min-width:0 }
   /* The cards have no headers: Sort ↑ (the direction, a tap reverses it) and the column menu stand in for them. "Sort"
-     shows beside the menu where it fits (from 390px, or 360px with no filter on), so the menu never reads as a
-     review-result filter; narrower, its arrow alone does. */
+     shows beside the menu where it fits (from 390px, 410px with a filter on), so the menu never reads as a review-result
+     filter; narrower, its arrow alone does. */
   .sort-control { display:inline-flex; flex:1 1 auto; gap:var(--sp-1) }
   .records-tools select { flex:1 1 auto; width:auto; min-width:0 }
   .download-page-detail { display:none }
@@ -2568,12 +2568,16 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
   /* Export drops its chevron here, as Filters has none: the menu then shows "Review result" whole. */
   .records-header .export-menu > summary .chevron { display:none }
 }
-/* Phones from 360 to 389px: with a filter on, the Filters count left the Sort menu too little room for "Review result"
-   (it read "Review res"), so the toolbar's buttons are narrower there too and "Sort" gives way to its arrow alone (read
-   out still). */
+/* Phones from 360px: "Sort" gives way to its arrow alone (read out still) where the Sort menu would not show "Review
+   result" whole in Linux's wider DejaVu font (round 17 fix pass: it read "Review resu" at 360px with no filter on, and
+   at 390px with one): to 389px, and with a filter on (the Filters count takes room too) to 409px, where the toolbar's
+   buttons are narrower and its gaps close up a little as well (DejaVu had left it 2px short at 360px). */
 @media (min-width: 360px) and (max-width: 389px) {
+  .sort-direction-word { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); clip-path:inset(50%); white-space:nowrap }
+  .sort-direction { min-width:20px; justify-content:center }
+}
+@media (min-width: 360px) and (max-width: 409px) {
   .records-header:has(#activeFilterCount:not(.hidden)) :is(#openFiltersButton, .export-menu > summary) { gap:var(--sp-1); padding-inline:var(--sp-2) }
-  /* Linux's wider DejaVu font still left it 2px short at 360px: the toolbar's gaps close up a little too. */
   .records-header:has(#activeFilterCount:not(.hidden)) { column-gap:6px }
   .records-header:has(#activeFilterCount:not(.hidden)) .sort-direction-word { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); clip-path:inset(50%); white-space:nowrap }
   .records-header:has(#activeFilterCount:not(.hidden)) .sort-direction { min-width:20px; justify-content:center }
