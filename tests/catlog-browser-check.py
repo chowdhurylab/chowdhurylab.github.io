@@ -4631,6 +4631,11 @@ def check_layout(driver, browser, url, route_label):
         assert (footer["shown"] and footer["text"] == "CC BY 4.0 · How to cite" and footer["href"] == "#guide-licence"
                 and footer["between"] and footer["whole"] and footer["bar"] == 48), f"The footer's license line: {footer}"
         results["footer-license"] = True
+        # Export ends the toolbar's row with no filter on too (round 17 fix pass: alone in the row it had sat at the left
+        # from 1280px); beside chips and beside a record it is there too (chips-record-1280 below).
+        export_end = "return [Math.round(document.querySelector('#exportMenu > summary').getBoundingClientRect().right), Math.round(document.querySelector('.records-header').getBoundingClientRect().right - parseFloat(getComputedStyle(document.querySelector('.records-header')).paddingRight))]"
+        end = driver.execute_script(export_end)
+        assert abs(end[0] - end[1]) <= 1, f"With no filter on, Export ends the toolbar's row at 1280: {end}"
         # Records' "?" in the counts band says what a record and its values are, over the band (the numbers stay put),
         # and Escape closes it.
         about = driver.find_element(By.ID, "recordsAboutButton")
@@ -4686,6 +4691,8 @@ def check_layout(driver, browser, url, route_label):
         """)
         assert not toolbar["cut"] and toolbar["clearWithLast"] and (
             (toolbar["beside"] and toolbar["header"] <= 49) or toolbar["under"]), f"Chips beside an open record at 1280: {toolbar}"
+        end = driver.execute_script(export_end)
+        assert abs(end[0] - end[1]) <= 1, f"Beside chips and a record, Export ends the toolbar's row at 1280: {end}"
         ActionChains(driver).send_keys(Keys.ESCAPE).perform()
         wait.until(lambda d: not detail_open())
         results["chips-record-1280"] = True
