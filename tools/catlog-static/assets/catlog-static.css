@@ -374,7 +374,7 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
   .summary-accepted { grid-area:accepted }
   .snapshot-paper { grid-area:paper }
   .snapshot-checked { grid-area:checked }
-  .snapshot-more { grid-area:more; display:inline-flex; justify-self:end; align-self:start; align-items:center; gap:4px; min-height:28px; margin:-4px -4px 0 0 }
+  .snapshot-more { grid-area:more; position:relative; z-index:1; display:inline-flex; justify-self:end; align-self:start; align-items:center; gap:4px; min-height:28px; margin:-4px -4px 0 0 }
   .snapshot-meta { grid-row:auto; grid-column:1 / -1; justify-self:stretch; grid-template-rows:none; row-gap:2px; border-top:1px solid var(--line-soft); border-left:0; padding:var(--sp-2) 0 0 }
   .snapshot-line > strong { grid-row:2; font-size:var(--fs-14); line-height:var(--lh-14) }
   .snapshot-band:not(.expanded) :is(.snapshot-meta,.snapshot-note) { display:none }
@@ -393,6 +393,10 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
   .snapshot-lead .snapshot-date { display:none }
   .snapshot-card-date { display:block }
   .snapshot-card-date .snapshot-note-text { display:none }
+  /* Open, Less takes More's place at the first row's end instead of a column of its own (beside "Matching records ?"
+     in a wide font that column would push it out of the card), and Accepted's line of context wraps under its number
+     rather than reach under Less (More and Less sit over the cards, so a tap on them never lands on Accepted). */
+  .snapshot-band.expanded .snapshot-overview { grid-template-columns:auto min-content minmax(0,1fr) }
 }
 
 /* Workbench: one grid, [filter sidebar | table | open record]. The sidebar is a column from 641px (open, or a 48px rail

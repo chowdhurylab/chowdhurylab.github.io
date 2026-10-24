@@ -189,7 +189,9 @@ Tablets (641-1023px): two rows, the key numbers with their lines of context, the
 kcat 104,525 Km 166,603 kcat/Km 71,218", 12/16px) and the snapshot date at its end (the line's last item, pushed right),
 one height (a 94px card) across the range. Phones: the four key numbers two by two (Records and Accepted, then Read
 from the paper and Human-checked), More at the first row's right; More shows their lines of context and the parameters
-(each label over its 14px count, under a thin rule across the card), rows that exist only while shown; an 8px card
+(each label over its 14px count, under a thin rule across the card), rows that exist only while shown; Less stays
+where More was, over the cards (below 360px Accepted's line of context wraps under its number, so beside "Matching
+records ?" in a wide font Less never leaves the card or sits under Accepted); an 8px card
 padding (the band is 163px at 375px, 6px shorter than round 14's). Read from the paper keeps its whole label down to
 360px and takes its short tag, From paper, below it (a screen reader still reads Read from the paper). Printing keeps
 the line over the card, the snapshot date with it. A filtered view says "Matching records". Read from the paper N (the name Stats and the Source filter give that count; its title
