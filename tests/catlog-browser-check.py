@@ -6826,6 +6826,16 @@ def check(driver, browser, url):
         return [before, during, method.open];
     """)
     assert printed == [False, True, False], printed
+    # Under the closed supplement, whose heading line is a hairline already, the section has no rule of its own (round 17
+    # fix pass: two hairlines framed an empty band); under the open one its rule ends the supplement's figures.
+    was_open = driver.execute_script("return document.querySelector('#statsCharts .stats-supp-all')?.open")
+    if was_open is not None:
+        rules = []
+        for opened in (False, True):
+            open_stats_supplement(driver, opened)
+            rules.append(driver.execute_script("return getComputedStyle(document.querySelector('#statsCharts > details.stats-method')).borderTopStyle"))
+        open_stats_supplement(driver, was_open)
+        assert rules == ["none", "solid"], f"How these numbers are counted's top rule, supplement closed and open: {rules}"
     captions_text = " ".join(driver.execute_script("return [...document.querySelectorAll('.stats-fig > figcaption .stats-fig-caption')].map(e => e.textContent)"))
     for kind in ("Figure", "Table"):
         for series in ("", "S"):

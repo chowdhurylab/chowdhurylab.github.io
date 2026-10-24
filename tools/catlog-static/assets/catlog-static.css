@@ -2006,6 +2006,9 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-explanation .stats-unaccepted-fields p { margin:8px 0 0 }
 .stats-method-sub { color:var(--text-2) }
 .stats-method { border-top:1px solid var(--line); padding-top:8px }
+/* (under the closed supplement, whose heading line is already a hairline, How these numbers are counted has no second
+   rule: two hairlines had framed an empty 48px band; open, the rule ends the supplement's figures) */
+.stats-supp:has(> .stats-supp-all:not([open])) + .stats-method { border-top:0 }
 /* Each figure's own rules, under its number (Figure 4, Table 1), its title first. */
 .stats-method-figures { border-top:1px solid var(--line-soft); padding-top:4px }
 .stats-method-title { color:var(--text); font-weight:500 }

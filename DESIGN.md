@@ -167,7 +167,8 @@ S. Supplementary figures (round 14, the user: "not every figure has to be shown 
    part's heading line: the muted S, its title, then at the line's end a muted "+" and "Show all 22 figures" in the
    accent ("−" and "Hide" when open). Its title says what it holds: "Supplementary figures" while every item is a figure,
    "Supplementary figures and tables" if a table comes back (statsSupplementTitle; On this page names it the same).
-   One click opens everything: inside, five groups (Quality; What is in the catalog; Organisms, enzymes and variants;
+   Closed, its heading line's hairline is the last rule above How these numbers are counted, which then has none of its
+   own (no empty band framed by two hairlines); open, the method's rule ends the figures. One click opens everything: inside, five groups (Quality; What is in the catalog; Organisms, enzymes and variants;
    Values; Compared with databases), each a grid of open items laid out as the main parts' (two to a row from 1024px, a
    wide figure or an odd one out taking the row, one per row below 1024px), no disclosure in any item. An item is a
    div.stats-supp-item with its own address by its key as its id (#stats-supp-printed-units for Units as printed; never

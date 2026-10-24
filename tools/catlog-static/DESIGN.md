@@ -1303,7 +1303,10 @@ its number, which follows the items the snapshot has) and its title. The title s
 figures" while it has no table. #stats-supplement, every item's address and every numbered address of the live round 16b
 supplement (STATS_SUPPLEMENT_OLD_ADDRESSES, resolved before anything else: #stats-s3 opens papers by parameter, Figure S5
 today; #stats-table-s4 the most common organisms, now a figure; a number that page never had, or an item the snapshot
-lacks, opens the supplement) open it and scroll there. The repository's DESIGN.md (its Stats part S) describes each figure; in short:
+lacks, opens the supplement) open it and scroll there. Closed, its heading line's hairline ends the parts: no space under
+it (be822741), and How these numbers are counted under it has no top rule of its own (fix pass: two hairlines had framed an
+empty 48px band; `.stats-supp:has(> .stats-supp-all:not([open])) + .stats-method`); open, that rule ends the supplement's
+figures. The repository's DESIGN.md (its Stats part S) describes each figure; in short:
 
 | Was (live round 16b) | Now | Form |
 |---|---|---|
