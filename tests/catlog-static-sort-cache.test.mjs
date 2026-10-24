@@ -7702,6 +7702,11 @@ api.indexLoadedRecords([
   api.state.pendingPage = 3;
   api.sortByColumn("organism");
   assert.equal(api.state.pendingPage, 0, "a sort drops the address's waiting page");
+  // The pass a sort starts is kept while it runs (an export waits for it), and let go once it has settled.
+  const pass = api.state.filterPass;
+  assert.ok(pass && typeof pass.then === "function", "a sort's filter pass is kept while it runs");
+  await pass;
+  assert.equal(api.state.filterPass, null, "a settled pass is let go");
   await api.ensureCurrentFilters();
   assert.equal(api.state.page, 1);
   assert.ok(!api.browseHash().includes("page="), api.browseHash());

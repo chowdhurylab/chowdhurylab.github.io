@@ -4649,6 +4649,31 @@ def check_layout(driver, browser, url, route_label):
                            and not d.find_elements(By.CSS_SELECTOR, "#recordsBody tr.skeleton-row"))
             spots[cell] = spot
         results["header-sort-spot"] = spots
+        # Export right after a header sort waits for its order (round 17 fix pass: "All matching records" taken while the
+        # sort ran saved the old order): the file's first record is the sorted table's first row.
+        open_page("#browse?organism=Danio%20rerio")
+        wait.until(lambda d: not d.find_element(By.ID, "exportAllCsvButton").get_attribute("disabled"))
+        # (the file is read from its Blob; the anchor's download is suppressed, as the export checks do, and the page is
+        # loaded again after)
+        driver.execute_script("""
+            window.__catlogCsv = null;
+            const original = URL.createObjectURL;
+            URL.createObjectURL = (blob) => { blob.text().then((text) => { window.__catlogCsv = text; }); return original.call(URL, blob); };
+            document.addEventListener('click', (event) => { if (event.target.closest?.('a[download]')) event.preventDefault(); }, true);
+            document.querySelector('#recordTableWrap thead th.c-kcat .sort-button').click();
+            document.getElementById('exportAllCsvButton').click();
+        """)
+        wait.until(lambda d: d.execute_script("return window.__catlogCsv !== null && /[?&]sort=kcat(&|$)/.test(location.hash)")
+                   and not d.find_elements(By.CSS_SELECTOR, "#recordsBody tr.skeleton-row"))
+        exported = driver.execute_script("""
+            const lines = window.__catlogCsv.split(/\\r?\\n/).filter(Boolean);
+            const at = lines[0].replace(/^\\ufeff/, '').split(',').indexOf('record_key');
+            return {rows: lines.length - 1, first: lines[1]?.split(',')[at], table: document.querySelector('#recordsBody tr[data-key]')?.dataset.key};
+        """)
+        if exported["rows"] >= 2:
+            assert exported["first"] == exported["table"], f"Export right after a sort follows the new order: {exported}"
+        results["export-after-sort"] = exported["rows"]
+        open_page()
         # The license and how to cite, said once: one quiet line in the footer bar between Records per page and the page
         # range, linking to the Guide's Licence and citation; not shown where the bar has no room for it (phones, a table
         # beside an open record at 1024px).

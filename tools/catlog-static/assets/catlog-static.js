@@ -78,6 +78,8 @@
     filtersAwayForRecord: null,
     // The table's column widths at its last fit, which a sort starts from (keepColumnWidths): { room, keys, widths }.
     columnAnchor: null,
+    // The filter pass running now (applyFilters' promise), or null: an export waits for it (handleCsvExport).
+    filterPass: null,
   };
   const EMPTY_VALUE = "—";
   // What a reader sees when a record's file cannot be used: it belongs to another snapshot, or lacks the record.
@@ -3801,6 +3803,9 @@
       state.filterTimerPending = false;
       await ensureCurrentFilters();
     }
+    // A pass still running (a header sort, a ticked filter) finishes first, so the file follows the order and filters
+    // the table is about to show; a pass that a newer one replaced hands over to it.
+    while (state.filterPass) await state.filterPass.catch(() => false);
     const rows = scope === "all" ? state.filtered : currentPageRows();
     if (!rows.length) {
       syncExportControls();
@@ -11068,8 +11073,21 @@
     return entry.promise;
   }
 
+  // Each pass is kept in state.filterPass while it runs, so an export started meanwhile waits for the order and filters it
+  // brings (round 17 fix pass: a header sort's cooperative sort takes 0.2-0.5 s on 186k records, longer on a phone, and
+  // "All matching records" taken in that time saved the old order).
+  function applyFilters(options = {}) {
+    const pass = runFilters(options);
+    state.filterPass = pass;
+    const settle = () => {
+      if (state.filterPass === pass) state.filterPass = null;
+    };
+    pass.then(settle, settle);
+    return pass;
+  }
+
   // keepColumnWidths: a new order of the same results (changeSort) keeps the columns' widths (keepTableColumns).
-  async function applyFilters({ resetPage = true, runId = null, keepColumnWidths = false } = {}) {
+  async function runFilters({ resetPage = true, runId = null, keepColumnWidths = false } = {}) {
     const filterRunId = runId == null ? ++state.filterRunId : runId;
     const recordsGeneration = state.recordsGeneration;
     const controls = filterControlState();
