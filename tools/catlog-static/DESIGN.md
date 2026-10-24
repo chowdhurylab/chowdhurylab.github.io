@@ -1875,3 +1875,7 @@ tools/site_patches/20261023-site-round17-brief.md, section 5.
   Safari's -webkit-hyphenate-limit-before/after), and a table that scrolls sideways anyway (beside a record at 1024px)
   gives a name column room for its longest capitalized word, which browsers do not hyphenate and would otherwise break
   anywhere ("Acetylcyclohexan" / "e").
+- The review result's badge and a number set as "a × 10ⁿ" carry role="img" with their aria-label (ARIA names no plain
+  span; VoiceOver and NVDA's browse mode skipped them, and the aria-hidden number with them), in the table, the record
+  and the Guide; CSS-drawn separators and marks ("·" between tags, the phone card's "·", the "!" of a flag and a chip,
+  the ↗ after a reference link) have empty alt text (content:"…" / ""), so readers skip them.

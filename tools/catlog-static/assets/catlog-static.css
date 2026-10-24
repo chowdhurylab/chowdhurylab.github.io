@@ -653,7 +653,7 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
 .chip-check { color:var(--checked) }
 .chip-check .check-icon { width:12px; height:12px; margin-right:2px; vertical-align:-2px }
 .chip-flag { display:inline-grid; width:12px; height:12px; margin:0 4px 1px 0; place-items:center; border-radius:50%; background:var(--caution-mark); box-shadow:inset 0 0 0 1px var(--caution-ring); color:var(--text); font-size:var(--fs-12); font-weight:600; line-height:1; vertical-align:middle }
-.chip-flag::before { content:"!" }
+.chip-flag::before { content:"!"; content:"!" / "" }
 .filter-chip .db-mark { width:8px; height:8px; margin:0 4px 1px 0; vertical-align:middle }
 .filter-chip:hover { border-color:var(--accent) }
 .filter-chip:hover .chip-x { color:var(--accent) }
@@ -788,7 +788,7 @@ td.c-form { display:none }
 /* A caution: a tan "!" disc beside the value (BPG tan with its 1px darker ring, the "!" in ink); the words are in its
    tooltip. */
 .value-flag { position:relative; display:inline-grid; flex:0 0 14px; place-items:center; align-self:center; width:14px; height:14px; border-radius:50%; background:var(--caution-mark); box-shadow:inset 0 0 0 1px var(--caution-ring); color:var(--text); cursor:help }
-.value-flag::before { content:"!"; font-size:var(--fs-12); font-weight:600; line-height:1 }
+.value-flag::before { content:"!"; content:"!" / ""; font-size:var(--fs-12); font-weight:600; line-height:1 }
 
 /* Placeholder rows while the first records load. */
 .skeleton-row, .skeleton-row:hover { cursor:default; background:var(--bg) }
@@ -829,7 +829,7 @@ td.c-status { text-align:left }
 .state-badge.disputed { --status-ink:var(--st-disputed-ink) }
 .state-tags { max-width:100%; overflow:hidden; text-overflow:ellipsis; color:var(--muted); font-size:var(--fs-12); line-height:var(--lh-12) }
 /* No spaces in the separator, so each tag stays one box; it stays grey beside a coloured tag. */
-.state-tag + .state-tag::before { content:"\00b7"; margin:0 3px; color:var(--muted); font-weight:400 }
+.state-tag + .state-tag::before { content:"\00b7"; content:"\00b7" / ""; margin:0 3px; color:var(--muted); font-weight:400 }
 /* Read from the paper's words in its dark cyan (the counts band's number, the record's status line, its chip, the
    sidebar's option, the Guide): the source is said in words, never by a square. */
 .state-tag.source-paper { color:var(--src-paper-ink) }
@@ -917,7 +917,7 @@ body.detail-open .detail-panel { display:block }
 .paper-records-sep, .paper-records-only { color:var(--muted) }
 /* A long DOI breaks inside the panel instead of widening it. */
 .reference-link { max-width:100%; overflow-wrap:anywhere; text-decoration-line:underline; text-decoration-color:var(--accent-line); text-underline-offset:2px }
-.reference-link::after { content:"\2197"; display:inline-block; margin-left:4px; color:var(--muted); font-size:var(--fs-12); text-decoration:none }
+.reference-link::after { content:"\2197"; content:"\2197" / ""; display:inline-block; margin-left:4px; color:var(--muted); font-size:var(--fs-12); text-decoration:none }
 .identity-how { color:var(--text-2) }
 /* The Guide link after the Method sentence moves to the next line whole when it does not fit, and wraps only when a line
    is narrower than the link (a phone of 361-389px held it on one line past the panel's edge). */
@@ -940,7 +940,7 @@ body.detail-open .detail-panel { display:block }
    it off the panel's edges). */
 .detail-status { display:flex; flex-wrap:wrap; align-items:center; gap:2px 12px; margin-top:2px; overflow-x:clip }
 .detail-status > span { position:relative; white-space:nowrap }
-.detail-status > span + span::before { content:"\00b7"; position:absolute; top:0; right:100%; width:12px; color:var(--muted); font-weight:400; text-align:center }
+.detail-status > span + span::before { content:"\00b7"; content:"\00b7" / ""; position:absolute; top:0; right:100%; width:12px; color:var(--muted); font-weight:400; text-align:center }
 .detail-status-word { color:var(--status-ink,var(--text)); font-weight:600 }
 .detail-status > .detail-status-checked { margin-left:-6px; color:var(--checked); font-weight:500 }
 .detail-status > .detail-status-checked::before { content:none }
@@ -2392,7 +2392,7 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
   /* Each wraps to two lines before it is cut, so cards that differ only in their substrate read apart on a phone (the
      full name stays in the title). */
   #recordsBody :is(td.c-organism,td.c-substrate) .clamp-2 { display:-webkit-box; max-height:none; overflow:hidden; -webkit-box-orient:vertical; -webkit-line-clamp:2; overflow-wrap:anywhere; white-space:normal }
-  #recordsBody td.c-substrate .clamp-2::before { content:"\00b7"; margin:0 4px }
+  #recordsBody td.c-substrate .clamp-2::before { content:"\00b7"; content:"\00b7" / ""; margin:0 4px }
   /* The variant line comes right under the name, as in the table (the name keeps its two lines), then organism ·
      substrate and any note under them: a note never parts a variant from its enzyme. */
   #recordsBody .primary-cell .enzyme-form { display:none }
@@ -2813,7 +2813,7 @@ body:is(.stats-open,.guide-open,.team-open) .app-header { grid-template-columns:
 .guide-view .guide-status-list .state-label { display:inline-flex; align-items:center; gap:4px; font-weight:500 }
 .guide-view .guide-status-list .state-tags { color:var(--muted); font-size:var(--fs-14); line-height:var(--lh-14) }
 .guide-view .guide-status-list .state-tags:empty { display:none }
-.guide-view .guide-status-list .state-tag + .state-tag::before { content:" · " }
+.guide-view .guide-status-list .state-tag + .state-tag::before { content:" · "; content:" · " / "" }
 .guide-view .guide-status-list dd { margin:0 }
 .guide-view .guide-details { margin:20px 0 0 }
 .guide-view .guide-details > summary { color:var(--accent); font-weight:500; cursor:pointer }
