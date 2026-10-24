@@ -11459,6 +11459,16 @@
       // when it shows the same records.
       const shownKeys = [...body.querySelectorAll("tr[data-key]")].map((rowElement) => rowElement.dataset.key);
       if (shownKeys.length === pageRows.length && pageRows.every((row, index) => row.record_key === shownKeys[index])) {
+        // A record opened or closed meanwhile (the index can take seconds to finish) still marks its row, and the columns
+        // still fit the table's width beside it (round 17: opened then, the table kept the full width's columns, its
+        // values out of view).
+        body.querySelectorAll("tr[data-key]").forEach((rowElement) => {
+          const selected = rowElement.dataset.key === state.selectedKey;
+          rowElement.classList?.toggle?.("selected", selected);
+          rowElement.setAttribute?.("aria-selected", String(selected));
+          rowElement.setAttribute?.("tabindex", rowElement.dataset.key === activeRowKey ? "0" : "-1");
+        });
+        fitTableColumns();
         return;
       }
     }
