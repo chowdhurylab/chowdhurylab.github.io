@@ -5382,11 +5382,15 @@ def check_layout(driver, browser, url, route_label):
                 assert marks and all(mark["first"] == "not re-read" and mark["up"] and not mark["tag"] and mark["tagIn"]
                                      for mark in marks), f"At 320px each card shows human-checked as the check after the result: {marks}"
                 results["phone-320-card-tags"] = True
-            # 360-389px with a filter on (the Filters count): the buttons narrow so the menu still shows "Review result"
-            # whole (its text, padding and arrow), with Sort's arrow beside it (the word "Sort" from 390px, or with no filter).
-            for width in (360, 372, 389):
+            # From 360px the menu shows "Review result" whole (its text, padding and arrow) in this browser's font, DejaVu
+            # Sans on Linux, with or without a filter on (the Filters count): "Sort" gives way to its arrow to 389px, and
+            # with a filter to 409px with narrower buttons (round 17 fix pass: "Review resu" at 360px with no filter, and
+            # at 390px with one).
+            for width, address in ((360, "#browse"), (372, "#browse"), (389, "#browse"), (390, "#browse"),
+                                   (360, "#browse?metric=kcat"), (372, "#browse?metric=kcat"), (389, "#browse?metric=kcat"),
+                                   (390, "#browse?metric=kcat"), (409, "#browse?metric=kcat"), (410, "#browse?metric=kcat")):
                 set_browse_viewport(driver, browser, width, 800)
-                open_page("#browse?metric=kcat")
+                open_page(address)
                 sort = driver.execute_script("""
                     const top = selector => Math.round(document.querySelector(selector).getBoundingClientRect().top);
                     const select = document.getElementById('sortSelect');
@@ -5405,7 +5409,7 @@ def check_layout(driver, browser, url, route_label):
                 """)
                 assert (sort["text"] == "Review result" and sort["width"] >= sort["need"] and sort["label"]
                         and max(sort["tops"]) - min(sort["tops"]) <= 2 and not sort["scroll"]), (
-                    f"At {width}px with a filter the Sort menu fits: {sort}")
+                    f"At {width}px ({address}) the Sort menu fits: {sort}")
             results["phone-320-toolbar"] = True
     except Exception:
         driver.save_screenshot(str(OUTPUT / f"{browser}-{route_label}-layout-failure.png"))
