@@ -115,7 +115,8 @@ Start with the table, not a landing page. The page is one grid on a 4px spacing
 scale with 24px gutters (16px below 1024px): a 56px header, the counts band (a 74px card from 1024px),
 then [filter sidebar | table | open record]. Off the main site (the GitHub Pages copy, offline copies), one 13px line
 on --surface-2 above the header says "CatLog's main site is now catlog.structf.studio", its link keeping the visitor's
-view (2026-10-24); the main site hides it. Rules are 1px --line between regions
+view (2026-10-24); the main site hides it, and a short window from 641px (700px tall or less) drops it, as the line
+over the counts card goes at 640px, so the table keeps its 340px and the page does not scroll as a whole. Rules are 1px --line between regions
 and --line-soft inside them; a crisp, short shadow (--shadow, 2px 8px) only where something floats above the page:
 menus, dialogs, the phone sheet, the record drawer and Stats' tooltip line. Round 14 (the user's colleague: "it looks a
 bit AI-ish, with the glow"): a calm, editorial look, like a scientific reference database (UniProt, PDB, a Nature data
