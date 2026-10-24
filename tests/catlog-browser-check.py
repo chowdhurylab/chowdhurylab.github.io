@@ -4174,6 +4174,39 @@ return {rule: meta.getBoundingClientRect().left, numbers,
 """
 
 
+# The table's names that break badly between their first two lines: a line that is only a locant ("4-"), or a break
+# inside a capitalized word (browsers do not hyphenate those, so it breaks anywhere: "Acetylcyclohexan" / "e").
+NAME_PIECES_SCRIPT = r"""
+const locantOnly = /^(?:\d+(?:[,'′]\d+)*['′]*|[A-Za-z])-$/;
+const bad = [];
+const range = document.createRange();
+for (const name of document.querySelectorAll('#recordsBody tr[data-key] :is(td.c-enzyme strong, td.c-organism .clamp-2, td.c-substrate .clamp-2)')) {
+  if (!name.getClientRects().length) continue;
+  const lines = [];
+  const walker = document.createTreeWalker(name, NodeFilter.SHOW_TEXT);
+  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+    for (let i = 0; i < node.data.length; i += 1) {
+      range.setStart(node, i);
+      range.setEnd(node, i + 1);
+      const rect = range.getClientRects()[0];
+      if (!rect) continue;
+      const last = lines[lines.length - 1];
+      if (!last || rect.top > last.top + 4) lines.push({top: rect.top, text: node.data[i]});
+      else last.text += node.data[i];
+    }
+  }
+  if (lines.length < 2) continue;
+  const [first, second] = [lines[0].text, lines[1].text];
+  if (locantOnly.test(first.trim())) bad.push(['locant alone', first, second]);
+  if (/\p{L}$/u.test(first) && /^\p{L}/u.test(second)) {
+    const word = first.match(/[^\s\-,/]*$/)[0] + second.match(/^[^\s\-,/]*/)[0];
+    if (/^\p{Lu}/u.test(word)) bad.push(['capitalized word broken', first, second]);
+  }
+}
+return bad;
+"""
+
+
 def check_layout(driver, browser, url, route_label):
     """The page grid: a 56px header, the counts band (28px numbers, 13px labels, a 12px line of context), the filter sidebar beside the table
     (open from 1200px and the rail from 1024 to 1199px, a viewer's other choice remembered; the rail while a record is
@@ -4891,17 +4924,32 @@ def check_layout(driver, browser, url, route_label):
                     viewTop: box.top + wrap.clientTop, width: parseFloat(after.width), z: after.zIndex};
         """)
         assert cue["shown"] and abs(cue["cueRight"] - cue["viewRight"]) <= 1 and abs(cue["cueTop"] - cue["viewTop"]) <= 1, cue
-        # The table scrolls anyway, so the sticky Enzyme column narrows to its 136px minimum or its longest word.
+        # The table scrolls anyway, so the sticky Enzyme column narrows to its 136px minimum or its longest word (a leading
+        # locant counts with its word) or variant line (up to 24 characters).
         enzyme = driver.execute_script("""
             const names = [...document.querySelectorAll('#recordsBody tr[data-key] td.c-enzyme strong')];
             const font = getComputedStyle(names[0]);
             const context = document.createElement('canvas').getContext('2d');
             context.font = `${font.fontStyle} ${font.fontWeight} ${font.fontSize} ${font.fontFamily}`;
-            const word = Math.max(...names.flatMap(name => name.textContent.split(/\\s+|(?<=[-,/])/)).map(part => context.measureText(part).width));
+            const locant = /^(?:\\d+(?:[,'′]\\d+)*['′]*|[A-Za-z])-(?=[^\\s-])/;
+            const words = names.flatMap(name => name.textContent.split(/\\s+/).flatMap(word => {
+                const lead = word.match(locant)?.[0] || '';
+                const parts = word.slice(lead.length).split(/(?<=[-,/])/);
+                parts[0] = lead + parts[0];
+                return parts;
+            }));
+            const word = Math.max(...words.map(part => context.measureText(part).width));
+            const forms = [...document.querySelectorAll('#recordsBody tr[data-key] td.c-enzyme .enzyme-form')];
+            let form = 0;
+            if (forms.length) {
+                const formFont = getComputedStyle(forms[0]);
+                context.font = `${formFont.fontStyle} ${formFont.fontWeight} ${formFont.fontSize} ${formFont.fontFamily}`;
+                form = Math.min(context.measureText('0'.repeat(24)).width, Math.max(...forms.map(line => line.scrollWidth)));
+            }
             const cell = getComputedStyle(document.querySelector('#recordsBody td.c-enzyme'));
             const padding = parseFloat(cell.paddingLeft) + parseFloat(cell.paddingRight) + 2;
             return {width: document.querySelector('#recordTableWrap thead th.c-enzyme').getBoundingClientRect().width,
-                    limit: Math.max(136, Math.ceil(word + padding))};
+                    limit: Math.max(136, Math.ceil(Math.max(word, form) + padding))};
         """)
         assert enzyme["width"] <= enzyme["limit"] + 1, enzyme
         # › steps one column: the next column's left edge meets the sticky Enzyme column (stops measured in the table's
@@ -4927,6 +4975,19 @@ def check_layout(driver, browser, url, route_label):
         wait.until(lambda d: not detail_open())
         driver.execute_script("try { localStorage.removeItem('catlog.filtersCollapsed'); } catch (e) {}")
         results["record-1024"] = True
+        # Beside a record at 1024 no name breaks into a tiny piece (round 17 fix pass: "4-" / "Aminoacetophe…",
+        # "Acetylcyclohexan" / "e"): a locant that begins a word keeps to it, and in a table that scrolls anyway a
+        # capitalized word, which browsers do not hyphenate, has room for itself. Checked on the first two lines (the rest
+        # is clamped), in the default order and among the records not yet re-read (BRENDA's capitalized substrates).
+        for view in ("", "#browse?source=databases"):
+            open_page(view)
+            driver.find_element(By.CSS_SELECTOR, "#recordsBody tr[data-key] .primary-cell").click()
+            wait.until(lambda d: detail_open())
+            pieces = driver.execute_script(NAME_PIECES_SCRIPT)
+            assert not pieces, f"Names beside a record at 1024 ({view or 'default'}) break into tiny pieces: {pieces[:4]}"
+            ActionChains(driver).send_keys(Keys.ESCAPE).perform()
+            wait.until(lambda d: not detail_open())
+        results["name-pieces-1024"] = True
         # 1024: the header is still one 56px line (the short links out, no tagline), on Browse and on Team.
         set_browse_viewport(driver, browser, 1024, 768)
         open_page()

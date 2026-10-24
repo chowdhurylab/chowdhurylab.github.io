@@ -1868,3 +1868,9 @@ tools/site_patches/20261023-site-round17-brief.md, section 5.
   ("variant A41P/H101Y/H236K"), as for a word of a name (formLineWidth): its starting width, its one-line width and its
   longest word all include it, and a sort keeps it (keepColumnWidths). A longer list still ends in "…" with the whole
   list in its title and the record.
+- Names never break into tiny pieces: a locant that begins a word ("4-", "2,4-", "3'-", "L-") keeps to it (nameHtml: a
+  span.locant holds it with the next letter; the text, copy and search keep the plain hyphen; the fitting measures the
+  word whole, nameWords), a hyphenated word keeps 3 letters on each side and 7 in all (hyphenate-limit-chars 7 3 3,
+  Safari's -webkit-hyphenate-limit-before/after), and a table that scrolls sideways anyway (beside a record at 1024px)
+  gives a name column room for its longest capitalized word, which browsers do not hyphenate and would otherwise break
+  anywhere ("Acetylcyclohexan" / "e").
