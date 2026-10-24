@@ -204,8 +204,10 @@ assert.ok(cautionsHtml.includes('the fastest known enzymes, such as catalase, re
       `<meta property="og:description" content="CatLog snapshot dated ${expectedSnapshotDate} with ${expectedRowCount} enzyme kinetics records, review results, source links, protein sequences and substrate structures." />`,
     ].some((tag) => pageHtml.includes(tag)),
   );
-  assert.ok(pageHtml.includes(`<meta property="og:url" content="https://chowdhurylab.github.io/tools/${publicPath}" />`));
-  assert.ok(pageHtml.includes(`<link rel="canonical" href="https://chowdhurylab.github.io/tools/${publicPath}" />`));
+  // (2026-10-24, the user: catlog.structf.studio is CatLog's main site; the GitHub page and its aliases say so)
+  assert.ok(pageHtml.includes(`<meta property="og:url" content="https://catlog.structf.studio/" />`), publicPath);
+  assert.ok(pageHtml.includes(`<link rel="canonical" href="https://catlog.structf.studio/" />`), publicPath);
+  assert.match(pageHtml, /<p id="mainSiteNote" class="main-site-note">CatLog's main site is now <a href="https:\/\/catlog\.structf\.studio\/">catlog\.structf\.studio<\/a>\.<\/p>/);
   assert.match(pageHtml, /<link rel="icon" href="\/images\/rz\.png" \/>/);
   // (round 17, the user: the license and snapshot said once, in the Guide's License and citation section, which Browse's
   // footer line links to: the license, the snapshot date, the Data ID and the citation in view, the rest folded)
@@ -1256,11 +1258,13 @@ narrowDetailPanel = false;
     document.querySelector = (selector) => metadata[selector] || oldQuerySelector(selector);
     for (const initial of ["catlog-latest.html", "catlog-stats.html"]) {
       window.location.href = `https://example.test/tools/${initial}?ref=paper&release=old#guide`;
+      canonical.setAttribute("href", "https://catlog.structf.studio/");
+      shareUrl.setAttribute("content", "https://catlog.structf.studio/");
       for (const view of ["stats", "guide", "browse"]) {
         api.renderView(view);
-        const url = `https://example.test/tools/catlog-${view === "stats" ? "stats" : "latest"}.html`;
-        assert.equal(canonical.getAttribute("href"), url);
-        assert.equal(shareUrl.getAttribute("content"), url);
+        // An alias page keeps naming the main site and titles its preview after the view.
+        assert.equal(canonical.getAttribute("href"), "https://catlog.structf.studio/");
+        assert.equal(shareUrl.getAttribute("content"), "https://catlog.structf.studio/");
         assert.equal(shareTitle.getAttribute("content"), document.title);
       }
     }

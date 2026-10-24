@@ -70,15 +70,7 @@ def build_alias(source: str, *, stats: bool = False) -> str:
     alias = alias.replace('href="#guide"', 'href="catlog-latest.html#guide"')
     alias = alias.replace('href="#team"', 'href="catlog-latest.html#team"')
     alias = alias.replace('href="#stats"', 'href="catlog-stats.html"')
-    public_url = f'https://chowdhurylab.github.io/tools/catlog-{"stats" if stats else "latest"}.html'
-    alias = alias.replace(
-        '<link rel="canonical" href="https://chowdhurylab.github.io/tools/catlog-static/"',
-        f'<link rel="canonical" href="{public_url}"',
-    )
-    alias = alias.replace(
-        '<meta property="og:url" content="https://chowdhurylab.github.io/tools/catlog-static/"',
-        f'<meta property="og:url" content="{public_url}"',
-    )
+    # The canonical and og:url stay index.html's: CatLog's main site, catlog.structf.studio (2026-10-24).
     if stats:
         # Each edit must happen exactly once: a reordered attribute would otherwise ship a Stats page that first
         # paints as Browse.

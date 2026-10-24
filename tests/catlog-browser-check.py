@@ -6621,13 +6621,23 @@ def check(driver, browser, url):
     assert not urlsplit(driver.current_url).fragment
 
     def check_metadata(view):
-        expected_path = stats_path if view == "stats" else urlsplit(url).path
-        expected_url = urljoin(url, expected_path)
+        # (2026-10-24: every view of every copy names CatLog's main site)
+        expected_url = "https://catlog.structf.studio/"
         assert driver.find_element(By.CSS_SELECTOR, 'link[rel="canonical"]').get_attribute("href") == expected_url
         assert driver.find_element(By.CSS_SELECTOR, 'meta[property="og:url"]').get_attribute("content") == expected_url
         assert driver.find_element(By.CSS_SELECTOR, 'meta[property="og:title"]').get_attribute("content") == driver.title
 
     check_metadata("stats")
+    # (2026-10-24) Off the main site one line at the top says where it is; its link keeps the view the visitor is on.
+    note = driver.find_element(By.ID, "mainSiteNote")
+    assert note.is_displayed(), "The main-site note is hidden off the main site"
+    note_href = driver.execute_script("""
+        const link = arguments[0].querySelector('a');
+        link.addEventListener('click', (event) => event.preventDefault(), {once: true});
+        link.click();
+        return link.href;
+    """, note)
+    assert note_href == "https://catlog.structf.studio/#stats", note_href
     for view in ("browse", "guide", "stats", "team"):
         link = driver.find_element(By.ID, view + "Button")
         reported_tag = link.tag_name
