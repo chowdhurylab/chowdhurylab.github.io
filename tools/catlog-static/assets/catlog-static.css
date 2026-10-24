@@ -590,7 +590,13 @@ body:is(.stats-open,.guide-open,.team-open) .catalog-load-progress { display:non
 .records-header { display:grid; grid-template-columns:minmax(0,1fr) auto; min-height:48px; flex-shrink:0; align-items:start; gap:var(--sp-3); border-bottom:1px solid var(--line); background:var(--bg); padding:7px var(--sp-4) }
 .records-title { display:flex; flex-wrap:wrap; align-items:center; gap:var(--sp-2) var(--sp-3); min-width:0; min-height:30px; padding-top:2px }
 .records-title > span { color:var(--text-2); font-size:var(--fs-13) }
-.records-tools { display:flex; align-items:center; gap:var(--sp-2); color:var(--text-2); font-size:var(--fs-13) }
+/* The tools (Columns, Export) keep the toolbar's last column, so Export ends the row at every width, with or without
+   a chip beside it (round 17 fix pass: with the title row empty from 1024px the tools fell into the first column and
+   Export sat at the left at 1280-1700px but at the right beside a filter or a record). */
+.records-tools { display:flex; grid-column:-2; align-items:center; gap:var(--sp-2); color:var(--text-2); font-size:var(--fs-13) }
+@media (min-width: 1024px) {
+  .records-tools > .export-menu { margin-left:auto }
+}
 /* Sorting is by the column headers; phones, whose cards have none, get a compact control instead (Sort ↑ reverses the
    order, the menu picks the column). */
 .sort-control { display:none; min-width:0; align-items:center; gap:var(--sp-2) }

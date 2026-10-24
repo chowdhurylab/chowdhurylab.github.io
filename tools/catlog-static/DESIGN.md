@@ -490,7 +490,8 @@ and Download share the first line (below 360px the header's gaps are 8px, so the
 only a wide system font puts them on two lines at the right, never over the brand), the four tabs share the second
 across the
 width, then search. The table's toolbar (48px) holds the active filters as chips
-with Clear all at the left and Columns and Export at the right (when the
+with Clear all at the left and Columns and Export at the right, Export ending the row at every width from 1024px,
+with or without a chip or a record beside it (when the
 records are 721 to 1000px wide, beside the open sidebar or a record on a laptop,
 Export drops "results" and the chips stay on that one 48px row
 while they fit beside them; when they do not, they take the full width under it,
