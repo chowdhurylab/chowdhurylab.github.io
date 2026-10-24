@@ -1521,7 +1521,7 @@ assert.match(guideHtml, /<dt><span class="state-tag">not <span class="nowrap">re
   assert.match(row[1], /<span class="guide-row-span gr-record-span" aria-hidden="true"><span>1 record<\/span><\/span>/);
   assert.deepEqual([...row[1].matchAll(/<span class="guide-row-cell gr-(kcat|km|eff) num">/g)].map((match) => match[1]), ["kcat", "km", "eff"]);
   // The row's badge is the table's (round 17's look): the word, human-checked's green check after it, "from paper" below.
-  assert.match(row[1], /<span class="state-badge accepted" data-status="verified" aria-label="Accepted, Read from the paper, human-checked"><span class="state-label">Accepted<span class="state-check" role="img" aria-label="human-checked"><svg class="check-icon"[^>]*>[\s\S]*?<\/svg><\/span><\/span><span class="state-tags"><span class="state-tag source-paper">from paper<\/span><\/span><\/span>/);
+  assert.match(row[1], /<span class="state-badge accepted" role="img" data-status="verified" aria-label="Accepted, Read from the paper, human-checked"><span class="state-label">Accepted<span class="state-check" role="img" aria-label="human-checked"><svg class="check-icon"[^>]*>[\s\S]*?<\/svg><\/span><\/span><span class="state-tags"><span class="state-tag source-paper">from paper<\/span><\/span><\/span>/);
   assert.doesNotMatch(row[1], /src-mark/);
   const terms = Object.fromEntries([...words.match(/<dl class="guide-term-list guide-words-list">([\s\S]*?)<\/dl>/)[1]
     .matchAll(/<dt>([^<]*)<\/dt><dd>([\s\S]*?)<\/dd>/g)].map(([, term, text]) => [term, text.replace(/<[^>]+>/g, "")]));
@@ -4034,7 +4034,7 @@ assert.equal(api.roundingFigures("7.333"), 0, "Km is never divided by 60");
   assert.match(html, /<span class="vt-number">135\.0<\/span><\/td><td class="vt-unit">s<sup>−1<\/sup><\/td><td class="vt-printed">135\.0 ± 15\.1 sec−1/, "Values keep the printed zero");
   assert.match(html, /<span class="vt-number">0\.03<\/span><\/td><td class="vt-unit">mM<\/td>/,
     "a printed integer's zero (30 µM) is no printed figure: the stored digits show, as in the table");
-  assert.match(html, /<span class="vt-number"><span class="scientific-number" aria-label="4\.5 times 10 to the power of 3"><span aria-hidden="true">4\.5 &times;&nbsp;10<sup>3<\/sup><\/span><\/span><\/span><\/td><td class="vt-unit">mM<sup>−1<\/sup> s<sup>−1<\/sup><\/td>/,
+  assert.match(html, /<span class="vt-number"><span class="scientific-number" role="img" aria-label="4\.5 times 10 to the power of 3"><span aria-hidden="true">4\.5 &times;&nbsp;10<sup>3<\/sup><\/span><\/span><\/span><\/td><td class="vt-unit">mM<sup>−1<\/sup> s<sup>−1<\/sup><\/td>/,
     "a value_display that is not the stored number is not used; the stored 4500 has 2 figures, so it reads 4.5 × 10³");
   assert.match(html, /<caption>Printed in Table 1<\/caption>/, "a place every value shares is said once");
   assert.doesNotMatch(html, /class="vt-where/);

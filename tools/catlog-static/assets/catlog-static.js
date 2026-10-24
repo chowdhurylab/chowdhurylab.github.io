@@ -1620,7 +1620,9 @@
     const accessibleValue = `${coefficient} times 10 to the power of ${exponent}`;
     // "× 10" never breaks after the "×": a phone card's narrow value may break before it. A negative exponent's sign is a
     // minus sign (U+2212), as in every exponent the page sets.
-    return `<span class="scientific-number" aria-label="${escapeHtml(accessibleValue)}"><span aria-hidden="true">${escapeHtml(coefficient)} &times;&nbsp;10<sup>${escapeHtml(exponent.replace("-", "−"))}</sup></span></span>`;
+    // role="img" lets the label name the span in every screen reader (ARIA allows no name on a plain span; VoiceOver and
+    // NVDA's browse mode skipped it, and the aria-hidden number with it).
+    return `<span class="scientific-number" role="img" aria-label="${escapeHtml(accessibleValue)}"><span aria-hidden="true">${escapeHtml(coefficient)} &times;&nbsp;10<sup>${escapeHtml(exponent.replace("-", "−"))}</sup></span></span>`;
   }
 
   const UNIT_NOT_RECORDED_LABEL = "no unit";
@@ -2338,7 +2340,8 @@
     const checkHtml = checked ? `<span class="state-check" role="img" aria-label="human-checked">${CHECK_ICON_HTML}</span>` : "";
     const fullTag = { [SOURCE_CATLOG_TAG]: SOURCE_CATLOG_LABEL, [SOURCE_DATABASES_TAG]: SOURCE_DATABASES_LABEL };
     const name = [label, ...tags.map((tag) => fullTag[tag] || tag), checked ? "human-checked" : ""].filter(Boolean).join(", ");
-    return `<span class="state-badge ${className}" data-status="${escapeHtml(row.verification_status || "")}" title="${escapeHtml(fullDescription)}" aria-label="${escapeHtml(name)}"><span class="state-label">${escapeHtml(label)}${checkHtml}</span><span class="state-tags">${tagsHtml}</span></span>`;
+    // (role="img": the accessible name is read in every screen reader, as scientificValueHtml's)
+    return `<span class="state-badge ${className}" role="img" data-status="${escapeHtml(row.verification_status || "")}" title="${escapeHtml(fullDescription)}" aria-label="${escapeHtml(name)}"><span class="state-label">${escapeHtml(label)}${checkHtml}</span><span class="state-tags">${tagsHtml}</span></span>`;
   }
 
   function isContentHashedDataAsset(src) {
