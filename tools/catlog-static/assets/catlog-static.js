@@ -76,6 +76,8 @@
     // The filter sidebar collapsed to its rail for a record (1024-1599px), with its scroll position: it comes back when
     // the record closes.
     filtersAwayForRecord: null,
+    // The table's column widths at its last fit, which a sort starts from (keepColumnWidths): { room, keys, widths }.
+    columnAnchor: null,
   };
   const EMPTY_VALUE = "—";
   // What a reader sees when a record's file cannot be used: it belongs to another snapshot, or lacks the record.
@@ -3004,7 +3006,7 @@
     setSort(sort);
     announceSort();
     state.pendingPage = 0;
-    applyFiltersInBackground();
+    applyFiltersInBackground({ keepColumnWidths: true });
   }
 
   // A screen reader hears the new order (the counts, which it also hears, do not change).
@@ -11042,7 +11044,8 @@
     return entry.promise;
   }
 
-  async function applyFilters({ resetPage = true, runId = null } = {}) {
+  // keepColumnWidths: a new order of the same results (changeSort) keeps the columns' widths (keepTableColumns).
+  async function applyFilters({ resetPage = true, runId = null, keepColumnWidths = false } = {}) {
     const filterRunId = runId == null ? ++state.filterRunId : runId;
     const recordsGeneration = state.recordsGeneration;
     const controls = filterControlState();
@@ -11072,7 +11075,7 @@
       resetDetail();
     }
     renderSummary();
-    renderRows();
+    renderRows({ keepColumnWidths });
     if (closedWithFocus) focusResults();
     else if (refocus != null && focusLost()) focusRecordRow(refocus);
     openRecordFromLocation();
@@ -11254,7 +11257,7 @@
     return `<small class="condition-note">${temperatureFlag}${note ? ` <span title="${escapePublic(title)}">· ${escapePublic(note)}</span>` : ""}</small>`;
   }
 
-  function renderRows() {
+  function renderRows({ keepColumnWidths = false } = {}) {
     document.body.classList.remove("catalog-load-failed");
     const totalPages = Math.max(1, Math.ceil(state.filtered.length / state.pageSize));
     state.page = Math.min(Math.max(1, state.page), totalPages);
@@ -11364,7 +11367,8 @@
       </tr>
     `;
     }).join("");
-    fitTableColumns();
+    if (keepColumnWidths) keepTableColumns();
+    else fitTableColumns();
     const rowElements = [...body.querySelectorAll("tr[data-key]")];
     rowElements.forEach((rowElement) => {
       // Hovering or focusing a row a moment starts loading its record, so opening it is immediate.
@@ -11457,6 +11461,213 @@
     updateTableScrollControls();
   }
 
+  // A new order of the same results (a header click, the phone's Sort) keeps the columns' widths as far as it can, so a
+  // second click where the first one was sorts the same column the other way (round 17 fix pass: each sort had refitted
+  // every column to the new page and moved the headers; in a spreadsheet they never move). Each sort starts from the
+  // widths of the table's last fit (state.columnAnchor), so each order has one layout, and a column sorted one way and
+  // then the other goes back and forth between two places, each holding the other's centre. Only the room the new page
+  // needs moves, and it comes from the name columns (Enzyme, Organism, Substrate), each down to its longest word:
+  // - a value, EC or Review result column at or before the sorted one grows from the names before the sorted column, so
+  //   the sorted column's right edge (a value heading's words) stays;
+  // - a column after it grows from the names after it, then from the sorted column's right part when that is a name (its
+  //   heading's words sit at its left edge, which stays; it keeps over half its width). Short of room, each takes the
+  //   least it can do with (a value its widest number, a note such as "calc." wrapping under it), Review result's tag
+  //   line ends in "…" down to its review word (its title says it whole), and what is still missing moves the sorted
+  //   column left that far;
+  // - a name narrower than its longest word then takes what the names on its side have left (else it hyphenates).
+  // A number never breaks. The spot just clicked (the sorted heading's centre) stays on the sorted column: when the last
+  // fit's widths cannot keep it there, the widths on screen are the start, and when those cannot either, or the names
+  // cannot give enough, the table refits as for new results. Filters, the page size, a page turn, a resize, the sidebar
+  // and a record opening or closing refit as before.
+  const SORT_FIT_COLUMNS = { evidence: "state", enzyme: "enzyme", ec_number: "ec", organism: "organism", substrate: "substrate",
+    kcat: "kcat", km: "km", kcat_over_km: "efficiency" };
+  function keepTableColumns() {
+    if (!keepColumnWidths()) {
+      fitTableColumns();
+      return;
+    }
+    fitCardOrganisms();
+    updateTableScrollControls();
+  }
+
+  // The widest piece of a value cell that cannot wrap: its number, or one of the notes after it (an element's own box: a
+  // range around the "!" would also span its visually hidden words).
+  function widestPieceWidth(element) {
+    if (!element || typeof document.createRange !== "function") return 0;
+    const range = document.createRange();
+    return Math.max(0, ...[...element.childNodes].filter((node) => node.nodeType !== 3 || node.data.trim()).map((node) => {
+      if (node.nodeType === 1) return node.getBoundingClientRect().width;
+      range.selectNode(node);
+      return range.getBoundingClientRect().width;
+    }));
+  }
+
+  function keepColumnWidths() {
+    const table = $("recordTableWrap")?.querySelector?.("table");
+    const style = window.getComputedStyle;
+    if (!table || typeof style !== "function" || style(table).display !== "table") return false;
+    const cols = {};
+    table.querySelectorAll("col").forEach((col) => { cols[col.className.replace(/^col-/, "")] = col; });
+    if (!cols.open || FIT_COLUMNS.some((column) => !cols[column.key])) return false;
+    const rows = [...table.querySelectorAll("#recordsBody tr[data-key]")];
+    const columns = FIT_COLUMNS.filter((column) => style(cols[column.key]).display !== "none").map((column) => {
+      const cells = rows.map((row) => row.querySelector(column.cell)).filter(Boolean);
+      const first = cells.length ? style(cells[0]) : null;
+      const padding = first ? parseFloat(first.paddingLeft) + parseFloat(first.paddingRight) + 2 : 0;
+      return { ...column, width: parseFloat(cols[column.key].style.width), cells, padding };
+    });
+    if (!rows.length || columns.some((column) => !(column.width > 0) || !column.cells.length)) return false;
+    // What each column needs, measured with wrapping off (table.measuring): a name room for its longest word (word); a
+    // value, EC or Review result column its widest contents (content) and the least it can do with (least: a value's
+    // widest number or note, EC all of it, Review result its review word).
+    table.classList.add("measuring");
+    try {
+      columns.forEach((column) => {
+        if (column.shrink) {
+          column.words = column.cells.map((cell) => widestWordWidth(cell.firstElementChild || cell));
+          column.word = Math.max(column.min, Math.min(column.cap, Math.ceil(Math.max(...column.words) + column.padding)));
+          return;
+        }
+        const contents = column.cells.map((cell) => cell.querySelector(":scope > :not(.card-label)"));
+        const natural = Math.max(0, ...contents.map((content) => content?.getBoundingClientRect().width || 0));
+        column.content = Math.min(column.cap, Math.ceil(natural + column.padding));
+        column.least = column.key === "state"
+          ? statusFloor(table, column.cells, column.min, column.padding)
+          : (column.key === "ec" ? column.content
+            : Math.min(column.content, Math.ceil(Math.max(0, ...contents.map(widestPieceWidth)) + column.padding)));
+        if (column.key === "state") column.heading = Math.ceil(headingWidth(table, "thead th.c-status"));
+      });
+      columns.filter((column) => column.shrink).forEach((column) => {
+        column.heading = Math.ceil(headingWidth(table, `thead th${column.cell}`));
+      });
+    } finally {
+      table.classList.remove("measuring");
+    }
+    const sorted = columns.findIndex((column) => column.key === SORT_FIT_COLUMNS[sortParts(currentSort()).column]);
+    const current = columns.map((column) => column.width);
+    const anchor = state.columnAnchor;
+    const anchored = anchor && anchor.room === table.parentElement.clientWidth
+      && anchor.keys === columns.map((column) => column.key).join() ? anchor.widths : null;
+    // The spot just clicked: the sorted heading's centre now.
+    const spot = sorted < 0 ? null : current.slice(0, sorted).reduce((total, width) => total + width, 0) + current[sorted] / 2;
+    // A table that already scrolls sideways (beside a record from 1024px, a tablet) grows wider instead, and scrolls by
+    // as much as the sorted heading moved, so it stays where it was on the screen.
+    const wrap = table.parentElement;
+    const grow = table.offsetWidth > wrap.clientWidth + 1;
+    const widths = (anchored && sortedLayout(columns, anchored, sorted, spot, grow))
+      || sortedLayout(columns, current, sorted, spot, grow);
+    if (!widths) return false;
+    const added = widths.reduce((total, width) => total + width, 0) - current.reduce((total, width) => total + width, 0);
+    if (added) table.style.minWidth = `${Math.ceil((parseFloat(table.style.minWidth) || table.offsetWidth) + added)}px`;
+    // How far the sorted heading's words moved: a name's left edge, a value's right edge.
+    const edge = (list) => list.slice(0, sorted + (columns[sorted]?.shrink ? 0 : 1)).reduce((total, width) => total + width, 0);
+    const moved = grow && sorted >= 0 ? edge(widths) - edge(current) : 0;
+    columns.forEach((column, index) => {
+      column.width = widths[index];
+      cols[column.key].style.width = `${column.width}px`;
+    });
+    if (moved) wrap.scrollLeft += moved;
+    // Only a name with a word longer than its column is hyphenated; the others break between words.
+    columns.filter((column) => column.shrink).forEach((column) => column.cells.forEach((cell, index) => {
+      (cell.firstElementChild || cell).classList.toggle("hyphenate", column.words[index] + column.padding > column.width);
+    }));
+    return true;
+  }
+
+  // keepColumnWidths' layout from the given widths (the columns' measures, the sorted column's index, the spot that must
+  // stay on it, whether the table may grow wider): the new widths, or null when the names cannot give the room or the
+  // spot would leave the sorted column.
+  function sortedLayout(measured, start, sorted, spot, grow) {
+    // Room each column needs beyond its width (full), and what it can give (down to floor).
+    const columns = measured.map((column, index) => {
+      const width = start[index];
+      if (column.shrink) return { ...column, width, full: Math.max(0, column.word - width), floor: Math.min(width, column.word) };
+      return { ...column, width, full: Math.max(0, column.content - width), least: Math.max(0, column.least - width),
+        floor: Math.min(width, column.least) };
+    });
+    const at = sorted < 0 ? columns.length : sorted;
+    const slack = (column) => (column.full ? 0 : Math.max(0, column.width - column.floor));
+    const room = (groups) => groups.flat().reduce((total, column) => total + slack(column), 0);
+    const sum = (list, key) => list.reduce((total, column) => total + column[key], 0);
+    // Each group gives in proportion to its members' slack, the next group only what the one before cannot.
+    const give = (groups, amount) => {
+      let rest = amount;
+      for (const group of groups) {
+        const groupRoom = room([group]);
+        const take = Math.min(rest, groupRoom);
+        let left = take;
+        group.forEach((column) => {
+          const share = Math.min(left, Math.floor(take * slack(column) / (groupRoom || 1)));
+          column.width -= share;
+          left -= share;
+        });
+        for (const column of group) {
+          const more = Math.min(left, slack(column));
+          column.width -= more;
+          left -= more;
+        }
+        rest -= take - left;
+      }
+    };
+    // The sorted column, when it is a name, keeps its heading's words, its longest word and over half its width.
+    const sortedName = sorted >= 0 && columns[sorted].shrink ? columns[sorted] : null;
+    if (sortedName && !sortedName.full) {
+      sortedName.floor = Math.min(sortedName.width, Math.max(sortedName.floor, Math.ceil(sortedName.width / 2) + 1,
+        sortedName.heading));
+    }
+    const nearNames = [columns.filter((column, index) => column.shrink && index < at)];
+    const farNames = [columns.filter((column, index) => column.shrink && index > at), sortedName ? [sortedName] : []];
+    const values = columns.filter((column) => !column.shrink && column.full);
+    const near = values.filter((column) => columns.indexOf(column) <= at);
+    const far = values.filter((column) => columns.indexOf(column) > at);
+    // Whole contents where the names allow (or the table grows), else the least each can do with.
+    const nearKey = grow || sum(near, "full") <= room(nearNames) ? "full" : "least";
+    near.forEach((column) => { column.need = column[nearKey]; });
+    let farGivers = farNames;
+    if (grow || sum(far, "full") <= room(farNames)) far.forEach((column) => { column.need = column.full; });
+    else {
+      far.forEach((column) => { column.need = column.least; });
+      // Review result after the sorted column gives way down to its review word (its tags then end in "…").
+      const status = columns.find((column, index) => column.key === "state" && index > at);
+      if (status) {
+        status.full = 0;
+        farGivers = [...farNames, [status]];
+      }
+    }
+    // What the columns after the sorted one still lack moves the sorted column left: the names before it give that too.
+    // A table that may grow takes what the names cannot give from its new width (the columns before the sorted one then
+    // move it right).
+    const shift = grow ? 0 : Math.max(0, sum(far, "need") - room(farGivers));
+    if (!grow && sum(near, "need") + shift > room(nearNames)) return null;
+    give(farGivers, Math.min(room(farGivers), sum(far, "need") - shift));
+    give(nearNames, Math.min(room(nearNames), sum(near, "need") + shift));
+    values.forEach((column) => {
+      column.width += column.need;
+      column.full = 0;
+    });
+    // Then a name too narrow for its longest word takes what the names on its side have left (the sorted name from after
+    // it, then from before it).
+    columns.filter((column) => column.shrink && column.full).forEach((column) => {
+      const index = columns.indexOf(column);
+      const sides = index < at ? [nearNames] : index > at ? [farNames] : [farNames, nearNames];
+      let rest = column.full;
+      sides.forEach((groups) => {
+        const others = groups.map((group) => group.filter((other) => other !== column));
+        const take = Math.min(rest, room(others));
+        give(others, take);
+        column.width += take;
+        rest -= take;
+      });
+    });
+    const widths = columns.map((column) => column.width);
+    // (A table that grows scrolls the sorted heading back under the spot instead.)
+    if (sorted >= 0 && !grow) {
+      const left = widths.slice(0, sorted).reduce((total, width) => total + width, 0);
+      if (spot < left || spot > left + widths[sorted]) return null;
+    }
+    return widths;
+  }
+
   // Phone cards: an organism that takes two lines beside its substrate ("Arcticibacterium" / "luteifluviistationis") puts
   // the substrate on a line of its own under it, without the "·" (round 15 polish: the substrate's column had opened with
   // a dangling "· 1,2,3,4-tetra-O-"), as every card does at 360px and below. Every card is measured side by side first,
@@ -11485,6 +11696,7 @@
     if (!cols.open || FIT_COLUMNS.some((column) => !cols[column.key])) return;
     Object.values(cols).forEach((col) => { col.style.width = ""; });
     table.style.minWidth = "";
+    state.columnAnchor = null;
     const rows = [...table.querySelectorAll("#recordsBody tr[data-key]")];
     if (style(table).display !== "table") return;
     if (!rows.length) {
@@ -11573,6 +11785,9 @@
     }
     widths.forEach((column) => { cols[column.key].style.width = `${column.width}px`; });
     table.style.minWidth = `${Math.ceil(total() + arrow)}px`;
+    // What a sort lays its columns out from (keepColumnWidths).
+    state.columnAnchor = { room: table.parentElement.clientWidth, keys: widths.map((column) => column.key).join(),
+      widths: widths.map((column) => column.width) };
     // Only a name with a word longer than its column is hyphenated; the others break between words.
     widths.filter((column) => column.shrink).forEach((column) => column.cells.forEach((cell, index) => {
       (cell.firstElementChild || cell).classList.toggle("hyphenate", column.cellWords[index] + column.padding > column.width);
