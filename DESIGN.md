@@ -72,9 +72,11 @@ each, so the legend table keeps its room beside the donut), one below. Figures a
    with the glow"): a plain white card with a 1px --line hairline and a 4px radius, no glow, halo, wash, gradient rule or
    entrance motion (round 13 had an accent glow round it, a fading accent rule along its top, a corner wash and a soft
    radial halo behind each number). Line 1 (40px, 600, tabular numbers): Records, Accepted with its share, Read from the
-   paper with its papers, Human review ("99.9%", "of 2,770 earlier entries people checked, 3 had a value disputed; 153
-   (5.5%) not found in the paper": round 14 states the review's share here only, with the not-found entries beside it as
-   the user asked on 2026-10-15; a snapshot without the review's counts gives the share of approved values the same
+   paper with its papers, Human review, earlier version ("99.9%", "no value disputed, 2,601 of 2,604", the sentence in
+   full its title; round 17 fix pass: the label names the scope, the records of CatLog's earlier version people checked,
+   so the share never reads as the current records' accuracy; round 14 states the review's share here only; an older
+   snapshot without the counts over the records with a paper keeps the not-found records beside it, as the user asked on
+   2026-10-15; a snapshot without the review's counts gives, as "Human review", the share of approved values the same
    where CatLog has re-read the paper), the numbers in the colours Browse's counts band gives them (Records ink, Accepted navy, Read from
    the paper the darker BPG cyan --src-paper-ink, Human review the human-checked green: one meaning per colour), leading
    by size, weight and whitespace alone; under the pointer a linked item takes a flat 9% tint of its colour and its
