@@ -11639,6 +11639,15 @@
     return Math.min(cap, Math.max(...forms.map((form) => form.getBoundingClientRect().width)));
   }
 
+  // The open-record arrow's column: its col's computed width where the browser gives one (Chrome), else its heading
+  // cell's (Safari computes a col's width as 0px: the 24px fallback left the table 4px wider than its room, scrolling
+  // sideways, so a header sort took it for a table that scrolls anyway and moved the columns under the pointer).
+  function openColumnWidth(table, col) {
+    const width = parseFloat(window.getComputedStyle(col).width);
+    if (width > 0) return width;
+    return table.querySelector("thead th.c-open")?.offsetWidth || 24;
+  }
+
   // Every refit (new rows, the human-review marks widening Status, a record opening or closing, the sidebar, a resize)
   // also updates the sideways-scroll cues: the sticky Enzyme column, the edge shadows and the scroll buttons.
   function fitTableColumns() {
@@ -11931,7 +11940,7 @@
       return { ...column, min, width, oneLine, words, capital, cells, cellWords, padding, floor };
     });
     table.classList.remove("measuring");
-    const arrow = visible(cols.open) ? parseFloat(style(cols.open).width) || 24 : 0;
+    const arrow = visible(cols.open) ? openColumnWidth(table, cols.open) : 0;
     const total = () => widths.reduce((sum, column) => sum + column.width, 0);
     const available = table.parentElement.clientWidth - arrow;
     const shrinkable = widths.filter((column) => column.shrink);
@@ -12005,7 +12014,7 @@
       return { ...column, heading, width: Math.max(narrow ? column.narrowMin : column.min, heading) };
     });
     const total = () => widths.reduce((sum, column) => sum + column.width, 0);
-    const arrow = visible(cols.open) ? parseFloat(style(cols.open).width) || 24 : 0;
+    const arrow = visible(cols.open) ? openColumnWidth(table, cols.open) : 0;
     const available = table.parentElement.clientWidth - arrow;
     // Short of room, the narrower minimums.
     if (total() > available) widths.forEach((column) => { column.width = Math.max(column.narrowMin, column.heading); });

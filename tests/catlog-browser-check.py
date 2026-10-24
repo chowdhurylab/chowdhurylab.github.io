@@ -4693,6 +4693,13 @@ def check_layout(driver, browser, url, route_label):
                                     ("c-kcat", "kcat", "kcat_asc")):
             open_page()
             wait.until(lambda d: not d.find_element(By.ID, "sortSelect").get_attribute("disabled"))
+            # The fitted table fills its room exactly, in Safari too (it computes a col's width as 0px; the open-record
+            # column's 24px fallback had left the table 4px wider, which a sort took for a table that scrolls anyway).
+            room = driver.execute_script("""
+                const wrap = document.getElementById('recordTableWrap');
+                return {table: wrap.querySelector('table').offsetWidth, room: wrap.clientWidth};
+            """)
+            assert room["table"] <= room["room"] + 1, f"At 1280px the table fits its room: {room}"
             spot = driver.execute_script("""
                 const r = document.querySelector(`#recordTableWrap thead th.${arguments[0]}`).getBoundingClientRect();
                 return [Math.round(r.left + r.width / 2), Math.round(r.top + r.height / 2)];
