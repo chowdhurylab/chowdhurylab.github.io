@@ -2448,11 +2448,11 @@ function row(overrides = {}) {
   assert.deepEqual([...lead.matchAll(/<li data-hl="([^"]+)"><i class="stats-unit-swatch stats-part-([a-z-]+)[^"]*" aria-hidden="true"><\/i><span>([\s\S]*?)<\/span><\/li>/g)]
     .map(([, key, part, text]) => `${key} ${part} ${text}`), ["undisputed human <b>2,671</b> no value disputed",
     "disputed disputed <b>3</b> with a value disputed; a check found all 3 as printed in the paper"]);
-  for (const [layout, columns, rows] of [["wide", 100, 27], ["narrow", 50, 54]]) {
+  for (const [layout, columns, rows] of [["wide", 100, 27], ["narrow", 50, 54], ["narrowest", 40, 67]]) {
     const svg = lead.match(new RegExp(`<svg class="stats-units-svg is-${layout}" viewBox="0 0 (\\d+) (\\d+)"[\\s\\S]*?</svg>`));
     assert.deepEqual([Number(svg[1]), Number(svg[2])], [columns * 6 - 1, rows * 6 - 1], `${layout}: ${columns} squares to a row`);
     assert.equal((svg[0].match(/h5v5h-5z/g) || []).length, 2674, `${layout}: one square per record`);
-    assert.match(svg[0], /<path class="stats-unit stats-part-disputed" d="(?:M426 156|M126 318)h5v5h-5zm6 0h5v5h-5zm6 0h5v5h-5z" data-hl="disputed"/, "the 3 disputed right after the 2,671");
+    assert.match(svg[0], /<path class="stats-unit stats-part-disputed" d="(?:M426 156|M126 318|M186 396)h5v5h-5zm6 0h5v5h-5zm6 0h5v5h-5z" data-hl="disputed"/, "the 3 disputed right after the 2,671");
   }
   assert.match(lead, /<strong>Figure 1\.<\/strong> Each square is one record people checked\./);
   assert.match(metricPlain(lead), /<p class="stats-units-foot" data-note="human-checked"><a class="stats-link" href="[^"]*#browse\?checked=1">1 record<\/a> in Browse carries the human-checked tag: of the 2 records with a reviewer’s verdict in Browse, the one accepted with every kcat and Km approved and the kcat\/Km approved or agreeing with kcat ÷ Km\.<\/p>/);

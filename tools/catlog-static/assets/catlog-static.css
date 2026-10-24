@@ -1675,10 +1675,11 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-units-title { margin:0; color:var(--text-2); font-size:var(--fs-13); line-height:var(--lh-13) }
 .stats-units-title strong { margin-right:6px; color:var(--text); font-size:var(--fs-14); font-weight:600; line-height:var(--lh-14) }
 .stats-units-body { display:grid; grid-template-columns:minmax(0,599px) minmax(200px,1fr); gap:12px 32px; align-items:start }
-.stats-units-chart { min-width:0 }
+.stats-units-chart { min-width:0; container-type:inline-size }
 .stats-units-svg { display:block; width:100%; height:auto; shape-rendering:crispEdges }
 .stats-units-svg.is-wide { max-width:599px }
 .stats-units-svg.is-narrow { display:none; max-width:299px }
+.stats-units-svg.is-narrowest { display:none; max-width:239px }
 .stats-unit { fill:color-mix(in srgb, var(--part) 60%, var(--bg)) }
 .stats-unit.stats-part-disputed { fill:var(--part) }
 .stats-unit.is-open { fill:var(--bg); stroke:var(--part); stroke-width:1 }
@@ -1728,6 +1729,22 @@ a.stats-total-value:focus-visible { outline:0 }
 @media (max-width: 640px) {
   .stats-units-svg.is-wide { display:none }
   .stats-units-svg.is-narrow { display:block }
+}
+/* The copy the chart's own room holds at its own size, never scaled (fix pass: on a 320px phone the 50-a-row copy drew
+   at 288 of its 299px and at 641-661px the 100-a-row copy at 578-597 of 599, so the 1px gaps blurred): 100 to a row from
+   599px of room, 50 from 299px, else 40 (239px; a 271px window). Browsers without container queries keep the window's
+   rule above. */
+@container (min-width: 599px) {
+  .stats-units-svg.is-wide { display:block }
+  .stats-units-svg.is-narrow, .stats-units-svg.is-narrowest { display:none }
+}
+@container (min-width: 299px) and (max-width: 598.98px) {
+  .stats-units-svg.is-narrow { display:block }
+  .stats-units-svg.is-wide, .stats-units-svg.is-narrowest { display:none }
+}
+@container (max-width: 298.98px) {
+  .stats-units-svg.is-narrowest { display:block }
+  .stats-units-svg.is-wide, .stats-units-svg.is-narrow { display:none }
 }
 
 /* Value ranges: three small log-scale histograms. */

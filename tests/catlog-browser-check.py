@@ -1085,6 +1085,17 @@ UNITS_DRAWN_JS = """
     const box = svg.getBoundingClientRect(), frame = arguments[0].getBoundingClientRect();
     return {layout: svg.classList.contains('is-wide') ? 'wide' : 'narrow', squares, fits: box.left >= frame.left - 0.5 && box.right <= frame.right + 0.5 && box.width > 200};
 """
+# Human review's unit charts draw at their own size, never scaled (round 17 fix pass: at 320px the 50-a-row copy drew at
+# 288 of its 299px, at 660px the 100-a-row copy at 597 of 599, and the 1px gaps blurred): the shown copy of each panel is
+# as wide as its viewBox. Returns the panels that are not.
+STATS_UNITS_CRISP_JS = """
+    return [...document.querySelectorAll('#statsCharts .stats-units-panel')].flatMap((panel) => {
+        const shown = [...panel.querySelectorAll('svg.stats-units-svg')].filter((svg) => svg.getClientRects().length);
+        if (shown.length !== 1) return [`${panel.dataset.units}: ${shown.length} copies shown`];
+        const width = shown[0].getBoundingClientRect().width, own = shown[0].viewBox.baseVal.width;
+        return Math.abs(width - own) > 0.5 ? [`${panel.dataset.units}: ${own}px drawn at ${width.toFixed(1)}px`] : [];
+    });
+"""
 # The base's "(408 papers)" in the given places: its text and how many lines it takes.
 REVIEW_BASE_PARENS = """
     return [...document.querySelectorAll(arguments[0])].flatMap(place => [...place.querySelectorAll('.nowrap')])
@@ -2549,6 +2560,9 @@ def check_stats_new_figures(driver, browser, url):
                 driver.execute_cdp_cmd("Emulation.setDeviceMetricsOverride", {"width": narrow, "height": 900, "deviceScaleFactor": 1, "mobile": narrow < 640})
                 touching = driver.execute_script(STATS_AXIS_TOUCHING_JS)
                 assert not touching, f"At {narrow}px in a wide font axis labels touch: {touching}"
+                # (660px: the chart has 597px, under the 100-a-row copy's 599; 320px: 288px, under the 50-a-row copy's 299)
+                scaled = driver.execute_script(STATS_UNITS_CRISP_JS)
+                assert not scaled, f"At {narrow}px Human review's squares draw at their own size: {scaled}"
                 assert driver.execute_script(STATS_AXIS_EVEN), f"At {narrow}px in a wide font a gridline is unlabelled or labels sit unevenly"
         finally:
             driver.execute_cdp_cmd("Page.removeScriptToEvaluateOnNewDocument", {"identifier": wide["identifier"]})
@@ -7144,6 +7158,8 @@ def check(driver, browser, url):
         assert not cut, f"Class medians' names are cut at {width}px: {cut}"
         broken = driver.execute_script(STATS_STATUS_KEY_JS)
         assert not broken, f"Review result's labels keep each name and count on one line at {width}px: {broken}"
+        scaled = driver.execute_script(STATS_UNITS_CRISP_JS)
+        assert not scaled, f"Human review's squares draw at their own size at {width}px: {scaled}"
         spacing = driver.execute_script("""
             // 16px bars 8px apart: rows whose name fits on one line are exactly as tall as their bar.
             const gaps = [];
@@ -7211,6 +7227,8 @@ def check(driver, browser, url):
         # each kind on a line of its own (round 17 fix pass: "Not / reviewed / 3,333").
         broken = driver.execute_script(STATS_STATUS_KEY_JS)
         assert not broken, f"Review result's labels are a key on phones, a line each: {broken}"
+        scaled = driver.execute_script(STATS_UNITS_CRISP_JS)
+        assert not scaled, f"Human review's squares draw at their own size on phones: {scaled}"
         assert driver.execute_script("""return [...document.querySelectorAll('.stats-status-section .stats-status-key')]
             .every((swatch) => swatch.getClientRects().length > 0)"""), "On phones each result in the key shows its swatch"
         assert driver.execute_script("""
