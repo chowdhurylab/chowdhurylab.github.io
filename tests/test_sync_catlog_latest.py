@@ -239,19 +239,19 @@ class SyncCatlogLatestTests(unittest.TestCase):
         self.stats_target.write_text("stale")
         self.assert_rejected_without_writes("--check")
 
-    def test_alias_metadata_uses_its_own_stable_url_without_rewriting_body_links(self) -> None:
+    def test_alias_metadata_names_the_main_site_without_rewriting_body_links(self) -> None:
+        main_url = "https://catlog.structf.studio/"
         old_url = "https://chowdhurylab.github.io/tools/catlog-static/"
         source = synthetic_page(EXPECTED_TRACKER_TAG).replace(
             "</head>",
-            f'<link rel="canonical" href="{old_url}" />\n'
-            f'<meta property="og:url" content="{old_url}" />\n</head>',
+            f'<link rel="canonical" href="{main_url}" />\n'
+            f'<meta property="og:url" content="{main_url}" />\n</head>',
         ).replace("</body>", f'<a href="{old_url}">Portable page</a>\n</body>')
         for stats in (False, True):
             with self.subTest(stats=stats):
                 alias = self.sync.build_alias(source, stats=stats)
-                public_url = f'https://chowdhurylab.github.io/tools/catlog-{"stats" if stats else "latest"}.html'
-                self.assertIn(f'<link rel="canonical" href="{public_url}"', alias)
-                self.assertIn(f'<meta property="og:url" content="{public_url}"', alias)
+                self.assertIn(f'<link rel="canonical" href="{main_url}"', alias)
+                self.assertIn(f'<meta property="og:url" content="{main_url}"', alias)
                 self.assertIn(f'<a href="{old_url}">Portable page</a>', alias)
 
     def test_main_rejects_invalid_alias_references_before_canonical_write(self) -> None:

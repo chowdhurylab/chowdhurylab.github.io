@@ -173,6 +173,9 @@ a:hover { text-decoration-color:currentColor }
 /* Skip link: shown only when focused. */
 .skip-link { position:absolute; top:8px; left:8px; z-index:200; border-radius:var(--radius); background:var(--bg); box-shadow:var(--shadow); padding:8px 12px; color:var(--accent); font-size:var(--fs-14); font-weight:600; transform:translateY(-200%) }
 .skip-link:focus { transform:none }
+/* On the GitHub Pages copy (and offline copies): one line saying where the main site is; hidden on the main site. */
+.main-site-note { flex-shrink:0; margin:0; border-bottom:1px solid var(--line-soft); background:var(--surface-2); color:var(--text-2); padding:6px var(--gutter); font-size:var(--fs-13); line-height:var(--lh-13) }
+.main-site-note a { color:var(--text); font-weight:600 }
 body:is(.stats-open,.guide-open,.team-open) .skip-link { display:none }
 .static-app { display:flex; flex-direction:column; height:100vh; height:100dvh; min-height:0; background:var(--bg) }
 .app-header, .catalog-load-progress, .snapshot-band { flex-shrink:0 }

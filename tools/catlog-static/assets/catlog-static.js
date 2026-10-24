@@ -839,11 +839,10 @@
     document.title = guideOpen
       ? "Guide | CatLog"
       : statsOpen ? "Stats | CatLog" : teamOpen ? "Team | CatLog" : "CatLog | Enzyme kinetics catalog";
+    // Search engines and link previews name CatLog's main site, catlog.structf.studio (index.html's canonical and
+    // og:url; the user, 2026-10-24); an alias page only titles its preview after the view it shows.
     const currentUrl = new URL(window.location.href);
     if (/^https?:$/.test(currentUrl.protocol) && /\/catlog-(latest|stats)\.html$/.test(currentUrl.pathname)) {
-      const publicUrl = new URL(statsOpen ? "./catlog-stats.html" : "./catlog-latest.html", currentUrl);
-      document.querySelector('link[rel="canonical"]')?.setAttribute("href", publicUrl.href);
-      document.querySelector('meta[property="og:url"]')?.setAttribute("content", publicUrl.href);
       document.querySelector('meta[property="og:title"]')?.setAttribute("content", document.title);
     }
     if (!browseOpen) {
@@ -1233,7 +1232,7 @@
     const generated = manifest.generated_at ? new Date(manifest.generated_at) : null;
     const day = generated && !Number.isNaN(generated.getTime()) ? generated.toISOString().slice(0, 10) : "";
     if ($("guideCitationLine") && day && sourceId !== EMPTY_VALUE) {
-      $("guideCitationLine").textContent = `CatLog snapshot ${day} (data ID ${sourceId}), Chowdhury Lab, https://chowdhurylab.github.io/tools/catlog-latest.html`;
+      $("guideCitationLine").textContent = `CatLog snapshot ${day} (data ID ${sourceId}), Chowdhury Lab, https://catlog.structf.studio`;
     }
     // Downloads save under the snapshot's date (catlog-2026-10-12-full.jsonl.gz), so a kept file says which snapshot it
     // is; the Guide's Data ID check names the same file.
