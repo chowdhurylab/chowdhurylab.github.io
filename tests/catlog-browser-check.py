@@ -4696,6 +4696,27 @@ def check_layout(driver, browser, url, route_label):
         ActionChains(driver).send_keys(Keys.ESCAPE).perform()
         wait.until(lambda d: not detail_open())
         results["chips-record-1280"] = True
+        # A variant line cannot wrap as a name does, so beside a record at 1280 Enzyme makes room for one of 24 characters
+        # ("variant A41P/H101Y/H236K") as for a word (round 17 fix pass: such lines ended in "…" while Organism and
+        # Substrate had room to spare). Every row is given a short name and that line, and the table refits as on a resize.
+        open_page()
+        driver.find_element(By.CSS_SELECTOR, "#recordsBody tr[data-key] .primary-cell").click()
+        wait.until(lambda d: detail_open())
+        forms = driver.execute_script("""
+            const cells = [...document.querySelectorAll('#recordsBody tr[data-key] td.c-enzyme')];
+            cells.forEach((cell) => {
+              cell.querySelector('strong').textContent = 'urease';
+              cell.querySelector('.enzyme-form')?.remove();
+              cell.insertAdjacentHTML('beforeend', '<span class="enzyme-form"><span class="form-word">variant</span> <span class="form-mutation">A41P/H101Y/H236K</span></span>');
+            });
+            window.dispatchEvent(new Event('resize'));
+            const forms = cells.map((cell) => cell.querySelector('.enzyme-form'));
+            return {rows: cells.length, cut: forms.filter((form) => form.scrollWidth > form.clientWidth + 1).length};
+        """)
+        assert forms["rows"] and not forms["cut"], f"Beside a record at 1280 a 24-character variant line is whole: {forms}"
+        ActionChains(driver).send_keys(Keys.ESCAPE).perform()
+        wait.until(lambda d: not detail_open())
+        results["variant-line-room"] = True
         # Beside the open sidebar from 1280px Review result stays in view without sideways scrolling, in the filtered views
         # whose wide tags and values once pushed it out (database sources, Not confirmed, a caution): the names give way,
         # then the tags (ending in an ellipsis), never the review result's word. Only the arrow may scroll out of view.
