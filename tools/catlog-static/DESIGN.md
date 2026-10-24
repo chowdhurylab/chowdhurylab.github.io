@@ -1786,6 +1786,12 @@ tools/site_patches/20261023-site-round17-brief.md, section 5.
 - Order: At a glance, Quality, What is in the catalog, Values, Compared with databases, CatLog and BRENDA by publication
   year (its own part, key `years`, #stats-years, its figure headed "Values per publication year"), the supplement.
   Quality's figures are numbered (Figures 1-3), so the rest follow from 4; no caption or rule names a number.
+- At a glance's review item is labelled "Human review, earlier version" ("earlier version" kept on one line, so a wrapped
+  label breaks after the comma), its note "no value disputed, 2,601 of 2,604" and its title the sentence in full (fix
+  pass: the scope had been in the title only, and the share read as the current records' accuracy). The scope goes in the
+  label, not the note: "earlier version: no value disputed, 2,601 of 2,604" took two lines from 1024px and three on
+  phones. A snapshot with only the match read from the paper again keeps "Human review" (that share is of today's
+  records).
 - At a glance ends with the counting words in one 12px muted line (statsCountingWordsHtml): "Record: one enzyme or
   variant, one substrate, one set of assay conditions, one paper. Value: one kcat, Km or kcat/Km, up to three per record."
 - Human review (statsReviewFigure): a unit chart (statsUnitGridSvg), one square per record people checked, a 5px square

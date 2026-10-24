@@ -1311,6 +1311,9 @@ def check_quality_round16b(driver, browser, url):
             lead = wait.until(lambda d: d.find_element(By.CSS_SELECTOR, "#statsCharts [data-figure='review']"))
             band = text(driver.find_element(By.CSS_SELECTOR, ".stats-total[data-total='review']"))
             assert "99.9%" in band and band.endswith("no value disputed, 2,601 of 2,604"), band
+            # (round 17 fix pass: its label names the scope, the earlier version's records, so the share never reads as
+            # the current records' accuracy)
+            assert band.startswith("Human review, earlier version 99.9%"), band
             # the note keeps one line wherever a column has the room (fix pass after round 16b), and the key numbers of a
             # row start at one height whatever wraps above them
             tops = driver.execute_script("""return [...document.querySelectorAll('.stats-totals-main .stats-total')].map(item =>
@@ -1319,6 +1322,7 @@ def check_quality_round16b(driver, browser, url):
             assert len({top for top, _ in (tops if width >= 721 else tops[2:])}) == 1, tops
             if width >= 1280:
                 assert all(height <= 20 for _, height in tops), tops
+            assert tops[-1][1] <= 37, f"Human review's note keeps two lines at most at {width}px: {tops}"
             # Round 17: Quality as figures, no table. The human review as one square per record people checked, the records
             # with no paper apart (open squares), its key the counts in words; the records with the human-checked tag
             # under it, with why they are fewer.

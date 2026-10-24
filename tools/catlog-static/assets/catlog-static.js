@@ -8465,7 +8465,11 @@
     // read from the paper and the human review's headline, stated here only (99.9%, of 2,770 earlier entries people
     // checked, 3 had a value disputed; 153 (5.5%) not found in the paper); line 2 (20px): the catalog's scope. A number
     // Browse can filter links there.
-    const reviewHeadline = review ? { value: review.share, note: reviewGlanceText(review), title: reviewGlanceTitle(review) }
+    // (round 17 fix pass: the review's label names its scope, the records of CatLog's earlier version, so its share never
+    // reads as the current records' accuracy; the label, not the note, which keeps one line from 1024px and two on phones;
+    // where the label wraps it breaks after the comma)
+    const reviewHeadline = review ? { label: "Human review, earlier version", labelHtml: `Human review, <span class="nowrap">earlier version</span>`,
+      value: review.share, note: reviewGlanceText(review), title: reviewGlanceTitle(review) }
       : match ? { value: qualityShare(match.same, match.approved), note: "of approved values the same where CatLog has re-read the paper",
         noteHtml: keepReRead("of approved values the same where CatLog has re-read the paper") } : null;
     const main = [
@@ -8474,7 +8478,7 @@
         params: accepted ? { status: "accepted" } : null },
       fromPaper !== null ? { key: "catlog", label: SOURCE_CATLOG_LABEL, value: formatInteger(fromPaper),
         note: papersRead !== null ? `from ${formatInteger(papersRead)} papers` : "", params: fromPaper ? { source: "paper" } : null } : null,
-      reviewHeadline ? { key: "review", label: "Human review", value: reviewHeadline.value, note: reviewHeadline.note,
+      reviewHeadline ? { key: "review", label: reviewHeadline.label || "Human review", labelHtml: reviewHeadline.labelHtml, value: reviewHeadline.value, note: reviewHeadline.note,
         noteHtml: reviewHeadline.noteHtml, title: reviewHeadline.title } : null,
     ].filter(Boolean);
     const scope = [
@@ -8484,7 +8488,7 @@
       ["organisms", "Organisms", statsCount(overview?.organisms) ?? statsCount(totals.unique_organisms)],
       ["substrates", "Substrates", statsCount(overview?.substrates) ?? statsCount(totals.unique_substrates)],
     ].filter(([, , value]) => value !== null).map(([key, label, value]) => ({ key, label, value: formatInteger(value) }));
-    const totalHtml = (item) => `<div class="stats-total" data-total="${item.key}"${item.title ? ` title="${escapeHtml(item.title)}"` : ""}><dt>${escapeHtml(item.label)}</dt><dd>${item.params
+    const totalHtml = (item) => `<div class="stats-total" data-total="${item.key}"${item.title ? ` title="${escapeHtml(item.title)}"` : ""}><dt>${item.labelHtml || escapeHtml(item.label)}</dt><dd>${item.params
       ? `<a class="stats-total-value" href="${escapeHtml(statsBrowseHref(item.params))}">${escapeHtml(item.value)}</a>`
       : `<span class="stats-total-value">${escapeHtml(item.value)}</span>`}${item.note ? `<small>${item.noteHtml || escapeHtml(item.note)}</small>` : ""}</dd></div>`;
     const totalsHtml = (items, className) => `<dl class="${className}" style="--stats-columns:${items.length}">${items.map(totalHtml).join("")}</dl>`;

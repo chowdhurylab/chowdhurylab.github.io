@@ -2429,7 +2429,7 @@ function row(overrides = {}) {
   // The headline is At a glance's alone (round 14: stated once): the share, then in a few words the entries checked, the
   // disputed ones and, beside the share as the user asked (2026-10-15), the entries whose value was not found.
   // Fix pass after round 16b: one line, as the other notes; the cell's title says it in full.
-  assert.match(element("statsTotals").innerHTML, /<div class="stats-total" data-total="review" title="No value disputed in 2,671 of the 2,674 records from CatLog’s earlier version that people checked\."><dt>Human review<\/dt><dd><span class="stats-total-value">99\.9%<\/span><small>no value disputed, 2,671 of 2,674; 153 \(5\.7%\) not found in the paper<\/small>/);
+  assert.match(element("statsTotals").innerHTML, /<div class="stats-total" data-total="review" title="No value disputed in 2,671 of the 2,674 records from CatLog’s earlier version that people checked\."><dt>Human review, <span class="nowrap">earlier version<\/span><\/dt><dd><span class="stats-total-value">99\.9%<\/span><small>no value disputed, 2,671 of 2,674; 153 \(5\.7%\) not found in the paper<\/small>/);
   assert.equal(api.reviewGlanceText(api.reviewFacts({ entries: 10, value_disputed: 0 })), "no value disputed, 10 of 10");
   // Round 16b: with the counts over the entries a reviewer could check against a paper (review.checkable), the share is
   // theirs and the entries without a paper are said beside it; counts that do not add up keep the older reading.
