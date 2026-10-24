@@ -1795,8 +1795,13 @@ tools/site_patches/20261023-site-round17-brief.md, section 5.
 - At a glance ends with the counting words in one 12px muted line (statsCountingWordsHtml): "Record: one enzyme or
   variant, one substrate, one set of assay conditions, one paper. Value: one kcat, Km or kcat/Km, up to three per record."
 - Human review (statsReviewFigure): a unit chart (statsUnitGridSvg), one square per record people checked, a 5px square
-  on a 6px pitch, crisp at its own size: 100 to a row (599px) from 641px, 50 to a row (299px) on phones, the other
-  drawing display:none. Runs in reading order, one path each (a square per subpath), lit with its key line: no value
+  on a 6px pitch, crisp at its own size: three drawings, 100 to a row (599px), 50 (299px) and 40 (239px), and the
+  stylesheet shows the one the chart's own room holds (container queries on .stats-units-chart: 599px of room or more,
+  299px or more, less), the others display:none, so a drawing is never scaled (fix pass: on a 320px phone the 50-a-row
+  copy drew at 288 of its 299px and at 641-661px the 100-a-row copy at 578-597px, and the 1px gaps blurred). 100 to a
+  row from 662px, 50 on most phones, 40 below a 331px window; a browser without container queries keeps the window's
+  rule (100 from 641px, 50 below). The browser check: STATS_UNITS_CRISP_JS (each panel's shown copy as wide as its
+  viewBox) at 1700, 1280, 884, 760, 375 and, in a wide font, 1280, 660 and 320px. Runs in reading order, one path each (a square per subpath), lit with its key line: no value
   disputed in human-checked's green at 60% (.stats-part-human), a value disputed in Disputed's deep red opaque, a blank
   row, then the records with no PMID or DOI as open squares (white, 1px slate: Not checked, as Browse calls them). The
   key (counts in words, a 10px swatch each) stands beside from 1024px, under below. The records read from the paper

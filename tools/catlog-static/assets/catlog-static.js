@@ -6703,14 +6703,15 @@
   // each drawn only when its counts hold together; what each counts stands under its number in How these numbers are
   // counted.
   //
-  // Human review as a unit chart: one square per record people checked, 100 to a row on a wide screen and 50 on a phone
-  // (one 6px pitch: a 5px square and a 1px gap), so that 3 disputed among 2,604 can be seen and the 99 records read from
+  // Human review as a unit chart: one square per record people checked, 100 to a row on a wide screen and 50 on a phone,
+  // 40 where the chart has under 299px (a 320px phone; the stylesheet shows the copy the chart's room holds at its own
+  // size, never scaled) (one 6px pitch: a 5px square and a 1px gap), so that 3 disputed among 2,604 can be seen and the 99 records read from
   // the paper stand at their true size beside them. Runs of squares in reading order: a run with `start: "row"` begins a
   // new row, `start: "gap"` leaves a blank row first. Each run is one path (a square per subpath), lit with its key line
   // (data-hl) and carrying its tooltip line; an open run draws outlined squares (Not checked's slate: a record with no
   // PMID or DOI, as Browse calls it).
   const STATS_UNIT_PITCH = 6;
-  const STATS_UNIT_COLUMNS = { wide: 100, narrow: 50 };
+  const STATS_UNIT_COLUMNS = { wide: 100, narrow: 50, narrowest: 40 };
   function statsUnitGridSvg(runs, columns, { label, layout }) {
     let column = 0;
     let row = 0;

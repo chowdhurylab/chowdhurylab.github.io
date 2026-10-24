@@ -111,8 +111,9 @@ each, so the legend table keeps its room beside the donut), one below. Figures a
    kcat/Km, up to three per record."); the line under the title is "Select a name to see its records in Browse."
 2. Quality (round 17, the user: "after the first box it should be the quality thing, with figures to understand it, not
    all those tables"): three numbered figures, no table, the review's share At a glance's alone.
-   - Human review: a unit chart, one 5px square per record people checked on a 6px pitch, 100 to a row (50 on phones, a
-     second drawing; statsUnitGridSvg), so 3 disputed among 2,604 show: CatLog's earlier version's records with no
+   - Human review: a unit chart, one 5px square per record people checked on a 6px pitch, 100 to a row (50 on phones and
+     40 where the chart has under 299px: a drawing each, statsUnitGridSvg, the one the chart's room holds shown at its
+     own size, never scaled), so 3 disputed among 2,604 show: CatLog's earlier version's records with no
      value disputed (human-checked's green at 60%), with a value disputed (Disputed's deep red, opaque as its dot), then
      a blank row and the records with no PMID or DOI as open squares in Not checked's slate; a key beside the squares
      from 1024px (under them below) gives the counts in words and what a check of the paper found of the disputed values.
