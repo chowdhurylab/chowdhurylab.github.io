@@ -11,6 +11,7 @@ import math
 import os
 from pathlib import Path
 import re
+import subprocess
 import sys
 import threading
 import time
@@ -4804,14 +4805,17 @@ def check_layout(driver, browser, url, route_label):
         end = driver.execute_script(export_end)
         assert abs(end[0] - end[1]) <= 1, f"With no filter on, Export ends the toolbar's row at 1280: {end}"
         # Records' "?" in the counts band says what a record and its values are, over the band (the numbers stay put),
-        # and Escape closes it.
-        about = driver.find_element(By.ID, "recordsAboutButton")
-        driver.execute_script("arguments[0].scrollIntoView({block: 'center'})", about)
+        # and Escape closes it. The band is drawn again when the review marks arrive and after each filter pass (the page
+        # keeps the note open), so the "?" and its note are found by id at each step, never held across the click.
+        driver.execute_script("document.getElementById('recordsAboutButton').scrollIntoView({block: 'center'})")
         before = box(".summary-records > strong")
-        about.click()
-        wait.until(lambda d: d.find_element(By.ID, "recordsAbout").is_displayed())
-        note = driver.find_element(By.ID, "recordsAbout").text.strip()
-        assert note.startswith("A record is one row of the table") and about.get_attribute("aria-expanded") == "true", note
+        WebDriverWait(driver, 30, ignored_exceptions=(StaleElementReferenceException,)).until(
+            lambda d: d.find_element(By.ID, "recordsAboutButton").click() is None)
+        about = wait.until(lambda d: d.execute_script("""
+            const button = document.getElementById('recordsAboutButton'), note = document.getElementById('recordsAbout');
+            return note?.getClientRects().length ? {expanded: button.getAttribute('aria-expanded'), note: note.innerText.trim()} : null;
+        """))
+        assert about["note"].startswith("A record is one row of the table") and about["expanded"] == "true", about
         assert box(".summary-records > strong") == before, "The note does not move the band's numbers"
         ActionChains(driver).send_keys(Keys.ESCAPE).perform()
         wait.until(lambda d: not d.find_element(By.ID, "recordsAbout").is_displayed())
@@ -7356,34 +7360,61 @@ def main():
     url = urljoin(local_base, "tools/catlog-latest.html")
     if os.environ.get("CHECK_LIVE") == "true":
         url = cache_tagged("https://chowdhurylab.github.io/tools/catlog-latest.html", os.environ["GITHUB_SHA"][:12])
-    driver = None
-    try:
+    def new_driver():
         if args.browser == "safari":
-            driver = webdriver.Safari()
-        else:
-            options = webdriver.ChromeOptions()
-            options.add_argument("--headless=new")
-            options.add_argument("--no-sandbox")
-            options.add_argument("--disable-dev-shm-usage")
-            # On macOS every automated launch otherwise leaves a clone of Chrome.app in /var/folders (thousands pile up).
-            options.add_argument("--disable-features=MacAppCodeSignClone")
-            driver = webdriver.Chrome(options=options)
-        result = check(driver, args.browser, url)
-        manifest = driver.execute_script("return window.CATLOG_STATIC_MANIFEST")
+            return webdriver.Safari()
+        options = webdriver.ChromeOptions()
+        options.add_argument("--headless=new")
+        options.add_argument("--no-sandbox")
+        options.add_argument("--disable-dev-shm-usage")
+        # On macOS every automated launch otherwise leaves a clone of Chrome.app in /var/folders (thousands pile up).
+        options.add_argument("--disable-features=MacAppCodeSignClone")
+        return webdriver.Chrome(options=options)
+
+    session = {"driver": None, "retried": False}
+
+    def run(check_function, *rest):
+        """One check. When Safari's driver stops answering (driver_stalled: about 1 Safari job in 5 on GitHub's runner,
+        page idle), the stalled session is dropped and that check runs once more in a fresh session; an assertion, a
+        page state not reached, or a second stall fails the job as before."""
+        try:
+            return check_function(session["driver"], args.browser, *rest)
+        except Exception as error:
+            if args.browser != "safari" or session["retried"] or not driver_stalled(error):
+                raise
+            session["retried"] = True
+            print(f"Safari stopped answering during {check_function.__name__}; fresh session, one retry", flush=True)
+            stop_waiting_on(session["driver"])
+            try:
+                session["driver"].quit()
+            except Exception:
+                pass
+            if os.environ.get("GITHUB_ACTIONS") == "true":  # a stalled Safari stays paired with its session: end it
+                for name in ("Safari", "safaridriver"):
+                    subprocess.run(["pkill", "-x", name], check=False)
+                time.sleep(5)
+            session["driver"] = new_driver()
+            session["driver"].set_window_size(1440, 1000)  # where check() starts the run
+            return check_function(session["driver"], args.browser, *rest)
+
+    try:
+        session["driver"] = new_driver()
+        result = run(check, url)
+        manifest = session["driver"].execute_script("return window.CATLOG_STATIC_MANIFEST")
         quality = (stats_overview(manifest) or {}).get("quality")
         if quality or args.browser == "chrome":
-            check_quality(driver, args.browser, url, quality)
-        check_review_headline(driver, args.browser, url)
-        check_quality_round16b(driver, args.browser, url)
-        result["stats_figures"] = check_stats_figures(driver, args.browser, url)
-        result["stats_databases"] = check_stats_databases(driver, args.browser, url)
-        result["stats_new_figures"] = check_stats_new_figures(driver, args.browser, url)
-        result["stats_years"] = check_stats_years(driver, args.browser, url)
-        result["team"] = check_team(driver, args.browser, url)
-        result["guide_databases"] = check_guide_databases(driver, args.browser, url)
-        result["word_breaks"] = check_word_breaks(driver, args.browser, url)
-        result["phone_scroll"] = check_phone_scroll(driver, args.browser, url)
-        result["record_beside_table"] = check_record_beside_table(driver, args.browser, url)
+            run(check_quality, url, quality)
+        run(check_review_headline, url)
+        run(check_quality_round16b, url)
+        result["stats_figures"] = run(check_stats_figures, url)
+        result["stats_databases"] = run(check_stats_databases, url)
+        result["stats_new_figures"] = run(check_stats_new_figures, url)
+        result["stats_years"] = run(check_stats_years, url)
+        result["team"] = run(check_team, url)
+        result["guide_databases"] = run(check_guide_databases, url)
+        result["word_breaks"] = run(check_word_breaks, url)
+        result["phone_scroll"] = run(check_phone_scroll, url)
+        result["record_beside_table"] = run(check_record_beside_table, url)
         browse = []
         bases = [("local", local_base)]
         if os.environ.get("CHECK_LIVE") == "true":
@@ -7393,20 +7424,20 @@ def main():
                 browse_url = urljoin(base, path)
                 if environment == "live":
                     browse_url = cache_tagged(browse_url, os.environ["GITHUB_SHA"][:12])
-                browse.append(check_browse(driver, args.browser, browse_url, f"{environment}-{route}"))
-                browse[-1]["filters"] = check_filters(driver, args.browser, browse_url, f"{environment}-{route}")
-                browse[-1]["record_panel"] = check_record_panel(driver, args.browser, browse_url, f"{environment}-{route}")
-                browse[-1]["layout"] = check_layout(driver, args.browser, browse_url, f"{environment}-{route}")
+                browse.append(run(check_browse, browse_url, f"{environment}-{route}"))
+                browse[-1]["filters"] = run(check_filters, browse_url, f"{environment}-{route}")
+                browse[-1]["record_panel"] = run(check_record_panel, browse_url, f"{environment}-{route}")
+                browse[-1]["layout"] = run(check_layout, browse_url, f"{environment}-{route}")
         result["browse_routes"] = browse
         (OUTPUT / f"{args.browser}-result.json").write_text(json.dumps(result, indent=2) + "\n")
         print(json.dumps(result))
     except Exception:
-        if driver:
-            failure_shot(driver, OUTPUT / f"{args.browser}-failure.png")
+        if session["driver"]:
+            failure_shot(session["driver"], OUTPUT / f"{args.browser}-failure.png")
         raise
     finally:
-        if driver:
-            driver.quit()
+        if session["driver"]:
+            session["driver"].quit()
         server.shutdown()
         server.server_close()
         thread.join()
