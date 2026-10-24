@@ -4564,7 +4564,14 @@ def check_layout(driver, browser, url, route_label):
             assert now["sorted"] == [[cell, direction]] and now["arrow"] == 1, f"{cell} sorts {sort or 'the default way'}: {now}"
         statuses = [text.strip() for text in driver.execute_script(
             "return [...document.querySelectorAll('#recordsBody tr[data-key] .c-status .state-label')].map(e => e.textContent)")]
-        assert statuses and all(text == "Not checked" for text in statuses), f"Review result reversed puts Not checked first: {statuses[:5]}"
+        # Review result reversed: the manifest's disputed records first, then Not checked.
+        disputed = driver.execute_script("""
+            const rows = window.CATLOG_STATIC_MANIFEST?.summary?.distributions?.verification_status || [];
+            return Number(rows.find(row => row.label === 'disputed')?.count || 0);
+        """)
+        shown = min(disputed, len(statuses))
+        assert statuses and statuses == ["Disputed"] * shown + ["Not checked"] * (len(statuses) - shown), (
+            f"Review result reversed puts the {disputed} disputed records first, then Not checked: {statuses[:shown + 3]}")
         enzymes = [text.strip() for text in driver.execute_script(
             "return [...document.querySelectorAll('#recordsBody tr[data-key] .c-enzyme strong')].map(e => e.textContent)")]
         # The keyboard: a header is a button (Enter sorts).

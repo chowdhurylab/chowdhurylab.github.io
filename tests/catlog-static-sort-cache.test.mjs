@@ -7540,7 +7540,8 @@ function referenceComparator(sort) {
       || referenceNameSort(a._sortEnzyme, b._sortEnzyme)
       || (referencePaper(a) - referencePaper(b))
     ),
-    // Review result the other way: Not checked first, accepted read from the paper last; names A to Z within each.
+    // Review result the other way: Disputed first, then Not checked, accepted read from the paper last; names A to Z
+    // within each.
     evidence_desc: (a, b) => (
       (b._stateRank - a._stateRank)
       || (b._tierRank - a._tierRank)

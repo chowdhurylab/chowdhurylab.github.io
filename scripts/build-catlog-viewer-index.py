@@ -321,7 +321,8 @@ if set(ENUM_FIELDS) & (set(SHARED_TEXT_FIELDS) | set(NUMBER_FROM_DISPLAY) | set(
         or set(SHARED_TEXT_FIELDS) & (set(NUMBER_FROM_DISPLAY) | set(SAME_AS)):
     raise RuntimeError("a field has one encoding only")
 
-STATE_RANK = {"verified": 0, "corrected": 0, "manual_review_required": 1}
+# Review result's order: Accepted, Not confirmed, Not checked (every other status), Disputed (the page's stateRanks).
+STATE_RANK = {"verified": 0, "corrected": 0, "manual_review_required": 1, "disputed": 3}
 TIER_ORDER = {
     "paper_grounded_high_confidence": 0,
     "paper_grounded": 1,
@@ -374,11 +375,11 @@ ASCII_LOWER = str.maketrans("ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstu
 
 def default_order_key(row: dict, pmid: int | None, position: int) -> tuple:
     """The page's rowComparator("evidence"), the default order (ROW_ORDER): accepted first, CatLog v2 rows (read from
-    the paper) leading them, then tier, then the enzyme's name A to Z (leading marks skipped, A-Z folded to a-z, the
-    rest by code point: the same in Python and in the page, which compares code units; a record without a name after
-    the named ones), then the paper (its first PMID; records without one after those with one), so a paper's records
-    of one enzyme stand together, then the table position. The page checks the order once as the index arrives and
-    sorts again if they ever disagree."""
+    the paper) leading them, then Not confirmed, Not checked and Disputed last; within each, tier, then the enzyme's
+    name A to Z (leading marks skipped, A-Z folded to a-z, the rest by code point: the same in Python and in the page,
+    which compares code units; a record without a name after the named ones), then the paper (its first PMID; records
+    without one after those with one), so a paper's records of one enzyme stand together, then the table position. The
+    page checks the order once as the index arrives and sorts again if they ever disagree."""
     name = sort_text(row["enzyme_display_name"]).translate(ASCII_LOWER)
     tier = -1 if is_v2_row(row) else TIER_ORDER.get(row["evidence_confidence_tier"], 99)
     return (

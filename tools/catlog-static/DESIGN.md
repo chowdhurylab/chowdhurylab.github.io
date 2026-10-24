@@ -541,9 +541,10 @@ heading shows a faint arrow for the way a click would sort it; the whole cell is
 (Enter sorts). The address names every order but the default (sort=enzyme, enzyme_desc, organism_desc,
 substrate_desc, ec_number_desc, evidence_desc for Review result reversed; kcat, kcat_asc, km_asc, kcat_over_km_asc as
 before); an unknown key, an older sort=temperature or ph included, opens the default. There is no Sort menu from
-641px. Review result reversed puts Not checked and Disputed first and accepted records read from the paper last, the
-names A to Z within each result. Review result stays the default order: accepted first (read
-from the paper leading them, then by tier; Disputed sorts with Not checked), then
+641px. Review result reversed puts Disputed first, then Not checked, and accepted records read from the paper last,
+the names A to Z within each result. Review result stays the default order: accepted first (read
+from the paper leading them, then by tier), then Not confirmed, Not checked and Disputed last (round 17 fix pass:
+Disputed had sorted inside Not checked, so the reverse order buried it), then
 the enzyme's name A to Z (A-Z folded to a-z, the rest by code unit, a nameless record
 last) with a paper's records of one enzyme together (by its first PMID, a record
 without one last), then the table's order: the index is built in this order
