@@ -6670,6 +6670,17 @@ def check(driver, browser, url):
                 or f"{identity_only:,} accepted records have no PMID or DOI linked" in status_text), status_text
         assert status_text.count("the earlier review had accepted") + status_text.count("accepted records have no PMID") == 1, \
             "Stats names the records without a paper once"
+    # Records accepted after a correction and the records Corrections on records not yet re-read counts (those that list a
+    # change, whatever their review result): where the counts differ, Review result's rule says why (round 17 fix pass:
+    # 1,166 beside 1,165), with the records that are both when the snapshot counts them.
+    earlier = (overview or {}).get("earlier_corrections")
+    if isinstance(earlier, dict) and isinstance(earlier.get("records"), int) and earlier["records"] and earlier["records"] != expected.get("corrected", 0):
+        rule = driver.execute_script("""const row = [...document.querySelectorAll('.stats-method-figures > div')]
+            .find((item) => /Review result\\./.test(item.textContent)); return row ? row.textContent.replace(/\\s+/g, ' ') : ''""")
+        assert f"Corrections on records not yet re-read counts the {earlier['records']:,} records not yet re-read that list a change, whatever their review result" in rule, rule
+        both, corrected_now = earlier.get("corrected"), expected.get("corrected", 0)
+        if isinstance(both, int) and 0 <= both <= min(earlier["records"], corrected_now):
+            assert f"{both:,} of the {corrected_now:,} accepted after a correction" in rule, rule
 
     # Every Stats link opens Browse with the shared #browse? filters.
     links = driver.find_elements(By.CSS_SELECTOR, "#statsCharts a.stats-link")

@@ -2608,6 +2608,28 @@ function row(overrides = {}) {
     replaced: { records: 7, accepted: 2, papers: 1, values: { kcat: [5, 6], km: [2, 2] } } } };
   api.renderStats();
   let figures = element("statsCharts").innerHTML;
+  // Review result's records accepted after a correction and the records Corrections on records not yet re-read counts
+  // (those that list a change, whatever their review result) differ: its rule says why (round 17 fix pass: 1,166 beside
+  // 1,165), from the snapshot's counts; earlier_corrections.corrected (the records that are both) splits the count.
+  const correctedStatus = runtimeManifest.summary.distributions.verification_status.find((item) => item.label === "corrected")?.count;
+  assert.ok(Number.isInteger(correctedStatus) && correctedStatus > 0 && correctedStatus !== 2881);
+  const statusRule = () => plain(methodHtml().match(/<span class="stats-method-title">Review result\.<\/span>[\s\S]*?<\/dd>/)?.[0] || "");
+  assert.match(statusRule(), /\. Corrections on records not yet re-read counts the 2,881 records not yet re-read that list a change, whatever their review result\./);
+  assert.doesNotMatch(statusRule(), /Figure S/, "No rule names a figure's number");
+  const both = Math.min(correctedStatus, 2881) - 1;
+  runtimeManifest.summary.overview.earlier_corrections = { ...earlierCounts, corrected: both };
+  api.renderStats();
+  assert.match(statusRule(), new RegExp(`whatever their review result: ${both.toLocaleString("en-US")} of the ${correctedStatus.toLocaleString("en-US")} accepted after a correction, and ${(2881 - both).toLocaleString("en-US")} with another review result\\.`));
+  // A count of the records that are both that does not fit is left out; the same counts of the same records say nothing.
+  runtimeManifest.summary.overview.earlier_corrections = { ...earlierCounts, corrected: 2882 };
+  api.renderStats();
+  assert.match(statusRule(), /that list a change, whatever their review result\.(?: |$)/);
+  runtimeManifest.summary.overview.earlier_corrections = { ...earlierCounts, records: correctedStatus, corrected: correctedStatus };
+  api.renderStats();
+  assert.doesNotMatch(statusRule(), /Corrections on records not yet re-read/);
+  runtimeManifest.summary.overview.earlier_corrections = earlierCounts;
+  api.renderStats();
+  figures = element("statsCharts").innerHTML;
   // The part keeps the values compared with databases and the corrections by cause; the rest is in the supplement.
   assert.deepEqual(headings().slice(-2), ["Values compared with databases", "Corrections by cause and how found"]);
   // (round 17: every item a figure, numbered in the order the page shows them)
@@ -2944,7 +2966,7 @@ function row(overrides = {}) {
   // snapshot's own); with the same count it names one.
   const correctedNow = runtimeManifest.summary.distributions.verification_status.find((item) => item.label === "corrected")?.count;
   assert.ok(Number.isInteger(correctedNow) && correctedNow !== 5);
-  assert.match(figures, new RegExp(`Changes the earlier review made to values on the 5 records accepted after a correction when counted, by kind; Figure 1 counts ${correctedNow} in this snapshot\\.`));
+  assert.match(figures, new RegExp(`Changes the earlier review made to values on the 5 records accepted after a correction when counted, by kind; Review result counts ${correctedNow} in this snapshot\\.`));
   runtimeManifest.summary.overview = { ...overview, quality: { as_of: "2026-10-12", earlier_corrections: { records: correctedNow,
     values: { kcat: { rounding: 1, different: 2, magnitude: 0, added: 1 } } } } };
   api.renderStats();
@@ -2953,7 +2975,7 @@ function row(overrides = {}) {
   runtimeManifest.summary.overview = { ...overview, quality: { as_of: "2026-10-12", earlier_corrections: { records: correctedNow + 1,
     values: { kcat: { rounding: 1, different: 2, magnitude: 0, added: 1 } } } } };
   api.renderStats();
-  assert.match(element("statsCharts").innerHTML, /accepted after a correction when counted \(Oct 12, 2026\), by kind; Figure 1 counts \d+ in this snapshot\./);
+  assert.match(element("statsCharts").innerHTML, /accepted after a correction when counted \(Oct 12, 2026\), by kind; Review result counts \d+ in this snapshot\./);
   // A figure whose counts are not whole numbers is not drawn, and part 7 without figures has no heading.
   runtimeManifest.summary.overview = { ...overview, quality: { db_compare: { kcat: { same: 9, differs: 1, absent: 0 } },
     replaced: { records: 7, values: { kcat: [8, 6] } } } };

@@ -8220,12 +8220,29 @@
     return /^\d{4}-\d{2}-\d{2}/.test(String(quality?.as_of || "")) ? formatDate(String(quality.as_of).slice(0, 10)) : "";
   }
 
+  // Review result's records accepted after a correction (Accepted's "after a correction") and Corrections on records not
+  // yet re-read's records (the records not yet re-read that list a change, whatever their review result) are two sets that
+  // mostly overlap: where their counts differ, or the snapshot says they are not the same records, Review result's rule
+  // says why, from the snapshot's own counts (round 17 fix pass: 1,166 after a correction beside 1,165 records listing a
+  // change, unexplained). `earlier` is overview.earlier_corrections, its `corrected` the records that are both (counted
+  // since the fix pass; without it the sentence says only what the figure counts). Empty when the figure is not drawn.
+  function statsCorrectedEarlierText(corrected, earlier, drawn) {
+    const listed = statsCount(earlier?.records);
+    if (!drawn || !listed || statsCount(corrected) === null) return "";
+    const both = statsCount(earlier.corrected, Math.min(listed, corrected));
+    if (listed === corrected && (both === null || both === listed)) return "";
+    const others = both === null ? 0 : listed - both;
+    const split = both === null ? ""
+      : `: ${formatInteger(both)} of the ${formatInteger(corrected)} accepted after a correction${others ? `, and ${formatInteger(others)} with another review result` : ""}`;
+    return `Corrections on records not yet re-read counts the ${formatInteger(listed)} ${listed === 1 ? "record" : "records"} not yet re-read that list a change, whatever their review result${split}.`;
+  }
+
   // Corrections on records not yet re-read: the changes CatLog's earlier version made to values, per
   // parameter by kind of change. `earlier` is this snapshot's own count from its Full data (overview.earlier_corrections:
   // the records whose corrections list Browse's Corrected earlier finds). Without it, the CatLog side's count
   // (quality.earlier_corrections) is used, which may be another snapshot's: snapshot.corrected is this snapshot's records
-  // accepted after a correction (figure 1), and a count made for another snapshot names both numbers, so the caption
-  // never contradicts figure 1.
+  // accepted after a correction (Review result), and a count made for another snapshot names both numbers, so the caption
+  // never contradicts Review result (no figure number: the numbers follow the figures the snapshot has).
   function statsCorrectionsFigure(quality, snapshot = {}, earlier = null) {
     const own = Boolean(earlier && typeof earlier === "object" && statsCount(earlier.records));
     const data = own ? earlier : quality?.earlier_corrections;
@@ -8258,7 +8275,7 @@
         // (fix pass after round 16b: "Changes ... made to values on the ... that list them" read as shorthand)
         ? `How CatLog’s earlier version changed values on ${recordsLink}, by kind of change.`
         : Number.isInteger(snapshot.corrected) && snapshot.corrected !== records
-          ? `Changes the earlier review made to values on the ${formatInteger(records)} ${records === 1 ? "record" : "records"} accepted after a correction when counted${statsAsOf(quality) ? ` (${statsAsOf(quality)})` : ""}, by kind; Figure 1 counts ${formatInteger(snapshot.corrected)} in this snapshot.`
+          ? `Changes the earlier review made to values on the ${formatInteger(records)} ${records === 1 ? "record" : "records"} accepted after a correction when counted${statsAsOf(quality) ? ` (${statsAsOf(quality)})` : ""}, by kind; Review result counts ${formatInteger(snapshot.corrected)} in this snapshot.`
           : `Changes the earlier review made to values on the ${formatInteger(records)} ${records === 1 ? "record" : "records"} accepted after a correction, by kind.`,
       rules: [listedText, othersText].filter(Boolean).join(" "),
     };
@@ -8604,8 +8621,11 @@
         ${minors.length ? `<span class="stats-status-minor">${minors.map((item) => statusLabel(item, true)).join("")}</span>` : ""}</div>` : "";
     const stripe = fromPaperAccepted ? { count: fromPaperAccepted, label: `Accepted, ${SOURCE_CATLOG_LABEL.toLowerCase()}`, key: "accepted" } : null;
     // (the rule says what the bar's labels leave out: Accepted's other parts and the records without a paper)
+    const earlierDrawn = Boolean(statsCount(overview?.earlier_corrections?.records)
+      && statsCorrectionsFigure(overview?.quality, { corrected: counts.corrected }, overview?.earlier_corrections));
     const statusRules = [
       `Accepted: ${acceptedNote}`,
+      statsCorrectedEarlierText(counts.corrected || 0, overview?.earlier_corrections, earlierDrawn),
       identityOnly && !noPaperRule ? `${formatInteger(identityOnly)} accepted records have no PMID or DOI linked, so their values cannot be traced to a paper.` : "",
     ].filter(Boolean).join(" ");
     content.push({

@@ -141,7 +141,12 @@ each, so the legend table keeps its room beside the donut), one below. Figures a
    two kinds under it; a result under a tenth of the records on a line of its own under the bar's end; on phones, and
    wherever a column cannot hold its lines one line each in the viewer's font, a key under the bar instead: a line per
    result with its swatch, name, records and share, its kinds indented under it); Accepted's other
-   parts are its title and the rule, and the fields saved in records that are not accepted a table in the rule.
+   parts are its title and the rule, and the fields saved in records that are not accepted a table in the rule. Where the
+   records accepted after a correction and those Corrections on records not yet re-read counts (records that list a
+   change, whatever their review result) differ, the rule says so from the snapshot's counts (statsCorrectedEarlierText:
+   "... counts the 1,165 records not yet re-read that list a change, whatever their review result: 1,157 of the 1,166
+   accepted after a correction, and 8 with another review result"; the split from overview.earlier_corrections.corrected,
+   which build-catlog-followup-summary.py counts since the round 17 fix pass).
 4. Values: Value ranges, Between papers, kcat against Km, Substrate specificity and Variants against their wild type.
    Round 17, no table: Between papers' same-temperature-and-pH table is 100% bars under its histograms, each parameter's
    pairs within 2-fold, 2- to 10-fold and more than 10-fold apart (one cyan, darker for closer, open for the farthest),
