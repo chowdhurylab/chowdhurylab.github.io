@@ -4586,6 +4586,8 @@ def check_layout(driver, browser, url, route_label):
             ActionChains(driver).move_to_element(driver.find_element(By.ID, "pageLabel")).perform()
             return header_state()
 
+        # Away from the headers first, as every step below does (a Safari pointer resting on a heading shows its hover arrow).
+        ActionChains(driver).move_to_element(driver.find_element(By.ID, "pageLabel")).perform()
         start = header_state()
         assert (start["buttons"] == 8 and start["sorted"] == [["c-status", "ascending"]] and start["menu"] == "none"
                 and start["arrow"] == 1), f"Every header sorts, Review result is the default order: {start}"
