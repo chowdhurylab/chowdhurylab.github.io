@@ -65,6 +65,27 @@ are a defined working set, not a universal count of all PTMs. Paper comparisons
 are selected examples, not a systematic review. Upper bounds, uncertainty,
 study conditions and source links are retained in the record details.
 
+Paper reading, round 49 — 25 October 2026
+- Read selected original sections in three previously unread papers: two
+  2026 studies of skin ceramides and one study of selenium-bound proteins.
+  These address hydroxyceramide ester and S-selanylation, outside round 48.
+- The skin studies identify ceramide structures or measure skin-model
+  permeability, but do not establish numerical function attributable to a
+  verified protein-ceramide state. The selenium study measures incorporation;
+  it leaves the protein bond chemistry and target functional effect unresolved.
+  No numerical records were added.
+- A known protein ATG8ylation paper remains access-held after a metadata-only
+  response. It is not counted as a newly read or recovered original.
+  S-diacylglycerol discovery returned previously covered PrsA papers.
+- Totals remain 261 comparisons, 322 measurement entries, 97 numerical papers,
+  92 of 111 families with numerical data and 19 remaining gaps. These are
+  selected reading outcomes, not evidence that the remaining literature has
+  no suitable measurements. The website data and audit workbook are unchanged.
+- Read sources: https://doi.org/10.1186/s40543-026-00542-3
+  https://doi.org/10.3389/fphys.2026.1838020
+  https://doi.org/10.1073/pnas.142291199
+  Prior access hold: https://doi.org/10.1016/j.celrep.2025.116485
+
 Paper reading, round 48 — 25 October 2026
 - Added three qualified comparisons from two previously unread papers,
   covering MIO cofactor formation and protein methylthiolation. These families
