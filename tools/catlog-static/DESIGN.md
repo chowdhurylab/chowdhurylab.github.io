@@ -98,7 +98,7 @@ manifest's entries, entries_without_paper, v2_measurements ...); only visible wo
 | record | One row of Browse: one enzyme (wild type or a variant) with one substrate under one set of assay conditions in one paper, and its values (up to three). Inside the code this is a "measurement". | Browse's counts band "?", the Guide's first section, Stats' first box | measurement(s), entry/entries, row(s) as a count, slot, item |
 | paper | One publication. | Guide, Records and values | article, reference (as a count) |
 | parameter | kcat, Km or kcat/Km as a kind of value; the filter group is "Parameter". | Guide, Records and values (the Value line) | measurement type |
-| records people checked (reviewed records) | The human review's "entries": records built from the enzyme databases, as they stood before CatLog read their paper (Figure 1's row "From the enzyme databases"), and records read from the paper. | Stats, Quality | entries, entries reviewed, "earlier version", "old" |
+| records people checked (reviewed records) | The human review's "entries": records built from the enzyme databases and accepted by an automated review, as they stood when the reviewers saw them (Figure 1's row "From the enzyme databases"), and records read from the paper. | Stats, Quality | entries, entries reviewed, "earlier version", "old" |
 | the enzyme databases, database listings | What BRENDA, SABIO-RK, OED, SKiD, STRENDA DB and UniProt list. | Guide, Compared with databases | database entries |
 
 Labels that keep their words: the review results Accepted, Not confirmed, Not checked and Disputed; the sources Read from
@@ -1911,14 +1911,14 @@ there". Plan: catlog-v2 work/website_next/research/stats_fixes.md. No new manife
   statsHumanCheckedFoot: "1,791 records in Browse carry the human-checked tag (3,687 values)." (the count linked; the
   tag's rule and the bridge stand under Human-checked in How these numbers are counted). Caption: "Records people checked
   against their papers; red marks a record with a value they disputed." Rule (reviewRulesText): the reviewers' own files;
-  "From the enzyme databases: records built from the enzyme databases, as they stood before CatLog read their paper; 166
+  "From the enzyme databases: records built from the enzyme databases and accepted by an automated review, as they stood when the reviewers saw them; 166
   more had no PMID or DOI, so they could not be checked against a paper and are not drawn."; "Read from the paper: 68
   drawn at random and 31 picked as hard cases, from papers free to read."; then the definitions as before.
 - No "earlier version" or "old" for the review: At a glance's label is "Human review" (its title "No value disputed in
   2,601 of the 2,604 records from the enzyme databases that people checked against their papers; 166 more had no PMID or
   DOI."; Figure 1's row right below names the records, so the share does not read as today's records' accuracy), Team's
-  Human check and reviewSentence say "records from the enzyme databases", the Human-checked bridge "as they stood before
-  CatLog read the paper", Figure 2's note "its agents saw them or earlier records of the paper", an older snapshot's lead
+  Human check and reviewSentence say "records from the enzyme databases", the Human-checked bridge "as they stood when the reviewers saw them" (until 2026-10-25 "as they stood before
+  CatLog read the paper"), Figure 2's note "its agents saw them or records CatLog held for the paper before", an older snapshot's lead
   "In records from the enzyme databases, ...". Still naming the earlier version on Stats: the Not yet re-read definition
   (SOURCE_DATABASES_HELP, shared with Browse and the Guide) and the supplement's figures on the earlier version's
   corrections and on its records CatLog has since read.

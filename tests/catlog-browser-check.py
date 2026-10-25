@@ -1369,7 +1369,7 @@ def check_quality_round16b(driver, browser, url):
             # (one short line, 2026-10-25: the tag's rule and the bridge are How these numbers are counted's)
             assert re.fullmatch(r"[\d,]+ records? in Browse carr(?:y|ies) the human-checked tag \(3,486 values\)\.", foot), foot
             method = " ".join(driver.execute_script("return document.querySelector('.stats-method').textContent").split())
-            assert ("From the enzyme databases: records built from the enzyme databases, as they stood before CatLog read their paper; 166 more "
+            assert ("From the enzyme databases: records built from the enzyme databases and accepted by an automated review, as they stood when the reviewers saw them; 166 more "
                     "had no PMID or DOI, so they could not be checked against a paper and are not drawn.") in method, method
             assert "Their values are the kcat, Km and kcat/Km values a reviewer approved on them" in method, method
             # Checks on the values: the random audit's share removed on a small axis, its 95% interval drawn from 0.30% to

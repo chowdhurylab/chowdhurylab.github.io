@@ -6968,14 +6968,14 @@
 
   // How the human-review counts relate (fix pass after round 16b; round 17's words: records, never entries): " Of the
   // 2,131 records with a reviewer’s verdict in Browse, the other 290 have a value not approved or are not accepted. The
-  // review counts records as they stood before CatLog read the paper, by whether a value was disputed, and Approved
+  // review counts records as they stood when the reviewers saw them, by whether a value was disputed, and Approved
   // values read from the paper again counts approved values one by one; the tag needs every kcat and Km a record shows
   // approved." "" without the counts.
   function statsHumanCheckedBridge(humanChecked, marked, review, match) {
     if (humanChecked === null || marked === null || marked < humanChecked) return "";
     const other = marked - humanChecked;
     const rest = other ? ` Of the ${formatInteger(marked)} records with a reviewer’s verdict in Browse, the other ${formatInteger(other)} ${other === 1 ? "has a value not approved or is" : "have a value not approved or are"} not accepted.` : "";
-    const counts = [review ? "the review counts records as they stood before CatLog read the paper, by whether a value was disputed" : "",
+    const counts = [review ? "the review counts records as they stood when the reviewers saw them, by whether a value was disputed" : "",
       match ? `${review ? "" : "the "}Approved values read from the paper again counts approved values one by one` : ""].filter(Boolean);
     const joined = counts.length ? ` ${counts.join(", and ").replace(/^./, (letter) => letter.toUpperCase())}; the tag needs every kcat and Km a record shows approved.` : "";
     return `${rest}${joined}`;
@@ -7018,7 +7018,7 @@
     const facts = statsExposureFacts(quality);
     if (!facts) return "";
     const { papers, sent, done, span } = facts;
-    const first = `CatLog reads without database values; on ${formatInteger(papers)} ${papers === 1 ? "paper" : "papers"}${span ? ` (${span.replace(" and ", " to ")})` : ""} its agents saw them or earlier records of the paper.`;
+    const first = `CatLog reads without database values; on ${formatInteger(papers)} ${papers === 1 ? "paper" : "papers"}${span ? ` (${span.replace(" and ", " to ")})` : ""} its agents saw them or records CatLog held for the paper before.`;
     if (sent === null) return first;
     const them = sent === papers ? (sent === 1 ? "It" : sent === 2 ? "Both" : `All ${formatInteger(sent)}`) : formatInteger(sent);
     const sentBack = `${them} ${sent === 1 ? "was" : "were"} sent back to be read or checked again without them`;
@@ -7170,7 +7170,7 @@
     return [
       asOf ? `Counted ${asOf}.` : "",
       review ? "From the reviewers’ own files: each record a reviewer checked counts once, by its final verdict." : "",
-      review ? `${REVIEW_DATABASES_LABEL}: records built from the enzyme databases, as they stood before CatLog read their paper${unchecked}.` : "",
+      review ? `${REVIEW_DATABASES_LABEL}: records built from the enzyme databases and accepted by an automated review, as they stood when the reviewers saw them${unchecked}.` : "",
       v2How ? `${SOURCE_CATLOG_LABEL}: ${v2How}.` : "",
       review ? `No value disputed: no reviewer disputed the record’s ${REVIEW_VALUES} number or unit.` : "",
       review && review.missing !== null ? "Values missing (the paper prints a value the record lacks) and other disagreements are counted by kind in the supplement." : "",
@@ -8238,10 +8238,10 @@
       caption: own
         // (what was changed, by kind, never "to the paper's number": a changed kcat/Km is often kcat ÷ Km, round 14)
         // (fix pass after round 16b: "Changes ... made to values on the ... that list them" read as shorthand)
-        ? `How CatLog’s earlier version changed values on ${recordsLink}, by kind of change.`
+        ? `How values were changed on ${recordsLink}, by kind of change.`
         : Number.isInteger(snapshot.corrected) && snapshot.corrected !== records
-          ? `Changes the earlier review made to values on the ${formatInteger(records)} ${records === 1 ? "record" : "records"} accepted after a correction when counted${statsAsOf(quality) ? ` (${statsAsOf(quality)})` : ""}, by kind; Review result counts ${formatInteger(snapshot.corrected)} in this snapshot.`
-          : `Changes the earlier review made to values on the ${formatInteger(records)} ${records === 1 ? "record" : "records"} accepted after a correction, by kind.`,
+          ? `Changes made to values on the ${formatInteger(records)} ${records === 1 ? "record" : "records"} accepted after a correction when counted${statsAsOf(quality) ? ` (${statsAsOf(quality)})` : ""}, by kind; Review result counts ${formatInteger(snapshot.corrected)} in this snapshot.`
+          : `Changes made to values on the ${formatInteger(records)} ${records === 1 ? "record" : "records"} accepted after a correction, by kind.`,
       rules: [listedText, othersText].filter(Boolean).join(" "),
     };
   }
