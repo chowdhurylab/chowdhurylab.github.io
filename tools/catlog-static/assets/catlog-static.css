@@ -1674,32 +1674,14 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-row-detail td { color:var(--text-2); font-size:var(--fs-12) }
 .stats-table .stats-row-detail th, .stats-table .stats-row-detail td { border-bottom-color:transparent }
 .stats-table tr:has(+ .stats-row-detail) > * { border-bottom-color:transparent }
-/* Quality (round 17: figures, no tables). Human review is a unit chart: one 5px square per record people checked on a
-   6px pitch, 100 to a row (50 on phones, its narrow drawing), filled at 60% in its meaning colour (no value disputed in
-   human-checked's green, a value disputed in Disputed's deep red, opaque as its dot is), a record with no PMID or DOI an
-   open square in Not checked's slate. Its key, the counts in words, stands beside the squares from 1024px and under them
-   below. The records with the human-checked tag are said under the panels. */
+/* Quality (round 17: figures, no tables). Human review (2026-10-25: two bars, no unit chart) is a statsBarChart on one
+   count scale: per row no value disputed in human-checked's green at 60% (.stats-part-human), then a value disputed in
+   Disputed's deep red. Three disputed among 2,604 records are under 1px of the bar, so the red shows at least 2px wide,
+   ending where the bar ends (over the green before it; the bar keeps its true length). Names up to 320px and the figure
+   to 920px, as Errors caught by CatLog's checks. The records with the human-checked tag are said in one line under it. */
 .stats-lead-links { display:flex; flex-wrap:wrap; gap:4px 24px; margin:0; font-size:var(--fs-13) }
-.stats-units { display:grid; gap:24px }
-.stats-units-panel { display:grid; gap:8px; min-width:0 }
-.stats-units-title { margin:0; color:var(--text-2); font-size:var(--fs-13); line-height:var(--lh-13) }
-.stats-units-title strong { margin-right:6px; color:var(--text); font-size:var(--fs-14); font-weight:600; line-height:var(--lh-14) }
-.stats-units-body { display:grid; grid-template-columns:minmax(0,599px) minmax(200px,1fr); gap:12px 32px; align-items:start }
-.stats-units-chart { min-width:0; container-type:inline-size }
-.stats-units-svg { display:block; width:100%; height:auto; shape-rendering:crispEdges }
-.stats-units-svg.is-wide { max-width:599px }
-.stats-units-svg.is-narrow { display:none; max-width:299px }
-.stats-units-svg.is-narrowest { display:none; max-width:239px }
-.stats-unit { fill:color-mix(in srgb, var(--part) 60%, var(--bg)) }
-.stats-unit.stats-part-disputed { fill:var(--part) }
-.stats-unit.is-open { fill:var(--bg); stroke:var(--part); stroke-width:1 }
-.stats-fig.has-active .stats-unit[data-hl]:not(.is-active) { opacity:0.35 }
-.stats-units-key { display:grid; gap:6px; margin:0; padding:0; list-style:none; color:var(--text-2); font-size:var(--fs-13); line-height:var(--lh-13) }
-.stats-units-key li { display:flex; align-items:flex-start; gap:8px }
-.stats-units-key b, .stats-check-labels b { color:var(--text); font-weight:600 }
-.stats-unit-swatch { flex:0 0 10px; width:10px; height:10px; margin-top:4px; background:var(--part); background:color-mix(in srgb, var(--part) 60%, var(--bg)) }
-.stats-unit-swatch.stats-part-disputed { background:var(--part) }
-.stats-unit-swatch.is-open { background:var(--bg); box-shadow:inset 0 0 0 1px var(--part) }
+.stats-chart[data-chart="review"] .stats-seg.stats-part-disputed.is-end::after { content:""; position:absolute; top:0; right:0; bottom:0; width:max(2px, 100%); border-radius:inherit; background:inherit; box-shadow:inherit }
+.stats-check-labels b { color:var(--text); font-weight:600 }
 .stats-units-foot { margin:20px 0 0; max-width:80ch; color:var(--text-2); font-size:var(--fs-13); line-height:var(--lh-13) }
 /* Checks on the values: two panels, the second AI check's 100% bar (confirmed in Read from the paper's cyan, corrected
    in a correction's opaque red) with each part's count under its end, and the random audit's share removed as wrong on
@@ -1727,34 +1709,14 @@ a.stats-total-value:focus-visible { outline:0 }
 .stats-ci-axis > span { position:absolute; top:6px; white-space:nowrap; transform:translateX(-50%) }
 .stats-ci-axis > span::before { content:""; position:absolute; left:50%; top:-6px; height:4px; border-left:1px solid var(--line-strong) }
 .stats-ci-title { margin:6px 0 0; color:var(--text-2); font-size:var(--fs-12); line-height:var(--lh-12); text-align:center }
-/* Errors found in CatLog: neutral bars (the counts carry no meaning colour), a route's kinds as parts of its bar, All
-   (each value once) set off by a hairline and weight. */
-.stats-errors-section > .stats-fig { max-width:920px }
-.stats-wide .stats-chart[data-chart="errors"] { --label-w:minmax(140px,320px) }
+/* Errors caught by CatLog's checks: neutral bars (the counts carry no meaning colour), a check's kinds as parts of its
+   bar, All (each value once) set off by a hairline and weight. Human review's two bars share its widths. */
+:is(.stats-review-section, .stats-errors-section) > .stats-fig { max-width:920px }
+.stats-wide .stats-chart:is([data-chart="errors"], [data-chart="review"]) { --label-w:minmax(140px,320px) }
 .stats-chart[data-chart="errors"] .stats-chart-row[data-row="all"] { margin-top:4px; border-top:1px solid var(--line); padding-top:12px }
 .stats-chart[data-chart="errors"] .stats-chart-row[data-row="all"] :is(.stats-chart-label, .stats-chart-value) { font-weight:600 }
 @media (max-width: 1023px) {
-  .stats-units-body, .stats-checks { grid-template-columns:minmax(0,1fr) }
-}
-@media (max-width: 640px) {
-  .stats-units-svg.is-wide { display:none }
-  .stats-units-svg.is-narrow { display:block }
-}
-/* The copy the chart's own room holds at its own size, never scaled (fix pass: on a 320px phone the 50-a-row copy drew
-   at 288 of its 299px and at 641-661px the 100-a-row copy at 578-597 of 599, so the 1px gaps blurred): 100 to a row from
-   599px of room, 50 from 299px, else 40 (239px; a 271px window). Browsers without container queries keep the window's
-   rule above. */
-@container (min-width: 599px) {
-  .stats-units-svg.is-wide { display:block }
-  .stats-units-svg.is-narrow, .stats-units-svg.is-narrowest { display:none }
-}
-@container (min-width: 299px) and (max-width: 598.98px) {
-  .stats-units-svg.is-narrow { display:block }
-  .stats-units-svg.is-wide, .stats-units-svg.is-narrowest { display:none }
-}
-@container (max-width: 298.98px) {
-  .stats-units-svg.is-narrowest { display:block }
-  .stats-units-svg.is-wide, .stats-units-svg.is-narrow { display:none }
+  .stats-checks { grid-template-columns:minmax(0,1fr) }
 }
 
 /* Value ranges: three small log-scale histograms. */
