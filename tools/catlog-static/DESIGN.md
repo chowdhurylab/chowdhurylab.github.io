@@ -98,7 +98,7 @@ manifest's entries, entries_without_paper, v2_measurements ...); only visible wo
 | record | One row of Browse: one enzyme (wild type or a variant) with one substrate under one set of assay conditions in one paper, and its values (up to three). Inside the code this is a "measurement". | Browse's counts band "?", the Guide's first section, Stats' first box | measurement(s), entry/entries, row(s) as a count, slot, item |
 | paper | One publication. | Guide, Records and values | article, reference (as a count) |
 | parameter | kcat, Km or kcat/Km as a kind of value; the filter group is "Parameter". | Guide, Records and values (the Value line) | measurement type |
-| records people checked (reviewed records) | The human review's "entries": records of CatLog's earlier version as the reviewers saw them. | Stats, Quality | entries, entries reviewed |
+| records people checked (reviewed records) | The human review's "entries": records built from the enzyme databases, as they stood before CatLog read their paper (Figure 1's row "From the enzyme databases"), and records read from the paper. | Stats, Quality | entries, entries reviewed, "earlier version", "old" |
 | the enzyme databases, database listings | What BRENDA, SABIO-RK, OED, SKiD, STRENDA DB and UniProt list. | Guide, Compared with databases | database entries |
 
 Labels that keep their words: the review results Accepted, Not confirmed, Not checked and Disputed; the sources Read from
@@ -134,7 +134,7 @@ document itself never scrolls (each view is positioned, so screen-reader-only
 text deep in a page cannot reach past it).
 
 The header is one 56px line from 1024px: brand ("CatLog", enzyme kinetics
-catalog), the catalog's tabs Browse · Stats · Guide · Team, the links out set
+database; 2026-10-25: never "catalog" in visible text, the thing itself is CatLog), CatLog's tabs Browse · Stats · Guide · Team, the links out set
 apart by a thin rule, the search box (at most 560px) and Download. From 1024 to
 1439px the brand drops its tagline and the links out read "Paper ↗" and "Lab ↗",
 so the search box keeps room for its placeholder. Tabs are 14px/500, the current
@@ -485,8 +485,8 @@ download of the same snapshot. When nothing matches, the table names the
 filters that are on and offers to remove the one set last that brings records
 back (with how many) or to clear everything; a button too long for the table's
 width wraps onto a second line inside it (at 320px "Remove Caution: Unit or
-magnitude error (144 records)"), never past its edge. The header's tabs are the
-catalog's own views, Browse · Stats · Guide · Team (#team, the people and agents
+magnitude error (144 records)"), never past its edge. The header's tabs are
+CatLog's own views, Browse · Stats · Guide · Team (#team, the people and agents
 behind CatLog); Stats alone has a soft BPG-cyan glow behind its word (no animation; the site's one glow, so visitors
 notice the Stats page; the user, 2026-10-21); the links out, "CatRange paper ↗" and "Chowdhury Lab ↗", follow
 them, set apart by a thin rule. From 641 to 1023px the header is one grid on
@@ -1023,8 +1023,8 @@ they compare with the databases and how far they were checked come first, the co
   to six or more decimals with more than four significant digits reads to four,
   "1.1/13 = 0.08462", as the Values table shows it, while 0.000015 keeps its digits;
   a note cut before its first label, "1.1 s⁻¹; K_B = 13 mM; ...", opens with
-  "kcat"; Python's 4.69e+01 reads 4.69 × 10¹; "catalog units" reads "the
-  catalog's units"). The notes never
+  "kcat"; Python's 4.69e+01 reads 4.69 × 10¹; "catalog units" reads "CatLog's
+  units", "normalized value" "value in CatLog's units"). The notes never
   show the earlier pipeline's field names or how it fetched the paper:
   "Km raw_value=1.27 mM raw_unit=mM" reads "Km 1.27 mM" (a unit once), a
   printed cell other than the value is quoted ("kcat 0.022 s⁻¹, printed
@@ -1228,7 +1228,8 @@ Database attribution belongs in Guide and dataset notes, not the Browse footer.
 One page from the snapshot manifest (never the record index) in numbered parts, each with one plain heading:
 1 At a glance (the headline band, the page's focal point: a plain white card with a 1px --line hairline, no glow, halo, wash or motion (round 14); 40px key numbers in the counts band's meaning colours (28px on phones, growing with the window from 721px to 30px at 1023px and on to 40px at 1200px, never smaller on a wider window, so a wide font keeps a six-digit count inside its column), then 20px scope counts),
 2 Quality (round 17: three numbered figures, no table: Human review as one square per record people checked, Checks on
-the values as a bar and an interval, Errors found in CatLog as bars; "Round 17 Stats" below), 3 What is in the catalog
+the values as a bar and an interval, Errors found in CatLog as bars; "Round 17 Stats" below; 2026-10-25: Human review as
+two bars and Errors caught by CatLog's checks, "Stats fixes" below), 3 What is in CatLog
 (Review result, its 100% bar with its labels under it, beside Records by main source with a Records | Share switch, then
 the enzyme classes with accepted and read-from-the-paper records), 4 Values (value ranges on one log axis per
 parameter; then, from the records read from the paper, Between papers with its bars of pairs within 2-fold and 10-fold,
@@ -1239,7 +1240,7 @@ temperature), 5 Compared with databases (from the manifest's database comparison
 the databases with each share on its bar, corrections by cause and how found), 6 CatLog and BRENDA by publication year
 (round 17: the last main part), then S Supplementary figures (round 14; round 17: one click opens all of it, and its
 tables are figures, "Stats supplement (round 17)" below): every other figure, numbered apart (Figure S1), in five groups
-(Quality; What is in the catalog; Organisms, enzymes and variants, called Biology until round 14's polish; Values;
+(Quality; What is in CatLog; Organisms, enzymes and variants, called Biology until round 14's polish; Values;
 Compared with databases), each item open inside the one closed supplement, with its own address (#stats-supp-printed-units) that opens
 the supplement at it; new there in round 14: papers by parameter, single substitutions by residue, kinds of variant and
 units as printed, counted by build_overview from the records read from the paper; round 16 added kcat and assay
@@ -1586,7 +1587,7 @@ Generated mockups guide layout only; their text is not a scientific source.
 ## Round 16 CatLog and BRENDA by publication year
 
 - The figure the user approved on 2026-10-21 (catlog-v2 work/brenda_lag_20261021/broad/brenda_catlog.png and its README:
-  "similar, but up to date"), drawn by the page in What is in the catalog, after Records by main source: kcat, Km and
+  "similar, but up to date"), drawn by the page in What is in CatLog, after Records by main source: kcat, Km and
   kcat/Km values per publication year of their paper, first_year to last_year (2000-2025), in BRENDA's release (BRENDA
   2026.1) and read by CatLog, from the manifest's summary.publication_years, which catlog-v2's build writes (the data
   contract: tools/site_patches/20261021-site-round16-brief.md in catlog-v2; an optional shaded_from moves the band, else
@@ -1788,10 +1789,10 @@ and "from paper" stays at 400.
 The user: "After the first box it should be the quality thing, with figures to understand it, not all those tables ...
 the CatLog and BRENDA plot should come later ... still too much writing." Brief: catlog-v2
 tools/site_patches/20261023-site-round17-brief.md, section 5.
-- Order: At a glance, Quality, What is in the catalog, Values, Compared with databases, CatLog and BRENDA by publication
+- Order: At a glance, Quality, What is in CatLog, Values, Compared with databases, CatLog and BRENDA by publication
   year (its own part, key `years`, #stats-years, its figure headed "Values per publication year"), the supplement.
   Quality's figures are numbered (Figures 1-3), so the rest follow from 4; no caption or rule names a number.
-- At a glance's review item is labelled "Human review, earlier version" ("earlier version" kept on one line, so a wrapped
+- (Until 2026-10-25, "Stats fixes" below.) At a glance's review item is labelled "Human review, earlier version" ("earlier version" kept on one line, so a wrapped
   label breaks after the comma), its note "no value disputed, 2,601 of 2,604" and its title the sentence in full (fix
   pass: the scope had been in the title only, and the share read as the current records' accuracy). The scope goes in the
   label, not the note: "earlier version: no value disputed, 2,601 of 2,604" took two lines from 1024px and three on
@@ -1799,7 +1800,7 @@ tools/site_patches/20261023-site-round17-brief.md, section 5.
   records).
 - At a glance ends with the counting words in one 12px muted line (statsCountingWordsHtml): "Record: one enzyme or
   variant, one substrate, one set of assay conditions, one paper. Value: one kcat, Km or kcat/Km, up to three per record."
-- Human review (statsReviewFigure): a unit chart (statsUnitGridSvg), one square per record people checked, a 5px square
+- (Until 2026-10-25, "Stats fixes" below.) Human review (statsReviewFigure): a unit chart (statsUnitGridSvg), one square per record people checked, a 5px square
   on a 6px pitch, crisp at its own size: three drawings, 100 to a row (599px), 50 (299px) and 40 (239px), and the
   stylesheet shows the one the chart's own room holds (container queries on .stats-units-chart: 599px of room or more,
   299px or more, less), the others display:none, so a drawing is never scaled (fix pass: on a 320px phone the 50-a-row
@@ -1831,7 +1832,7 @@ tools/site_patches/20261023-site-round17-brief.md, section 5.
   the papers drops the second sentence (round 17 fix pass: it had read as nothing sent back); none given, or 0, says
   their values stay. Which agent saw them, the date sent back and the papers not sent back are statsExposureRule, in the
   figure's rule with the audit's date, interval and follow-ups.
-- Errors found in CatLog (statsErrorsFigure): statsBarChart, neutral, one axis to All; a route's kinds as parts of its
+- Errors found in CatLog (statsErrorsFigure; "Errors caught by CatLog's checks" since 2026-10-25, "Stats fixes" below): statsBarChart, neutral, one axis to All; a route's kinds as parts of its
   bar only when they make it (statsErrorParts: the sweep's reprinted, partial and other values; a database check's
   corrected, removed and awaiting), in words under its name (statsErrorKinds; the audit's "28 in the random audit, 46 in
   follow-up audits", statsAuditSplit, when the two make it); Values and Papers beside; All, each value once, set off by a
@@ -1890,9 +1891,50 @@ tools/site_patches/20261023-site-round17-brief.md, section 5.
   on the main page at 1440px (captions, leads, notes and paragraphs outside the figures' labels): 719 words before, 354
   after; tables on the main page: 9 (378 words) before, none after.
 - Tests: the node test's Stats blocks and the browser check's check_quality, check_review_headline,
-  check_quality_round16b (unit chart squares, key, foot, CI geometry, errors rows, exposure text), check_stats_figures,
+  check_quality_round16b (review rows, foot, CI geometry, errors rows, exposure text), check_stats_figures,
   check_stats_databases (SEGMENT_LABELS_JS), check_stats_insights (class dot plot), check_stats_years (part `years`) and
   the Stats block of check().
+
+## Stats fixes: Human review, Errors caught, "catalog" (2026-10-25)
+
+The user, on Stats: Figure 1 "is too much and confusing, and writing old catlog is internal and doesn't make sense";
+Figure 3 "feels like those errors are inside CatLog and not that CatLog found them"; "you still write catalog here and
+there". Plan: catlog-v2 work/website_next/research/stats_fixes.md. No new manifest fields.
+- Human review (statsReviewFigure): two bars on one count scale (statsBarChart, key review, value column "Records",
+  axis 0 to 3,000), no unit chart (statsUnitGridSvg, STATS_UNIT_* and the .stats-units* rules are gone; .stats-units-foot
+  stays for the tag line). Rows: "From the enzyme databases" (REVIEW_DATABASES_LABEL: review.v1's checkable records,
+  2,604, green for no value disputed then red for a value disputed, note "3 with a value disputed; a check found all 3 as
+  printed in the paper") and Read from the paper (review.v2, 99 at their true size, note "68 drawn at random, 31 picked
+  as hard cases; none of their 217 values disputed"). A legend above (No value disputed; A value disputed only when a row
+  has one). Red under 2px shows 2px wide, ending where the bar ends, over the green before it (an ::after on the last
+  segment), so the bar keeps its true length. Names up to 320px and the figure to 920px, as Figure 3. Under it one line,
+  statsHumanCheckedFoot: "1,791 records in Browse carry the human-checked tag (3,687 values)." (the count linked; the
+  tag's rule and the bridge stand under Human-checked in How these numbers are counted). Caption: "Records people checked
+  against their papers; red marks a record with a value they disputed." Rule (reviewRulesText): the reviewers' own files;
+  "From the enzyme databases: records built from the enzyme databases, as they stood before CatLog read their paper; 166
+  more had no PMID or DOI, so they could not be checked against a paper and are not drawn."; "Read from the paper: 68
+  drawn at random and 31 picked as hard cases, from papers free to read."; then the definitions as before.
+- No "earlier version" or "old" for the review: At a glance's label is "Human review" (its title "No value disputed in
+  2,601 of the 2,604 records from the enzyme databases that people checked against their papers; 166 more had no PMID or
+  DOI."; Figure 1's row right below names the records, so the share does not read as today's records' accuracy), Team's
+  Human check and reviewSentence say "records from the enzyme databases", the Human-checked bridge "as they stood before
+  CatLog read the paper", Figure 2's note "its agents saw them or earlier records of the paper", an older snapshot's lead
+  "In records from the enzyme databases, ...". Still naming the earlier version on Stats: the Not yet re-read definition
+  (SOURCE_DATABASES_HELP, shared with Browse and the Guide) and the supplement's figures on the earlier version's
+  corrections and on its records CatLog has since read.
+- Errors caught by CatLog's checks (statsErrorsFigure; was "Errors found in CatLog"): caption "Wrong values CatLog's own
+  checks caught, by the check that caught them."; rows AI audits ("29 in the random audit, 119 in follow-up audits; all
+  removed"), Follow-up searches for the same kind of error ("all removed: 1,062 reprinted from an earlier paper, 326
+  per-product (partial) rate constants, 100 others"), Paper checks of database differences ("10 corrected, 2 awaiting a
+  further check"), Units the paper misprinted ("corrected; the misprint is the paper's", last before All: the misprint is
+  the paper's, not a misread by CatLog), All, each value once. Data keys unchanged. Rule: "A value caught by more than one
+  check counts under each, and once in All." and, with the unit row, what a misprinted unit is. Figure 2's rule: "...;
+  Errors caught by CatLog's checks counts them under AI audits."
+- "catalog" in visible text: the tagline is "enzyme kinetics database" (title and og:title "CatLog | Enzyme kinetics
+  database", also in sync-catlog-latest.py's Stats edits), the nav "CatLog sections", the search "Search CatLog", part 3
+  and its supplement group "What is in CatLog", the Guide's "In CatLog's units", the citation placeholder "... when the
+  page loads", notes' "value in CatLog's units", Team's loop "the checked values feed the website and the paper". Code
+  identifiers, CSS classes, ids, field names and the supplement key "catalog" stay.
 
 ## Round 17 fix pass, Browse lane (2026-10-23)
 - Records' "?": the label's words are span.summary-label, the "?" follows them and its note (div#recordsAbout) sits

@@ -22,11 +22,11 @@
       <script>(function(n){if(/(^|\.)catlog\.structf\.studio$|\.workers\.dev$/.test(location.hostname)){n.hidden=true;return}var a=n.querySelector("a"),f=function(){a.href="https://catlog.structf.studio/"+(location.hash||(/catlog-stats\.html$/.test(location.pathname)?"#stats":""))};f();["pointerdown","focus","click"].forEach(function(e){a.addEventListener(e,f)})})(document.currentScript.previousElementSibling);</script>
       <header class="app-header">
         <button id="brandHomeButton" class="brand-lockup" type="button" aria-label="Return to CatLog browse">
-          <span class="visually-hidden">CatLog, enzyme kinetics catalog</span>
+          <span class="visually-hidden">CatLog, enzyme kinetics database</span>
           <strong aria-hidden="true">CatLog</strong>
-          <span aria-hidden="true">enzyme kinetics catalog</span>
+          <span aria-hidden="true">enzyme kinetics database</span>
         </button>
-        <nav class="top-nav" aria-label="Catalog sections">
+        <nav class="top-nav" aria-label="CatLog sections">
           <a id="browseButton" class="nav-tab" href="catlog-latest.html">Browse</a>
           <a id="statsButton" class="nav-tab active" aria-current="page" href="catlog-stats.html" aria-controls="statsView">Stats</a>
           <a id="guideButton" class="nav-tab" href="catlog-latest.html#guide">Guide</a>
@@ -43,7 +43,7 @@
           ><span class="nav-external-long">CatRange paper</span><span class="nav-external-short">Paper</span>&nbsp;<span aria-hidden="true">&#8599;</span></a>
           <a class="nav-external" href="https://chowdhurylab.github.io/" title="Chowdhury Lab website" aria-label="Chowdhury Lab website"><span class="nav-external-long">Chowdhury Lab</span><span class="nav-external-short">Lab</span>&nbsp;<span aria-hidden="true">&#8599;</span></a>
         </nav>
-        <label class="global-search" aria-label="Search catalog">
+        <label class="global-search" aria-label="Search CatLog">
           <input id="globalSearchInput" type="search" placeholder="Enzyme, EC, organism or substrate" aria-label="Search by enzyme, EC number, organism, substrate, UniProt ID or PMID" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="searchSuggestions" />
           <kbd>/</kbd>
         </label>
@@ -555,7 +555,7 @@ JSON</span>
                 <ol>
                   <li><strong>Header</strong> Enzyme, EC number, organism, form and substrate.</li>
                   <li><strong>Review result</strong> The result and its tags (<a href="#guide-status">labels</a>).</li>
-                  <li><strong>Values</strong> In catalog units, beside the cell as printed; a tick means a reviewer approved it.</li>
+                  <li><strong>Values</strong> In CatLog&rsquo;s units, beside the cell as printed; a tick means a reviewer approved it.</li>
                   <li><strong>In the paper</strong> The line the values come from.</li>
                   <li data-guide-databases hidden><strong>Compared with databases</strong> What the databases list; here BRENDA&rsquo;s <i>K</i><sub>m</sub> is 10&times; the paper&rsquo;s (<a href="#guide-databases">results</a>).</li>
                   <li><strong>Checks</strong> The second AI check, AI audits and human review (<a href="#guide-how-read">How CatLog reads a value</a>).</li>
@@ -689,7 +689,7 @@ JSON</span>
             <dl class="guide-citation-meta">
               <div><dt>Snapshot</dt><dd id="guideSnapshotDate">—</dd></div>
               <div><dt>Data ID</dt><dd><code id="guideSourceId">—</code></dd></div>
-              <div><dt>Cite</dt><dd><p id="guidePaperCitation">Sajeevan, K. A., et al. (2026). <cite>CatRange enables robust prediction of enzyme variant kinetic regimes.</cite> PNAS Nexus, pgag309. doi: 10.1093/pnasnexus/pgag309.</p><p class="guide-citation-line"><code id="guideCitationLine">CatLog snapshot (date and data ID appear when the catalog loads)</code></p></dd></div>
+              <div><dt>Cite</dt><dd><p id="guidePaperCitation">Sajeevan, K. A., et al. (2026). <cite>CatRange enables robust prediction of enzyme variant kinetic regimes.</cite> PNAS Nexus, pgag309. doi: 10.1093/pnasnexus/pgag309.</p><p class="guide-citation-line"><code id="guideCitationLine">CatLog snapshot (date and data ID appear when the page loads)</code></p></dd></div>
             </dl>
             <details class="guide-ref guide-cite" id="guide-cite">
               <summary><h3 id="guide-citation-title">More on citing</h3><span class="guide-ref-gist">One value, the Data ID, CatLog-27k</span></summary>

@@ -1108,36 +1108,23 @@ REVIEW_FIXTURE = {
 # Round 16b: the word "entries" glossed where Stats first uses it.
 # Fix pass after round 16b: the note is one line, and the gloss is Quality's lead's, Stats' first use of "entries".
 REVIEW_HEADLINE_NOTE = "no value disputed, 2,671 of 2,674; 153 (5.7%) not found in the paper"
-# Round 17: the review is one square per record people checked; its key gives the counts in words.
+# 2026-10-25 (the user: round 17's unit chart "is too much and confusing"): the review is two bars on one count scale,
+# the counts in words under each name.
 REVIEW_DISPUTED_KEY = "3 with a value disputed; a check found all 3 as printed in the paper"
-UNITS_KEY_JS = """
-    return [...arguments[0].querySelectorAll('[data-units="earlier"] .stats-units-key li')].map(li => li.innerText.replace(/\\s+/g, ' ').trim());
-"""
-# The unit chart drawn for this width (100 to a row, 50 on a phone): its squares, one per record, and it fits its figure.
-UNITS_DRAWN_JS = """
-    const panel = arguments[0].querySelector('[data-units="earlier"]');
-    const shown = [...panel.querySelectorAll('svg.stats-units-svg')].filter(svg => svg.getClientRects().length);
-    if (shown.length !== 1) return {layout: shown.length};
-    const svg = shown[0];
-    const squares = [...svg.querySelectorAll('path')].reduce((sum, path) => sum + (path.getAttribute('d').match(/h[45]v[45]/g) || []).length, 0);
-    const box = svg.getBoundingClientRect(), frame = arguments[0].getBoundingClientRect();
-    return {layout: svg.classList.contains('is-wide') ? 'wide' : 'narrow', squares, fits: box.left >= frame.left - 0.5 && box.right <= frame.right + 0.5 && box.width > 200};
-"""
-# Human review's unit charts draw at their own size, never scaled (round 17 fix pass: at 320px the 50-a-row copy drew at
-# 288 of its 299px, at 660px the 100-a-row copy at 597 of 599, and the 1px gaps blurred): the shown copy of each panel is
-# as wide as its viewBox. Returns the panels that are not.
-STATS_UNITS_CRISP_JS = """
-    return [...document.querySelectorAll('#statsCharts .stats-units-panel')].flatMap((panel) => {
-        const shown = [...panel.querySelectorAll('svg.stats-units-svg')].filter((svg) => svg.getClientRects().length);
-        if (shown.length !== 1) return [`${panel.dataset.units}: ${shown.length} copies shown`];
-        const width = shown[0].getBoundingClientRect().width, own = shown[0].viewBox.baseVal.width;
-        return Math.abs(width - own) > 0.5 ? [`${panel.dataset.units}: ${own}px drawn at ${width.toFixed(1)}px`] : [];
+# Human review's rows as drawn: key, name, the words under it, the records beside the bar, the parts drawn, the red part's
+# drawn width (its ::after, at least 2px, ending where the bar ends) and where the bar ends as a share of its track.
+REVIEW_ROWS_JS = """
+    return [...arguments[0].querySelectorAll('[data-chart="review"] .stats-chart-row')].map(row => {
+        const track = row.querySelector('.stats-track').getBoundingClientRect();
+        const segs = [...row.querySelectorAll('.stats-seg')];
+        const end = Math.max(...segs.map(seg => seg.getBoundingClientRect().right));
+        const red = row.querySelector('.stats-seg.stats-part-disputed');
+        const after = red && getComputedStyle(red, '::after');
+        return [row.dataset.row, row.querySelector('.stats-chart-label').firstChild.textContent.trim(),
+            (row.querySelector('.stats-chart-label small')?.innerText || '').trim(),
+            [...row.querySelectorAll('.stats-value-part')].map(part => part.innerText.trim()).join(' '), segs.length,
+            after && after.content !== 'none' ? parseFloat(after.width) : null, (end - track.left) / track.width];
     });
-"""
-# The base's "(408 papers)" in the given places: its text and how many lines it takes.
-REVIEW_BASE_PARENS = """
-    return [...document.querySelectorAll(arguments[0])].flatMap(place => [...place.querySelectorAll('.nowrap')])
-        .map(e => [e.textContent, new Set([...e.getClientRects()].map(box => Math.round(box.top))).size]);
 """
 
 
@@ -1253,15 +1240,14 @@ def check_review_headline(driver, browser, url):
             assert lead.find_element(By.CSS_SELECTOR, "h3").get_attribute("innerText").strip() == "Human review"
             band = driver.find_element(By.CSS_SELECTOR, ".stats-total[data-total='review']").get_attribute("innerText")
             assert "99.9%" in band and REVIEW_HEADLINE_NOTE in " ".join(band.split()) and "values correct" not in band, band
-            # Quality has no second big number (round 14) and no table (round 17): one square per record people checked.
+            # Quality has no second big number (round 14) and no table (round 17); the review is a bar on a count scale
+            # (2026-10-25), its 3 disputed records a red part at least 2px wide at the bar's end.
             assert not lead.find_elements(By.CSS_SELECTOR, ".stats-lead-figure, table")
-            # The base's parenthesis never breaks inside: "(408" ending one line and "papers)" starting the next.
-            parens = driver.execute_script(REVIEW_BASE_PARENS, "#statsCharts [data-units='earlier'] .stats-units-title")
-            assert len(parens) == 1 and all(text == "(408 papers)" and lines == 1 for text, lines in parens), parens
-            assert driver.execute_script(UNITS_KEY_JS, lead) == ["2,671 no value disputed", REVIEW_DISPUTED_KEY], driver.execute_script(UNITS_KEY_JS, lead)
-            units = driver.execute_script(UNITS_DRAWN_JS, lead)
-            assert units["squares"] == 2674 and units["layout"] == ("wide" if width > 640 else "narrow") and units["fits"], units
+            rows = driver.execute_script(REVIEW_ROWS_JS, lead)
+            assert [row[:5] for row in rows] == [["databases", "From the enzyme databases", REVIEW_DISPUTED_KEY, "2,674", 2]], rows
+            assert rows[0][5] is not None and rows[0][5] >= 1.99 and abs(rows[0][6] - 2674 / 3000) < 0.005, rows
             text = lead.get_attribute("innerText")
+            assert "earlier version" not in text, text
             assert not re.search(r"\bv[12]\b", text + band), "CatLog is the one name: no v1 or v2"
             assert "could not find" not in text and "values correct" not in text, text
             # The kinds of other disagreement and the match read from the paper again are the supplement's Quality figures.
@@ -1286,7 +1272,7 @@ def check_review_headline(driver, browser, url):
             driver.get("about:blank")
             driver.get(url + "#team")
             station = wait.until(lambda d: d.find_element(By.CSS_SELECTOR, f"svg.team-loop-{layout} [data-station='human']"))
-            assert "no value disputed on 2,671 of 2,674 records (99.9%) from the earlier version" in station.get_attribute("aria-label"), station.get_attribute("aria-label")
+            assert "no value disputed on 2,671 of 2,674 records (99.9%) from the enzyme databases" in station.get_attribute("aria-label"), station.get_attribute("aria-label")
             assert driver.execute_script(TEAM_TEXT_APART, layout), f"Team's {layout} loop: station texts overlap"
     finally:
         driver.execute_cdp_cmd("Emulation.clearDeviceMetricsOverride", {})
@@ -1343,7 +1329,7 @@ def check_quality_round16b(driver, browser, url):
     entries a reviewer could check, the 166 without a paper said beside it, and "entries" glossed where Stats first uses
     it; the random audit's share with its 95% interval, its follow-up audits apart (from 2026-10-22; the two-papers
     sentence only with its count, which this fixture leaves out as catlog-v2 now does); human-checked records with
-    their values; the papers read or checked with database values in view; Errors found in CatLog by route; the
+    their values; the papers read or checked with database values in view; Errors caught by CatLog's checks; the
     differences checked by AI agents, X of Y; the corrections split by how found and called a lower bound. Chrome only:
     the fixture is set before the page starts (the data files are not changed)."""
     if browser != "chrome":
@@ -1360,9 +1346,8 @@ def check_quality_round16b(driver, browser, url):
             lead = wait.until(lambda d: d.find_element(By.CSS_SELECTOR, "#statsCharts [data-figure='review']"))
             band = text(driver.find_element(By.CSS_SELECTOR, ".stats-total[data-total='review']"))
             assert "99.9%" in band and band.endswith("no value disputed, 2,601 of 2,604"), band
-            # (round 17 fix pass: its label names the scope, the earlier version's records, so the share never reads as
-            # the current records' accuracy)
-            assert band.startswith("Human review, earlier version 99.9%"), band
+            # (2026-10-25: the label is "Human review", never "earlier version"; Figure 1's row names the records)
+            assert band.startswith("Human review 99.9%"), band
             # the note keeps one line wherever a column has the room (fix pass after round 16b), and the key numbers of a
             # row start at one height whatever wraps above them
             tops = driver.execute_script("""return [...document.querySelectorAll('.stats-totals-main .stats-total')].map(item =>
@@ -1372,22 +1357,20 @@ def check_quality_round16b(driver, browser, url):
             if width >= 1280:
                 assert all(height <= 20 for _, height in tops), tops
             assert tops[-1][1] <= 37, f"Human review's note keeps two lines at most at {width}px: {tops}"
-            # Round 17: Quality as figures, no table. The human review as one square per record people checked, the records
-            # with no paper apart (open squares), its key the counts in words; the records with the human-checked tag
-            # under it, with why they are fewer.
+            # Round 17: Quality as figures, no table. The human review (2026-10-25) as a bar on a count scale: the 2,604
+            # records with a paper, the 166 without one in its rule; the records with the human-checked tag in one line
+            # under it.
             assert not driver.find_elements(By.CSS_SELECTOR, "#stats-quality table"), "No table in Quality"
-            assert text(lead.find_element(By.CSS_SELECTOR, "[data-units='earlier'] .stats-units-title")) == "CatLog’s earlier version 2,770 records people checked (431 papers)"
-            assert driver.execute_script(UNITS_KEY_JS, lead) == ["2,601 no value disputed", REVIEW_DISPUTED_KEY,
-                                                                 "166 with no PMID or DOI, so not checked against a paper"], driver.execute_script(UNITS_KEY_JS, lead)
-            units = driver.execute_script(UNITS_DRAWN_JS, lead)
-            assert units["squares"] == 2770 and units["layout"] == ("wide" if width > 640 else "narrow") and units["fits"], units
+            rows = driver.execute_script(REVIEW_ROWS_JS, lead)
+            assert [row[:5] for row in rows] == [["databases", "From the enzyme databases", REVIEW_DISPUTED_KEY, "2,604", 2]], rows
+            assert rows[0][5] is not None and rows[0][5] >= 1.99 and abs(rows[0][6] - 2604 / 3000) < 0.005, rows
+            assert "earlier version" not in text(lead) and "PMID or DOI" not in text(lead), text(lead)
             foot = text(lead.find_element(By.CSS_SELECTOR, "[data-note='human-checked']"))
-            # (the tag's own rule, of the records with a reviewer's verdict: round 17 fix pass)
-            assert re.fullmatch(r"[\d,]+ records? in Browse \(3,486 values\) carr(?:y|ies) the human-checked tag: (?:of the [\d,]+ records? with a "
-                                r"reviewer’s verdict in Browse, (?:those|the one) )?accepted with every kcat and Km approved and the kcat/Km "
-                                r"approved or agreeing with kcat ÷ Km\.", foot), foot
+            # (one short line, 2026-10-25: the tag's rule and the bridge are How these numbers are counted's)
+            assert re.fullmatch(r"[\d,]+ records? in Browse carr(?:y|ies) the human-checked tag \(3,486 values\)\.", foot), foot
             method = " ".join(driver.execute_script("return document.querySelector('.stats-method').textContent").split())
-            assert "A record with no PMID or DOI could not be checked against a paper, so the review’s share leaves it out." in method, method
+            assert ("From the enzyme databases: records built from the enzyme databases, as they stood before CatLog read their paper; 166 more "
+                    "had no PMID or DOI, so they could not be checked against a paper and are not drawn.") in method, method
             assert "Their values are the kcat, Km and kcat/Km values a reviewer approved on them" in method, method
             # Checks on the values: the random audit's share removed on a small axis, its 95% interval drawn from 0.30% to
             # 0.62% and the dot at 0.43% (28 of 6,477), the follow-ups and the date in its rule.
@@ -1400,22 +1383,24 @@ def check_quality_round16b(driver, browser, url):
                 const plot = box('.stats-ci-plot'), line = box('.stats-ci-line'), dot = box('.stats-ci-dot');
                 return [(line.left - plot.left) / plot.width, (line.right - plot.left) / plot.width, ((dot.left + dot.right) / 2 - plot.left) / plot.width];""")
             assert all(abs(got - want) < 0.015 for got, want in zip(places, (0.30, 0.62, 28 / 6477 * 100))), places
-            assert "Follow-up audits of whole papers and of values a check had questioned checked 188 more values and removed 46; Errors found in CatLog counts them under AI audit." in method, method
+            assert "Follow-up audits of whole papers and of values a check had questioned checked 188 more values and removed 46; Errors caught by CatLog’s checks counts them under AI audits." in method, method
             assert text(driver.find_element(By.CSS_SELECTOR, "[data-note='exposure']")) == (
-                "CatLog reads without database values; on 309 papers (Oct 9 to Oct 21, 2026) its agents saw them or the earlier "
-                "version’s files. 303 were sent back to be read or checked again without them; none is done yet."), \
+                "CatLog reads without database values; on 309 papers (Oct 9 to Oct 21, 2026) its agents saw them or earlier "
+                "records of the paper. 303 were sent back to be read or checked again without them; none is done yet."), \
                 text(driver.find_element(By.CSS_SELECTOR, "[data-note='exposure']"))
             assert "Papers with database values in view: the reading agent saw them on 173 and only a checking agent on 136. 303 were sent back on Oct 21, 2026; the other 6 were not sent back." in method, method
-            # Errors found in CatLog as bars: a row per route with its values and papers, the sweep's kinds and the audit's
-            # two ways as parts and words, All with each value once; the bars on one scale.
+            # Errors caught by CatLog's checks as bars: a row per check with its values and papers, the sweep's kinds and
+            # the audit's two ways as parts and words, what became of the values, the paper's misprinted units last, All
+            # with each value once; the bars on one scale.
             errors = driver.execute_script("""return [...document.querySelectorAll('[data-chart="errors"] .stats-chart-row')].map(row => [row.dataset.row,
                 row.querySelector('.stats-chart-label').firstChild.textContent.trim(), ...[...row.querySelectorAll('.stats-value-part')].map(part => part.innerText.trim()),
                 (row.querySelector('.stats-chart-label small')?.innerText || '').trim(), row.querySelectorAll('.stats-seg').length])""")
-            assert errors == [["audit", "AI audit", "74", "26", "28 in the random audit, 46 in follow-up audits", 1],
-                              ["sweep", "Wider searches after an audit or check found an error", "1,254", "97", "1,058 reprinted from an earlier paper, 103 per-product (partial) rate constants, 93 others", 3],
-                              ["unit_fix", "Unit misprinted in the paper, corrected", "108", "13", "", 1],
-                              ["difference_check", "Check of a database difference against the paper", "12", "4", "5 removed, 2 corrected, 5 awaiting a further check", 3],
+            assert errors == [["audit", "AI audits", "74", "26", "28 in the random audit, 46 in follow-up audits; all removed", 1],
+                              ["sweep", "Follow-up searches for the same kind of error", "1,254", "97", "all removed: 1,058 reprinted from an earlier paper, 103 per-product (partial) rate constants, 93 others", 3],
+                              ["difference_check", "Paper checks of database differences", "12", "4", "5 removed, 2 corrected, 5 awaiting a further check", 3],
+                              ["unit_fix", "Units the paper misprinted", "108", "13", "corrected; the misprint is the paper’s", 1],
                               ["all", "All, each value once", "1,435", "127", "", 1]], errors
+            assert driver.find_element(By.CSS_SELECTOR, "#statsErrorsTitle").get_attribute("innerText").strip() == "Errors caught by CatLog’s checks"
             ends = driver.execute_script("""const end = (key) => { const track = document.querySelector(`[data-chart="errors"] [data-row="${key}"] .stats-track`);
                 const segs = [...track.querySelectorAll('.stats-seg')].map(seg => seg.getBoundingClientRect().right);
                 return Math.max(...segs) - track.getBoundingClientRect().left; }; return [end('sweep'), end('all')];""")
@@ -1448,7 +1433,7 @@ def check_quality_round16b(driver, browser, url):
             driver.get("about:blank")
             driver.get(url + "#team")
             station = wait.until(lambda d: d.find_element(By.CSS_SELECTOR, f"svg.team-loop-{layout} [data-station='human']"))
-            assert "no value disputed on 2,601 of 2,604 records (99.9%) from the earlier version" in station.get_attribute("aria-label"), station.get_attribute("aria-label")
+            assert "no value disputed on 2,601 of 2,604 records (99.9%) from the enzyme databases" in station.get_attribute("aria-label"), station.get_attribute("aria-label")
             assert driver.execute_script(TEAM_TEXT_APART, layout), f"Team's {layout} loop: station texts overlap"
     finally:
         driver.execute_cdp_cmd("Emulation.clearDeviceMetricsOverride", {})
@@ -2598,9 +2583,6 @@ def check_stats_new_figures(driver, browser, url):
                 driver.execute_cdp_cmd("Emulation.setDeviceMetricsOverride", {"width": narrow, "height": 900, "deviceScaleFactor": 1, "mobile": narrow < 640})
                 touching = driver.execute_script(STATS_AXIS_TOUCHING_JS)
                 assert not touching, f"At {narrow}px in a wide font axis labels touch: {touching}"
-                # (660px: the chart has 597px, under the 100-a-row copy's 599; 320px: 288px, under the 50-a-row copy's 299)
-                scaled = driver.execute_script(STATS_UNITS_CRISP_JS)
-                assert not scaled, f"At {narrow}px Human review's squares draw at their own size: {scaled}"
                 assert driver.execute_script(STATS_AXIS_EVEN), f"At {narrow}px in a wide font a gridline is unlabelled or labels sit unevenly"
         finally:
             driver.execute_cdp_cmd("Page.removeScriptToEvaluateOnNewDocument", {"identifier": wide["identifier"]})
@@ -7221,8 +7203,6 @@ def check(driver, browser, url):
         assert not cut, f"Class medians' names are cut at {width}px: {cut}"
         broken = driver.execute_script(STATS_STATUS_KEY_JS)
         assert not broken, f"Review result's labels keep each name and count on one line at {width}px: {broken}"
-        scaled = driver.execute_script(STATS_UNITS_CRISP_JS)
-        assert not scaled, f"Human review's squares draw at their own size at {width}px: {scaled}"
         spacing = driver.execute_script("""
             // 16px bars 8px apart: rows whose name fits on one line are exactly as tall as their bar.
             const gaps = [];
@@ -7290,8 +7270,6 @@ def check(driver, browser, url):
         # each kind on a line of its own (round 17 fix pass: "Not / reviewed / 3,333").
         broken = driver.execute_script(STATS_STATUS_KEY_JS)
         assert not broken, f"Review result's labels are a key on phones, a line each: {broken}"
-        scaled = driver.execute_script(STATS_UNITS_CRISP_JS)
-        assert not scaled, f"Human review's squares draw at their own size on phones: {scaled}"
         assert driver.execute_script("""return [...document.querySelectorAll('.stats-status-section .stats-status-key')]
             .every((swatch) => swatch.getClientRects().length > 0)"""), "On phones each result in the key shows its swatch"
         assert driver.execute_script("""

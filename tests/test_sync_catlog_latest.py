@@ -25,8 +25,8 @@ def synthetic_page(tracker: str = "") -> str:
     """Supply only the structural references required by build_alias() (the Stats page edits included)."""
     return (
         '<!doctype html>\n<html lang="en">\n<head>\n'
-        '  <title>CatLog | Enzyme kinetics catalog</title>\n'
-        '  <meta property="og:title" content="CatLog | Enzyme kinetics catalog" />\n'
+        '  <title>CatLog | Enzyme kinetics database</title>\n'
+        '  <meta property="og:title" content="CatLog | Enzyme kinetics database" />\n'
         '  <link rel="stylesheet" href="assets/catalog.css">\n'
         '</head>\n<body>\n'
         '  <!-- Preserve this synthetic μM label byte-for-byte. -->\n'

@@ -80,14 +80,14 @@ def build_alias(source: str, *, stats: bool = False) -> str:
 
 
 STATS_PAGE_EDITS = (
-    ('<title>CatLog | Enzyme kinetics catalog</title>', '<title>Stats | CatLog</title>'),
+    ('<title>CatLog | Enzyme kinetics database</title>', '<title>Stats | CatLog</title>'),
     ('<body>', '<body class="stats-open">'),
     ('<main id="catalogView">', '<main id="catalogView" hidden>'),
     ('class="stats-view" hidden', 'class="stats-view"'),
     ('id="browseButton" class="nav-tab active" href="catlog-latest.html" aria-current="page"',
      'id="browseButton" class="nav-tab" href="catlog-latest.html"'),
     ('id="statsButton" class="nav-tab"', 'id="statsButton" class="nav-tab active" aria-current="page"'),
-    ('content="CatLog | Enzyme kinetics catalog"', 'content="Stats | CatLog"'),
+    ('content="CatLog | Enzyme kinetics database"', 'content="Stats | CatLog"'),
 )
 
 
