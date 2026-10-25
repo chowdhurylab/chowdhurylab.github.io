@@ -2294,7 +2294,7 @@ function row(overrides = {}) {
     assert.equal(api.statsChecksFigure({ fromPaper: null, papersRead: null }), null);
     // How the counts relate (fix pass after round 16b; round 17's words): the records left out, and what the review and
     // the match count.
-    assert.equal(api.statsHumanCheckedBridge(1721, 2005, {}, {}), " Of the 2,005 records with a reviewer’s verdict in Browse, the other 284 have a value not approved or are not accepted. The review counts records as they stood before CatLog read the paper, by whether a value was disputed, and Approved values read from the paper again counts approved values one by one; the tag needs every kcat and Km a record shows approved.");
+    assert.equal(api.statsHumanCheckedBridge(1721, 2005, {}, {}), " Of the 2,005 records with a reviewer’s verdict in Browse, the other 284 have a value not approved or are not accepted. The review counts records as they stood when the reviewers saw them, by whether a value was disputed, and Approved values read from the paper again counts approved values one by one; the tag needs every kcat and Km a record shows approved.");
     assert.equal(api.statsHumanCheckedBridge(1721, null, {}, {}), "");
     // The review of records read from the paper in counts, never a share of so few.
     assert.equal(api.reviewFromPaperText({ entries: 99, papers: 40, value_disputed: 0, picked_value_disputed: 0, entries_random: 68, entries_picked: 31,
@@ -2308,23 +2308,23 @@ function row(overrides = {}) {
     // data: none, some or all of them done; the split between agents and the papers not sent back are the rule).
     const exposed = { papers: 309, reader: 173, checker_only: 136, first: "2026-10-09", last: "2026-10-21", reread_blind: 303,
       reread_blind_read: 173, reread_blind_verify: 130, reread_blind_on: "2026-10-21", reread_blind_done: 0 };
-    assert.equal(api.statsExposureText({ exposed }), "CatLog reads without database values; on 309 papers (Oct 9 to Oct 21, 2026) its agents saw them or earlier records of the paper. 303 were sent back to be read or checked again without them; none is done yet.");
+    assert.equal(api.statsExposureText({ exposed }), "CatLog reads without database values; on 309 papers (Oct 9 to Oct 21, 2026) its agents saw them or records CatLog held for the paper before. 303 were sent back to be read or checked again without them; none is done yet.");
     // (round 17 fix pass) A done count that is missing or not whole says only that they were sent back, never "none is
     // done yet"; a re-read count above the papers, or not whole, is no count: neither sent back nor staying is said.
     for (const missing of [undefined, null, "303", 304, -1, 1.5]) {
       assert.equal(api.statsExposureText({ exposed: { ...exposed, reread_blind_done: missing } }),
-        "CatLog reads without database values; on 309 papers (Oct 9 to Oct 21, 2026) its agents saw them or earlier records of the paper. 303 were sent back to be read or checked again without them.", String(missing));
+        "CatLog reads without database values; on 309 papers (Oct 9 to Oct 21, 2026) its agents saw them or records CatLog held for the paper before. 303 were sent back to be read or checked again without them.", String(missing));
     }
     for (const invalid of [310, "303", 1.5, -2]) {
       assert.equal(api.statsExposureText({ exposed: { ...exposed, reread_blind: invalid } }),
-        "CatLog reads without database values; on 309 papers (Oct 9 to Oct 21, 2026) its agents saw them or earlier records of the paper.", String(invalid));
+        "CatLog reads without database values; on 309 papers (Oct 9 to Oct 21, 2026) its agents saw them or records CatLog held for the paper before.", String(invalid));
       assert.equal(api.statsExposureRule({ exposed: { ...exposed, reread_blind: invalid } }), "Papers with database values in view: the reading agent saw them on 173 and only a checking agent on 136.", String(invalid));
     }
     assert.match(api.statsExposureText({ exposed: { ...exposed, reread_blind_done: 120 } }), / 303 were sent back to be read or checked again without them; 120 are done so far\.$/);
-    assert.match(api.statsExposureText({ exposed: { ...exposed, reread_blind_done: 303 } }), /\(Oct 9 to Oct 21, 2026\) its agents saw them or earlier records of the paper\. 303 have since been read or checked again without them\.$/);
+    assert.match(api.statsExposureText({ exposed: { ...exposed, reread_blind_done: 303 } }), /\(Oct 9 to Oct 21, 2026\) its agents saw them or records CatLog held for the paper before\. 303 have since been read or checked again without them\.$/);
     assert.match(api.statsExposureText({ exposed: { ...exposed, reread_blind: 309, reread_blind_done: 309 } }), / All 309 have since been read or checked again without them\.$/);
-    assert.match(api.statsExposureText({ exposed: { papers: 309, reader: 173, checker_only: 136 } }), /on 309 papers its agents saw them or earlier records of the paper\. Their values stay in CatLog and in the comparison with the databases\.$/);
-    assert.match(api.statsExposureText({ exposed: { papers: 309, reader: 173, checker_only: 136, reread_blind: 0 } }), /of the paper\. Their values stay in CatLog and in the comparison with the databases\.$/);
+    assert.match(api.statsExposureText({ exposed: { papers: 309, reader: 173, checker_only: 136 } }), /on 309 papers its agents saw them or records CatLog held for the paper before\. Their values stay in CatLog and in the comparison with the databases\.$/);
+    assert.match(api.statsExposureText({ exposed: { papers: 309, reader: 173, checker_only: 136, reread_blind: 0 } }), /for the paper before\. Their values stay in CatLog and in the comparison with the databases\.$/);
     assert.equal(api.statsExposureText({ exposed: { papers: 309, reader: 173, checker_only: 135 } }), "", "Counts that do not add up say nothing");
     assert.equal(api.statsExposureRule({ exposed }), "Papers with database values in view: the reading agent saw them on 173 and only a checking agent on 136. 303 were sent back on Oct 21, 2026, 173 to be read and 130 to be checked again; the other 6 were not sent back.");
     // Errors caught by CatLog's checks as bars (round 17; named for the checks, 2026-10-25): a bar per check, its kinds as
@@ -2482,7 +2482,7 @@ function row(overrides = {}) {
     assert.equal((figure.body.match(/data-row="from-paper"[\s\S]*?<\/li>/)[0].match(/class="stats-seg /g) || []).length, 1, "No red part without a dispute");
     assert.match(figure.body, /<span class="stats-seg stats-part-human is-start is-end" style="left:0%;width:3\.3%" data-tip="Read from the paper: 99 records with no value disputed"><\/span>/);
     assert.equal(figure.body.replace(/<[^>]+>/g, "").match(/[\d,]+ records? in Browse.*$/)[0], "1,791 records in Browse carry the human-checked tag (3,687 values).");
-    assert.equal(figure.rules, "Counted Oct 24, 2026. From the reviewers’ own files: each record a reviewer checked counts once, by its final verdict. From the enzyme databases: records built from the enzyme databases, as they stood before CatLog read their paper; 166 more had no PMID or DOI, so they could not be checked against a paper and are not drawn. Read from the paper: 68 drawn at random and 31 picked as hard cases, from papers free to read. No value disputed: no reviewer disputed the record’s kcat, Km or kcat/Km number or unit.");
+    assert.equal(figure.rules, "Counted Oct 24, 2026. From the reviewers’ own files: each record a reviewer checked counts once, by its final verdict. From the enzyme databases: records built from the enzyme databases and accepted by an automated review, as they stood when the reviewers saw them; 166 more had no PMID or DOI, so they could not be checked against a paper and are not drawn. Read from the paper: 68 drawn at random and 31 picked as hard cases, from papers free to read. No value disputed: no reviewer disputed the record’s kcat, Km or kcat/Km number or unit.");
     // No dispute anywhere: no red in the legend either.
     const calm = api.statsReviewFigure({ quality: { review: { v1: { entries: 10, value_disputed: 0 } } } });
     assert.doesNotMatch(calm.body, /stats-part-disputed/);
@@ -2508,7 +2508,7 @@ function row(overrides = {}) {
   assert.doesNotMatch(lead.replace(/<[^>]*>/g, " "), /\bv[12]\b/, "CatLog is the one name");
   // What the review counts is said once, under How these numbers are counted, not under the lead.
   assert.doesNotMatch(lead, /Counted|own files|stats-fig-data/);
-  assert.match(methodHtml(), /<dt>Figure 1<\/dt><dd><span class=\"stats-method-title\">Human review\.<\/span> Counted Oct 13, 2026\. From the reviewers’ own files: each record a reviewer checked counts once, by its final verdict\. From the enzyme databases: records built from the enzyme databases, as they stood before CatLog read their paper\. No value disputed: no reviewer disputed the record’s kcat, Km or kcat\/Km number or unit\. Values missing \(the paper prints a value the record lacks\) and other disagreements are counted by kind in the supplement\. Approved values: kcat, Km and printed kcat\/Km values a reviewer approved without objection\. The same value: the same paper, metric, protein, variant and substrate, and a value within 2%\.<\/dd>/);
+  assert.match(methodHtml(), /<dt>Figure 1<\/dt><dd><span class=\"stats-method-title\">Human review\.<\/span> Counted Oct 13, 2026\. From the reviewers’ own files: each record a reviewer checked counts once, by its final verdict\. From the enzyme databases: records built from the enzyme databases and accepted by an automated review, as they stood when the reviewers saw them\. No value disputed: no reviewer disputed the record’s kcat, Km or kcat\/Km number or unit\. Values missing \(the paper prints a value the record lacks\) and other disagreements are counted by kind in the supplement\. Approved values: kcat, Km and printed kcat\/Km values a reviewer approved without objection\. The same value: the same paper, metric, protein, variant and substrate, and a value within 2%\.<\/dd>/);
   assert.doesNotMatch(lead, /first comparison|blind|95% range|85\.9|87\.0|earlier catalog/i, "The strict wording is gone");
   // The checks: the second AI check, the AI audits and the human-checked records; the review and the match are the
   // lead's.
@@ -2804,7 +2804,7 @@ function row(overrides = {}) {
   assert.match(plain(causes.match(/<ul class="stats-db-blocks">[\s\S]*?<\/ul>/)[0].replace(/<\/li>/g, " ")), /^BRENDA: unit or scale 979 · decimal slip 85 · another number 46 · unit misprinted 46 SABIO-RK: unit or scale 325 · unit misprinted 43 /);
   // The earlier version's corrections, counted from this snapshot's Full data: on the records Corrected earlier finds.
   const earlier = figureHtml("earlier-corrections");
-  assert.match(plain(earlier), /How CatLog’s earlier version changed values on 2,881 records not yet re-read, by kind of change\./);
+  assert.match(plain(earlier), /How values were changed on 2,881 records not yet re-read, by kind of change\./);
   assert.doesNotMatch(plain(earlier), /to the paper's number|what the paper prints/);
   // Every part-7 caption is plain, and none repeats the caveat the lead says once.
   for (const caption of databaseSection().match(/<span class="stats-fig-caption">[\s\S]*?<\/span>(?=<\/figcaption>)/g)) assertPlainCaption(caption);
@@ -2986,7 +2986,7 @@ function row(overrides = {}) {
   assert.deepEqual(supplementTitles().slice(-2), ["Figure S7 Corrections on records not yet re-read", "Figure S8 Earlier records replaced by reading the paper"]);
   assert.deepEqual(partTitles().slice(-2), ["4 Values", "S Supplementary figures"], "No part without its main figures");
   assert.doesNotMatch(figures, /stats-part-lead/);
-  assert.match(figures, /<strong>Figure S7\.<\/strong> Changes the earlier review made to values/);
+  assert.match(figures, /<strong>Figure S7\.<\/strong> Changes made to values/);
   assert.match(figures, /for 3 of 4 changed values \(75\.0%\)/);
   assert.match(figures, /The 7 records from the earlier version \(2 accepted\) on the 1 paper CatLog has since read, by whether CatLog found the same number\./);
   assert.match(figures, /When CatLog reads a paper, its records replace these\./);
@@ -2995,7 +2995,7 @@ function row(overrides = {}) {
   // snapshot's own); with the same count it names one.
   const correctedNow = runtimeManifest.summary.distributions.verification_status.find((item) => item.label === "corrected")?.count;
   assert.ok(Number.isInteger(correctedNow) && correctedNow !== 5);
-  assert.match(figures, new RegExp(`Changes the earlier review made to values on the 5 records accepted after a correction when counted, by kind; Review result counts ${correctedNow} in this snapshot\\.`));
+  assert.match(figures, new RegExp(`Changes made to values on the 5 records accepted after a correction when counted, by kind; Review result counts ${correctedNow} in this snapshot\\.`));
   runtimeManifest.summary.overview = { ...overview, quality: { as_of: "2026-10-12", earlier_corrections: { records: correctedNow,
     values: { kcat: { rounding: 1, different: 2, magnitude: 0, added: 1 } } } } };
   api.renderStats();
