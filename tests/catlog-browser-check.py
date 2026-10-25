@@ -24,7 +24,7 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.actions.action_builder import ActionBuilder
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
-from selenium.common.exceptions import StaleElementReferenceException, TimeoutException
+from selenium.common.exceptions import ElementNotInteractableException, StaleElementReferenceException, TimeoutException
 from selenium.webdriver.support.ui import WebDriverWait
 
 
@@ -4796,12 +4796,21 @@ def check_layout(driver, browser, url, route_label):
         # keeps the note open), so the "?" and its note are found by id at each step, never held across the click.
         driver.execute_script("document.getElementById('recordsAboutButton').scrollIntoView({block: 'center'})")
         before = box(".summary-records > strong")
-        WebDriverWait(driver, 30, ignored_exceptions=(StaleElementReferenceException,)).until(
-            lambda d: d.find_element(By.ID, "recordsAboutButton").click() is None)
-        about = wait.until(lambda d: d.execute_script("""
-            const button = document.getElementById('recordsAboutButton'), note = document.getElementById('recordsAbout');
-            return note?.getClientRects().length ? {expanded: button.getAttribute('aria-expanded'), note: note.innerText.trim()} : null;
-        """))
+
+        # (2026-10-25: Safari's click could land while the band was being drawn again and the note never showed, also on
+        # main; the "?" is clicked again, a real click each time, until its note shows)
+        def open_records_about(d):
+            shown = d.execute_script("""
+                const button = document.getElementById('recordsAboutButton'), note = document.getElementById('recordsAbout');
+                return note?.getClientRects().length ? {expanded: button.getAttribute('aria-expanded'), note: note.innerText.trim()} : null;
+            """)
+            if not shown:
+                d.find_element(By.ID, "recordsAboutButton").click()
+            return shown
+
+        about = WebDriverWait(driver, 30, poll_frequency=1.5,
+                              ignored_exceptions=(StaleElementReferenceException, ElementNotInteractableException)).until(
+            open_records_about)
         assert about["note"].startswith("A record is one row of the table") and about["expanded"] == "true", about
         assert box(".summary-records > strong") == before, "The note does not move the band's numbers"
         ActionChains(driver).send_keys(Keys.ESCAPE).perform()
