@@ -1,8 +1,8 @@
 CatLog dataset notes
 
 CatLog in brief
-- CatLog is a catalog of enzyme kinetic values (kcat, Km, kcat/Km), each with its enzyme, organism, substrate,
-  variant, assay conditions and source. This snapshot (2026-10-24) holds 190,222 records, 100,639 of them accepted.
+- CatLog is a database of enzyme kinetic values (kcat, Km, kcat/Km), each with its enzyme, organism, substrate,
+  variant, assay conditions and source. This snapshot (2026-10-25) holds 190,222 records, 100,639 of them accepted.
 - Words: a record is one line of the Full data and Table files (one row of Browse): one enzyme, wild type or a
   variant, with one substrate under one set of assay conditions in one paper. A value is one number, a kcat, a Km or a
   kcat/Km; a record holds up to three. A paper is one publication.
@@ -26,23 +26,23 @@ How the values were obtained and checked
   yet re-read are accepted on human review (accepted_basis, under Fields).
 
 Quality checks
-- AI audits: a separate AI auditor re-checked 6,865 values, drawn at random, against their papers to find errors; 29
-  (0.42%; 95% interval 0.29-0.61%) were wrong and removed. The interval treats each value as independent; errors can
+- AI audits: a separate AI auditor re-checked 6,928 values, drawn at random, against their papers to find errors; 29
+  (0.42%; 95% interval 0.29-0.60%) were wrong and removed. The interval treats each value as independent; errors can
   cluster in a paper. A further 696 values were audited because an audit sample or a database check pointed to them
   (119 wrong and removed); they are not in this share, and their wrong values count under CatLog's own errors.
-- CatLog's own errors found so far: 1,819 values in 151 papers (a value found in two ways counts once). AI audits
-  found 148 (46 papers), removed. Searches for an error an audit or check had found, in the rest of its paper or
-  across the catalog, removed 1,488 more (102 papers): 1,062 values the paper reprints from earlier work, 326
-  per-product (partial) rate constants stored as the reaction's kcat or kcat/Km and 100 others. A unit misprinted in
-  the paper led to 186 corrected values (19 papers). Checks of database differences against the paper found 12 (4
-  papers): 10 corrected and 2 awaiting a further check.
+- Errors CatLog's own checks caught so far: 1,819 values in 151 papers (a value caught in two ways counts once). AI
+  audits caught 148 (46 papers); removed. Follow-up searches for the same kind of error, in the rest of its paper or
+  across CatLog, removed 1,488 more (102 papers): 1,062 values the paper reprints from earlier work, 326 per-product
+  (partial) rate constants stored as the reaction's kcat or kcat/Km and 100 others. Units the paper misprinted: 186
+  values (19 papers) corrected. Checks of database differences against the paper found 12 (4 papers): 10 corrected and
+  2 awaiting a further check.
 - Blind reading: CatLog's reading and checking agents are meant to work without database values, so that agreement
-  with the databases is a fair test. Between October 9 and October 22, 2026, agents saw such values, or files of
-  CatLog's earlier version, on 309 papers: the reading agent on 181 and only a checking agent on 128. 303 of them were
-  sent back on October 21, 2026 to be read or checked again without them (173 to be read and 130 to be checked; 303
-  are done); the other 6 have not been sent back.
-- Human review: people checked 2,770 records of the earlier version as the reviewers saw them (431 papers); 166 had no
-  paper and could not be checked; no value disputed on 2,601 of the 2,604 that could (99.9%); the 3 disputed values
+  with the databases is a fair test. Between October 9 and October 22, 2026, agents saw such values, or records CatLog
+  held for the paper before, on 309 papers: the reading agent on 181 and only a checking agent on 128. 303 of them
+  were sent back on October 21, 2026 to be read or checked again without them (173 to be read and 130 to be checked;
+  303 are done); the other 6 have not been sent back.
+- Human review: people checked 2,770 records from the enzyme databases as the reviewers saw them (431 papers); 166 had
+  no paper and could not be checked; no value disputed on 2,601 of the 2,604 that could (99.9%); the 3 disputed values
   are as printed in the paper.
 - Values missing: 27 records (1.0%) lacked a value the paper prints, mostly the kcat. CatLog now has 71 of the 77
   values reviewers named. Other disagreements: organism name (13), DOI (5), substrate name (3), duplicate (2), paper
@@ -58,15 +58,24 @@ Quality checks
   without a paper or one changed since gets none.
 
 Files
-- Full data, catlog-2026-10-24-full.jsonl.gz (data/catlog-enriched.76beb35e0316.jsonl.gz on the server):
+- Full data, catlog-2026-10-25-full.jsonl.gz (data/catlog-enriched.f1dcc9087f9c.jsonl.gz on the server):
   gzip-compressed JSON Lines, one record per line, every field below.
-- Table, catlog-2026-10-24-table.jsonl.gz (data/catlog-table.1acf125085dd.jsonl.gz on the server): the same records in
+- Table, catlog-2026-10-25-table.jsonl.gz (data/catlog-table.40f54dfdd2d8.jsonl.gz on the server): the same records in
   the same order, without the fields marked * below (no sequences, SMILES, paper IDs, printed values or
   assay_conditions_summary); join it to Full data on record_key.
 - Load with pandas: pandas.read_json(path, lines=True, compression="gzip").
-- Compared with databases, catlog-2026-10-24-database-comparison.csv.gz
-  (data/catlog-database-comparison.6c73043ba319.csv.gz on the server): gzip-compressed CSV, described under Compared
+- Compared with databases, catlog-2026-10-25-database-comparison.csv.gz
+  (data/catlog-database-comparison.4f6e275231a0.csv.gz on the server): gzip-compressed CSV, described under Compared
   with databases below; load with pandas.read_csv(path).
+- Not detected, catlog-2026-10-25-not-detected.csv.gz (data/catlog-not-detected.14a6de141495.csv.gz on the server):
+  gzip-compressed CSV, one line per value a paper reports as not detected or prints only as a bound (1,925 values from
+  199 papers so far): a mutant with no measurable activity, a Km above the highest concentration tested. They are the
+  papers' own statements; CatLog never turns them into numbers, and they are in no value column, chart, count or
+  database comparison of the other files. Columns: data_id, snapshot_date; record_key (the record whose values they
+  sit beside, empty when the variant has no measured value); pubmed_id, doi, enzyme, organism, uniprot_id, variant,
+  construct, substrate; parameter (kcat, Km or kcat/Km); reported (not detected, below or above); limit_value and
+  limit_unit (the printed limit in s⁻¹, mM or mM⁻¹ s⁻¹, when one is printed); as_printed; detection_limit_as_printed;
+  location; printed_line; ph; temperature_c; conditions; note. Load with pandas.read_csv(path).
 - Records of one paper share pubmed_id: split training and test sets by paper or by primary_uniprot_id.
 
 Units
@@ -188,8 +197,8 @@ Compared with databases
   used to pair values. Readers and checkers are meant to work without database values; the comparison runs on the
   finished values. Differences of 1.5-fold or more are then checked against the paper by an AI agent; those checks
   have found 12 CatLog values wrong in 4 papers (Quality checks). Between October 9 and October 22, 2026, a reading or
-  checking agent opened database values or files of CatLog's earlier version on 309 papers; 303 of them were sent
-  back, and all 303 have since been read or checked again without them (Quality checks).
+  checking agent opened database values or records CatLog held for the paper before on 309 papers; 303 of them were
+  sent back, and all 303 have since been read or checked again without them (Quality checks).
 - The databases compared (version, the date the copy was taken, its kcat, Km and kcat/Km values with a paper ID, the
   papers they cite, and the SHA-256 of the file they come from):
   - BRENDA 2026.1: 297,863 values from 36,795 papers; SHA-256
@@ -204,7 +213,7 @@ Compared with databases
     ed28b808616fc7b986eaa51c6c7c44ea7fd062d701fafc6b8133b1f544e55be7.
   - UniProt 2026_03 (retrieved 2026-10-13): 35,941 values from 8,862 papers; SHA-256
     42f20aea04b15f3f0e9b626e1d6690658c6fbb57e90e48a32099c0ede1280e53.
-- The file (catlog-2026-10-24-database-comparison.csv.gz, UTF-8 CSV) has one line per value and database that lists
+- The file (catlog-2026-10-25-database-comparison.csv.gz, UTF-8 CSV) has one line per value and database that lists
   its paper, and one line with database empty for a value no database lists and for a kcat/Km CatLog calculated.
   Columns: data_id and snapshot_date (this snapshot); record_key (joins the Full data); measurement_id (CatLog's own
   ID for the record), pubmed_id, doi, enzyme, ec_number, organism, variant, substrate; parameter (kcat, Km or
@@ -230,19 +239,19 @@ Compared with databases
 - The databases also list 24,991 numbers for these papers that match no value CatLog read from them (each paper,
   parameter and number to 3 significant figures counted once), by the first reason that applies: paired with a CatLog
   value as a different number (corrects or differs) 9,270; reprinted by the paper from other work (CatLog leaves
-  reprints out) 4,311; CatLog kept no value from the paper (retracted, a review, no kinetic constants) 3,243; equal to
+  reprints out) 4,178; CatLog kept no value from the paper (retracted, a review, no kinetic constants) 3,243; equal to
   a kcat/Km CatLog calculated (the paper prints none) 2,470; in the paper text with 3 or more significant digits or a
-  power of ten: a possible CatLog miss, not yet checked 1,870; rejected by CatLog's checks 927; only a 2-digit number
-  in the paper text: a weak possible miss 689; not in the paper text under any unit factor 680; in CatLog under
-  another parameter 660; next to Ki, Vmax or another quantity in the text 330; no substrate named, and the paper has
-  several 329; another record of the paper, found by an AI check of the paper 212. Together, 2,559 may be values
+  power of ten: a possible CatLog miss, not yet checked 1,967; rejected by CatLog's checks 927; only a 2-digit number
+  in the paper text: a weak possible miss 723; not in the paper text under any unit factor 680; in CatLog under
+  another parameter 660; next to Ki, Vmax or another quantity in the text 332; no substrate named, and the paper has
+  several 329; another record of the paper, found by an AI check of the paper 212. Together, 2,690 may be values
   CatLog missed, not yet checked.
 - The values no database lists: pandas.read_csv(path)[lambda d: d.result == 'not_listed'].
 - To reproduce: the database values come from the files above, merged into one table (db_values.tsv, SHA-256
   23d3fe3abce8ffc40a5ada3215c9a48ff43fd893111878f77800e5363f892d4a); the AI checks of the paper are in
   database_corrections.tsv (SHA-256 66a0bd4de111b45a9dff7d95cea1275b6ab81554c3df003d62ef7005b381700b); CatLog's values
-  are its export with SHA-256 99ad3d1df3eb17603d6c1be75e92ea922814a464c87be6cc07a272af4f4bacc2, built with CatLog code
-  commit 34711da. The comparison is automatic: the same files give the same lines.
+  are its export with SHA-256 d8a6c968fe969f657faf108cc795444edda499795e5903f4c54f9713e8a4def4, built with CatLog code
+  commit 2045d1d. The comparison is automatic: the same files give the same lines.
 - To cite: "Of 220,879 kinetic values (kcat, Km and kcat/Km) CatLog read from 6,391 papers and compared with BRENDA,
   SABIO-RK, OED, SKiD, STRENDA DB and UniProt for the same paper, 52,712 (23.9%) are listed by none of them: 8,958
   printed kcat/Km values whose kcat and Km they list, 8,390 where they list other numbers for the same substrate and
@@ -250,8 +259,8 @@ Compared with databases
   lists a number for the same value (158,830 values), it is the paper's number for 154,500 (97.3%); 3,367 values
   correct a database's number (2,194 found by an AI check of the paper, 1,173 by an exact factor that the paper's own
   kcat ÷ Km agrees with; a lower bound, as only differences of 1.5-fold or more are checked) and 963 differ with the
-  cause not yet known (60 by an exact factor not yet checked against the paper)." CatLog snapshot 2026-10-24, data ID
-  660092338b.
+  cause not yet known (60 by an exact factor not yet checked against the paper)." CatLog snapshot 2026-10-25, data ID
+  523fd5860b.
 
 License
 - Read from the paper by CatLog: 98,324 records under CC BY 4.0 (CatLog compilation): cite the snapshot and the
@@ -279,25 +288,26 @@ License
   - No source recorded (unknown): 151 records; see source.
 
 Cite
-- CatLog snapshot 2026-10-24 (data ID 660092338b), Chowdhury Lab,
-  https://chowdhurylab.github.io/tools/catlog-latest.html
+- CatLog snapshot 2026-10-25 (data ID 523fd5860b), Chowdhury Lab, https://catlog.structf.studio
 - Sajeevan, K. A., et al. (2026). CatRange enables robust prediction of enzyme variant kinetic regimes. PNAS Nexus,
   pgag309. doi: 10.1093/pnasnexus/pgag309 (https://doi.org/10.1093/pnasnexus/pgag309). It describes CatLog-27k (27,176
-  kinetic records curated from BRENDA and SABIO-RK), the set its models were trained on; CatLog is the growing catalog
-  that followed.
+  kinetic records curated from BRENDA and SABIO-RK), the set its models were trained on; CatLog is the growing
+  database that followed.
 - If you use records from a database, cite that database as it asks: BRENDA, SABIO-RK, SKiD (Zenodo 15355031), the
   Open Enzyme Database, UniProt (links under License).
 - Keep the file you used: older snapshots leave the site over time.
 
 Snapshot details
-- Records: 190,222. Generated (UTC): 2026-10-24T13:31:11+00:00.
-- Data ID 660092338b: the first 10 characters of the SHA-256 of the decompressed Full data (gunzip -c
-  catlog-2026-10-24-full.jsonl.gz | shasum -a 256): 660092338bf83c57ceda754c25a56f0a5608f52ac2be37fc8ea66fae6dc50b34.
-- Full data file catlog-enriched.76beb35e0316.jsonl.gz, SHA-256
-  76beb35e0316ec1950ed6fa6032c1891237e06d90a85357a9a1862f48e409c5b.
-- Table file catlog-table.1acf125085dd.jsonl.gz, SHA-256
-  1acf125085ddfd54553ecfa765770d8543e38aaabfb0771b4c4c6680a75eb78b.
-- Compared with databases file catlog-database-comparison.6c73043ba319.csv.gz, SHA-256
-  6c73043ba31965bcfe4da4627b8a0edfcaf9b21cfe5fc0abed33ce79c1e1f27f, 425,616 lines.
-- Catalog file this snapshot was built from: SHA-256 5e5cabf311c7fdc79eccd84f7286ff97e587845149e1b326cfa6605fe6193e5d.
-- Records with a sequence: 101,054 (wild-type sequence 97,089, variant sequence 28,940); records with SMILES: 133,782.
+- Records: 190,222. Generated (UTC): 2026-10-25T14:34:29+00:00.
+- Data ID 523fd5860b: the first 10 characters of the SHA-256 of the decompressed Full data (gunzip -c
+  catlog-2026-10-25-full.jsonl.gz | shasum -a 256): 523fd5860bdd36d95259196342272c79065a3f9c51f49e0e8a3a454cf018c4ec.
+- Full data file catlog-enriched.f1dcc9087f9c.jsonl.gz, SHA-256
+  f1dcc9087f9c27e81d4d8bcf4b34c2eb95a141354ba4f7ca0e9beac93e6a3c1d.
+- Table file catlog-table.40f54dfdd2d8.jsonl.gz, SHA-256
+  40f54dfdd2d842121c0792cd09ba7804dc3a43c07d4a26f7d3f921a8e636da83.
+- Compared with databases file catlog-database-comparison.4f6e275231a0.csv.gz, SHA-256
+  4f6e275231a0684878c8ec11940ac0957dde7da1bda45ecb01f5e341c7b00867, 425,616 lines.
+- Not detected file catlog-not-detected.14a6de141495.csv.gz, SHA-256
+  14a6de1414950ead9e8e09400dab4245948f0fb3e470497a66ccc80eee7dfd2a, 1,925 lines.
+- Source file this snapshot was built from: SHA-256 e5ca81ecd5f575b86c1e49eda9b87be512c3de3d1c0f5cd889a3490d4d642648.
+- Records with a sequence: 101,052 (wild-type sequence 97,087, variant sequence 28,951); records with SMILES: 133,782.
