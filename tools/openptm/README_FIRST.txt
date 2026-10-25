@@ -1,7 +1,7 @@
 openPTM
 
 Website: https://chowdhurylab.github.io/tools/openptm/
-Release: 2026-10-24
+Release: 2026-10-25
 
 Browse measurements, statistics, PTM families, sites, disease studies and the guide. The page contains its data,
 styles and scripts; it does not need external fonts or JavaScript libraries.
@@ -52,10 +52,10 @@ Design update, 20 October
 
 Included in this release
 - 111 operational PTM families in the original audit.
-- 27,165 site records and 14,433 function/regulation records.
+- 27,165 site records and 14,436 function/regulation records.
 - 63 source summaries: six original comparisons and 57 later additions.
-- 258 selected paper comparisons, containing 319 measurement entries from
-  95 primary papers across 90 families with numeric measurements; 21 gaps.
+- 261 selected paper comparisons, containing 322 measurement entries from
+  97 primary papers across 92 families with numeric measurements; 19 gaps.
 - 69 selected disease-study connections.
 - All nine original audit worksheets, with source records and methods.
 
@@ -64,6 +64,29 @@ overlap and must not be summed as unique biological sites. The 111 families
 are a defined working set, not a universal count of all PTMs. Paper comparisons
 are selected examples, not a systematic review. Upper bounds, uncertainty,
 study conditions and source links are retained in the record details.
+
+Paper reading, round 48 — 25 October 2026
+- Added three qualified comparisons from two previously unread papers,
+  covering MIO cofactor formation and protein methylthiolation. These families
+  were outside round 47's reading and access-held subjects.
+- Plant PAM variants N231A and Y322A each have <0.01% of wild-type specific
+  activity in the source table (WT normalized to 100%). Structures identify
+  deficient MIO formation. The mutations also alter the active site; they do
+  not isolate the effect of MIO alone. The upper bounds are retained, and
+  unreported assay details, uncertainty and solution occupancy remain unknown.
+- A cellular rimO perturbation reports approximately 80% less ribosome-bound
+  RNase R. The source assigns loss of S12 methylthiolation, but RNase R
+  abundance and turnover also change. This is a relative association amount,
+  not an affinity measurement; modification occupancy was not measured.
+- Totals: 261 comparisons, 322 measurement entries, 97 numerical papers,
+  92 of 111 families with numerical data and 19 remaining gaps. Prior records,
+  the interface and original August audit workbook are preserved.
+- Selected original Results/Discussion, one supporting table and the source
+  figure were checked. A 2025 review supplied discovery context only; an
+  archaeal tRNA study was excluded from protein-PTM coverage.
+- Sources: https://doi.org/10.1021/bi500187a
+  https://doi.org/10.1021/bi500187a.s001
+  https://doi.org/10.1074/jbc.M113.519553
 
 Paper reading, round 47 — 24 October 2026
 - Read selected Results, Discussion and table/caption sections in two
@@ -758,7 +781,7 @@ exports, not the current website dataset. They are retained for old links.
 
 Release checksums (SHA-256)
 index.html
-1ff179ba83ca299e18bf4748193c0840a19f7c86ebe68acfb005e72ecc2c8ed8
+91c166c82a45bfba0c2fd5238cd54504710524d224893f411ed78494c591feba
 PTM_family_database_audit_final_2026-08-14.xlsx
 ddaa9ec6227fcfdaa12bb1a4a99ffaf7d28adb7c701f4ce8a7815038bbe81a8a
 
