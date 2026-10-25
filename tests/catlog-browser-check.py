@@ -1385,8 +1385,8 @@ def check_quality_round16b(driver, browser, url):
             assert all(abs(got - want) < 0.015 for got, want in zip(places, (0.30, 0.62, 28 / 6477 * 100))), places
             assert "Follow-up audits of whole papers and of values a check had questioned checked 188 more values and removed 46; Errors caught by CatLog’s checks counts them under AI audits." in method, method
             assert text(driver.find_element(By.CSS_SELECTOR, "[data-note='exposure']")) == (
-                "CatLog reads without database values; on 309 papers (Oct 9 to Oct 21, 2026) its agents saw them or earlier "
-                "records of the paper. 303 were sent back to be read or checked again without them; none is done yet."), \
+                "CatLog reads without database values; on 309 papers (Oct 9 to Oct 21, 2026) its agents saw them or records "
+                "CatLog held for the paper before. 303 were sent back to be read or checked again without them; none is done yet."), \
                 text(driver.find_element(By.CSS_SELECTOR, "[data-note='exposure']"))
             assert "Papers with database values in view: the reading agent saw them on 173 and only a checking agent on 136. 303 were sent back on Oct 21, 2026; the other 6 were not sent back." in method, method
             # Errors caught by CatLog's checks as bars: a row per check with its values and papers, the sweep's kinds and
