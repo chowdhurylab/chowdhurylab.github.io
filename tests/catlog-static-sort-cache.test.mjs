@@ -204,9 +204,10 @@ assert.ok(cautionsHtml.includes('the fastest known enzymes, such as catalase, re
       `<meta property="og:description" content="CatLog snapshot dated ${expectedSnapshotDate} with ${expectedRowCount} enzyme kinetics records, review results, source links, protein sequences and substrate structures." />`,
     ].some((tag) => pageHtml.includes(tag)),
   );
-  // (2026-10-24, the user: catlog.structf.studio is CatLog's main site; the GitHub page and its aliases say so)
-  assert.ok(pageHtml.includes(`<meta property="og:url" content="https://catlog.structf.studio/" />`), publicPath);
-  assert.ok(pageHtml.includes(`<link rel="canonical" href="https://catlog.structf.studio/" />`), publicPath);
+  // (2026-10-24, the user: catlog.structf.studio is CatLog's main site; the GitHub page and its aliases say so; from
+  // 2026-10-25 its home is a landing page and this page is its Browse, /browse)
+  assert.ok(pageHtml.includes(`<meta property="og:url" content="https://catlog.structf.studio/browse" />`), publicPath);
+  assert.ok(pageHtml.includes(`<link rel="canonical" href="https://catlog.structf.studio/browse" />`), publicPath);
   assert.match(pageHtml, /<p id="mainSiteNote" class="main-site-note">CatLog's main site is now <a href="https:\/\/catlog\.structf\.studio\/">catlog\.structf\.studio<\/a>\.<\/p>/);
   assert.match(pageHtml, /<link rel="icon" href="\/images\/rz\.png" \/>/);
   // (round 17, the user: the license and snapshot said once, in the Guide's License and citation section, which Browse's

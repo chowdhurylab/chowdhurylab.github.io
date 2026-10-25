@@ -6603,8 +6603,9 @@ def check(driver, browser, url):
     assert not urlsplit(driver.current_url).fragment
 
     def check_metadata(view):
-        # (2026-10-24: every view of every copy names CatLog's main site)
-        expected_url = "https://catlog.structf.studio/"
+        # (2026-10-24: every view of every copy names CatLog's main site; 2026-10-25: its Browse, /browse, since "/" is
+        # the main site's landing page)
+        expected_url = "https://catlog.structf.studio/browse"
         assert driver.find_element(By.CSS_SELECTOR, 'link[rel="canonical"]').get_attribute("href") == expected_url
         assert driver.find_element(By.CSS_SELECTOR, 'meta[property="og:url"]').get_attribute("content") == expected_url
         assert driver.find_element(By.CSS_SELECTOR, 'meta[property="og:title"]').get_attribute("content") == driver.title
