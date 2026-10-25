@@ -52,10 +52,10 @@ Design update, 20 October
 
 Included in this release
 - 111 operational PTM families in the original audit.
-- 27,165 site records and 14,436 function/regulation records.
+- 27,165 site records and 14,437 function/regulation records.
 - 63 source summaries: six original comparisons and 57 later additions.
-- 261 selected paper comparisons, containing 322 measurement entries from
-  97 primary papers across 92 families with numeric measurements; 19 gaps.
+- 262 selected paper comparisons, containing 323 measurement entries from
+  98 primary papers across 93 families with numeric measurements; 18 gaps.
 - 69 selected disease-study connections.
 - All nine original audit worksheets, with source records and methods.
 
@@ -64,6 +64,34 @@ overlap and must not be summed as unique biological sites. The 111 families
 are a defined working set, not a universal count of all PTMs. Paper comparisons
 are selected examples, not a systematic review. Upper bounds, uncertainty,
 study conditions and source links are retained in the record details.
+
+Paper reading, round 50 — 25 October 2026
+- Added one qualified SAMPylation comparison by reassessing a previously read
+  TBP2 paper. Figure 1 prints relative protein abundance of 6.3 +/- 1.1 in
+  delta-ubaA cells versus 1.0 +/- 0.1 in WT (SEM; three independent experiments).
+  The source detects the TBP2-SAMP2 conjugate in WT but not delta-ubaA.
+- This is an indirect cellular abundance result. Global UbaA loss, tagged and
+  coexpressed proteins, other TBP2 modifications and unknown assay occupancy
+  limit causal interpretation. It is not a numerical half-life or activity
+  measurement. The linked erratum corrects a cited researcher's name only.
+- Read selected original sections of two further SAMP-related papers for the
+  first time. One identity was already in an earlier bulk discovery list.
+  Neither supplied a numerical SAMP-state functional comparison: the Orc1
+  binding values concern a DNA-contact mutation, and the acetylome values
+  describe overlap with earlier SAMP-site datasets.
+- Reassessed a previously read SMAD3 isonicotinylation study. The inspected
+  functional plots do not print group means or effect magnitudes; no values
+  were estimated from graphs. Lysine itaconylation and BilA discovery returned
+  previously covered identities. These subjects were outside round 48.
+- Totals: 262 comparisons, 323 measurement entries, 98 numerical papers,
+  93 of 111 families with numerical data and 18 remaining gaps. Prior records,
+  the interface and original August audit workbook are preserved. These are
+  selected reading outcomes, not a systematic review of the remaining gaps.
+- Sources: https://doi.org/10.1128/mBio.00379-16
+  https://doi.org/10.1128/mBio.01192-16
+  https://doi.org/10.1007/s00792-026-01420-x
+  https://doi.org/10.3390/antiox12061203
+  https://doi.org/10.1016/j.isci.2024.110775
 
 Paper reading, round 49 — 25 October 2026
 - Read selected original sections in three previously unread papers: two
@@ -802,7 +830,7 @@ exports, not the current website dataset. They are retained for old links.
 
 Release checksums (SHA-256)
 index.html
-91c166c82a45bfba0c2fd5238cd54504710524d224893f411ed78494c591feba
+2b501251199ad6db712ae03fcfa86c48352f46669e285881e6fa502d3e661349
 PTM_family_database_audit_final_2026-08-14.xlsx
 ddaa9ec6227fcfdaa12bb1a4a99ffaf7d28adb7c701f4ce8a7815038bbe81a8a
 
