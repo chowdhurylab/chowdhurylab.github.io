@@ -1,7 +1,7 @@
 openPTM
 
 Website: https://chowdhurylab.github.io/tools/openptm/
-Release: 2026-10-25
+Release: 2026-10-26
 
 Browse measurements, statistics, PTM families, sites, disease studies and the guide. The page contains its data,
 styles and scripts; it does not need external fonts or JavaScript libraries.
@@ -52,10 +52,10 @@ Design update, 20 October
 
 Included in this release
 - 111 operational PTM families in the original audit.
-- 27,165 site records and 14,437 function/regulation records.
+- 27,165 site records and 14,438 function/regulation records.
 - 63 source summaries: six original comparisons and 57 later additions.
-- 262 selected paper comparisons, containing 323 measurement entries from
-  98 primary papers across 93 families with numeric measurements; 18 gaps.
+- 263 selected paper comparisons, containing 324 measurement entries from
+  99 primary papers across 93 families with numeric measurements; 18 gaps.
 - 69 selected disease-study connections.
 - All nine original audit worksheets, with source records and methods.
 
@@ -64,6 +64,33 @@ overlap and must not be summed as unique biological sites. The 111 families
 are a defined working set, not a universal count of all PTMs. Paper comparisons
 are selected examples, not a systematic review. Upper bounds, uncertainty,
 study conditions and source links are retained in the record details.
+
+Paper reading, round 51 — 26 October 2026
+- Added one qualified lactylation comparison from a previously unread DLD
+  paper. Figure 4I prints estimated sphere-forming cell frequencies of
+  1/36.9 for WT DLD and 1/72.2 for K445R in MES505 cells under ES-Cu treatment.
+  The source supports K445 lactylation and its reduction in the variant.
+- These are ELDA point estimates, preserved as printed. Mutation effects,
+  cellular treatment context and unmeasured occupancy limit attribution to
+  lactylation alone. Panel-specific sample counts and numerical confidence
+  bounds are unspecified. These are not catalytic activity measurements.
+- Read selected original sections of three previously unread papers in total:
+  DLD, AIM2 S-itaconation and SIRT5 modulation by NARH. The latter two remain
+  on hold: the inspected AIM2 panels print no numerical stability effect,
+  and SIRT5 drug/substrate kinetics do not measure a target protein PTM effect.
+- Recovered and read one source-data workbook from a prior pyruvylation lead.
+  It supplies numerical metabolic-treatment results without attributing a
+  functional effect to a specific protein's pyruvylation state, so remains
+  on hold. This is a first supplement read, not a new paper or main-body read.
+  AIM2 supplement access was limited; no inaccessible values were estimated.
+- Totals: 263 comparisons, 324 measurement entries, 99 numerical papers,
+  93 of 111 families with numerical data and 18 remaining gaps. This addition
+  expands an already covered family. Prior records, the interface and the
+  August audit workbook are preserved. Reading was selective, not exhaustive.
+- Sources: https://doi.org/10.1002/advs.78046
+  https://doi.org/10.1038/s41423-026-01414-x
+  https://doi.org/10.1039/d5cb00191a
+  https://doi.org/10.1038/s42255-026-01556-2
 
 Paper reading, round 50 — 25 October 2026
 - Added one qualified SAMPylation comparison by reassessing a previously read
@@ -830,7 +857,7 @@ exports, not the current website dataset. They are retained for old links.
 
 Release checksums (SHA-256)
 index.html
-2b501251199ad6db712ae03fcfa86c48352f46669e285881e6fa502d3e661349
+89ef9dd8f0638a6c08350aa170f714536f93ed6e817c52302e7490ba5137d24a
 PTM_family_database_audit_final_2026-08-14.xlsx
 ddaa9ec6227fcfdaa12bb1a4a99ffaf7d28adb7c701f4ce8a7815038bbe81a8a
 
