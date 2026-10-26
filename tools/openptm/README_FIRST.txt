@@ -65,6 +65,31 @@ are a defined working set, not a universal count of all PTMs. Paper comparisons
 are selected examples, not a systematic review. Upper bounds, uncertainty,
 study conditions and source links are retained in the record details.
 
+Paper reading, round 55 — 26 October 2026
+- Followed seven remaining gap families outside round 54: S-guanylation,
+  Urmylation, hydroxyceramide ester, BilA conjugation, 3-methylglutaconylation,
+  lysine pyruvylation and isonicotinylation. Most searches returned known
+  papers. Selected new source reading was confined to S-guanylation.
+- Newly read an author thesis and the PKG paper's public supplement.
+  Neither is counted as a newly read journal article or recovered main text.
+- The 2015 Kunieda thesis reports recombinant SNAP25 pull-down at 120% of
+  untreated control (Figure 2-9; n = 5, mean with SE; numeric SE not printed).
+  This measures relative co-precipitation, not a binding constant. Occupancy
+  and possible reagent carryover remain limitations. The thesis is linked
+  below; its numbers are not attributed to the unread related journal paper.
+  This finding is retained as a thesis lead, outside the journal-measurement table.
+- PKG Supplementary Figure S3 reports nucleotide-response kinetics. Those
+  curves do not establish a numerical comparison between covalently
+  S-guanylated and unmodified PKG. They remain outside the measurement table.
+- One new access route for the known lysine-pyruvylation paper returned 403.
+  No article was recovered. No new numerical rows were admitted this round.
+- Totals remain 267 comparisons, 328 measurement entries, 102 numerical
+  papers, 94 of 111 numerical families and 17 gaps. Existing records,
+  website and audit workbook are unchanged. No website rebuild was needed.
+- Sources: https://omu.repo.nii.ac.jp/records/776
+  https://doi.org/10.24729/00000769
+  https://doi.org/10.1021/acs.biochem.5b00774.s001
+
 Paper reading, round 54 — 26 October 2026
 - Added the first numerical comparison for S-diacylglycerol lipidation:
   a qualified PrtM lipidation-site variant result in Lactococcus lactis.
