@@ -52,10 +52,10 @@ Design update, 20 October
 
 Included in this release
 - 111 operational PTM families in the original audit.
-- 27,165 site records and 14,441 function/regulation records.
+- 27,165 site records and 14,442 function/regulation records.
 - 63 source summaries: six original comparisons and 57 later additions.
-- 266 selected paper comparisons, containing 327 measurement entries from
-  101 primary papers across 93 families with numeric measurements; 18 gaps.
+- 267 selected paper comparisons, containing 328 measurement entries from
+  102 primary papers across 94 families with numeric measurements; 17 gaps.
 - 69 selected disease-study connections.
 - All nine original audit worksheets, with source records and methods.
 
@@ -64,6 +64,33 @@ overlap and must not be summed as unique biological sites. The 111 families
 are a defined working set, not a universal count of all PTMs. Paper comparisons
 are selected examples, not a systematic review. Upper bounds, uncertainty,
 study conditions and source links are retained in the record details.
+
+Paper reading, round 54 — 26 October 2026
+- Added the first numerical comparison for S-diacylglycerol lipidation:
+  a qualified PrtM lipidation-site variant result in Lactococcus lactis.
+  Culture proteolysis was A340 0.521 with wild-type PrtM and 0.467 with
+  C24A PrtM, which lacked palmitate labeling. The authors describe retained
+  proteinase function; no error, replicate count or equivalence test is given.
+- This is a downstream PrtP-dependent culture assay. The mutation also
+  changes PrtM processing and localization, and cell densities differ.
+  Values are not blank-subtracted or normalized. They do not isolate the
+  causal effect of the lipid anchor or measure intrinsic PrtM catalysis.
+  Exact acyl chains and occupancy remain unresolved.
+- Read two new paper identities (PrtM and HSPA8) and, for the first time,
+  the original body of a previously screened sortase paper. Selected
+  sections and six original PrtM page scans were inspected; no PDFs or
+  supplements were downloaded.
+- HSPA8 effects after 4-octyl-itaconate treatment remain on hold for
+  S-itaconation: binding and downstream ubiquitination do not establish a
+  cysteine-itaconate adduct.
+  Sortase-linked whole-cell enzyme values also remain on hold because the
+  native target's covalent anchor state was not verified in those samples.
+- Totals: 267 comparisons, 328 measurement entries, 102 numerical papers,
+  94 of 111 families with numerical data and 17 remaining gaps. All prior
+  records, the website interface and August audit workbook are preserved.
+- Sources: https://doi.org/10.1128/jb.173.14.4517-4525.1991
+  https://doi.org/10.1038/s12276-026-01799-9
+  https://doi.org/10.1128/aem.02287-12
 
 Paper reading, round 53 — 26 October 2026
 - Read two previously unread originals: a horseradish-peroxidase study and
@@ -908,7 +935,7 @@ exports, not the current website dataset. They are retained for old links.
 
 Release checksums (SHA-256)
 index.html
-f0c9eec7d56ac267b8494e4bcbc1075cee6ebd5889d6b3ae97fe2d5206e7759d
+81dc025e172d223bcccf4bb4dbf6c60ec226ce3b1224051e4ad110357f3da66e
 PTM_family_database_audit_final_2026-08-14.xlsx
 ddaa9ec6227fcfdaa12bb1a4a99ffaf7d28adb7c701f4ce8a7815038bbe81a8a
 
