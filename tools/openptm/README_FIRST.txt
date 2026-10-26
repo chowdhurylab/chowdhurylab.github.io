@@ -52,10 +52,10 @@ Design update, 20 October
 
 Included in this release
 - 111 operational PTM families in the original audit.
-- 27,165 site records and 14,438 function/regulation records.
+- 27,165 site records and 14,440 function/regulation records.
 - 63 source summaries: six original comparisons and 57 later additions.
-- 263 selected paper comparisons, containing 324 measurement entries from
-  99 primary papers across 93 families with numeric measurements; 18 gaps.
+- 265 selected paper comparisons, containing 326 measurement entries from
+  100 primary papers across 93 families with numeric measurements; 18 gaps.
 - 69 selected disease-study connections.
 - All nine original audit worksheets, with source records and methods.
 
@@ -64,6 +64,32 @@ overlap and must not be summed as unique biological sites. The 111 families
 are a defined working set, not a universal count of all PTMs. Paper comparisons
 are selected examples, not a systematic review. Upper bounds, uncertainty,
 study conditions and source links are retained in the record details.
+
+Paper reading, round 52 — 26 October 2026
+- Added two binding comparisons from a previously unread alpha-synuclein
+  paper. Apparent Kd is 154 +/- 62 micromolar for N-terminal acetylation and
+  202 +/- 102 micromolar for the N-terminally succinylated preparation,
+  each compared with unmodified protein at 565 +/- 83 micromolar (mean +/- SD).
+- Figure 4 reports at least four independent binding curves; exact group n
+  is unspecified. All groups use E130C/AlexaFluor488 protein and model lipid
+  vesicles. Kd is fitted against accessible lipid concentration.
+- The succinylated sample is chemically generated and has weak residual
+  lysine-succinyl signals. The result is not attributed exclusively to its
+  N-terminal group or claimed as an endogenous N-terminal modification.
+- Recovered a previously access-held Urmylation original and read selected
+  target/results sections. The reported roughly 50% decline in conjugate
+  signal after four hours describes conjugate persistence, not a numerical
+  effect of Urmylation on target function or a measured four-hour half-life.
+  It remains on hold. Recovery is not counted as a new paper identity.
+- Other gap searches returned prior identities or discovery-only leads.
+  No source values were inferred from plotted points. These selected reads
+  do not establish absence of usable measurements elsewhere.
+- Totals: 265 comparisons, 326 measurement entries, 100 numerical papers,
+  93 of 111 families with numerical data and 18 remaining gaps. Both new
+  comparisons expand existing families. Prior records, interface and the
+  August audit workbook are preserved.
+- Sources: https://doi.org/10.1021/acs.biochem.6c00382
+  https://doi.org/10.1073/pnas.1014402108
 
 Paper reading, round 51 — 26 October 2026
 - Added one qualified lactylation comparison from a previously unread DLD
@@ -857,7 +883,7 @@ exports, not the current website dataset. They are retained for old links.
 
 Release checksums (SHA-256)
 index.html
-89ef9dd8f0638a6c08350aa170f714536f93ed6e817c52302e7490ba5137d24a
+b66c518bd9a72af9f922a74d14a4393e4c3423acf2034591aa2426d5f53b4496
 PTM_family_database_audit_final_2026-08-14.xlsx
 ddaa9ec6227fcfdaa12bb1a4a99ffaf7d28adb7c701f4ce8a7815038bbe81a8a
 
