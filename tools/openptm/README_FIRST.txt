@@ -52,10 +52,10 @@ Design update, 20 October
 
 Included in this release
 - 111 operational PTM families in the original audit.
-- 27,165 site records and 14,440 function/regulation records.
+- 27,165 site records and 14,441 function/regulation records.
 - 63 source summaries: six original comparisons and 57 later additions.
-- 265 selected paper comparisons, containing 326 measurement entries from
-  100 primary papers across 93 families with numeric measurements; 18 gaps.
+- 266 selected paper comparisons, containing 327 measurement entries from
+  101 primary papers across 93 families with numeric measurements; 18 gaps.
 - 69 selected disease-study connections.
 - All nine original audit worksheets, with source records and methods.
 
@@ -64,6 +64,31 @@ overlap and must not be summed as unique biological sites. The 111 families
 are a defined working set, not a universal count of all PTMs. Paper comparisons
 are selected examples, not a systematic review. Upper bounds, uncertainty,
 study conditions and source links are retained in the record details.
+
+Paper reading, round 53 — 26 October 2026
+- Read two previously unread originals: a horseradish-peroxidase study and
+  a 3-methylglutaconylation study. Added one numerical comparison.
+- Recombinant peroxidase has a reported thermal activity half-life at
+  60 degrees C of approximately 128 minutes before deglycosylation versus
+  98 minutes after EndoH treatment. The paper reports no significant group
+  difference. These are author-calculated values, with no reported error
+  or independent half-life replicate count; activity reactions at each time
+  point were performed in triplicate.
+- The EndoH-treated sample is not established as completely glycan-free.
+  No site occupancy or predicted O-glycosylation site is imported. The
+  paper's kinetic table has unresolved inconsistencies and remains on hold.
+- The new 3-methylglutaconylation study supports protein modification, but
+  its printed numerical endpoints concern free-metabolite chemistry and
+  recognition. They do not establish a numerical effect on target protein
+  function, so no functional record was added from that paper.
+- S-guanylation and isonicotinylation searches also revisited prior leads.
+  Those discovery checks are not counted as new original-body readings.
+- Totals: 266 comparisons, 327 measurement entries, 101 numerical papers,
+  93 of 111 families with numerical data and 18 remaining gaps. This round
+  adds depth to an existing family. Prior records, interface and the
+  August audit workbook are preserved.
+- Sources: https://doi.org/10.3390/molecules30224374
+  https://doi.org/10.1111/febs.16316
 
 Paper reading, round 52 — 26 October 2026
 - Added two binding comparisons from a previously unread alpha-synuclein
@@ -883,7 +908,7 @@ exports, not the current website dataset. They are retained for old links.
 
 Release checksums (SHA-256)
 index.html
-b66c518bd9a72af9f922a74d14a4393e4c3423acf2034591aa2426d5f53b4496
+f0c9eec7d56ac267b8494e4bcbc1075cee6ebd5889d6b3ae97fe2d5206e7759d
 PTM_family_database_audit_final_2026-08-14.xlsx
 ddaa9ec6227fcfdaa12bb1a4a99ffaf7d28adb7c701f4ce8a7815038bbe81a8a
 
